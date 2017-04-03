@@ -1,3 +1,14 @@
+sudo: required
+
 language: scala
 scala: 2.11.8
 jdk: oraclejdk8
+
+
+before_install:
+  - docker pull yandex/clickhouse-server
+  - docker run -d -p 127.0.0.1:8123:8123 yandex/clickhouse-server
+  - docker ps -a
+services:
+  - docker
+
