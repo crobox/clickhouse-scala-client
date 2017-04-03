@@ -41,8 +41,6 @@ class ClickhouseClientTest extends FlatSpecLike with Matchers {
     }
   }
 
-
-
 }
-@sjoerd
+
 
