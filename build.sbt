@@ -5,10 +5,17 @@ lazy val root = Project("clickhouse-scala-client", file("."))
   	organization := "com.crobox",
   	name := "clickhouse-scala-client",
   	version := "0.0.1",
-  	scalaVersion := "2.11.8",
+  	scalaVersion := "2.11.9",
   	libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
 			"com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
-      "org.scalatest" %% "scalatest" % "3.0.0" % Test
+			"com.google.guava" % "guava" % "19.0",
+			"com.fasterxml.jackson.core" % "jackson-core" % JacksonVersion,
+			"com.fasterxml.jackson.core" % "jackson-databind" % JacksonVersion,
+			"com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % JacksonVersion,
+			"com.fasterxml.jackson.core" % "jackson-annotations" % JacksonVersion,
+			"com.fasterxml.jackson.module" %% "jackson-module-scala" % JacksonScalaVersion,
+
+			"org.scalatest" %% "scalatest" % "3.0.0" % Test
 	)
   )
