@@ -24,5 +24,19 @@ lazy val root = Project("clickhouse-scala-client", file("."))
         Some("snapshots" at nexus + "content/repositories/snapshots")
       else
         Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    },
+    pomExtra := {
+      <url>https://github.com/crobox/clickhouse-scala-client</url>
+        <licenses>
+          <license>
+            <name>The GNU Lesser General Public License, Version 3.0</name>
+            <url>http://www.gnu.org/licenses/lgpl-3.0.txt</url>
+            <distribution>repo</distribution>
+          </license>
+        </licenses>
+        <scm>
+          <url>git@github.com:crobox/clickhouse-scala-client.git</url>
+          <connection>scm:git@github.com:crobox/clickhouse-scala-client.git</connection>
+        </scm>
     }
   )
