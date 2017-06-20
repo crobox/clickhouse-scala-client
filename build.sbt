@@ -38,5 +38,12 @@ lazy val root = Project("clickhouse-scala-client", file("."))
           <url>git@github.com:crobox/clickhouse-scala-client.git</url>
           <connection>scm:git@github.com:crobox/clickhouse-scala-client.git</connection>
         </scm>
+        <developers>
+          <developer>
+            <id>crobox</id>
+            <name>crobox</name>
+            <url>https://github.com/crobox</url>
+          </developer>
+        </developers>
     }
   )
