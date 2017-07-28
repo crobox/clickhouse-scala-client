@@ -7,6 +7,12 @@ lazy val root = Project("clickhouse-scala-client", file("."))
     version := "0.0.1-SNAPSHOT",
     scalaVersion := "2.11.11",
     crossScalaVersions := List("2.11.11", "2.12.3"),
+    scalacOptions ++= List(
+      "-unchecked",
+      "-deprecation",
+      "-language:_",
+      "-encoding", "UTF-8"
+    ),
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
