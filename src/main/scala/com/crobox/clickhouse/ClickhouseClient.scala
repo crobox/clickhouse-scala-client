@@ -64,8 +64,8 @@ class ClickhouseClient(host: String, val database: String = "default",
   validateConnection()
 
   private def validateConnection(): Unit = {
-    Await.ready(query("SELECT 1"), 10.seconds).onFailure {
-      case _: Throwable => logger.error(s"Server is unavailable! Couldn't connect to $hostUri")
+    Await.ready(query("SELECT 1"), 10.seconds).failed.foreach {
+      _: Throwable => logger.error(s"Server is unavailable! Couldn't connect to $hostUri")
     }
   }
 
