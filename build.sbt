@@ -4,7 +4,6 @@ lazy val root = Project("clickhouse-scala-client", file("."))
   .settings(
     organization := "com.crobox",
     name := "clickhouse-scala-client",
-    version := "0.0.1-SNAPSHOT",
     scalaVersion := "2.11.11",
     crossScalaVersions := List("2.11.11", "2.12.3"),
     scalacOptions ++= List(
