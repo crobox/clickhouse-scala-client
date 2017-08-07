@@ -1,3 +1,4 @@
+import com.typesafe.sbt.pgp.PgpKeys
 import Build._
 
 lazy val root = Project("clickhouse-scala-client", file("."))
@@ -24,6 +25,7 @@ lazy val root = Project("clickhouse-scala-client", file("."))
 
       "org.scalatest" %% "scalatest" % "3.0.0" % Test
     ),
+    sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       if (version.value.trim.endsWith("SNAPSHOT"))
