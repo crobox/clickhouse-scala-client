@@ -22,6 +22,10 @@ import scala.concurrent.{Await, Future}
 class ClickhouseClient(hostBalancer: QueryBalancer, val database: String = "default",
                        override val bufferSize: Int = 1024)(override implicit val system: ActorSystem) extends LazyLogging with ClickHouseExecutor {
 
+  def this(host: String, database: String)(implicit system: ActorSystem) {
+    this(SingleHostQueryBalancer(host), database)
+  }
+
   import system.dispatcher
 
   override implicit val materializer: Materializer = ActorMaterializer()
