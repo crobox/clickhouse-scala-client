@@ -1,6 +1,7 @@
 package com.crobox.clickhouse
 
 import akka.actor.ActorSystem
+import com.crobox.clickhouse.balancing.ClusterAwareQueryBalancer
 import org.scalatest.{FlatSpecLike, Matchers}
 
 import scala.concurrent.Await
@@ -15,7 +16,11 @@ class ClickhouseClientTest extends FlatSpecLike with Matchers {
 
   val timeout = 10.seconds
   implicit val system = ActorSystem()
+
+  import ClickhouseClient._
+
   val client = new ClickhouseClient("localhost")
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   it should "select" in {
@@ -39,6 +44,18 @@ class ClickhouseClientTest extends FlatSpecLike with Matchers {
     intercept[IllegalArgumentException] {
       Await.result(client.execute("select 1 + 2"), timeout)
     }
+  }
+
+  "Load balancing" should "use system balancer" in {
+    val client = new ClickhouseClient(ClusterAwareQueryBalancer("localhost"))
+
+    Await.result(client.query("select 1 + 2").map { f =>
+      f.trim.toInt should be(3)
+    }, timeout)
+
+    Await.result(client.query("select currentDatabase()").map { f =>
+      f.trim should be("default")
+    }, timeout)
   }
 
 }
