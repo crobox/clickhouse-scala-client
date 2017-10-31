@@ -1,10 +1,23 @@
 package com.crobox.clickhouse.balancing.discovery
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, PoisonPill, Props}
+import akka.actor.{
+  Actor,
+  ActorLogging,
+  ActorRef,
+  Cancellable,
+  PoisonPill,
+  Props
+}
 import akka.http.scaladsl.model.Uri
 import akka.util.Timeout.durationToTimeout
-import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
-import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{HostStatus, IsAlive}
+import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{
+  Alive,
+  Dead
+}
+import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{
+  HostStatus,
+  IsAlive
+}
 import com.crobox.clickhouse.balancing.iterator.CircularIteratorSet
 import com.typesafe.config.Config
 
@@ -30,25 +43,22 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
 
   override def receive = {
     case Connections(hosts) =>
-      currentConfiguredHosts = hosts
-      hosts.toParArray
+      hosts
         .foreach(host => {
-          hostsStatus.getOrElse(
-            host, {
-              val hostHealthChecker: ActorRef =
-                context.actorOf(healthProvider(host),
-                                healthCheckActorName(host))
-              log.info(s"Setting up host health checks for host $host")
+          if (!currentConfiguredHosts.contains(host)) {
+            val hostHealthChecker: ActorRef =
+              context.actorOf(healthProvider(host), healthCheckActorName(host))
+            log.info(s"Setting up host health checks for host $host")
 
-              val scheduler = context.system.scheduler
-                .schedule(Duration.Zero,
-                          healthCheckInterval,
-                          hostHealthChecker,
-                          IsAlive())(context.dispatcher, context.self)
-              hostHealthScheduler.put(host, scheduler)
-            }
-          )
+            val scheduler = context.system.scheduler
+              .schedule(Duration.Zero,
+                        healthCheckInterval,
+                        hostHealthChecker,
+                        IsAlive())(context.dispatcher, context.self)
+            hostHealthScheduler.put(host, scheduler)
+          }
         })
+      currentConfiguredHosts = hosts
       sender ! Unit
 
     case GetConnection() =>
