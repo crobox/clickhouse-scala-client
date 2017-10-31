@@ -28,13 +28,8 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
     val manager =
       system.actorOf(
         ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
-    import system.dispatcher
     (manager ? Connections(urisWithDead.keySet.toSeq)).flatMap(_ => {
-      getConnections(manager, 100).map(connections => {
-        connections should contain theSameElementsAs elementsDuplicated(
-          hostUris,
-          100)
-      })
+      returnsConnectionsInRoundRobinFashion(manager, uris.keySet)
     })
   }
 
@@ -49,18 +44,12 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
 
     (manager ? Connections(urisWithDead.keySet.toSeq))
       .flatMap(_ => {
-        getConnections(manager, 100)
-          .flatMap(
-            _ should contain theSameElementsAs elementsDuplicated(hostUris,
-                                                                  100))
+        returnsConnectionsInRoundRobinFashion(manager, uris.keySet)
       })
       .flatMap(_ => {
         //        TODO remove the sleeps by injecting test probes as health actors
         Thread.sleep(1100)
-        getConnections(manager, 120).map(
-          _ should contain allElementsOf elementsDuplicated(
-            urisWithDead.keySet.toSeq,
-            110))
+        returnsConnectionsInRoundRobinFashion(manager, urisWithDead.keySet)
       })
   }
 
@@ -90,6 +79,20 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
       })
     })
 
+  }
+
+  private def returnsConnectionsInRoundRobinFashion(
+      manager: ActorRef,
+      expectedConnections: Set[Uri]) = {
+    import system.dispatcher
+    val RequestConnectionsPerHost = 1000
+    getConnections(manager, RequestConnectionsPerHost * expectedConnections.size)
+      .map(connections => {
+        val connectionsPerHost = expectedConnections.toSeq
+          .map(uri => connections.count(_ == uri))
+        val expectedConnectionsPerHost = expectedConnections.toSeq.map(_ => RequestConnectionsPerHost)
+        connectionsPerHost should contain theSameElementsAs expectedConnectionsPerHost
+      })
   }
 
 }

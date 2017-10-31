@@ -2,11 +2,11 @@ package com.crobox.clickhouse.balancing.iterator
 
 import scala.collection.{AbstractIterator, mutable}
 
-class CircularIterator[T](seed: Seq[T] = Seq.empty)
+class CircularIteratorSet[T](seed: Seq[T] = Seq.empty)
     extends AbstractIterator[T] {
 
   private var internalIterator = Iterator.continually(seed).flatten
-  private val elements: mutable.ListBuffer[T] = mutable.ListBuffer(seed: _*)
+  private val elements: mutable.Set[T] = mutable.HashSet(seed: _*)
   def add(element: T) = {
     elements += element
     internalIterator = Iterator.continually(elements).flatten

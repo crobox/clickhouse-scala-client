@@ -13,7 +13,7 @@ import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{
   IsAlive,
   Status
 }
-import com.crobox.clickhouse.balancing.iterator.CircularIterator
+import com.crobox.clickhouse.balancing.iterator.CircularIteratorSet
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{AsyncFlatSpecLike, BeforeAndAfterAll, Matchers}
@@ -36,7 +36,7 @@ class ClickhouseClientAsyncSpec
   val config = ConfigFactory.load()
   val uris: Map[Uri, Uri => Props] = Map(
     (ClickhouseHostBuilder
-       .toHost("localhost"),
+       .toHost("localhost", 8245),
      HostAliveMock.props(Seq(Alive))),
     (ClickhouseHostBuilder
        .toHost("127.0.0.1"),
@@ -46,7 +46,7 @@ class ClickhouseClientAsyncSpec
   class HostAliveMock(host: Uri, status: Seq[Status])
       extends Actor
       with ActorLogging {
-    val statuses = new CircularIterator[Status](status)
+    val statuses = new CircularIteratorSet[Status](status)
 
     override def receive: Receive = {
       case IsAlive() =>

@@ -1,24 +1,11 @@
 package com.crobox.clickhouse.balancing.discovery
 
-import akka.actor.{
-  Actor,
-  ActorLogging,
-  ActorRef,
-  Cancellable,
-  PoisonPill,
-  Props
-}
+import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, PoisonPill, Props}
 import akka.http.scaladsl.model.Uri
 import akka.util.Timeout.durationToTimeout
-import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{
-  Alive,
-  Dead
-}
-import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{
-  HostStatus,
-  IsAlive
-}
-import com.crobox.clickhouse.balancing.iterator.CircularIterator
+import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
+import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{HostStatus, IsAlive}
+import com.crobox.clickhouse.balancing.iterator.CircularIteratorSet
 import com.typesafe.config.Config
 
 import scala.collection.mutable
@@ -28,12 +15,15 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
     extends Actor
     with ActorLogging {
   private implicit val timeout = durationToTimeout(5 second)
+
   import ConnectionManagerActor._
+
   val healthCheckInterval = config
     .getLong("com.crobox.clickhouse.client.connection.health-check-interval") seconds
 
-//  state
-  val connectionIterator: CircularIterator[Uri] = new CircularIterator[Uri]()
+  //  state
+  val connectionIterator: CircularIteratorSet[Uri] =
+    new CircularIteratorSet[Uri]()
   val hostsStatus = mutable.Map.empty[Uri, HostStatus]
   val hostHealthScheduler = mutable.Map.empty[Uri, Cancellable]
   var currentConfiguredHosts: Seq[Uri] = Seq.empty
@@ -76,11 +66,11 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
       } else {
         log.info(
           s"Received host status $status for host which is no longer enabled for this connection. Killing health check actor for it.")
+        sender ! PoisonPill
         hostsStatus.remove(host)
         connectionIterator.remove(host)
         hostHealthScheduler.get(host).foreach(_.cancel())
         hostHealthScheduler.remove(host)
-        sender ! PoisonPill
       }
   }
 
@@ -100,6 +90,7 @@ object ConnectionManagerActor {
 
   def props(healthProvider: (Uri) => Props, config: Config): Props =
     Props(new ConnectionManagerActor(healthProvider, config))
+
   def healthCheckActorName(host: Uri) = {
     s"${host.authority.host.address()}:${host.authority.port}"
   }
