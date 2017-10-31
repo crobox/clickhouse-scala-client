@@ -2,18 +2,24 @@ package com.crobox.clickhouse.balancing
 
 import java.util.UUID
 
+import akka.actor.{ActorNotFound, ActorRef}
+import akka.http.scaladsl.model.Uri
+import akka.pattern.ask
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
+import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{
   Alive,
   Dead
 }
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.crobox.clickhouse.test.ClickhouseClientAsyncSpec
-import akka.pattern.ask
-import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
+import org.scalatest.Assertion
+
+import scala.concurrent.duration._
 
 class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
 
+  private val hostUris: Seq[Uri] = uris.keySet.toSeq
   it should "remove dead connection" in {
     val urisWithDead = uris.+(
       (ClickhouseHostBuilder
@@ -21,13 +27,12 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
        HostAliveMock.props(Seq(Dead)) _))
     val manager =
       system.actorOf(
-        ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config),
-        s"manager-${UUID.randomUUID()}")
+        ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
     import system.dispatcher
     (manager ? Connections(urisWithDead.keySet.toSeq)).flatMap(_ => {
       getConnections(manager, 100).map(connections => {
         connections should contain theSameElementsAs elementsDuplicated(
-          uris.keySet.toSeq,
+          hostUris,
           100)
       })
     })
@@ -40,18 +45,17 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
        HostAliveMock.props(Seq(Dead, Alive, Alive)) _))
     val manager =
       system.actorOf(
-        ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config),
-        s"manager-${UUID.randomUUID()}")
+        ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
 
     (manager ? Connections(urisWithDead.keySet.toSeq))
       .flatMap(_ => {
         getConnections(manager, 100)
           .flatMap(
-            _ should contain theSameElementsAs elementsDuplicated(
-              uris.keySet.toSeq,
-              100))
+            _ should contain theSameElementsAs elementsDuplicated(hostUris,
+                                                                  100))
       })
       .flatMap(_ => {
+        //        TODO remove the sleeps by injecting test probes as health actors
         Thread.sleep(1100)
         getConnections(manager, 120).map(
           _ should contain allElementsOf elementsDuplicated(
@@ -59,4 +63,33 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
             110))
       })
   }
+
+  it should "kill health actor when connection is removed from configuration" in {
+    val managerName = UUID.randomUUID().toString
+    val manager =
+      system.actorOf(
+        ConnectionManagerActor.props(uri => uris(uri)(uri), config),
+        managerName)
+
+    import system.dispatcher
+    (manager ? Connections(hostUris)).flatMap(_ => {
+      val droppedHost = hostUris.head
+      (manager ? Connections(hostUris.drop(1))).flatMap(_ => {
+        Thread.sleep(2000)
+        system
+          .actorSelection(
+            s"/user/$managerName/${ConnectionManagerActor.healthCheckActorName(droppedHost)}")
+          .resolveOne(1 second)
+          .recoverWith {
+            case _: ActorNotFound => succeed
+          }
+          .map {
+            case _: ActorRef          => fail("Actor for health check exists")
+            case assertion: Assertion => assertion
+          }
+      })
+    })
+
+  }
+
 }
