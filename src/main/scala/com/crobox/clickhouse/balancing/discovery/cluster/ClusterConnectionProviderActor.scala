@@ -32,6 +32,7 @@ class ClusterConnectionProviderActor(manager: ActorRef, executor: ActorRef)
       config.host,
       s"SELECT host_address FROM system.clusters WHERE cluster='${config.cluster}'"))
       .mapTo[Seq[String]]
+      .map(_.toSet)
       .map(result => {
         if (result.isEmpty) {
           throw new IllegalArgumentException(

@@ -3,7 +3,7 @@ package com.crobox.clickhouse.test
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.model.Uri
 import akka.pattern.ask
-import akka.testkit.TestKit
+import akka.testkit.{TestKit, TestProbe}
 import akka.util.Timeout.durationToTimeout
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.GetConnection
@@ -16,7 +16,12 @@ import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{
 import com.crobox.clickhouse.balancing.iterator.CircularIteratorSet
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{AsyncFlatSpecLike, BeforeAndAfterAll, Matchers}
+import org.scalatest.{
+  AsyncFlatSpecLike,
+  BeforeAndAfterAll,
+  BeforeAndAfterEach,
+  Matchers
+}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -25,37 +30,47 @@ class ClickhouseClientAsyncSpec
     extends TestKit(ActorSystem("clickhouseClientTestSystem"))
     with AsyncFlatSpecLike
     with Matchers
-    with BeforeAndAfterAll {
+    with BeforeAndAfterAll
+    with BeforeAndAfterEach {
   implicit val timeout = durationToTimeout(5 second)
+
+  var probe: TestProbe = _
+
+  var uris: Map[Uri, Uri => Props] = Map.empty
+
+  override protected def beforeEach(): Unit = {
+    super.beforeEach()
+    probe = TestProbe()
+    uris = Map(
+      (ClickhouseHostBuilder
+         .toHost("localhost", 8245),
+       HostAliveMock.props(Seq(Alive))),
+      (ClickhouseHostBuilder
+         .toHost("127.0.0.1"),
+       HostAliveMock.props(Seq(Alive)))
+    )
+  }
 
   override protected def afterAll(): Unit = {
     super.afterAll()
     system.terminate()
   }
-
   val config = ConfigFactory.load()
-  val uris: Map[Uri, Uri => Props] = Map(
-    (ClickhouseHostBuilder
-       .toHost("localhost", 8245),
-     HostAliveMock.props(Seq(Alive))),
-    (ClickhouseHostBuilder
-       .toHost("127.0.0.1"),
-     HostAliveMock.props(Seq(Alive)))
-  )
 
-  class HostAliveMock(host: Uri, status: Seq[Status])
+  class HostAliveMock(host: Uri, status: Seq[Status], testProbe: TestProbe)
       extends Actor
       with ActorLogging {
     val statuses = new CircularIteratorSet[Status](status)
 
     override def receive: Receive = {
-      case IsAlive() =>
+      case msg @ IsAlive() =>
         sender ! HostStatus(host, statuses.next())
+        testProbe.ref ! msg
     }
   }
   object HostAliveMock {
     def props(status: Seq[Status])(host: Uri) =
-      Props(new HostAliveMock(host, status))
+      Props(new HostAliveMock(host, status, probe))
   }
 
   def requestParallelHosts(balancer: HostBalancer,
@@ -77,11 +92,12 @@ class ClickhouseClientAsyncSpec
         })
         .seq)
   }
-//  TODO change this methods to custom matchers
+
+  //  TODO change this methods to custom matchers
   def returnsConnectionsInRoundRobinFashion(manager: ActorRef,
                                             expectedConnections: Set[Uri]) = {
     import system.dispatcher
-    val RequestConnectionsPerHost = 1000
+    val RequestConnectionsPerHost = 50
     getConnections(manager,
                    RequestConnectionsPerHost * expectedConnections.size)
       .map(connections => {

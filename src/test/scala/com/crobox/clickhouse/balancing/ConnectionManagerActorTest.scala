@@ -3,14 +3,10 @@ package com.crobox.clickhouse.balancing
 import java.util.UUID
 
 import akka.actor.{ActorNotFound, ActorRef}
-import akka.http.scaladsl.model.Uri
 import akka.pattern.ask
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
-import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{
-  Alive,
-  Dead
-}
+import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.crobox.clickhouse.test.ClickhouseClientAsyncSpec
 import org.scalatest.Assertion
@@ -19,7 +15,6 @@ import scala.concurrent.duration._
 
 class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
 
-  private val hostUris: Seq[Uri] = uris.keySet.toSeq
   it should "remove dead connection" in {
     val urisWithDead = uris.+(
       (ClickhouseHostBuilder
@@ -28,7 +23,7 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
     val manager =
       system.actorOf(
         ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
-    (manager ? Connections(urisWithDead.keySet.toSeq)).flatMap(_ => {
+    (manager ? Connections(urisWithDead.keySet)).flatMap(_ => {
       returnsConnectionsInRoundRobinFashion(manager, uris.keySet)
     })
   }
@@ -37,18 +32,17 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
     val urisWithDead = uris.+(
       (ClickhouseHostBuilder
          .toHost("deadConnection"),
-       HostAliveMock.props(Seq(Dead, Alive, Alive)) _))
+       HostAliveMock.props(Seq(Dead, Alive, Alive, Alive, Alive)) _))
     val manager =
       system.actorOf(
         ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
-
-    (manager ? Connections(urisWithDead.keySet.toSeq))
+    (manager ? Connections(urisWithDead.keySet))
       .flatMap(_ => {
+        probe.receiveN(3, 2 seconds)
         returnsConnectionsInRoundRobinFashion(manager, uris.keySet)
       })
       .flatMap(_ => {
-        //        TODO remove the sleeps by injecting test probes as health actors
-        Thread.sleep(1100)
+        probe.receiveN(3, 2 seconds)
         returnsConnectionsInRoundRobinFashion(manager, urisWithDead.keySet)
       })
   }
@@ -59,12 +53,14 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
       system.actorOf(
         ConnectionManagerActor.props(uri => uris(uri)(uri), config),
         managerName)
-
+    val hostUris = uris.keySet
     import system.dispatcher
     (manager ? Connections(hostUris)).flatMap(_ => {
+      probe.receiveN(hostUris.size, 2 seconds)
       val droppedHost = hostUris.head
-      (manager ? Connections(hostUris.drop(1))).flatMap(_ => {
-        Thread.sleep(2000)
+      val hostUrisWithDropped = hostUris.drop(1)
+      (manager ? Connections(hostUrisWithDropped)).flatMap(_ => {
+        probe.receiveN(2, 2 seconds)
         system
           .actorSelection(
             s"/user/$managerName/${ConnectionManagerActor.healthCheckActorName(droppedHost)}")

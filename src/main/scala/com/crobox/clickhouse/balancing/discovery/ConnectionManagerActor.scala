@@ -39,7 +39,7 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
     new CircularIteratorSet[Uri]()
   val hostsStatus = mutable.Map.empty[Uri, HostStatus]
   val hostHealthScheduler = mutable.Map.empty[Uri, Cancellable]
-  var currentConfiguredHosts: Seq[Uri] = Seq.empty
+  var currentConfiguredHosts: Set[Uri] = Set.empty
 
   override def receive = {
     case Connections(hosts) =>
@@ -105,5 +105,5 @@ object ConnectionManagerActor {
     s"${host.authority.host.address()}:${host.authority.port}"
   }
   case class GetConnection()
-  case class Connections(hosts: Seq[Uri])
+  case class Connections(hosts: Set[Uri])
 }

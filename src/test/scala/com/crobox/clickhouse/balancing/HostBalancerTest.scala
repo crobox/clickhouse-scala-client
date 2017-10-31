@@ -28,7 +28,7 @@ class HostBalancerTest extends ClickhouseClientSpec {
         |}
       """.stripMargin)) match {
       case MultiHostBalancer(hosts, _) =>
-        hosts should contain theSameElementsInOrderAs Seq(
+        hosts.toSeq should contain theSameElementsInOrderAs Seq(
           ClickhouseHostBuilder.toHost("localhost"))
     }
   }

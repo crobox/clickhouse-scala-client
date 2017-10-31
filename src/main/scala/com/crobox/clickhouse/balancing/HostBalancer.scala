@@ -40,7 +40,8 @@ object HostBalancer extends ClickhouseHostBuilder {
             .props(HostHealthChecker.props(_, internalExecutor), config))
         MultiHostBalancer(connectionConfig
                             .getConfigList("hosts")
-                            .map(config => extractHost(config)),
+                            .toSet
+                            .map((config: Config) => extractHost(config)),
                           manager)
       case ClusterAware =>
         val manager = system.actorOf(

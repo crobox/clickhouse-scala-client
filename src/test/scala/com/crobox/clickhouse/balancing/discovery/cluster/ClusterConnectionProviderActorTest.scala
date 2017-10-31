@@ -15,13 +15,13 @@ class ClusterConnectionProviderActorTest extends ClickhouseClientSpec {
     ClusterConnectionProviderActor.props(testActor, internalExecutor.ref))
 
   it should "select only cluster specific hosts" in {
-    val hosts = Seq("localhost", "anotherhost")
+    val hosts = Set("localhost", "anotherhost")
     val cluster = "test_cluster"
     provider ! ScanHosts(
       ConnectionConfig(ClickhouseHostBuilder.toHost("localhost"), cluster))
     internalExecutor.expectMsgPF() {
       case Execute(_, query) if query.contains(cluster) =>
-        internalExecutor.reply(hosts)
+        internalExecutor.reply(hosts.toSeq)
     }
     expectMsg(
       Connections(

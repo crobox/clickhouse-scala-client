@@ -11,7 +11,7 @@ import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
-case class MultiHostBalancer(hosts: Seq[Uri], manager: ActorRef)(
+case class MultiHostBalancer(hosts: Set[Uri], manager: ActorRef)(
     implicit system: ActorSystem)
     extends HostBalancer
     with ClickhouseHostBuilder {
