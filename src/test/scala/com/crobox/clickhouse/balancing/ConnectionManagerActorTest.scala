@@ -81,18 +81,4 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
 
   }
 
-  private def returnsConnectionsInRoundRobinFashion(
-      manager: ActorRef,
-      expectedConnections: Set[Uri]) = {
-    import system.dispatcher
-    val RequestConnectionsPerHost = 1000
-    getConnections(manager, RequestConnectionsPerHost * expectedConnections.size)
-      .map(connections => {
-        val connectionsPerHost = expectedConnections.toSeq
-          .map(uri => connections.count(_ == uri))
-        val expectedConnectionsPerHost = expectedConnections.toSeq.map(_ => RequestConnectionsPerHost)
-        connectionsPerHost should contain theSameElementsAs expectedConnectionsPerHost
-      })
-  }
-
 }

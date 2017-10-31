@@ -77,6 +77,29 @@ class ClickhouseClientAsyncSpec
         })
         .seq)
   }
+//  TODO change this methods to custom matchers
+  def returnsConnectionsInRoundRobinFashion(manager: ActorRef,
+                                            expectedConnections: Set[Uri]) = {
+    import system.dispatcher
+    val RequestConnectionsPerHost = 1000
+    getConnections(manager,
+                   RequestConnectionsPerHost * expectedConnections.size)
+      .map(connections => {
+        eachHostReceivedExpectedConnections(connections,
+                                            expectedConnections,
+                                            RequestConnectionsPerHost)
+      })
+  }
+
+  def eachHostReceivedExpectedConnections(connections: Seq[Uri],
+                                          expectedConnections: Set[Uri],
+                                          RequestConnectionsPerHost: Int) = {
+    val connectionsPerHost = expectedConnections.toSeq
+      .map(uri => connections.count(_ == uri))
+    val expectedConnectionsPerHost =
+      expectedConnections.toSeq.map(_ => RequestConnectionsPerHost)
+    connectionsPerHost should contain theSameElementsAs expectedConnectionsPerHost
+  }
 
   def elementsDuplicated(values: Seq[Uri], elements: Int) = {
     Iterator
