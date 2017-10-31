@@ -1,8 +1,7 @@
 package com.crobox.clickhouse
 
-import akka.actor.ActorSystem
-import com.crobox.clickhouse.balancing.ClusterAwareQueryBalancer
-import org.scalatest.{FlatSpecLike, Matchers}
+import com.crobox.clickhouse.test.ClickhouseClientSpec
+import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -12,14 +11,11 @@ import scala.concurrent.duration._
   * @author Yegor Andreenko
   * @since 31-3-17
   */
-class ClickhouseClientTest extends FlatSpecLike with Matchers {
+class ClickhouseClientTest extends ClickhouseClientSpec {
 
   val timeout = 10.seconds
-  implicit val system = ActorSystem()
 
-  import ClickhouseClient._
-
-  val client = new ClickhouseClient("localhost")
+  val client: ClickhouseClient = new ClickhouseClient(config)
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -34,8 +30,10 @@ class ClickhouseClientTest extends FlatSpecLike with Matchers {
   }
 
   it should "support compression" in {
-    val compressClient = client.withHttpCompression()
-    Await.result(compressClient.query("select count(*) from system.tables").map { f =>
+    val client: ClickhouseClient = new ClickhouseClient(
+      config.resolveWith(ConfigFactory.parseString(
+        "com.crobox.clickhouse.client.httpCompression = true")))
+    Await.result(client.query("select count(*) from system.tables").map { f =>
       f.trim.toInt > 10 should be(true)
     }, timeout)
   }
@@ -45,19 +43,4 @@ class ClickhouseClientTest extends FlatSpecLike with Matchers {
       Await.result(client.execute("select 1 + 2"), timeout)
     }
   }
-
-  "Load balancing" should "use system balancer" in {
-    val client = new ClickhouseClient(ClusterAwareQueryBalancer("localhost"))
-
-    Await.result(client.query("select 1 + 2").map { f =>
-      f.trim.toInt should be(3)
-    }, timeout)
-
-    Await.result(client.query("select currentDatabase()").map { f =>
-      f.trim should be("default")
-    }, timeout)
-  }
-
 }
-
-

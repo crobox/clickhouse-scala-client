@@ -24,6 +24,7 @@ lazy val root = Project("clickhouse-scala-client", file("."))
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % JacksonScalaVersion,
 
       "org.scalatest" %% "scalatest" % "3.0.0" % Test,
+      "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test,
       "ch.qos.logback" % "logback-classic" % "1.2.3" % Test
     ),
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,

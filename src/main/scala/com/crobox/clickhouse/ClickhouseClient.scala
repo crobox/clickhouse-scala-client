@@ -4,13 +4,17 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Framing, Source}
-import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.ByteString
-import com.crobox.clickhouse.balancing.{QueryBalancer, SingleHostQueryBalancer}
-import com.typesafe.scalalogging.LazyLogging
+import com.crobox.clickhouse.balancing.HostBalancer
+import com.crobox.clickhouse.internal.{
+  ClickHouseExecutor,
+  ClickhouseQueryBuilder,
+  ClickhouseResponseParser,
+  InternalExecutorActor
+}
+import com.typesafe.config.Config
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Async clickhouse client using Akka Http and Streams
@@ -19,27 +23,18 @@ import scala.concurrent.{Await, Future}
   * @author Sjoerd Mulder
   * @since 31-03-17
   */
-class ClickhouseClient(hostBalancer: QueryBalancer, val database: String = "default",
-                       override val bufferSize: Int = 1024)(override implicit val system: ActorSystem) extends LazyLogging with ClickHouseExecutor {
+class ClickhouseClient(override val config: Config, database: String = "default")(
+  override implicit val system: ActorSystem = ActorSystem("clickhouseClient"))
+  extends ClickHouseExecutor
+    with ClickhouseResponseParser
+    with ClickhouseQueryBuilder {
 
-  def this(host: String, database: String)(implicit system: ActorSystem) {
-    this(SingleHostQueryBalancer(host), database)
-  }
-
-  import system.dispatcher
-
-  override implicit val materializer: Materializer = ActorMaterializer()
+  private val hostBalancer = HostBalancer(config)
 
   private val MaximumFrameLength: Int = 1024 * 1024 // 1 MB
 
-  logger.info(s"Starting Clickhouse Client connecting to $hostBalancer, database $database")
-  validateConnection()
-
-  private def validateConnection(): Unit = {
-    Await.ready(query("SELECT 1"), 10.seconds).failed.foreach {
-      _: Throwable => logger.error(s"Server is unavailable! Couldn't connect to $hostBalancer")
-    }
-  }
+  logger.info(
+    s"Starting Clickhouse Client connecting to $hostBalancer, database $database")
 
   /**
     * Resolves the table name relative to the current clickhouse client database.
@@ -47,15 +42,6 @@ class ClickhouseClient(hostBalancer: QueryBalancer, val database: String = "defa
     * @param name name of the table
     */
   def table(name: String): String = s"$database.$name"
-
-  /**
-    * Enables http compression (enable_http_compression) when communicating with Clickhouse
-    */
-  def withHttpCompression(): ClickhouseClient = {
-    enableHttpCompression = true
-    this
-  }
-
 
   /**
     * Execute a read-only query on Clickhouse
@@ -77,11 +63,16 @@ class ClickhouseClient(hostBalancer: QueryBalancer, val database: String = "defa
     * @return Future with the result that clickhouse returns
     */
   def execute(sql: String): Future[String] = {
-    require(!(sql.toUpperCase.startsWith("SELECT") || sql.toUpperCase.startsWith("SHOW")),
-      ".execute() is not allowed for SELECT or SHOW statements, use .query() instead")
-    executeWithRetries {
-      executeRequest(_, sql, readOnly = false)
-    }
+    Future {
+      require(
+        !(sql.toUpperCase.startsWith("SELECT") || sql.toUpperCase.startsWith(
+          "SHOW")),
+        ".execute() is not allowed for SELECT or SHOW statements, use .query() instead"
+      )
+    }.flatMap(_ =>
+      executeWithRetries {
+        executeRequest(_, sql, readOnly = false)
+      })
   }
 
   def execute(sql: String, entity: String): Future[String] = {
@@ -96,12 +87,14 @@ class ClickhouseClient(hostBalancer: QueryBalancer, val database: String = "defa
     * @param sql a valid Clickhouse SQL string
     */
   def source(sql: String): Source[String, NotUsed] = {
-    Source.fromFuture(singleRequest(toHttpRequest(hostBalancer.nextHost, sql)))
+    Source
+      .fromFuture(hostBalancer.nextHost.flatMap { host =>
+        singleRequest(toRequest(host, sql))
+      })
       .flatMapConcat(response => response.entity.withoutSizeLimit().dataBytes)
       .via(Framing.delimiter(ByteString("\n"), MaximumFrameLength))
       .map(_.utf8String)
   }
-
 
   /**
     * Accepts a source of Strings that it will stream to Clickhouse
@@ -117,18 +110,19 @@ class ClickhouseClient(hostBalancer: QueryBalancer, val database: String = "defa
     }
   }
 
-  private def executeWithRetries(request: Uri => Future[String], retries: Int = 5): Future[String] = {
+  private def executeWithRetries(request: Future[Uri] => Future[String],
+                                 retries: Int = 5): Future[String] = {
     request(hostBalancer.nextHost).recoverWith {
       // The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests
-      case e: RuntimeException if e.getMessage.contains("The http server closed the connection unexpectedly") && retries > 0 =>
+      case e: RuntimeException
+        if e.getMessage.contains(
+          "The http server closed the connection unexpectedly") && retries > 0 =>
         logger.warn(s"Unexpected connection closure, retries left: $retries", e)
         //Retry the request with 1 less retry
         executeWithRetries(request, retries - 1)
     }
   }
 
-
-}
-object ClickhouseClient {
-  implicit def hostToBalancer(host: String): QueryBalancer = SingleHostQueryBalancer(host)
+  override protected implicit val executionContext: ExecutionContext =
+    system.dispatcher
 }
