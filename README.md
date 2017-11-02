@@ -31,7 +31,7 @@ libraryDependencies += "com.crobox" % "clickhouse-scala-client_2.11" % "0.0.1"
 The clickhouse connection is configured from the configuration file as well.
 Three different connection modes are supported.
 
-       The balancing connections use actors to monitor the connection health by doing a `SELECT 1` on it. If the query fails then the connection is no longer served untill the query succeeds.
+       The balancing connections use actors to monitor the connection health by doing a `SELECT 1` on it. If the query fails then the connection is no longer served until the query succeeds.
        The cluster aware balancing connection also periodically requires the `system.cluster` table to update the connections with any added/removed cluster node.
 
 #### Single host connection
@@ -51,9 +51,9 @@ Configuration options:
 ```
 com.crobox.clickhouse.client {
     connection: {
-        type: "single-host",
-        host: "localhost",
-        port: 8123
+        type = "single-host",
+        host = "localhost",
+        port = 8123
     }
 }
 
@@ -78,11 +78,11 @@ Round robin on the hosts lists, while keeping only connections that respond the 
 ```
 com.crobox.clickhouse.client {
     connection: {
-        type: "balancing-hosts"
+        type = "balancing-hosts"
         hosts: [
           {
-            host: "localhost",
-            port: 7415
+            host = "localhost",
+            port = 7415
           }
         ]
         health-check-interval = 5
@@ -109,9 +109,9 @@ Please do note that this connection type will default to using the port of 8123 
 ```
 com.crobox.clickhouse.client {
     connection: {
-        type: "cluster-aware"
-        host: "localhost"
-        port: 8123
+        type = "cluster-aware"
+        host = "localhost"
+        port = 8123
         health-check-interval = 5
     }
 }
