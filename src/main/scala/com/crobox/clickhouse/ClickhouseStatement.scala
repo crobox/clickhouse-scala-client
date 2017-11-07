@@ -3,12 +3,11 @@ package com.crobox.clickhouse
 import com.google.common.escape.Escapers
 
 /**
-  * @author Sjoerd Mulder
-  * @since 2-1-17
-  */
-
+ * @author Sjoerd Mulder
+ * @since 2-1-17
+ */
 object ClickhouseStatement {
-  val DefaultDatabase: String = "default"
+  val DefaultDatabase: String    = "default"
   private val UnquotedIdentifier = "^[a-zA-Z_][0-9a-zA-Z_]*$"
   private val Escaper = Escapers.builder
     .addEscape('\\', "\\\\")
@@ -21,7 +20,6 @@ object ClickhouseStatement {
     .addEscape('\'', "\\'")
     .addEscape('`', "\\`")
     .build
-
 
   def isValidIdentifier(identifier: String): Boolean = identifier != null && identifier.matches(UnquotedIdentifier)
 
@@ -39,10 +37,10 @@ object ClickhouseStatement {
 trait ClickhouseStatement {
 
   /**
-    * Returns the query string for this statement.
-    *
-    * @return String containing the Clickhouse dialect SQL statement
-    */
+   * Returns the query string for this statement.
+   *
+   * @return String containing the Clickhouse dialect SQL statement
+   */
   def query: String
 
 }
