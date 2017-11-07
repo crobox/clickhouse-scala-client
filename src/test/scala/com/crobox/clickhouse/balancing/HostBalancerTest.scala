@@ -30,7 +30,7 @@ class HostBalancerTest extends ClickhouseClientSpec {
         |        }
         |    }
         |}
-      """.stripMargin)) match {
+      """.stripMargin).withFallback(config)) match {
       case MultiHostBalancer(hosts, _) =>
         hosts.toSeq should contain theSameElementsInOrderAs Seq(ClickhouseHostBuilder.toHost("localhost"))
     }
@@ -50,7 +50,7 @@ class HostBalancerTest extends ClickhouseClientSpec {
         |        }
         |    }
         |}
-      """.stripMargin).withFallback(ConfigFactory.load())) match {
+      """.stripMargin).withFallback(config)) match {
       case ClusterAwareHostBalancer(host, cluster, _, _, builtTimeout) =>
         host shouldEqual ClickhouseHostBuilder.toHost("localhost")
         cluster shouldBe "cluster"
