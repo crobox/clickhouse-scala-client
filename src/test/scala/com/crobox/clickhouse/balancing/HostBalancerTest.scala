@@ -3,6 +3,7 @@ package com.crobox.clickhouse.balancing
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.crobox.clickhouse.test.ClickhouseClientSpec
 import com.typesafe.config.ConfigFactory
+import scala.concurrent.duration._
 
 class HostBalancerTest extends ClickhouseClientSpec {
 
@@ -23,13 +24,15 @@ class HostBalancerTest extends ClickhouseClientSpec {
         |            port: 8123
         |          }
         |        ]
-        |        health-check-interval = 1
+        |        health-check {
+        |         timeout = 1 second
+        |         interval = 1 second
+        |        }
         |    }
         |}
       """.stripMargin)) match {
       case MultiHostBalancer(hosts, _) =>
-        hosts.toSeq should contain theSameElementsInOrderAs Seq(
-          ClickhouseHostBuilder.toHost("localhost"))
+        hosts.toSeq should contain theSameElementsInOrderAs Seq(ClickhouseHostBuilder.toHost("localhost"))
     }
   }
 
@@ -40,13 +43,18 @@ class HostBalancerTest extends ClickhouseClientSpec {
         |        host: "localhost"
         |        port: 8123
         |        cluster: "cluster"
-        |        health-check-interval = 1
+        |        scanning-interval = 1 second
+        |        health-check {
+        |         timeout = 1 second
+        |         interval = 1 second
+        |        }
         |    }
         |}
-      """.stripMargin)) match {
-      case ClusterAwareHostBalancer(host, cluster, _, _) =>
+      """.stripMargin).withFallback(ConfigFactory.load())) match {
+      case ClusterAwareHostBalancer(host, cluster, _, _, builtTimeout) =>
         host shouldEqual ClickhouseHostBuilder.toHost("localhost")
         cluster shouldBe "cluster"
+        builtTimeout shouldBe (1 second)
     }
   }
 

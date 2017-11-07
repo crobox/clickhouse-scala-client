@@ -7,10 +7,10 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 /**
-  * @author Sjoerd Mulder
-  * @author Yegor Andreenko
-  * @since 31-3-17
-  */
+ * @author Sjoerd Mulder
+ * @author Yegor Andreenko
+ * @since 31-3-17
+ */
 class ClickhouseClientTest extends ClickhouseClientSpec {
 
   val timeout = 10.seconds
@@ -31,8 +31,8 @@ class ClickhouseClientTest extends ClickhouseClientSpec {
 
   it should "support compression" in {
     val client: ClickhouseClient = new ClickhouseClient(
-      config.resolveWith(ConfigFactory.parseString(
-        "com.crobox.clickhouse.client.httpCompression = true")))
+      config.resolveWith(ConfigFactory.parseString("com.crobox.clickhouse.client.http-compression = true"))
+    )
     Await.result(client.query("select count(*) from system.tables").map { f =>
       f.trim.toInt > 10 should be(true)
     }, timeout)

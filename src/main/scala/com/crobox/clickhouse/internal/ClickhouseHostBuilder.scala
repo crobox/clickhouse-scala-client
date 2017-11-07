@@ -12,4 +12,5 @@ private[clickhouse] trait ClickhouseHostBuilder {
     }
 
 }
+
 private[clickhouse] object ClickhouseHostBuilder extends ClickhouseHostBuilder {}

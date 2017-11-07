@@ -4,12 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Keep, Sink, Source}
-import akka.stream.{
-  ActorMaterializer,
-  Materializer,
-  OverflowStrategy,
-  QueueOfferResult
-}
+import akka.stream.{ActorMaterializer, Materializer, OverflowStrategy, QueueOfferResult}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
@@ -26,10 +21,9 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
 
   private lazy val pool = Http().superPool[Promise[HttpResponse]]()
   protected lazy val bufferSize: Int =
-    config.getInt("com.crobox.clickhouse.client.bufferSize")
+    config.getInt("com.crobox.clickhouse.client.buffer-size")
   private lazy val queue = Source
-    .queue[(HttpRequest, Promise[HttpResponse])](bufferSize,
-                                                 OverflowStrategy.dropNew)
+    .queue[(HttpRequest, Promise[HttpResponse])](bufferSize, OverflowStrategy.dropNew)
     .via(pool)
     .toMat(Sink.foreach {
       case ((Success(resp), p)) => p.success(resp)
@@ -40,12 +34,11 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   def executeRequest(host: Future[Uri],
                      query: String,
                      readOnly: Boolean = true,
-                     entity: Option[RequestEntity] = None): Future[String] = {
+                     entity: Option[RequestEntity] = None): Future[String] =
     host.flatMap(actualHost => {
       val request = toRequest(actualHost, query, readOnly, entity)
       handleResponse(singleRequest(request), query)
     })
-  }
 
   def singleRequest(request: HttpRequest): Future[HttpResponse] = {
     val promise = Promise[HttpResponse]

@@ -14,10 +14,9 @@ import com.crobox.clickhouse.internal.InternalExecutorActor.Execute
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class ClusterConnectionProviderActor(manager: ActorRef, executor: ActorRef)
-    extends Actor {
+class ClusterConnectionProviderActor(manager: ActorRef, executor: ActorRef) extends Actor {
 
-  private implicit val timeout: Timeout = durationToTimeout(5 second)
+  private implicit val timeout: Timeout                = durationToTimeout(5 second)
   private implicit val materialzier: ActorMaterializer = ActorMaterializer()
 
   import context.dispatcher
@@ -27,26 +26,26 @@ class ClusterConnectionProviderActor(manager: ActorRef, executor: ActorRef)
       resolveHosts(config) pipeTo manager
   }
 
-  def resolveHosts(config: ConnectionConfig): Future[Connections] = {
-    (executor ? Execute(
-      config.host,
-      s"SELECT host_address FROM system.clusters WHERE cluster='${config.cluster}'"))
+  def resolveHosts(config: ConnectionConfig): Future[Connections] =
+    (executor ? Execute(config.host, s"SELECT host_address FROM system.clusters WHERE cluster='${config.cluster}'"))
       .mapTo[Seq[String]]
       .map(_.toSet)
       .map(result => {
         if (result.isEmpty) {
           throw new IllegalArgumentException(
             s"Could not determine clickhouse cluster hosts from $config. " +
-              s"This could indicate that you are trying to use the cluster balancer to connect to a non cluster based clickhouse server. " +
-              s"Please use the `SingleHostQueryBalancer` in that case.")
+            s"This could indicate that you are trying to use the cluster balancer to connect to a non cluster based clickhouse server. " +
+            s"Please use the `SingleHostQueryBalancer` in that case."
+          )
         }
         Connections(result.map(ClickhouseHostBuilder.toHost(_)))
       })
-  }
 }
 
 object ClusterConnectionProviderActor {
+
   case class ScanHosts(config: ConnectionConfig)
+
   def props(manager: ActorRef, executor: ActorRef) =
     Props(new ClusterConnectionProviderActor(manager, executor))
 }

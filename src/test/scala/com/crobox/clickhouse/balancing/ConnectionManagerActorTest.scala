@@ -19,10 +19,10 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
     val urisWithDead = uris.+(
       (ClickhouseHostBuilder
          .toHost("deadConnection"),
-       HostAliveMock.props(Seq(Dead)) _))
+       HostAliveMock.props(Seq(Dead)) _)
+    )
     val manager =
-      system.actorOf(
-        ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
+      system.actorOf(ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
     (manager ? Connections(urisWithDead.keySet)).flatMap(_ => {
       returnsConnectionsInRoundRobinFashion(manager, uris.keySet)
     })
@@ -32,10 +32,10 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
     val urisWithDead = uris.+(
       (ClickhouseHostBuilder
          .toHost("deadConnection"),
-       HostAliveMock.props(Seq(Dead, Alive, Alive, Alive, Alive)) _))
+       HostAliveMock.props(Seq(Dead, Alive, Alive, Alive, Alive)) _)
+    )
     val manager =
-      system.actorOf(
-        ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
+      system.actorOf(ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
     (manager ? Connections(urisWithDead.keySet))
       .flatMap(_ => {
         probe.receiveN(3, 2 seconds)
@@ -50,20 +50,17 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
   it should "kill health actor when connection is removed from configuration" in {
     val managerName = UUID.randomUUID().toString
     val manager =
-      system.actorOf(
-        ConnectionManagerActor.props(uri => uris(uri)(uri), config),
-        managerName)
+      system.actorOf(ConnectionManagerActor.props(uri => uris(uri)(uri), config), managerName)
     val hostUris = uris.keySet
     import system.dispatcher
     (manager ? Connections(hostUris)).flatMap(_ => {
       probe.receiveN(hostUris.size, 2 seconds)
-      val droppedHost = hostUris.head
+      val droppedHost         = hostUris.head
       val hostUrisWithDropped = hostUris.drop(1)
       (manager ? Connections(hostUrisWithDropped)).flatMap(_ => {
         probe.receiveN(2, 2 seconds)
         system
-          .actorSelection(
-            s"/user/$managerName/${ConnectionManagerActor.healthCheckActorName(droppedHost)}")
+          .actorSelection(s"/user/$managerName/${ConnectionManagerActor.healthCheckActorName(droppedHost)}")
           .resolveOne(1 second)
           .recoverWith {
             case _: ActorNotFound => succeed

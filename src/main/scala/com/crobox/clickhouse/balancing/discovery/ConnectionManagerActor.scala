@@ -12,13 +12,17 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 
 class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config) extends Actor with ActorLogging {
-  private implicit val timeout = durationToTimeout(5 second)
 
   import ConnectionManagerActor._
 
-  val healthCheckInterval = config
-    .getLong("com.crobox.clickhouse.client.connection.health-check-interval") seconds
-
+  private val healthCheckInterval: FiniteDuration =
+    config
+      .getDuration("com.crobox.clickhouse.client.connection.health-check.interval")
+      .getSeconds seconds
+  private val hostRetrievalTimeout =
+    config
+      .getDuration("com.crobox.clickhouse.client.host-retrieval-timeout")
+      .getSeconds seconds
   //  state
   val connectionIterator: CircularIteratorSet[Uri] =
     new CircularIteratorSet[Uri]()
@@ -91,6 +95,8 @@ object ConnectionManagerActor {
 
   def healthCheckActorName(host: Uri) =
     s"${host.authority.host.address()}:${host.authority.port}"
+
   case class GetConnection()
+
   case class Connections(hosts: Set[Uri])
 }

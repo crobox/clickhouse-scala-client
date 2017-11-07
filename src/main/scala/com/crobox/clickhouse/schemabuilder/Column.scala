@@ -3,14 +3,15 @@ package com.crobox.clickhouse.schemabuilder
 import com.crobox.clickhouse.ClickhouseStatement
 
 /**
-  * @author Sjoerd Mulder
-  * @since 30-12-16
-  */
+ * @author Sjoerd Mulder
+ * @since 30-12-16
+ */
 sealed trait ColumnType
 
 object ColumnType {
 
   abstract class SimpleColumnType(value: String) extends ColumnType {
+
     override def toString: String = value
   }
 
@@ -57,7 +58,8 @@ object ColumnType {
   case object DateTime extends SimpleColumnType("DateTime")
 
   case class Array(columnType: ColumnType) extends ColumnType {
-    require(!columnType.isInstanceOf[Nested] && !columnType.isInstanceOf[Array], "Only simple types are allowed in Array")
+    require(!columnType.isInstanceOf[Nested] && !columnType.isInstanceOf[Array],
+            "Only simple types are allowed in Array")
 
     override def toString: String = s"Array($columnType)"
   }
@@ -75,24 +77,27 @@ sealed trait DefaultValue
 object DefaultValue {
 
   case object NoDefault extends DefaultValue {
+
     override def toString: String = ""
   }
 
   case class Default(value: String) extends DefaultValue {
+
     override def toString: String = " DEFAULT " + value
   }
 
   case class Materialized(value: String) extends DefaultValue {
+
     override def toString: String = " MATERIALIZED " + value
   }
 
 }
 
-case class Column(name: String, columnType: ColumnType = ColumnType.String,
+case class Column(name: String,
+                  columnType: ColumnType = ColumnType.String,
                   defaultValue: DefaultValue = DefaultValue.NoDefault) {
   require(ClickhouseStatement.isValidIdentifier(name), s"Invalid column name identifier")
 
-  override def toString: String = {
+  override def toString: String =
     s"$name $columnType$defaultValue"
-  }
 }

@@ -5,10 +5,9 @@ import akka.http.scaladsl.model.Uri
 import scala.concurrent.Future
 
 /**
-  * The default host balancer which always provides the same host.
+ * The default host balancer which always provides the same host.
   **/
-case class SingleHostBalancer(host: Uri)
-  extends HostBalancer {
+case class SingleHostBalancer(host: Uri) extends HostBalancer {
 
   override def nextHost: Future[Uri] = Future.successful(host)
 }

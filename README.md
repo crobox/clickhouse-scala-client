@@ -24,8 +24,9 @@ libraryDependencies += "com.crobox" % "clickhouse-scala-client_2.11" % "0.0.1"
 
 | Key | Default|Description |
 | --- | ---|------------|
-|httpCompression| false | If the client should use http compression in the communication with clickhouse. More info: http://clickhouse-docs.readthedocs.io/en/latest/interfaces/http_interface.html |
-|bufferSize|1024|The size of the internal queue being used for the queries. If the queue is full then any new queries will be dropped|
+|http-compression| false | If the client should use http compression in the communication with clickhouse. More info: http://clickhouse-docs.readthedocs.io/en/latest/interfaces/http_interface.html |
+|buffer-size|1024|The size of the internal queue being used for the queries. If the queue is full then any new queries will be dropped|
+|host-retrieval-timeout|1 second|Maximum time to wait for receiving a host from the provider|
 
 ### Connection configuration
 The clickhouse connection is configured from the configuration file as well.
@@ -72,7 +73,8 @@ Round robin on the hosts lists, while keeping only connections that respond the 
 |type | N/A|"balancing-hosts"|
 |host|N/A|The host of the clickhouse server|
 |port|N/A|The port of the clickhouse server|
-|health-check-interval| 5 | Seconds between the healthchecks for each host |
+|health-check.interval| 5 seconds | Seconds between the healthchecks for each host |
+|health-check.timeout | 1 second | Timeout to wait for clickhouse to respond before considering healthcheck failed|
 ###### Example:
 
 ```
@@ -85,7 +87,10 @@ com.crobox.clickhouse.client {
             port = 7415
           }
         ]
-        health-check-interval = 5
+        health-check {
+              interval = 5 seconds
+              timout = 1 second
+        }
     }
 }
 
@@ -99,7 +104,8 @@ com.crobox.clickhouse.client {
 | host |localhost| The host of the clickhouse server |
 | port| 8123 | The port of the clickhouse server|
 | cluster| cluster | The cluster name for which to query for connections|
-|health-check-interval| 5 | Seconds between the healthchecks for each host |
+|health-check.interval| 5 seconds | Seconds between the healthchecks for each host |
+|health-check.timeout | 1 second | Timeout to wait for clickhouse to respond before considering healthcheck failed|
 
 The host and the port will be used to continually update the list of clickhouse nodes by querying and using the `host-name` from the `system.cluster` clickhouse table.
 Please do note that this connection type will default to using the port of 8123 for all nodes.
@@ -112,7 +118,10 @@ com.crobox.clickhouse.client {
         type = "cluster-aware"
         host = "localhost"
         port = 8123
-        health-check-interval = 5
+        health-check {
+              interval = 5 seconds
+              timout = 1 second
+        }
     }
 }
 

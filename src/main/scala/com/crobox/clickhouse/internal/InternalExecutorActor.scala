@@ -24,7 +24,10 @@ class InternalExecutorActor(override protected val config: Config)
   override protected implicit val executionContext: ExecutionContext =
     context.dispatcher
 }
+
 object InternalExecutorActor {
+
   def props(config: Config) = Props(new InternalExecutorActor(config))
+
   case class Execute(host: Uri, query: String)
 }

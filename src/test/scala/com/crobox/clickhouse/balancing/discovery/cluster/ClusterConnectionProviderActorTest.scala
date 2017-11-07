@@ -11,14 +11,12 @@ import com.crobox.clickhouse.test.ClickhouseClientSpec
 class ClusterConnectionProviderActorTest extends ClickhouseClientSpec {
 
   val internalExecutor = TestProbe()
-  val provider = system.actorOf(
-    ClusterConnectionProviderActor.props(testActor, internalExecutor.ref))
+  val provider         = system.actorOf(ClusterConnectionProviderActor.props(testActor, internalExecutor.ref))
 
   it should "select only cluster specific hosts" in {
-    val hosts = Set("localhost", "anotherhost")
+    val hosts   = Set("localhost", "anotherhost")
     val cluster = "test_cluster"
-    provider ! ScanHosts(
-      ConnectionConfig(ClickhouseHostBuilder.toHost("localhost"), cluster))
+    provider ! ScanHosts(ConnectionConfig(ClickhouseHostBuilder.toHost("localhost"), cluster))
     internalExecutor.expectMsgPF() {
       case Execute(_, query) if query.contains(cluster) =>
         internalExecutor.reply(hosts.toSeq)
@@ -26,7 +24,8 @@ class ClusterConnectionProviderActorTest extends ClickhouseClientSpec {
     expectMsg(
       Connections(
         hosts.map(ClickhouseHostBuilder.toHost(_))
-      ))
+      )
+    )
   }
 
 }
