@@ -23,7 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * @author Sjoerd Mulder
  * @since 31-03-17
  */
-class ClickhouseClient(override val config: Config, database: String = "default")(
+class ClickhouseClient(override val config: Config, val database: String = "default")(
     override implicit val system: ActorSystem = ActorSystem("clickhouseClient")
 ) extends ClickHouseExecutor
     with ClickhouseResponseParser
