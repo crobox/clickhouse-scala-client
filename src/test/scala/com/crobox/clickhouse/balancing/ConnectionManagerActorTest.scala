@@ -18,7 +18,7 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
   it should "remove dead connection" in {
     val urisWithDead = uris.+(
       (ClickhouseHostBuilder
-         .toHost("deadConnection"),
+         .toHost("deadConnection", None),
        HostAliveMock.props(Seq(Dead)) _)
     )
     val manager =
@@ -31,7 +31,7 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
   it should "add back connection when it comes to life" in {
     val urisWithDead = uris.+(
       (ClickhouseHostBuilder
-         .toHost("deadConnection"),
+         .toHost("deadConnection", None),
        HostAliveMock.props(Seq(Dead, Alive, Alive, Alive, Alive)) _)
     )
     val manager =

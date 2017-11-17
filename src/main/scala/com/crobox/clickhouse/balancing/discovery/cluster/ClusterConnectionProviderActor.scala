@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.balancing.discovery.cluster
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.{ask, pipe}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
@@ -13,8 +13,9 @@ import com.crobox.clickhouse.internal.InternalExecutorActor.Execute
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
-class ClusterConnectionProviderActor(manager: ActorRef, executor: ActorRef) extends Actor {
+class ClusterConnectionProviderActor(manager: ActorRef, executor: ActorRef) extends Actor with ActorLogging {
 
   private implicit val timeout: Timeout                = durationToTimeout(5 second)
   private implicit val materialzier: ActorMaterializer = ActorMaterializer()
@@ -23,7 +24,12 @@ class ClusterConnectionProviderActor(manager: ActorRef, executor: ActorRef) exte
 
   override def receive = {
     case ScanHosts(config) =>
-      resolveHosts(config) pipeTo manager
+      val eventualConnections = resolveHosts(config)
+      eventualConnections.onComplete {
+        case Success(connection) => log.debug(s"Got successful connections $connection")
+        case Failure(ex)         => log.error(ex, "Exception while getting connections")
+      }
+      eventualConnections pipeTo manager
   }
 
   def resolveHosts(config: ConnectionConfig): Future[Connections] =
@@ -38,7 +44,7 @@ class ClusterConnectionProviderActor(manager: ActorRef, executor: ActorRef) exte
             s"Please use the `SingleHostQueryBalancer` in that case."
           )
         }
-        Connections(result.map(ClickhouseHostBuilder.toHost(_)))
+        Connections(result.map(ClickhouseHostBuilder.toHost(_, Some(8123))))
       })
 }
 

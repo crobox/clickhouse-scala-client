@@ -4,11 +4,13 @@ import akka.http.scaladsl.model.Uri
 
 private[clickhouse] trait ClickhouseHostBuilder {
 
-  def toHost(host: String, port: Int = 8123): Uri =
+  def toHost(host: String, port: Option[Int]): Uri =
     if (host.startsWith("http:") || host.startsWith("https:")) {
-      Uri(host).withPort(port)
+      val uri = Uri(host)
+      port.map(uri.withPort).getOrElse(uri)
     } else {
-      Uri("http://" + host).withPort(port)
+      val uri = Uri("http://" + host)
+      port.map(uri.withPort).getOrElse(uri)
     }
 
 }

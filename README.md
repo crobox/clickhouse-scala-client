@@ -43,11 +43,10 @@ Configuration options:
 | --- | ---|------------|
 |type | N/A|"single-host"|
 | host |localhost| The host of the clickhouse server |
-| port| port | The port of the clickhouse server|
+| port| N/A | The port of the clickhouse server, if required |
 
 ###### Example:
-
-**This is also the default configuration**
+** The default configuration uses single host type but without a defined port. **
 
 ```
 com.crobox.clickhouse.client {
@@ -89,7 +88,7 @@ com.crobox.clickhouse.client {
         ]
         health-check {
               interval = 5 seconds
-              timout = 1 second
+              timeout = 1 second
         }
     }
 }
@@ -120,7 +119,7 @@ com.crobox.clickhouse.client {
         port = 8123
         health-check {
               interval = 5 seconds
-              timout = 1 second
+              timeout = 1 second
         }
     }
 }

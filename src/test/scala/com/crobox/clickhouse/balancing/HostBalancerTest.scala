@@ -10,7 +10,7 @@ class HostBalancerTest extends ClickhouseClientSpec {
   it should "resolve to single host balancer" in {
     HostBalancer(config) match {
       case SingleHostBalancer(host) =>
-        host shouldEqual ClickhouseHostBuilder.toHost("localhost")
+        host shouldEqual ClickhouseHostBuilder.toHost("localhost", Some(8123))
     }
   }
 
@@ -32,7 +32,7 @@ class HostBalancerTest extends ClickhouseClientSpec {
         |}
       """.stripMargin).withFallback(config)) match {
       case MultiHostBalancer(hosts, _) =>
-        hosts.toSeq should contain theSameElementsInOrderAs Seq(ClickhouseHostBuilder.toHost("localhost"))
+        hosts.toSeq should contain theSameElementsInOrderAs Seq(ClickhouseHostBuilder.toHost("localhost", Some(8123)))
     }
   }
 
@@ -52,7 +52,7 @@ class HostBalancerTest extends ClickhouseClientSpec {
         |}
       """.stripMargin).withFallback(config)) match {
       case ClusterAwareHostBalancer(host, cluster, _, _, builtTimeout) =>
-        host shouldEqual ClickhouseHostBuilder.toHost("localhost")
+        host shouldEqual ClickhouseHostBuilder.toHost("localhost", Some(8123))
         cluster shouldBe "cluster"
         builtTimeout shouldBe (1 second)
     }

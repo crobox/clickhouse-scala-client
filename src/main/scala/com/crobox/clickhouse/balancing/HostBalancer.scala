@@ -66,5 +66,6 @@ object HostBalancer extends ClickhouseHostBuilder {
   }
 
   private def extractHost(connectionConfig: Config): Uri =
-    toHost(connectionConfig.getString("host"), connectionConfig.getInt("port"))
+    toHost(connectionConfig.getString("host"),
+           if (connectionConfig.hasPath("port")) Option(connectionConfig.getInt("port")) else None)
 }

@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorSystem, Props}
 import akka.http.scaladsl.model.Uri
 import com.crobox.clickhouse.internal.InternalExecutorActor.Execute
 import com.typesafe.config.Config
-
+import akka.pattern.pipe
 import scala.concurrent.{ExecutionContext, Future}
 
 class InternalExecutorActor(override protected val config: Config)
@@ -17,7 +17,8 @@ class InternalExecutorActor(override protected val config: Config)
 
   override def receive = {
     case Execute(uri: Uri, query: String) =>
-      executeRequest(Future.successful(uri), query)
+      val eventualResponse = executeRequest(Future.successful(uri), query)
+      eventualResponse.map(response => response.split("\n").toSeq) pipeTo sender
   }
 
   override protected lazy val bufferSize = 100

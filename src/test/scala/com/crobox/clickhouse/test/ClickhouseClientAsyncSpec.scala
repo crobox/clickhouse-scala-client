@@ -34,10 +34,10 @@ class ClickhouseClientAsyncSpec
     probe = TestProbe()
     uris = Map(
       (ClickhouseHostBuilder
-         .toHost("localhost", 8245),
+         .toHost("localhost", Some(8245)),
        HostAliveMock.props(Seq(Alive))),
       (ClickhouseHostBuilder
-         .toHost("127.0.0.1"),
+         .toHost("127.0.0.1", None),
        HostAliveMock.props(Seq(Alive)))
     )
   }
@@ -84,7 +84,6 @@ class ClickhouseClientAsyncSpec
 
   //  TODO change this methods to custom matchers
   def returnsConnectionsInRoundRobinFashion(manager: ActorRef, expectedConnections: Set[Uri]) = {
-    import system.dispatcher
     val RequestConnectionsPerHost = 50
     getConnections(manager, RequestConnectionsPerHost * expectedConnections.size)
       .map(connections => {

@@ -23,6 +23,7 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config) ext
     config
       .getDuration("com.crobox.clickhouse.client.host-retrieval-timeout")
       .getSeconds seconds
+
   //  state
   val connectionIterator: CircularIteratorSet[Uri] =
     new CircularIteratorSet[Uri]()
@@ -38,7 +39,6 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config) ext
             val hostHealthChecker: ActorRef =
               context.actorOf(healthProvider(host), healthCheckActorName(host))
             log.info(s"Setting up host health checks for host $host")
-
             val scheduler = context.system.scheduler
               .schedule(Duration.Zero, healthCheckInterval, hostHealthChecker, IsAlive())(context.dispatcher,
                                                                                           context.self)
