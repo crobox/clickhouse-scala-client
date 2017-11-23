@@ -17,7 +17,7 @@ class CircularIteratorSet[T](seed: Seq[T] = Seq.empty) extends AbstractIterator[
     internalIterator = Iterator.continually(elements).flatten
   }
 
-  override def hasNext = internalIterator.hasNext
+  override def hasNext = elements.nonEmpty
 
   override def next() = internalIterator.next()
 }
