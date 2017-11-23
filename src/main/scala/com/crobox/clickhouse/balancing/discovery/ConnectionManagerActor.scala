@@ -1,8 +1,7 @@
 package com.crobox.clickhouse.balancing.discovery
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, PoisonPill, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, PoisonPill, Props, Status}
 import akka.http.scaladsl.model.Uri
-import akka.util.Timeout.durationToTimeout
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{HostStatus, IsAlive}
 import com.crobox.clickhouse.balancing.iterator.CircularIteratorSet
@@ -49,8 +48,14 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config) ext
       sender ! Unit
 
     case GetConnection() =>
-      val uri = connectionIterator.next()
-      sender ! uri
+      if (connectionIterator.hasNext) {
+        val uri = connectionIterator.next()
+        sender ! uri
+      } else {
+        sender ! Status.Failure(
+          NoHostAvailableException(s"No connection is available. Current connections statuses $hostsStatus")
+        )
+      }
 
     case status @ HostStatus(host, _) =>
       if (currentConfiguredHosts.contains(host)) {
@@ -99,4 +104,6 @@ object ConnectionManagerActor {
   case class GetConnection()
 
   case class Connections(hosts: Set[Uri])
+
+  case class NoHostAvailableException(msg: String) extends IllegalStateException(msg)
 }
