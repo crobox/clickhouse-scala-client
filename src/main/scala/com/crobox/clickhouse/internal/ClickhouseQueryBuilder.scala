@@ -39,7 +39,7 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
     }
 
   private def enableHttpCompressionParam: (String, String) =
-    "enable_http_compression" -> (if (config.getBoolean("com.crobox.clickhouse.client.http-compression")) "1" else "0")
+    "enable_http_compression" -> (if (config.getBoolean("crobox.clickhouse.client.http-compression")) "1" else "0")
 
   private def readOnlyParam(readOnly: Boolean): (String, String) =
     "readonly" -> (if (readOnly) "1" else "0")

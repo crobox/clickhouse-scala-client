@@ -31,7 +31,7 @@ class ClickhouseClientTest extends ClickhouseClientSpec {
 
   it should "support compression" in {
     val client: ClickhouseClient = new ClickhouseClient(
-      config.resolveWith(ConfigFactory.parseString("com.crobox.clickhouse.client.http-compression = true"))
+      config.resolveWith(ConfigFactory.parseString("crobox.clickhouse.client.http-compression = true"))
     )
     Await.result(client.query("select count(*) from system.tables").map { f =>
       f.trim.toInt > 10 should be(true)

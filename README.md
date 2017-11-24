@@ -19,7 +19,7 @@ libraryDependencies += "com.crobox" % "clickhouse-scala-client_2.11" % "0.0.1"
 
 ## Configuration
 
-  All the configuration keys are under the prefix `com.crobox.clickhouse.client`
+  All the configuration keys are under the prefix `crobox.clickhouse.client`
 ### Client configuration
 
 | Key | Default|Description |
@@ -49,7 +49,7 @@ Configuration options:
 ** The default configuration uses single host type but without a defined port. **
 
 ```
-com.crobox.clickhouse.client {
+crobox.clickhouse.client {
     connection: {
         type = "single-host",
         host = "localhost",
@@ -77,7 +77,7 @@ Round robin on the hosts lists, while keeping only connections that respond the 
 ###### Example:
 
 ```
-com.crobox.clickhouse.client {
+crobox.clickhouse.client {
     connection: {
         type = "balancing-hosts"
         hosts: [
@@ -112,7 +112,7 @@ Please do note that this connection type will default to using the port of 8123 
 ###### Example:
 
 ```
-com.crobox.clickhouse.client {
+crobox.clickhouse.client {
     connection: {
         type = "cluster-aware"
         host = "localhost"

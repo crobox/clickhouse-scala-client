@@ -15,7 +15,7 @@ class HostBalancerTest extends ClickhouseClientSpec {
   }
 
   it should "resolve to multi host balancer" in {
-    HostBalancer(ConfigFactory.parseString("""com.crobox.clickhouse.client {
+    HostBalancer(ConfigFactory.parseString("""crobox.clickhouse.client {
         |    connection: {
         |        type: "balancing-hosts"
         |        hosts: [
@@ -37,7 +37,7 @@ class HostBalancerTest extends ClickhouseClientSpec {
   }
 
   it should "resolve to cluster aware host balancer" in {
-    HostBalancer(ConfigFactory.parseString("""com.crobox.clickhouse.client {
+    HostBalancer(ConfigFactory.parseString("""crobox.clickhouse.client {
         |    connection: {
         |        type: "cluster-aware"
         |        host: "localhost"

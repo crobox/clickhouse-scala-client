@@ -21,7 +21,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
 
   private lazy val pool = Http().superPool[Promise[HttpResponse]]()
   protected lazy val bufferSize: Int =
-    config.getInt("com.crobox.clickhouse.client.buffer-size")
+    config.getInt("crobox.clickhouse.client.buffer-size")
   private lazy val queue = Source
     .queue[(HttpRequest, Promise[HttpResponse])](bufferSize, OverflowStrategy.dropNew)
     .via(pool)

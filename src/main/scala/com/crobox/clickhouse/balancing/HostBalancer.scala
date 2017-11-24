@@ -24,7 +24,7 @@ object HostBalancer extends ClickhouseHostBuilder {
 
   def apply(config: Config)(implicit system: ActorSystem): HostBalancer = {
     val connectionConfig =
-      config.getConfig("com.crobox.clickhouse.client.connection")
+      config.getConfig("crobox.clickhouse.client.connection")
     val internalExecutor = system.actorOf(InternalExecutorActor.props(config))
     val connectionType   = ConnectionType(connectionConfig.getString("type"))
     connectionType match {
@@ -61,7 +61,7 @@ object HostBalancer extends ClickhouseHostBuilder {
           manager,
           provider,
           connectionConfig.getDuration("scanning-interval").getSeconds seconds
-        )(system, config.getDuration("com.crobox.clickhouse.client.host-retrieval-timeout").getSeconds seconds)
+        )(system, config.getDuration("crobox.clickhouse.client.host-retrieval-timeout").getSeconds seconds)
     }
   }
 

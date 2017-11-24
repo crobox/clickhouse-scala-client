@@ -16,11 +16,11 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config) ext
 
   private val healthCheckInterval: FiniteDuration =
     config
-      .getDuration("com.crobox.clickhouse.client.connection.health-check.interval")
+      .getDuration("crobox.clickhouse.client.connection.health-check.interval")
       .getSeconds seconds
   private val hostRetrievalTimeout =
     config
-      .getDuration("com.crobox.clickhouse.client.host-retrieval-timeout")
+      .getDuration("crobox.clickhouse.client.host-retrieval-timeout")
       .getSeconds seconds
 
   //  state
