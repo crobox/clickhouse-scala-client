@@ -3,9 +3,11 @@ package com.crobox.clickhouse.balancing
 import java.util.UUID
 
 import akka.actor.{ActorNotFound, ActorRef}
+import akka.http.scaladsl.model.Uri
 import akka.pattern.ask
+import akka.testkit.TestProbe
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
-import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
+import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.{Connections, GetConnection}
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.crobox.clickhouse.test.ClickhouseClientAsyncSpec
@@ -72,6 +74,20 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
       })
     })
 
+  }
+
+  it should "stash messages when no connections were received yet" in {
+    val client = TestProbe()
+    val managerName = UUID.randomUUID().toString
+    val manager =
+      system.actorOf(ConnectionManagerActor.props(uri => uris(uri)(uri), config), managerName)
+    manager.tell(GetConnection(), client.ref)
+    val uri = uris.keySet.head
+    (manager ? Connections(Set(uri)))
+      .map(_ => {
+        client.expectMsg(1 second, uri)
+        succeed
+      })
   }
 
 }
