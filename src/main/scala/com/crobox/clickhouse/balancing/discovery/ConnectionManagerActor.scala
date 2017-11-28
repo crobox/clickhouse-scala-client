@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.balancing.discovery
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, PoisonPill, Props, Status}
+import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, PoisonPill, Props, Stash, Status}
 import akka.http.scaladsl.model.Uri
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{HostStatus, IsAlive}
@@ -10,7 +10,10 @@ import com.typesafe.config.Config
 import scala.collection.mutable
 import scala.concurrent.duration._
 
-class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config) extends Actor with ActorLogging {
+class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
+    extends Actor
+    with ActorLogging
+    with Stash {
 
   import ConnectionManagerActor._
 
@@ -29,6 +32,7 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config) ext
   val hostsStatus                      = mutable.Map.empty[Uri, HostStatus]
   val hostHealthScheduler              = mutable.Map.empty[Uri, Cancellable]
   var currentConfiguredHosts: Set[Uri] = Set.empty
+  var initialized                      = false
 
   override def receive = {
     case Connections(hosts) =>
@@ -48,13 +52,18 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config) ext
       sender ! Unit
 
     case GetConnection() =>
-      if (connectionIterator.hasNext) {
-        val uri = connectionIterator.next()
-        sender ! uri
+      if (!initialized) {
+        log.warning("Stashing get connection message until connection message is sent to initialize the manager.")
+        stash()
       } else {
-        sender ! Status.Failure(
-          NoHostAvailableException(s"No connection is available. Current connections statuses $hostsStatus")
-        )
+        if (connectionIterator.hasNext) {
+          val uri = connectionIterator.next()
+          sender ! uri
+        } else {
+          sender ! Status.Failure(
+            NoHostAvailableException(s"No connection is available. Current connections statuses $hostsStatus")
+          )
+        }
       }
 
     case status @ HostStatus(host, _) =>
@@ -71,6 +80,11 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config) ext
         )
         sender ! PoisonPill
         cleanUpHost(host)
+      }
+      if (!initialized) {
+        initialized = true
+        log.info(s"Received first status. Unstashing all previous messages.")
+        unstashAll()
       }
   }
 

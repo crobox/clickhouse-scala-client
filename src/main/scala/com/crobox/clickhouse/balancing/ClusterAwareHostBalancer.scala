@@ -4,13 +4,12 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.Uri
 import akka.pattern.ask
 import akka.util.Timeout
-import akka.util.Timeout.durationToTimeout
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.GetConnection
 import com.crobox.clickhouse.balancing.discovery.cluster.ClusterConnectionProviderActor.ScanHosts
 import com.crobox.clickhouse.discovery.ConnectionConfig
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 /**
  * Host balancer that does a round robin on all the entries found in the `system.clusters` table.
