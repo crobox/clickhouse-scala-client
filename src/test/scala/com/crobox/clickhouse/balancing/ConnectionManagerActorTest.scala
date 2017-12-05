@@ -77,7 +77,7 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
   }
 
   it should "stash messages when no connections were received yet" in {
-    val client = TestProbe()
+    val client      = TestProbe()
     val managerName = UUID.randomUUID().toString
     val manager =
       system.actorOf(ConnectionManagerActor.props(uri => uris(uri)(uri), config), managerName)

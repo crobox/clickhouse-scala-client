@@ -3,6 +3,7 @@ package com.crobox.clickhouse.stream
 import akka.Done
 import akka.actor.{Actor, ActorRef, ActorRefFactory, Cancellable, PoisonPill, Props, Terminated}
 import com.crobox.clickhouse.ClickhouseClient
+import com.crobox.clickhouse.stream.ClickhouseBulkActor.{InsertParsed, InsertRaw}
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.joda.JodaModule
@@ -12,7 +13,7 @@ import org.reactivestreams.{Subscriber, Subscription}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
 
 object ClickhouseIndexingSubscriber extends LazyLogging {
@@ -58,9 +59,9 @@ object ClickhouseIndexingSubscriber extends LazyLogging {
  * @author Sjoerd Mulder
  * @since 16-9-16
  */
-class ClickhouseIndexingSubscriber(client: ClickhouseClient,
-                                   config: SubscriberConfig)(implicit actorRefFactory: ActorRefFactory)
-    extends Subscriber[ClickhouseBulkActor.Insert] {
+class ClickhouseIndexingSubscriber(client: ClickhouseClient, config: SubscriberConfig)(
+    implicit actorRefFactory: ActorRefFactory
+) extends Subscriber[ClickhouseBulkActor.Insert] {
 
   private var actor: ActorRef = _
 
@@ -159,7 +160,21 @@ object ClickhouseBulkActor {
 
   case class Request(size: Int)
 
-  case class Insert(table: String, data: Map[String, Any])
+  abstract class Insert(val table: String, val data: Map[String, Any])
+
+  case class InsertParsed(
+      override val table: String,
+      override val data: Map[String, String]
+  ) extends Insert(table, data)
+
+  @deprecated(
+    "Use InsertParsed instead. " +
+      "The concern of parsing is not part of the clickhouse client, and will be removed in the future."
+  )
+  case class InsertRaw(
+      override val table: String,
+      override val data: Map[String, Any]
+  ) extends Insert(table, data)
 
   case class Send(req: String, attempts: Int)
 
@@ -178,7 +193,9 @@ class ClickhouseBulkActor(targetTable: String,
 
   logger.info(s"Starting ClickhouseBulkActor for $targetTable")
 
-  import context.{dispatcher, system}
+  import context.system
+
+  implicit val ec: ExecutionContext = context.dispatcher
 
   private val buffer = new ArrayBuffer[ClickhouseBulkActor.Insert]()
   buffer.sizeHint(config.batchSize)
@@ -223,7 +240,6 @@ class ClickhouseBulkActor(targetTable: String,
         index()
       completed = true
       shutdownIfAllConfirmed()
-
     case m: ClickhouseBulkActor.Insert =>
       if (m.table != targetTable) {
         logger.warn(s"Received insert for ${m.table} but this indexer writes to $targetTable")
@@ -279,21 +295,41 @@ class ClickhouseBulkActor(targetTable: String,
     buffer.clear()
     context.stop(self)
   }
-
-  val insertQuery = s"INSERT INTO $targetTable FORMAT JSONEachRow"
-
   private val objectMapper = new ObjectMapper()
     .registerModule(new JodaModule)
     .registerModule(new DefaultScalaModule)
     .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
 
   private def index(): Unit = {
-    val payload = buffer.map(i => objectMapper.writeValueAsString(i.data)).mkString("\n") + "\n"
-    val count   = buffer.size
+    val colList = buffer
+      .map(_.data)
+      .reduce(
+        (e1, e2) => if (e1.size > e2.size) e1 else e2
+      )
+      .keys
+      .toSeq
+
+    val regularPayload = buffer
+      .collect {
+        case InsertParsed(table, data) => {
+          "(" + data.values.mkString(", ") + ")"
+        }
+      }
+      .mkString(",\n") + "\n"
+
+    val jsonPayload = buffer
+      .collect {
+        case InsertRaw(table, data) => objectMapper.writeValueAsString(data)
+      }
+      .mkString("\n") + "\n"
+
+    val count = buffer.size
     logger.debug(s"Inserting $count")
+
     sent = sent + count
     logger.debug(s"Clickhouse $targetTable sent: $sent (confirmed: $confirmed, failed: $failed)")
-    send(payload, count)
+    send(targetTable, jsonPayload, count)
+    send(targetTable, regularPayload, count, rawColList = colList)
     buffer.clear()
 
     // buffer is now empty so no point keeping a scheduled flush after operation
@@ -301,13 +337,28 @@ class ClickhouseBulkActor(targetTable: String,
     flushAfterScheduler = None
   }
 
-  private def send(payload: String, count: Int, retries: Int = 3): Unit =
-    client.execute(insertQuery, payload) onComplete {
-      case Failure(_) if retries > 0 => send(payload, count, retries - 1)
-      case Failure(e)                => self ! ClickhouseBulkActor.FlushFailure(e, count)
-      case Success(resp: String)     => self ! ClickhouseBulkActor.FlushSuccess(resp, count)
+  private def send(table: String,
+                   payload: String,
+                   count: Int,
+                   retries: Int = 3,
+                   rawColList: Seq[String] = Seq.empty): Unit = {
+    val insertQuery = {
+      if (rawColList.isEmpty) {
+        s"INSERT INTO $table FORMAT JSONEachRow"
+      } else {
+        val colList = rawColList.mkString(", ")
+        s"INSERT INTO $table ($colList) VALUES"
+      }
     }
-
+    client.execute(insertQuery, payload) onComplete {
+      case Failure(_) if retries > 0 =>
+        send(table, payload, count, retries - 1, rawColList)
+      case Failure(e) =>
+        self ! ClickhouseBulkActor.FlushFailure(e, count)
+      case Success(resp: String) =>
+        self ! ClickhouseBulkActor.FlushSuccess(resp, count)
+    }
+  }
 }
 
 case class SubscriberConfig(batchSize: Int = 10000,
