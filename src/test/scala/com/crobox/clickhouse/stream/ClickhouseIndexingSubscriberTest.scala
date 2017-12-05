@@ -3,12 +3,11 @@ package com.crobox.clickhouse.stream
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import com.crobox.clickhouse.ClickhouseClient
-import com.crobox.clickhouse.stream.ClickhouseBulkActor.{InsertParsed, InsertRaw}
+import com.crobox.clickhouse.stream.ClickhouseBulkActor.Insert
 import com.crobox.clickhouse.test.ClickhouseClientSpec
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
-import scala.collection.mutable
 import scala.concurrent.{Await, Future, Promise}
 import scala.concurrent.duration._
 import scala.util.{Random, Try}
@@ -86,7 +85,7 @@ class ClickhouseIndexingSubscriberTest
 
     Source
       .fromIterator(() => parsedInserts.toIterator)
-      .map(data => InsertParsed("test.insert", data))
+      .map(data => Insert("test.insert", data))
       .toMat(sink)(Keep.left)
       .run()
 
@@ -94,22 +93,6 @@ class ClickhouseIndexingSubscriberTest
 
     eventually {
       checkRowCount().futureValue shouldBe parsedInserts.size
-    }
-  }
-
-  it should "inject unparsed rows" in {
-    val sink = Sink.fromSubscriber(testSubscriber)
-
-    Source
-      .fromIterator(() => unparsedInserts.toIterator)
-      .map(data => InsertRaw("test.insert", data))
-      .toMat(sink)(Keep.left)
-      .run()
-
-    Await.ready(subscriberCompletes.future, 5.seconds)
-
-    eventually {
-      checkRowCount().futureValue shouldBe unparsedInserts.size
     }
   }
 
