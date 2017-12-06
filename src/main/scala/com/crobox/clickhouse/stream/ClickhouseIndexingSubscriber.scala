@@ -3,11 +3,6 @@ package com.crobox.clickhouse.stream
 import akka.Done
 import akka.actor.{Actor, ActorRef, ActorRefFactory, Cancellable, PoisonPill, Props, Terminated}
 import com.crobox.clickhouse.ClickhouseClient
-import com.crobox.clickhouse.stream.ClickhouseBulkActor.Insert
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.joda.JodaModule
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.scalalogging.LazyLogging
 import org.reactivestreams.{Subscriber, Subscription}
 
@@ -160,7 +155,7 @@ object ClickhouseBulkActor {
 
   case class Request(size: Int)
 
-  case class Insert(table: String, data: Map[String, String])
+  case class Insert(table: String, jsonRow: String)
 
   case class Send(req: String, attempts: Int)
 
@@ -281,16 +276,9 @@ class ClickhouseBulkActor(targetTable: String,
     buffer.clear()
     context.stop(self)
   }
-  private val objectMapper = new ObjectMapper()
-    .registerModule(new JodaModule)
-    .registerModule(new DefaultScalaModule)
-    .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
 
   private def index(): Unit = {
-    val payload = buffer
-      .collect {
-        case Insert(table, data) => data
-      }
+    val payload = buffer.map(_.jsonRow)
 
     val count = buffer.size
     logger.debug(s"Inserting $count")
@@ -305,23 +293,18 @@ class ClickhouseBulkActor(targetTable: String,
     flushAfterScheduler = None
   }
 
-  private def send(table: String, payload: Seq[Map[String, String]], count: Int): Unit = {
-    if (payload.isEmpty) Unit
+  private def send(table: String, payload: Seq[String], count: Int): Unit = {
+    if (payload.nonEmpty) {
+      val insertQuery = s"INSERT INTO $table FORMAT JSONEachRow"
 
-    val colList = payload.head.keys.mkString(", ")
+      val payloadSql = payload.mkString("\n")
 
-    val insertQuery = s"INSERT INTO $table ($colList) VALUES"
-
-    val payloadSql = payload
-      .map(_.values)
-      .map(values => "(" + values.mkString(", ") + ")")
-      .mkString(",\n") + "\n"
-
-    client.execute(insertQuery, payloadSql) onComplete {
-      case Failure(e) =>
-        self ! ClickhouseBulkActor.FlushFailure(e, count)
-      case Success(resp: String) =>
-        self ! ClickhouseBulkActor.FlushSuccess(resp, count)
+      client.execute(insertQuery, payloadSql) onComplete {
+        case Failure(e) =>
+          self ! ClickhouseBulkActor.FlushFailure(e, count)
+        case Success(resp: String) =>
+          self ! ClickhouseBulkActor.FlushSuccess(resp, count)
+      }
     }
   }
 }

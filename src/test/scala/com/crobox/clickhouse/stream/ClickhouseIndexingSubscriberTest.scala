@@ -65,11 +65,15 @@ class ClickhouseIndexingSubscriberTest
     )
   )
 
-  val parsedInserts: Seq[Map[String, String]] = unparsedInserts.map(_.mapValues({
-    case value: Int             => value.toString
-    case value: String          => "'" + value + "'"
-    case value: IndexedSeq[Int] => "[" + value.mkString(", ") + "]"
-  }))
+  val parsedInserts = unparsedInserts.map(
+    _.mapValues({
+      case value: Int             => value.toString
+      case value: String          => "\"" + value + "\""
+      case value: IndexedSeq[Int] => "[" + value.mkString(", ") + "]"
+    })
+    .map{ case (k,v) => s""""$k" : $v""" }
+    .mkString(", ")
+  )
 
   def testSubscriber = new ClickhouseIndexingSubscriber(client,
     SubscriberConfig(
@@ -85,10 +89,11 @@ class ClickhouseIndexingSubscriberTest
 
     Source
       .fromIterator(() => parsedInserts.toIterator)
-      .map(data => Insert("test.insert", data))
+      .map(data => Insert("test.insert", "{" + data + "}"))
       .toMat(sink)(Keep.left)
       .run()
 
+    //Note that this would time-out if the subscriber fails to write the inserts
     Await.ready(subscriberCompletes.future, 5.seconds)
 
     eventually {
