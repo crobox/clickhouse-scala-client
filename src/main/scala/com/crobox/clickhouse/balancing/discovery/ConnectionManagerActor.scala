@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.balancing.discovery
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, PoisonPill, Props, Stash, Status}
+import akka.dispatch.ControlMessage
 import akka.http.scaladsl.model.Uri
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{HostStatus, IsAlive}
@@ -49,7 +50,6 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
           }
         })
       currentConfiguredHosts = hosts
-      sender ! Unit
 
     case GetConnection() =>
       if (!initialized) {
@@ -117,7 +117,7 @@ object ConnectionManagerActor {
 
   case class GetConnection()
 
-  case class Connections(hosts: Set[Uri])
+  case class Connections(hosts: Set[Uri]) extends ControlMessage
 
   case class NoHostAvailableException(msg: String) extends IllegalStateException(msg)
 }

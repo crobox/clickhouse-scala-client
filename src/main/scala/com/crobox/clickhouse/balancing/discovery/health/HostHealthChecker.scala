@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.balancing.discovery.health
 
 import akka.actor.{Actor, ActorRef, Props}
+import akka.dispatch.ControlMessage
 import akka.http.scaladsl.model.Uri
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
@@ -53,5 +54,5 @@ object HostHealthChecker {
     case object Dead extends Status
   }
 
-  case class HostStatus(host: Uri, status: Status)
+  case class HostStatus(host: Uri, status: Status) extends ControlMessage
 }

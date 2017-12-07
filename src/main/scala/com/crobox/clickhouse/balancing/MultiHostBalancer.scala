@@ -17,7 +17,7 @@ case class MultiHostBalancer(hosts: Set[Uri], manager: ActorRef)(implicit system
 
   private implicit val timeout = durationToTimeout(5 seconds)
 
-  Await.result(manager ? ConnectionManagerActor.Connections(hosts), 10 seconds)
+  manager ! ConnectionManagerActor.Connections(hosts)
 
   override def nextHost: Future[Uri] = (manager ? GetConnection()).mapTo[Uri]
 }
