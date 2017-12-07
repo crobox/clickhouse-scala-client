@@ -29,7 +29,7 @@ class ClickhouseIndexingSubscriberTest
   var subscriberCompletes: Promise[Unit] = Promise[Unit]
 
   val createDb    = "CREATE DATABASE IF NOT EXISTS test"
-  val dropDb   = "DROP DATABASE IF EXISTS test"
+  val dropDb      = "DROP DATABASE IF EXISTS test"
   val createTable = """CREATE TABLE test.insert
                       |(
                       |    i UInt64,
@@ -70,19 +70,22 @@ class ClickhouseIndexingSubscriberTest
       case value: Int             => value.toString
       case value: String          => "\"" + value + "\""
       case value: IndexedSeq[Int] => "[" + value.mkString(", ") + "]"
-    })
-    .map{ case (k,v) => s""""$k" : $v""" }
-    .mkString(", ")
+    }).map { case (k, v) => s""""$k" : $v""" }
+      .mkString(", ")
   )
 
-  def testSubscriber = new ClickhouseIndexingSubscriber(client,
-    SubscriberConfig(
-      batchSize = 10,
-      flushInterval = Some(10.millis),
-      flushAfter = Some(10.millis),
-      successCallback = (a,b) => {
-        if (!subscriberCompletes.isCompleted) subscriberCompletes.complete(Try{}); Unit
-      }))
+  def testSubscriber =
+    new ClickhouseIndexingSubscriber(
+      client,
+      SubscriberConfig(
+        batchSize = 10,
+        flushInterval = Some(10.millis),
+        flushAfter = Some(10.millis),
+        successCallback = (a, b) => {
+          if (!subscriberCompletes.isCompleted) subscriberCompletes.complete(Try {}); Unit
+        }
+      )
+    )
 
   it should "inject sql parsed rows" in {
     val sink = Sink.fromSubscriber(testSubscriber)
@@ -101,7 +104,6 @@ class ClickhouseIndexingSubscriberTest
     }
   }
 
-  private def checkRowCount(): Future[Int] = client.query("SELECT count(*) FROM test.insert").map(res =>
-    Try(res.stripLineEnd.toInt).getOrElse(0)
-  )
+  private def checkRowCount(): Future[Int] =
+    client.query("SELECT count(*) FROM test.insert").map(res => Try(res.stripLineEnd.toInt).getOrElse(0))
 }

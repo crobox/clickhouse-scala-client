@@ -293,7 +293,7 @@ class ClickhouseBulkActor(targetTable: String,
     flushAfterScheduler = None
   }
 
-  private def send(table: String, payload: Seq[String], count: Int): Unit = {
+  private def send(table: String, payload: Seq[String], count: Int): Unit =
     if (payload.nonEmpty) {
       val insertQuery = s"INSERT INTO $table FORMAT JSONEachRow"
 
@@ -306,7 +306,6 @@ class ClickhouseBulkActor(targetTable: String,
           self ! ClickhouseBulkActor.FlushSuccess(resp, count)
       }
     }
-  }
 }
 
 case class SubscriberConfig(batchSize: Int = 10000,

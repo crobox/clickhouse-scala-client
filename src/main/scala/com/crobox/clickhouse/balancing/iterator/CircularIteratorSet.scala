@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.balancing.iterator
 
-import scala.collection.{AbstractIterator, mutable}
+import scala.collection.{mutable, AbstractIterator}
 
 class CircularIteratorSet[T](seed: Seq[T] = Seq.empty) extends AbstractIterator[T] {
 
