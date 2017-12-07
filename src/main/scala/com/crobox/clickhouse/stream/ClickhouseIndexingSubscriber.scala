@@ -3,16 +3,12 @@ package com.crobox.clickhouse.stream
 import akka.Done
 import akka.actor.{Actor, ActorRef, ActorRefFactory, Cancellable, PoisonPill, Props, Terminated}
 import com.crobox.clickhouse.ClickhouseClient
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.joda.JodaModule
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.typesafe.scalalogging.LazyLogging
 import org.reactivestreams.{Subscriber, Subscription}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
 
 object ClickhouseIndexingSubscriber extends LazyLogging {
@@ -58,9 +54,9 @@ object ClickhouseIndexingSubscriber extends LazyLogging {
  * @author Sjoerd Mulder
  * @since 16-9-16
  */
-class ClickhouseIndexingSubscriber(client: ClickhouseClient,
-                                   config: SubscriberConfig)(implicit actorRefFactory: ActorRefFactory)
-    extends Subscriber[ClickhouseBulkActor.Insert] {
+class ClickhouseIndexingSubscriber(client: ClickhouseClient, config: SubscriberConfig)(
+    implicit actorRefFactory: ActorRefFactory
+) extends Subscriber[ClickhouseBulkActor.Insert] {
 
   private var actor: ActorRef = _
 
@@ -159,7 +155,7 @@ object ClickhouseBulkActor {
 
   case class Request(size: Int)
 
-  case class Insert(table: String, data: Map[String, Any])
+  case class Insert(table: String, jsonRow: String)
 
   case class Send(req: String, attempts: Int)
 
@@ -178,7 +174,9 @@ class ClickhouseBulkActor(targetTable: String,
 
   logger.info(s"Starting ClickhouseBulkActor for $targetTable")
 
-  import context.{dispatcher, system}
+  import context.system
+
+  implicit val ec: ExecutionContext = context.dispatcher
 
   private val buffer = new ArrayBuffer[ClickhouseBulkActor.Insert]()
   buffer.sizeHint(config.batchSize)
@@ -223,7 +221,6 @@ class ClickhouseBulkActor(targetTable: String,
         index()
       completed = true
       shutdownIfAllConfirmed()
-
     case m: ClickhouseBulkActor.Insert =>
       if (m.table != targetTable) {
         logger.warn(s"Received insert for ${m.table} but this indexer writes to $targetTable")
@@ -280,20 +277,15 @@ class ClickhouseBulkActor(targetTable: String,
     context.stop(self)
   }
 
-  val insertQuery = s"INSERT INTO $targetTable FORMAT JSONEachRow"
-
-  private val objectMapper = new ObjectMapper()
-    .registerModule(new JodaModule)
-    .registerModule(new DefaultScalaModule)
-    .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
-
   private def index(): Unit = {
-    val payload = buffer.map(i => objectMapper.writeValueAsString(i.data)).mkString("\n") + "\n"
-    val count   = buffer.size
+    val payload = buffer.map(_.jsonRow)
+
+    val count = buffer.size
     logger.debug(s"Inserting $count")
+
     sent = sent + count
     logger.debug(s"Clickhouse $targetTable sent: $sent (confirmed: $confirmed, failed: $failed)")
-    send(payload, count)
+    send(targetTable, payload, count)
     buffer.clear()
 
     // buffer is now empty so no point keeping a scheduled flush after operation
@@ -301,13 +293,20 @@ class ClickhouseBulkActor(targetTable: String,
     flushAfterScheduler = None
   }
 
-  private def send(payload: String, count: Int, retries: Int = 3): Unit =
-    client.execute(insertQuery, payload) onComplete {
-      case Failure(_) if retries > 0 => send(payload, count, retries - 1)
-      case Failure(e)                => self ! ClickhouseBulkActor.FlushFailure(e, count)
-      case Success(resp: String)     => self ! ClickhouseBulkActor.FlushSuccess(resp, count)
-    }
+  private def send(table: String, payload: Seq[String], count: Int): Unit = {
+    if (payload.nonEmpty) {
+      val insertQuery = s"INSERT INTO $table FORMAT JSONEachRow"
 
+      val payloadSql = payload.mkString("\n")
+
+      client.execute(insertQuery, payloadSql) onComplete {
+        case Failure(e) =>
+          self ! ClickhouseBulkActor.FlushFailure(e, count)
+        case Success(resp: String) =>
+          self ! ClickhouseBulkActor.FlushSuccess(resp, count)
+      }
+    }
+  }
 }
 
 case class SubscriberConfig(batchSize: Int = 10000,
