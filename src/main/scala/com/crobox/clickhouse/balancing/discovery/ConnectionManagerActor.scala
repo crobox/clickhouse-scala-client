@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.balancing.discovery
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, PoisonPill, Props, Stash, Status}
-import akka.dispatch.ControlMessage
 import akka.http.scaladsl.model.Uri
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{HostStatus, IsAlive}

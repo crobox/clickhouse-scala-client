@@ -8,8 +8,8 @@ import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.GetConne
 import com.crobox.clickhouse.balancing.discovery.cluster.ClusterConnectionProviderActor.ScanHosts
 import com.crobox.clickhouse.discovery.ConnectionConfig
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 /**
  * Host balancer that does a round robin on all the entries found in the `system.clusters` table.
