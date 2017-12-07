@@ -54,5 +54,5 @@ object HostHealthChecker {
     case object Dead extends Status
   }
 
-  case class HostStatus(host: Uri, status: Status) extends ControlMessage
+  case class HostStatus(host: Uri, status: Status)
 }

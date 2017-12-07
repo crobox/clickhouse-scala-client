@@ -117,7 +117,7 @@ object ConnectionManagerActor {
 
   case class GetConnection()
 
-  case class Connections(hosts: Set[Uri]) extends ControlMessage
+  case class Connections(hosts: Set[Uri])
 
   case class NoHostAvailableException(msg: String) extends IllegalStateException(msg)
 }
