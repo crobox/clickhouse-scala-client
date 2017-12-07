@@ -8,7 +8,7 @@ import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.GetConnection
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 case class MultiHostBalancer(hosts: Set[Uri], manager: ActorRef)(implicit system: ActorSystem)
@@ -17,7 +17,7 @@ case class MultiHostBalancer(hosts: Set[Uri], manager: ActorRef)(implicit system
 
   private implicit val timeout = durationToTimeout(5 seconds)
 
-  Await.result(manager ? ConnectionManagerActor.Connections(hosts), 10 seconds)
+  manager ! ConnectionManagerActor.Connections(hosts)
 
   override def nextHost: Future[Uri] = (manager ? GetConnection()).mapTo[Uri]
 }

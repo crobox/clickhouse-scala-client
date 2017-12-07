@@ -49,7 +49,6 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
           }
         })
       currentConfiguredHosts = hosts
-      sender ! Unit
 
     case GetConnection() =>
       if (!initialized) {
