@@ -3,15 +3,11 @@ package com.crobox.clickhouse
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
+import akka.stream.StreamTcpException
 import akka.stream.scaladsl.{Framing, Source}
 import akka.util.ByteString
 import com.crobox.clickhouse.balancing.HostBalancer
-import com.crobox.clickhouse.internal.{
-  ClickHouseExecutor,
-  ClickhouseQueryBuilder,
-  ClickhouseResponseParser,
-  InternalExecutorActor
-}
+import com.crobox.clickhouse.internal.{ClickHouseExecutor, ClickhouseQueryBuilder, ClickhouseResponseParser}
 import com.typesafe.config.Config
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -109,6 +105,9 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
   private def executeWithRetries(request: Future[Uri] => Future[String], retries: Int = 5): Future[String] =
     request(hostBalancer.nextHost).recoverWith {
       // The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests
+      case e: StreamTcpException =>
+        logger.warn(s"Stream exception, retries left: $retries", e)
+        executeWithRetries(request, retries - 1)
       case e: RuntimeException
           if e.getMessage.contains("The http server closed the connection unexpectedly") && retries > 0 =>
         logger.warn(s"Unexpected connection closure, retries left: $retries", e)

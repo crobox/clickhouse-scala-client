@@ -10,7 +10,7 @@ import com.crobox.clickhouse.internal.{ClickhouseHostBuilder, InternalExecutorAc
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -41,6 +41,7 @@ object HostBalancer extends ClickhouseHostBuilder {
         )
         MultiHostBalancer(connectionConfig
                             .getConfigList("hosts")
+                            .asScala
                             .toSet
                             .map((config: Config) => extractHost(config)),
                           manager)
