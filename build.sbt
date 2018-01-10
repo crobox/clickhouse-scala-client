@@ -10,8 +10,8 @@ lazy val root = Project("clickhouse-scala-client", file("."))
   .settings(
     organization := "com.crobox",
     name := "clickhouse-scala-client",
-    scalaVersion := "2.11.11",
-    crossScalaVersions := List("2.11.11", "2.12.3"),
+    scalaVersion := "2.12.4",
+    crossScalaVersions := List("2.11.11", "2.12.4"),
     scalacOptions ++= List(
       "-unchecked",
       "-deprecation",
@@ -20,6 +20,8 @@ lazy val root = Project("clickhouse-scala-client", file("."))
       "UTF-8"
     ),
     libraryDependencies ++= Seq(
+      "com.typesafe.akka"          %% "akka-actor"     % AkkaVersion,
+      "com.typesafe.akka"          %% "akka-stream"    % AkkaVersion,
       "com.typesafe.akka"          %% "akka-http"      % AkkaHttpVersion,
       "com.typesafe.scala-logging" %% "scala-logging"  % "3.7.2",
       "com.google.guava"           % "guava"           % "19.0",
