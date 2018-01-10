@@ -105,7 +105,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
   private def executeWithRetries(request: Future[Uri] => Future[String], retries: Int = 5): Future[String] =
     request(hostBalancer.nextHost).recoverWith {
       // The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests
-      case e: StreamTcpException =>
+      case e: StreamTcpException if retries > 0 =>
         logger.warn(s"Stream exception, retries left: $retries", e)
         executeWithRetries(request, retries - 1)
       case e: RuntimeException
