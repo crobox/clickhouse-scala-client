@@ -2,7 +2,7 @@ package com.crobox.clickhouse.internal
 
 import akka.http.scaladsl.coding.Gzip
 import akka.http.scaladsl.model.headers.{HttpEncoding, HttpEncodings}
-import akka.http.scaladsl.model.{HttpResponse, ResponseEntity, StatusCodes}
+import akka.http.scaladsl.model.{HttpResponse, ResponseEntity, StatusCodes, Uri}
 import akka.stream.Materializer
 import akka.util.ByteString
 import com.crobox.clickhouse.ClickhouseException
@@ -12,8 +12,9 @@ import scala.concurrent.{ExecutionContext, Future}
 private[clickhouse] trait ClickhouseResponseParser {
   protected implicit val executionContext: ExecutionContext
 
-  protected def handleResponse(responseFuture: Future[HttpResponse],
-                               query: String)(implicit materializer: Materializer): Future[String] =
+  protected def handleResponse(responseFuture: Future[HttpResponse], query: String, host: Uri)(
+      implicit materializer: Materializer
+  ): Future[String] =
     responseFuture.flatMap { response =>
       val encoding = response.encoding
       response match {
@@ -21,7 +22,10 @@ private[clickhouse] trait ClickhouseResponseParser {
           entityToString(entity, encoding)
         case HttpResponse(code, _, entity, _) =>
           entityToString(entity, encoding).flatMap(
-            response => Future.failed(new ClickhouseException(s"Server returned code $code; $response", query))
+            response =>
+              Future.failed(
+                new ClickhouseException(s"Server [$host] returned code $code; $response", query, statusCode = code)
+            )
           )
       }
     }

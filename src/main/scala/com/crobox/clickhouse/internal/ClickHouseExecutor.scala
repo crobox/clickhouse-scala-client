@@ -37,7 +37,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
                      entity: Option[RequestEntity] = None): Future[String] =
     host.flatMap(actualHost => {
       val request = toRequest(actualHost, query, readOnly, entity)
-      handleResponse(singleRequest(request), query)
+      handleResponse(singleRequest(request), query, actualHost)
     })
 
   def singleRequest(request: HttpRequest): Future[HttpResponse] = {
