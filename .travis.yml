@@ -16,9 +16,8 @@ after_success:
       ++${TRAVIS_SCALA_VERSION} publish
 
 before_install:
-  - docker pull yandex/clickhouse-server
-  - docker run -d -p 127.0.0.1:8123:8123 yandex/clickhouse-server
-  - docker ps -a
+  - docker-compose up -d
+
 services:
   - docker
 
