@@ -1,7 +1,8 @@
 package com.crobox.clickhouse.stream
 
 import akka.actor.{Actor, ActorRef, Cancellable, Props}
-import com.crobox.clickhouse.{ClickhouseClient, ClickhouseException}
+import com.crobox.clickhouse.ClickhouseClient
+import com.crobox.clickhouse.stream.ClickhouseBulkActor.ClickhouseIndexingException
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.mutable.ArrayBuffer
@@ -21,7 +22,7 @@ class ClickhouseBulkActor(targetTable: String,
 
   implicit val ec: ExecutionContext = context.dispatcher
 
-  private val buffer = new ArrayBuffer[ClickhouseBulkActor.Insert]()
+  private val buffer = new ArrayBuffer[String]()
   buffer.sizeHint(config.batchSize)
 
   private var completed = false
@@ -74,7 +75,7 @@ class ClickhouseBulkActor(targetTable: String,
       if (m.table != targetTable) {
         logger.warn(s"Received insert for ${m.table} but this indexer writes to $targetTable")
       }
-      buffer.append(m)
+      buffer.append(m.jsonRow)
       if (buffer.size == config.batchSize) {
         index()
       } else {
@@ -92,14 +93,13 @@ class ClickhouseBulkActor(targetTable: String,
 
     case ClickhouseBulkActor.FlushFailure(ex, count, payload) =>
       failed = failed + count
-      ex match {
-        case ClickhouseException(_, _, _, code) if code.intValue() >= 400 || code.intValue() <= 500 => {
-          logger.error(s"Query error while indexing $count items: $payload. failed: $failed, (confirmed: $confirmed)",
-                       ex)
-        }
-        case _ => logger.error(s"Exception while indexing $count items. failed: $failed, (confirmed: $confirmed)", ex)
-      }
-      config.failureCallback(targetTable, count)
+      logger.error(s"Exception while indexing $count items. failed: $failed, (confirmed: $confirmed)", ex)
+      config.failureCallback(
+        ClickhouseIndexingException(s"Exception while indexing $count items. failed: $failed, (confirmed: $confirmed)",
+                                    ex,
+                                    payload,
+                                    targetTable)
+      )
       checkCompleteOrRequestNext(count)
   }
 
@@ -132,14 +132,11 @@ class ClickhouseBulkActor(targetTable: String,
   }
 
   private def index(): Unit = {
-    val payload = buffer.map(_.jsonRow)
-
     val count = buffer.size
     logger.debug(s"Inserting $count")
-
     sent = sent + count
     logger.debug(s"Clickhouse $targetTable sent: $sent (confirmed: $confirmed, failed: $failed)")
-    send(targetTable, payload, count)
+    send(buffer.toList, count)
     buffer.clear()
 
     // buffer is now empty so no point keeping a scheduled flush after operation
@@ -147,15 +144,15 @@ class ClickhouseBulkActor(targetTable: String,
     flushAfterScheduler = None
   }
 
-  private def send(table: String, payload: Seq[String], count: Int): Unit =
+  private def send(payload: Seq[String], count: Int): Unit =
     if (payload.nonEmpty) {
-      val insertQuery = s"INSERT INTO $table FORMAT JSONEachRow"
+      val insertQuery = s"INSERT INTO $targetTable FORMAT JSONEachRow"
 
       val payloadSql = payload.mkString("\n")
 
       client.execute(insertQuery, payloadSql) onComplete {
         case Failure(e) =>
-          self ! ClickhouseBulkActor.FlushFailure(e, count, payloadSql)
+          self ! ClickhouseBulkActor.FlushFailure(e, count, payload)
         case Success(resp: String) =>
           self ! ClickhouseBulkActor.FlushSuccess(resp, count)
       }
@@ -183,6 +180,9 @@ object ClickhouseBulkActor {
 
   case class FlushSuccess(result: String, count: Int)
 
-  case class FlushFailure(ex: Throwable, count: Int, payload: String)
+  case class FlushFailure(ex: Throwable, count: Int, payload: Seq[String])
+
+  case class ClickhouseIndexingException(msg: String, cause: Throwable, payload: Seq[String], table: String)
+      extends RuntimeException(msg, cause)
 
 }

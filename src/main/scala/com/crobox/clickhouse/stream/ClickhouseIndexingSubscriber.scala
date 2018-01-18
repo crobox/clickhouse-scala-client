@@ -1,15 +1,14 @@
 package com.crobox.clickhouse.stream
 
 import akka.Done
-import akka.actor.{Actor, ActorRef, ActorRefFactory, Cancellable, PoisonPill, Props, Terminated}
-import com.crobox.clickhouse.{ClickhouseClient, ClickhouseException}
+import akka.actor.{Actor, ActorRef, ActorRefFactory, PoisonPill, Props, Terminated}
+import com.crobox.clickhouse.ClickhouseClient
+import com.crobox.clickhouse.stream.ClickhouseBulkActor.ClickhouseIndexingException
 import com.typesafe.scalalogging.LazyLogging
 import org.reactivestreams.{Subscriber, Subscription}
 
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ExecutionContext, Future, Promise}
-import scala.util.{Failure, Success}
+import scala.concurrent.{Future, Promise}
 
 object ClickhouseIndexingSubscriber extends LazyLogging {
 
@@ -22,7 +21,7 @@ object ClickhouseIndexingSubscriber extends LazyLogging {
   def default(
       client: ClickhouseClient,
       flushInterval: Option[FiniteDuration],
-      failureCallback: (String, Long) => Unit = (table, count) => (),
+      failureCallback: (ClickhouseIndexingException) => Unit = (ex) => (),
       successCallback: (String, Long) => Unit = (table, count) => ()
   )(implicit actorRefFactory: ActorRefFactory): (Subscriber[ClickhouseBulkActor.Insert], Future[Done]) = {
     val completed = Promise[Done]
@@ -37,11 +36,11 @@ object ClickhouseIndexingSubscriber extends LazyLogging {
           logger.debug(s"Completed!")
           completed.success(Done)
         },
-        failureCallback = (table, count) => {
-          failureCallback(table, count)
+        failureCallback = (ex) => {
+          failureCallback(ex)
         },
         successCallback = (table, count) => {
-          failureCallback(table, count)
+          successCallback(table, count)
         },
         flushInterval = flushInterval
       )
@@ -148,7 +147,7 @@ case class SubscriberConfig(batchSize: Int = 10000,
                             errorFn: Throwable => Unit = e => (),
                             //                            failureWait: FiniteDuration = 2.seconds,
                             //                            maxAttempts: Int = 5,
-                            failureCallback: (String, Long) => Unit = (table, count) => (),
+                            failureCallback: (ClickhouseIndexingException) => Unit = (ex) => {},
                             successCallback: (String, Long) => Unit = (table, count) => (),
                             flushInterval: Option[FiniteDuration] = None,
                             flushAfter: Option[FiniteDuration] = None)
