@@ -16,6 +16,8 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 class ClusterConnectionProviderActor(manager: ActorRef, executor: ActorRef) extends Actor with ActorLogging {
+  require(manager != null, "Manager has to be provided")
+  require(executor != null, "Executor has to be provided")
 
   private implicit val timeout: Timeout                = durationToTimeout(5 second)
   private implicit val materialzier: ActorMaterializer = ActorMaterializer()
