@@ -1,7 +1,7 @@
 version: '3'
 services:
   clickhouse:
-      image: yandex/clickhouse-server
+      image: crobox/clickhouse
       expose:
         - "8123"
       ports:
