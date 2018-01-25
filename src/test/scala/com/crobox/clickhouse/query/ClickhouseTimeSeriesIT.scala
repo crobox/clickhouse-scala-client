@@ -9,6 +9,8 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.TableDrivenPropertyChecks
 import com.crobox.clickhouse.query.marshalling.JsonProtocol._
+import org.scalatest.time.{Millis, Seconds, Span}
+
 import scala.concurrent.Future
 
 class ClickhouseTimeSeriesIT
@@ -20,6 +22,8 @@ class ClickhouseTimeSeriesIT
     with TableDrivenPropertyChecks {
 
   case class Result(time: IntervalStart, shields: String)
+  implicit override val patienceConfig =
+    PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
 
   object Result {
     implicit val format = jsonFormat2(Result.apply)
