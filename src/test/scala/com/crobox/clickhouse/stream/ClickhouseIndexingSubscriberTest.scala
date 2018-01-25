@@ -67,9 +67,9 @@ class ClickhouseIndexingSubscriberTest
 
   val parsedInserts = unparsedInserts.map(
     _.mapValues({
-      case value: Int             => value.toString
-      case value: String          => "\"" + value + "\""
-      case value: IndexedSeq[Int] => "[" + value.mkString(", ") + "]"
+      case value: Int           => value.toString
+      case value: String        => "\"" + value + "\""
+      case value: IndexedSeq[_] => "[" + value.mkString(", ") + "]"
     }).map { case (k, v) => s""""$k" : $v""" }
       .mkString(", ")
   )

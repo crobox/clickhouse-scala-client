@@ -1,4 +1,4 @@
-package com.crobox.clickhouse.schemabuilder
+package com.crobox.clickhouse.query.schemabuilder
 
 import com.crobox.clickhouse.ClickhouseStatement
 

@@ -1,6 +1,6 @@
-package com.crobox.clickhouse.schemabuilder
+package com.crobox.clickhouse.query.schemabuilder
 
-import com.crobox.clickhouse.schemabuilder.ColumnOperation.{AddColumn, DropColumn, ModifyColumn}
+import com.crobox.clickhouse.query.schemabuilder.ColumnOperation.{AddColumn, DropColumn, ModifyColumn}
 import org.scalatest.{FlatSpecLike, Matchers}
 
 /**

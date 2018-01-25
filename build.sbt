@@ -26,6 +26,7 @@ lazy val root = Project("clickhouse-scala-client", file("."))
       "com.typesafe.scala-logging" %% "scala-logging"  % "3.7.2",
       "com.google.guava"           % "guava"           % "19.0",
       "joda-time"                  % "joda-time"       % "2.9.9",
+      "io.spray"                   %% "spray-json"     % "1.3.3",
       "org.scalatest"              %% "scalatest"      % "3.0.0" % Test,
       "com.typesafe.akka"          %% "akka-testkit"   % AkkaVersion % Test,
       "ch.qos.logback"             % "logback-classic" % "1.2.3" % Test
