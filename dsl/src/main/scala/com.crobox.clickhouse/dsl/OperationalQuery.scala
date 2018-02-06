@@ -20,7 +20,7 @@ trait OperationalQuery extends Query with JoinableQuery {
   }
 
   def having(condition: Comparison): OperationalQuery = {
-    val comparison = underlying.where.map(_.and(condition)).getOrElse(condition)
+    val comparison = underlying.having.map(_.and(condition)).getOrElse(condition)
     OperationalQueryWrapper(underlying.copy(having = Option(comparison)))
   }
 
