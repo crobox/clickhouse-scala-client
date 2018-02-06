@@ -19,6 +19,11 @@ trait OperationalQuery extends Query with JoinableQuery {
     )
   }
 
+  def having(condition: Comparison): OperationalQuery = {
+    val comparison = underlying.where.map(_.and(condition)).getOrElse(condition)
+    OperationalQueryWrapper(underlying.copy(having = Option(comparison)))
+  }
+
   def orderBy(columns: AnyTableColumn*): OperationalQuery =
     orderByWithDirection(columns.map(c => (c, ASC)): _*)
 

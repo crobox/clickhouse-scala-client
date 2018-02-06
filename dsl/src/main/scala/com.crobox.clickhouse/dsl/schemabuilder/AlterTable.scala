@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import com.crobox.clickhouse.dsl.ClickhouseStatement
+import com.crobox.clickhouse.dsl.{ClickhouseStatement, Column, NativeColumn}
 
 /**
  * @author Sjoerd Mulder
@@ -23,10 +23,10 @@ sealed trait ColumnOperation
 
 object ColumnOperation {
 
-  case class AddColumn(column: Column, after: Option[String] = None) extends ColumnOperation {
+  case class AddColumn(column: NativeColumn[_], after: Option[String] = None) extends ColumnOperation {
     private val afterString = after.map(" AFTER " + _).getOrElse("")
 
-    override def toString: String = s"ADD COLUMN $column$afterString"
+    override def toString: String = s"ADD COLUMN ${column.query()}$afterString"
   }
 
   case class DropColumn(name: String) extends ColumnOperation {
@@ -34,9 +34,9 @@ object ColumnOperation {
     override def toString: String = s"DROP COLUMN $name"
   }
 
-  case class ModifyColumn(column: Column) extends ColumnOperation {
+  case class ModifyColumn(column: NativeColumn[_]) extends ColumnOperation {
 
-    override def toString: String = s"MODIFY COLUMN $column"
+    override def toString: String = s"MODIFY COLUMN ${column.query()}"
   }
 
 }

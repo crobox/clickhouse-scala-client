@@ -3,15 +3,14 @@ import com.typesafe.sbt.pgp.PgpKeys
 
 //scalafmt settings
 scalafmtVersion in ThisBuild := "1.0.0"
-scalafmtOnCompile in ThisBuild := false    // all projects
+scalafmtOnCompile in ThisBuild := false     // all projects
 scalafmtTestOnCompile in ThisBuild := false // all projects
 
 lazy val root = (project in file("."))
   .settings(
     inThisBuild(
       List(
-        organization := "com.crobox",
-        name := "clickhouse-scala-client",
+        organization := "com.crobox.clickhouse",
         scalaVersion := "2.12.4",
         crossScalaVersions := List("2.11.12", "2.12.4"),
         scalacOptions ++= List(
@@ -23,6 +22,7 @@ lazy val root = (project in file("."))
         )
       )
     ),
+    name := "clickhouse-client",
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
       if (version.value.trim.endsWith("SNAPSHOT"))
@@ -55,7 +55,7 @@ lazy val root = (project in file("."))
   .aggregate(clickhouseClient, testKit, clickhouseDsl)
 lazy val clickhouseClient: Project = (project in file("client"))
   .settings(
-    name := "clickhouse-scala-client",
+    name := "client",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
       "com.typesafe.akka"          %% "akka-actor" % AkkaVersion,
@@ -68,6 +68,7 @@ lazy val clickhouseClient: Project = (project in file("client"))
 
 lazy val testKit = (project in file("testKit"))
   .settings(
+    name := "testKit",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++=
       Build.testDependencies
@@ -76,8 +77,8 @@ lazy val testKit = (project in file("testKit"))
 
 lazy val clickhouseDsl = (project in file("dsl"))
   .settings(
-    name := "clickhouse-dsl",
+    name := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    libraryDependencies := Seq("io.spray" %% "spray-json" % "1.3.3","com.google.guava" % "guava" % "19.0")
+    libraryDependencies := Seq("io.spray" %% "spray-json" % "1.3.3", "com.google.guava" % "guava" % "19.0")
   )
   .dependsOn(clickhouseClient, testKit)

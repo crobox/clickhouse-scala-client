@@ -1,7 +1,5 @@
 package com.crobox.clickhouse.testkit
 
-import java.util.UUID
-
 import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.stream.{ActorMaterializer, Materializer}
@@ -9,32 +7,27 @@ import akka.{Done, NotUsed}
 import com.crobox.clickhouse.ClickhouseClient
 import com.crobox.clickhouse.stream.ClickhouseBulkActor.Insert
 import com.crobox.clickhouse.stream.{ClickhouseIndexingSubscriber, SubscriberConfig}
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpecLike}
+import org.scalatest._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise}
 import scala.util.{Random, Try}
 
-trait ClickhouseSpec extends FlatSpecLike with BeforeAndAfter with BeforeAndAfterAll with LazyLogging {
-
-  def config: Config
-
-  def randomUUID = UUID.randomUUID()
-
-  def randomString = Random.alphanumeric.take(10).mkString
-
+trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterAll {
+  this: Suite =>
+  def config: Config = ConfigFactory.load()
   //  actor system needs to be lazy, if wanting to override it please override this method
   def buildClickHouseSystem(): ActorSystem = ActorSystem("clickhouse-test")
 
   private lazy implicit val system: ActorSystem        = buildClickHouseSystem()
   private lazy implicit val materializer: Materializer = ActorMaterializer()
   import system.dispatcher
+
   def clickClient: ClickhouseClient = internalClient
 
   protected val database                            = s"crobox_clickhouse_client_${Random.nextInt(1000000)}"
-  protected val dropDatabase                        = true
   private lazy val internalClient: ClickhouseClient = new ClickhouseClient(config, database)
 
   private def sql(query: String): String = {
@@ -94,7 +87,7 @@ trait ClickhouseSpec extends FlatSpecLike with BeforeAndAfter with BeforeAndAfte
       try {
         done = predicate()
       } catch {
-        case e: Throwable => logger.warn("problem while testing predicate", e)
+        case _: Throwable =>
       }
     }
 
@@ -126,5 +119,5 @@ trait ClickhouseSpec extends FlatSpecLike with BeforeAndAfter with BeforeAndAfte
 
   override protected def afterAll(): Unit =
     try super.afterAll() // To be stackable, must call super.afterAll
-    finally if (dropDatabase) sql(s"DROP DATABASE IF EXISTS $database")
+    finally sql(s"DROP DATABASE IF EXISTS $database")
 }

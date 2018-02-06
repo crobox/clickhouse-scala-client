@@ -6,6 +6,7 @@ import scala.collection.mutable
 
 trait Table {
   val name: String
+  val columns: List[NativeColumn[_]]
 }
 
 trait Query {
@@ -20,11 +21,11 @@ case object ASC extends OrderingDirection
 
 case object DESC extends OrderingDirection
 
-//trait InnerQuery[T <: VirtualTable] extends Query[T]
 sealed case class UnderlyingQuery(selectQuery: SelectQuery,
                                   from: FromQuery,
                                   where: Option[Comparison] = None,
                                   groupBy: mutable.LinkedHashSet[AnyTableColumn] = mutable.LinkedHashSet.empty,
+                                  having: Option[Comparison] = None,
                                   join: Option[JoinQuery] = None,
                                   orderBy: mutable.LinkedHashSet[(AnyTableColumn, OrderingDirection)] =
                                     mutable.LinkedHashSet.empty,

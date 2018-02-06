@@ -3,7 +3,8 @@ package com.crobox.clickhouse.dsl
 import java.util.UUID
 
 import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
-import com.crobox.clickhouse.dsl.clickhouse.ClickhouseTokenizerModule
+import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
+import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 
 class QueryTest extends ClickhouseClientSpec with TestSchema {

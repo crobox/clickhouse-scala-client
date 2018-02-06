@@ -1,12 +1,30 @@
 package com.crobox.clickhouse
 
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.clickhouse.{QueryValue, QueryValueFormats}
+import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, DefaultClickhouseQueryExecutor, QueryResult}
+import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
+import spray.json.{JsonReader, JsonWriter}
 
 import scala.collection.immutable.Iterable
 import scala.collection.mutable
+import scala.concurrent.{ExecutionContext, Future}
 
-package object dsl extends ColumnOperations with QueryValueFormats {
+package object dsl extends ColumnOperations {
+  implicit class QueryExecution(query: Query) {
+
+    def as[V: JsonReader](
+        implicit executionContext: ExecutionContext,
+        clickhouseExecutor: ClickhouseQueryExecutor
+    ): Future[QueryResult[V]] = clickhouseExecutor.execute(query)
+  }
+
+  implicit class ValueInsertion[V: JsonWriter](values: Seq[V]) {
+
+    def into(table: Table)(
+        implicit executionContext: ExecutionContext,
+        clickhouseExecutor: ClickhouseQueryExecutor
+    ): Future[String] = clickhouseExecutor.insert(table, values)
+  }
 
   def select(columns: AnyTableColumn*): SelectQuery =
     SelectQuery(mutable.LinkedHashSet(columns: _*))
@@ -65,6 +83,15 @@ package object dsl extends ColumnOperations with QueryValueFormats {
 
   }
 
+  implicit class BooleanConditions(column: TableColumn[Boolean]) {
+
+    def isFalse(implicit qv: QueryValue[Boolean]): Comparison =
+      column.isEq(false)
+
+    def isTrue(implicit qv: QueryValue[Boolean]): Comparison =
+      column.isEq(true)
+  }
+
   implicit class ColumnsWithCondition[V](column: TableColumn[V]) {
 
     def <(other: TableColumn[V]): Comparison =
@@ -105,7 +132,7 @@ package object dsl extends ColumnOperations with QueryValueFormats {
                                  validator: ComparisonValidator[Iterable[_ >: V]] =
                                    ColumnsWithCondition.notEmptyValidator): Comparison =
       if (validator.isValid(other))
-        ValueColumnComparison[V, Iterable[V]](column, "IN", other)(queryValueToSeq[V](ev))
+        ValueColumnComparison[V, Iterable[V]](column, "IN", other)(QueryValueFormats.queryValueToSeq[V](ev))
       else
         NoOpComparison()
 
@@ -146,8 +173,7 @@ package object dsl extends ColumnOperations with QueryValueFormats {
 
   }
 
-  implicit class NegatedConditions[V](negated: NegateColumn[V])
-      extends ColumnsWithCondition(negated.column) {
+  implicit class NegatedConditions[V](negated: NegateColumn[V]) extends ColumnsWithCondition(negated.column) {
 
     override def isEq(other: V)(implicit ev: QueryValue[V], validator: ComparisonValidator[V]): Comparison =
       if (validator.isValid(other))

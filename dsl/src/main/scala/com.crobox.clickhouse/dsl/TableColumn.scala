@@ -1,12 +1,17 @@
 package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.dsl.clickhouse.QueryValue
+import com.crobox.clickhouse.dsl.marshalling.QueryValue
+import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue}
 import com.crobox.clickhouse.time.MultiInterval
 import org.joda.time.DateTime
 
 sealed case class EmptyColumn() extends TableColumn("")
 
-abstract class TableColumn[V](val name: String) {
+trait Column {
+  val name: String
+}
+
+class TableColumn[V](val name: String) extends Column {
 
   def as(alias: String): AliasedColumn[V] =
     AliasedColumn(this, alias)
@@ -15,9 +20,19 @@ abstract class TableColumn[V](val name: String) {
     AliasedColumn(this, alias.name)
 }
 
-object TableColumn {
-  type AnyTableColumn = TableColumn[_]
+case class NativeColumn[V](override val name: String,
+                           clickhouseType: ColumnType = ColumnType.String,
+                           defaultValue: DefaultValue = DefaultValue.NoDefault)
+    extends TableColumn[V](name) {
+  require(ClickhouseStatement.isValidIdentifier(name), s"Invalid column name identifier")
+
+  def query(): String = s"$name $clickhouseType$defaultValue"
 }
+
+object TableColumn {
+  type AnyTableColumn = Column
+}
+
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
 case class RefColumn[V](ref: String) extends TableColumn[V](ref)
@@ -28,46 +43,45 @@ case class TupleColumn[V](elements: AnyTableColumn*) extends TableColumn[V]("")
 
 abstract class ExpressionColumn[V](targetColumn: AnyTableColumn) extends TableColumn[V](targetColumn.name)
 
-case class Count[T <: Table]() extends ExpressionColumn[Long](EmptyColumn())
+case class Count(column: Option[TableColumn[_]] = None) extends ExpressionColumn[Long](EmptyColumn())
 
-case class CountIf[T <: Table](expressionColumn: ExpressionColumn[_]) extends ExpressionColumn[Long](EmptyColumn())
+case class CountIf(expressionColumn: ExpressionColumn[_]) extends ExpressionColumn[Long](EmptyColumn())
 
-case class UniqIf[T <: Table](tableColumn: AnyTableColumn, expressionColumn: ExpressionColumn[_])
+case class UniqIf(tableColumn: AnyTableColumn, expressionColumn: ExpressionColumn[_])
     extends ExpressionColumn[Long](tableColumn)
 
 case class ArrayJoin[V](tableColumn: TableColumn[Seq[V]]) extends ExpressionColumn[V](tableColumn)
 
 case class GroupUniqArray[V](tableColumn: TableColumn[V]) extends ExpressionColumn[Seq[V]](tableColumn)
 
-case class UInt64[T <: Table](tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
+case class UInt64(tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
 
-case class Uniq[T <: Table](tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
+case class Uniq(tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
 
-case class UniqState[T <: Table](tableColumn: AnyTableColumn) extends ExpressionColumn[String](tableColumn)
+case class UniqState(tableColumn: AnyTableColumn) extends ExpressionColumn[String](tableColumn)
 
-case class UniqMerge[T <: Table](tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
+case class UniqMerge(tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
 
-case class Sum[T <: Table](tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
+case class Sum(tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
 
 case class Min[V](tableColumn: TableColumn[V]) extends ExpressionColumn[V](tableColumn)
 
 case class Max[V](tableColumn: TableColumn[V]) extends ExpressionColumn[V](tableColumn)
 
-case class Empty[T <: Table](tableColumn: AnyTableColumn) extends ExpressionColumn[Boolean](tableColumn)
+case class Empty(tableColumn: AnyTableColumn) extends ExpressionColumn[Boolean](tableColumn)
 
-case class NotEmpty[T <: Table](tableColumn: AnyTableColumn) extends ExpressionColumn[Boolean](tableColumn)
+case class NotEmpty(tableColumn: AnyTableColumn) extends ExpressionColumn[Boolean](tableColumn)
 
-case class LowerCaseColumn[T <: Table](tableColumn: AnyTableColumn) extends ExpressionColumn[String](tableColumn)
+case class LowerCaseColumn(tableColumn: AnyTableColumn) extends ExpressionColumn[String](tableColumn)
 
-case class TimeSeries[T <: Table](tableColumn: TableColumn[Long],
-                                  interval: MultiInterval,
-                                  dateColumn: Option[TableColumn[DateTime]])
+case class TimeSeries(tableColumn: TableColumn[Long],
+                      interval: MultiInterval,
+                      dateColumn: Option[TableColumn[DateTime]])
     extends ExpressionColumn[Long](tableColumn)
 
-case class All[T <: Table]() extends ExpressionColumn[Long](EmptyColumn())
+case class All() extends ExpressionColumn[Long](EmptyColumn())
 //TODO allow comparisons to be used in expressions
-case class BooleanInt[T <: Table](tableColumn: AnyTableColumn, expected: Int)
-    extends ExpressionColumn[Int](tableColumn)
+case class BooleanInt(tableColumn: AnyTableColumn, expected: Int) extends ExpressionColumn[Int](tableColumn)
 
 case class Case[V](column: TableColumn[V], condition: Comparison)
 
@@ -76,7 +90,7 @@ case class Conditional[V](cases: Seq[Case[V]], default: AnyTableColumn) extends 
 /**
  * Used when referencing to a column in an expression
  */
-case class RawColumn[T <: Table](tableColumn: AnyTableColumn) extends ExpressionColumn[Boolean](tableColumn)
+case class RawColumn(tableColumn: AnyTableColumn) extends ExpressionColumn[Boolean](tableColumn)
 
 /**
  * Parse the supplied value as a constant value column in the query
@@ -87,7 +101,7 @@ case class Const[V: QueryValue](const: V) extends ExpressionColumn[V](EmptyColum
 
 trait ColumnOperations {
 
-  def conditional[T <: Table](column: AnyTableColumn, condition: Boolean): AnyTableColumn =
+  def conditional(column: AnyTableColumn, condition: Boolean): AnyTableColumn =
     if (condition) column else EmptyColumn()
 
   def ref[V](refName: String): TableColumn[V] =
@@ -96,43 +110,46 @@ trait ColumnOperations {
   def const[V: QueryValue](const: V): Const[V] =
     Const(const)
 
-  def toUInt64[T <: Table](tableColumn: TableColumn[Long]): UInt64[T] =
+  def toUInt64(tableColumn: TableColumn[Long]): UInt64 =
     UInt64(tableColumn)
 
-  def count[T <: Table](): TableColumn[Long] =
+  def count(): TableColumn[Long] =
     Count()
 
-  def countIf[T <: Table](expressionColumn: ExpressionColumn[_]): TableColumn[Long] =
+  def count(column: TableColumn[_]): TableColumn[Long] =
+    Count(Option(column))
+
+  def countIf(expressionColumn: ExpressionColumn[_]): TableColumn[Long] =
     CountIf(expressionColumn)
 
-  def uniqIf[T <: Table](tableColumn: AnyTableColumn, condition: ExpressionColumn[_]): TableColumn[Long] =
+  def uniqIf(tableColumn: AnyTableColumn, condition: ExpressionColumn[_]): TableColumn[Long] =
     UniqIf(tableColumn, condition)
 
-  def notEmpty[T <: Table](tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
+  def notEmpty(tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
     NotEmpty(tableColumn)
 
-  def empty[T <: Table](tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
+  def empty(tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
     Empty(tableColumn)
 
-  def is[T <: Table](tableColumn: AnyTableColumn): ExpressionColumn[Int] =
+  def is(tableColumn: AnyTableColumn): ExpressionColumn[Int] =
     BooleanInt(tableColumn, 1)
 
-  def not[T <: Table](tableColumn: AnyTableColumn): ExpressionColumn[Int] =
+  def not(tableColumn: AnyTableColumn): ExpressionColumn[Int] =
     BooleanInt(tableColumn, 0)
 
-  def rawColumn[T <: Table](tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
+  def rawColumn(tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
     RawColumn(tableColumn)
 
-  def uniq[T <: Table](tableColumn: AnyTableColumn): ExpressionColumn[Long] =
+  def uniq(tableColumn: AnyTableColumn): ExpressionColumn[Long] =
     Uniq(tableColumn)
 
-  def uniqState[T <: Table](tableColumn: AnyTableColumn): ExpressionColumn[String] =
+  def uniqState(tableColumn: AnyTableColumn): ExpressionColumn[String] =
     UniqState(tableColumn)
 
-  def uniqMerge[T <: Table](tableColumn: AnyTableColumn): ExpressionColumn[Long] =
+  def uniqMerge(tableColumn: AnyTableColumn): ExpressionColumn[Long] =
     UniqMerge(tableColumn)
 
-  def sum[T <: Table](tableColumn: AnyTableColumn): ExpressionColumn[Long] =
+  def sum(tableColumn: AnyTableColumn): ExpressionColumn[Long] =
     Sum(tableColumn)
 
   def min[V](tableColumn: TableColumn[V]): ExpressionColumn[V] =
@@ -141,20 +158,20 @@ trait ColumnOperations {
   def max[V](tableColumn: TableColumn[V]): ExpressionColumn[V] =
     Max(tableColumn)
 
-  def all(): All[Nothing] =
+  def all(): All =
     All()
 
   def switch[V](defaultValue: TableColumn[V], cases: Case[V]*): TableColumn[V] =
     Conditional(cases, defaultValue)
 
-  def columnCase[V](condition: Comparison, value: TableColumn[V]) = Case[V](value, condition)
+  def columnCase[V](condition: Comparison, value: TableColumn[V]): Case[V] = Case[V](value, condition)
 
   /*
    * @dateColumn Optional column
    * */
-  def timeSeries[T <: Table](tableColumn: TableColumn[Long],
-                             interval: MultiInterval,
-                             dateColumn: Option[TableColumn[DateTime]] = None): ExpressionColumn[Long] =
+  def timeSeries(tableColumn: TableColumn[Long],
+                 interval: MultiInterval,
+                 dateColumn: Option[TableColumn[DateTime]] = None): ExpressionColumn[Long] =
     TimeSeries(tableColumn, interval, dateColumn)
 
   def arrayJoin[V](tableColumn: TableColumn[Seq[V]]): ExpressionColumn[V] =
@@ -163,10 +180,10 @@ trait ColumnOperations {
   def groupUniqArray[V](tableColumn: TableColumn[V]): ExpressionColumn[Seq[V]] =
     GroupUniqArray(tableColumn)
 
-  def tuple[T1, T2](firstColumn: TableColumn[T1], secondColumn: TableColumn[T2]) =
+  def tuple[T1, T2](firstColumn: TableColumn[T1], secondColumn: TableColumn[T2]): TupleColumn[(T1, T2)] =
     TupleColumn[(T1, T2)](firstColumn, secondColumn)
 
-  def lowercase[T <: Table](tableColumn: TableColumn[String]): ExpressionColumn[String] =
+  def lowercase(tableColumn: TableColumn[String]): ExpressionColumn[String] =
     LowerCaseColumn(tableColumn)
 
 }

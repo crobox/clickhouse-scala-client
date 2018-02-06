@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import com.crobox.clickhouse.dsl.ClickhouseStatement
+import com.crobox.clickhouse.dsl.NativeColumn
+import scala.reflect.runtime.universe._
 
 /**
  * @author Sjoerd Mulder
@@ -10,6 +11,7 @@ sealed trait ColumnType
 
 object ColumnType {
 
+  //TODO infer the types based on the generic passed to the tablecolumn
   abstract class SimpleColumnType(value: String) extends ColumnType {
 
     override def toString: String = value
@@ -64,11 +66,15 @@ object ColumnType {
     override def toString: String = s"Array($columnType)"
   }
 
-  case class Nested(columns: Column*) extends ColumnType {
-    require(!columns.exists(c => c.columnType.isInstanceOf[Nested]), "Only a single nesting level is supported.")
+  case class Nested(columns: NativeColumn[_]*) extends ColumnType {
+    require(!columns.exists(c => c.clickhouseType.isInstanceOf[Nested]), "Only a single nesting level is supported.")
 
-    override def toString: String = s"Nested(${columns.mkString(", ")})"
+    override def toString: String = s"Nested(${columns.map(_.query()).mkString(", ")})"
   }
+
+//  TODO modifi this to accept and expression column
+  case class AggregateFunction(function: String, columnType: ColumnType)
+      extends SimpleColumnType(s"AggregateFunction($function, ${columnType.toString})")
 
 }
 
@@ -91,13 +97,4 @@ object DefaultValue {
     override def toString: String = " MATERIALIZED " + value
   }
 
-}
-
-case class Column(name: String,
-                  columnType: ColumnType = ColumnType.String,
-                  defaultValue: DefaultValue = DefaultValue.NoDefault) {
-  require(ClickhouseStatement.isValidIdentifier(name), s"Invalid column name identifier")
-
-  override def toString: String =
-    s"$name $columnType$defaultValue"
 }

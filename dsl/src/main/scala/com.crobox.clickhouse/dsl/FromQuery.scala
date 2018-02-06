@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.dsl.TokenizerModule.Database
+import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 
 sealed trait FromQuery extends Query with OperationalQuery with JoinableQuery
 

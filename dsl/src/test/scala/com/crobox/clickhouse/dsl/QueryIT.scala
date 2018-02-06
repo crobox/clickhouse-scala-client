@@ -2,20 +2,21 @@ package com.crobox.clickhouse.dsl
 
 import java.util.UUID
 
-import com.crobox.clickhouse.ClickhouseQuerySpec
+import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
-import com.crobox.clickhouse.dsl.clickhouse.QueryResult
+import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.testkit.{ClickhouseClientSpec, ClickhouseSpec}
 import org.scalatest.concurrent.ScalaFutures
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import scala.concurrent.Future
+import scala.util.Random
 
 class QueryIT
     extends ClickhouseClientSpec
     with ClickhouseSpec
-    with ClickhouseQuerySpec
+    with TestSchemaClickhouseQuerySpec
     with TestSchema
     with ScalaFutures {
 
@@ -24,7 +25,7 @@ class QueryIT
   private val oneId             = UUID.randomUUID()
   override val table1Entries =
     Seq(Table1Entry(oneId), Table1Entry(randomUUID), Table1Entry(randomUUID), Table1Entry(randomUUID))
-  override val table2Entries = Seq(Table2Entry(oneId, randomString, r.nextInt(1000), randomString, None))
+  override val table2Entries = Seq(Table2Entry(oneId, randomString, Random.nextInt(1000), randomString, None))
 
   "querying table" should "map as result" in {
 

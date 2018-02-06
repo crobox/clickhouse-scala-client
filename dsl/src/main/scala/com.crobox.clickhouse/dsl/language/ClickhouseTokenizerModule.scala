@@ -1,18 +1,21 @@
-package com.crobox.clickhouse.dsl.clickhouse
+package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.TokenizerModule.Database
-import com.crobox.clickhouse.dsl.{TokenizerModule, _}
+import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.crobox.clickhouse.time.TimeUnit.{Quarter, Total, Year}
 import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration, TimeUnit}
-import com.typesafe.scalalogging.LazyLogging
+import com.typesafe.scalalogging.{LazyLogging, Logger}
 import org.joda.time.DateTimeZone
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 
-trait ClickhouseTokenizerModule extends LazyLogging with TokenizerModule {
+trait ClickhouseTokenizerModule extends TokenizerModule {
+
+  private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
   override def toSql(query: UnderlyingQuery,
                      formatting: Option[String] = Some("JSON"))(implicit database: Database): String = {
@@ -25,15 +28,16 @@ trait ClickhouseTokenizerModule extends LazyLogging with TokenizerModule {
   private def toRawSql(query: UnderlyingQuery)(implicit database: Database): String =
     //    require(query != null) because parallel query is null
     query match {
-      case UnderlyingQuery(selectQuery, from, where, groupBy, join, orderBy, limit) =>
+      case UnderlyingQuery(selectQuery, from, where, groupBy, having, join, orderBy, limit) =>
         s"""
            |SELECT ${selectQuery.modifier} ${tokenizeColumns(
              selectQuery.columns
            )} FROM
            | ${tokenizeFrom(from)}
            | ${tokenizeJoin(join)}
-           | ${tokenizeWhere(where)}
+           | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
+           | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
            | ${tokenizeLimit(limit)}""".stripMargin
     }
@@ -52,7 +56,7 @@ trait ClickhouseTokenizerModule extends LazyLogging with TokenizerModule {
     column match {
       case AliasedColumn(original, alias) => s"${tokenizeColumn(original)} AS $alias"
       case tuple: TupleColumn[_]          => s"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
-      case Count()                        => "count()"
+      case Count(countColumn)             => s"count(${countColumn.map(tokenizeColumn).getOrElse("")})"
       case c: Const[_]                    => c.parsed
       case CountIf(expressionColumn)      => s"countIf(${tokenizeColumn(expressionColumn)})"
       case ArrayJoin(tableColumn)         => s"arrayJoin(${tokenizeColumn(tableColumn)})"
@@ -71,7 +75,7 @@ trait ClickhouseTokenizerModule extends LazyLogging with TokenizerModule {
       case Min(tableColumn)               => s"min(${tokenizeColumn(tableColumn)})"
       case Max(tableColumn)               => s"max(${tokenizeColumn(tableColumn)})"
       case LowerCaseColumn(tableColumn)   => s"lowerUTF8(${tokenizeColumn(tableColumn)})"
-      case timeSeries: TimeSeries[_]      => tokenizeTimeSeries(timeSeries)
+      case timeSeries: TimeSeries         => tokenizeTimeSeries(timeSeries)
       case Conditional(cases, default) =>
         s"CASE ${cases
           .map(ccase => s"WHEN ${tokenizeCondition(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
@@ -80,13 +84,13 @@ trait ClickhouseTokenizerModule extends LazyLogging with TokenizerModule {
     }
   }
 
-  private def tokenizeTimeSeries(timeSeries: TimeSeries[_ <: Table]): String = {
+  private def tokenizeTimeSeries(timeSeries: TimeSeries): String = {
     val column = tokenizeColumn(timeSeries.tableColumn)
     val zone   = timeSeries.interval.getStart.getZone
     tokenizeDuration(timeSeries, column, zone)
   }
 
-  private def tokenizeDuration(timeSeries: TimeSeries[_ <: Table], column: String, dateZone: DateTimeZone) = {
+  private def tokenizeDuration(timeSeries: TimeSeries, column: String, dateZone: DateTimeZone) = {
     val interval = timeSeries.interval
     val zoneId   = dateZone.getID
     interval.duration match {
@@ -141,10 +145,10 @@ trait ClickhouseTokenizerModule extends LazyLogging with TokenizerModule {
       case AllInnerJoin => "ALL INNER JOIN"
     }
 
-  private def tokenizeWhere(maybeCondition: Option[dsl.Comparison]): String =
+  private def tokenizeFiltering(maybeCondition: Option[dsl.Comparison], keyword: String): String =
     maybeCondition match {
       case None            => ""
-      case Some(condition) => s"WHERE ${tokenizeCondition(condition)}"
+      case Some(condition) => s"$keyword ${tokenizeCondition(condition)}"
     }
 
   protected def tokenizeCondition(condition: Comparison): String =

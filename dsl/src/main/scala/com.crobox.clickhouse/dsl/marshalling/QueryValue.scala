@@ -1,10 +1,10 @@
-package com.crobox.clickhouse.dsl.clickhouse
+package com.crobox.clickhouse.dsl.marshalling
 
 import java.util.UUID
 
 import com.crobox.clickhouse.dsl.ClickhouseStatement
 import com.crobox.clickhouse.partitioning.PartitionDateFormatter
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, LocalDate}
 
 import scala.collection.immutable.Iterable
 
@@ -40,9 +40,9 @@ trait QueryValueFormats {
 
   implicit object BooleanQueryValue extends QueryValue[Boolean] {
 
-    override def apply(v: Boolean): String = v.toString
+    override def apply(v: Boolean): String = IntQueryValue.apply(if (v) 1 else 0)
 
-    override def unapply(v: String): Boolean = v.toBoolean
+    override def unapply(v: String): Boolean = IntQueryValue.unapply(v) == 1
   }
 
   implicit object FloatQueryValue extends QueryValue[Float] {
@@ -79,6 +79,12 @@ trait QueryValueFormats {
     override def apply(v: DateTime): String = quote(PartitionDateFormatter.dateFormat(v))
 
     override def unapply(v: String): DateTime = DateTime.parse(unquote(v))
+  }
+  implicit object LocalDateQueryValue extends QueryValue[LocalDate] {
+
+    override def apply(v: LocalDate): String = quote(PartitionDateFormatter.dateFormat(v))
+
+    override def unapply(v: String): LocalDate = LocalDate.parse(unquote(v))
   }
 
   implicit def queryValueToSeq[V](ev: QueryValue[V]): QueryValue[Iterable[V]] =

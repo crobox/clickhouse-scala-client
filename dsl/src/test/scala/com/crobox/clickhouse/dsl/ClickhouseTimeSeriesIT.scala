@@ -2,9 +2,10 @@ package com.crobox.clickhouse.dsl
 
 import java.util.UUID
 
-import com.crobox.clickhouse.ClickhouseQuerySpec
-import com.crobox.clickhouse.dsl.clickhouse.QueryResult
-import com.crobox.clickhouse.dsl.marshalling.JsonProtocol._
+import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
+import com.crobox.clickhouse.dsl.execution.QueryResult
+import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
+import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 import com.crobox.clickhouse.testkit.{ClickhouseClientSpec, ClickhouseSpec}
 import com.crobox.clickhouse.time.{IntervalStart, MultiDuration, MultiInterval, SimpleDuration, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -17,8 +18,7 @@ import scala.concurrent.Future
 class ClickhouseTimeSeriesIT
     extends ClickhouseClientSpec
     with ClickhouseSpec
-    with ClickhouseQuerySpec
-    with TestSchema
+    with TestSchemaClickhouseQuerySpec
     with ScalaFutures
     with TableDrivenPropertyChecks {
 
