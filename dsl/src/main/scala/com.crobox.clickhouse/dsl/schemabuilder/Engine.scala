@@ -7,18 +7,7 @@ import org.joda.time.LocalDate
  * @author Sjoerd Mulder
  * @since 30-12-16
  */
-sealed trait Engine {
-  abstract override def toString: String =
-    this match {
-      case _: Replacing => s"Replacing${super.toString}"
-      case _            => super.toString
-    }
-
-}
-
-trait Replacing {
-  this: Engine =>
-}
+sealed trait Engine {}
 
 object Engine {
   case object TinyLog extends Engine {
@@ -41,7 +30,7 @@ object Engine {
 
   }
 
-  private[Engine] abstract class MergeTreeEngine extends Engine {
+  private[Engine] abstract class MergeTreeEngine(val name: String) extends Engine {
     val dateColumn: NativeColumn[LocalDate]
     val primaryKey: Seq[Column]
     val indexGranularity: Int
@@ -50,20 +39,19 @@ object Engine {
     private val samplingString = samplingExpression.map(_ + ", ").getOrElse("")
 
     override def toString: String =
-      s"MergeTree(${dateColumn.name}, $samplingString(${primaryKey.map(_.name).mkString(", ")}), $indexGranularity)"
+      s"$name(${dateColumn.name}, $samplingString(${primaryKey.map(_.name).mkString(", ")}), $indexGranularity)"
   }
 
   case class MergeTree(dateColumn: NativeColumn[LocalDate],
                        primaryKey: Seq[Column],
                        samplingExpression: Option[String] = None,
                        indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
-      extends MergeTreeEngine
+      extends MergeTreeEngine("MergeTree")
 
   case class ReplacingMergeTree(dateColumn: NativeColumn[LocalDate],
                                 primaryKey: Seq[Column],
                                 samplingExpression: Option[String] = None,
                                 indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
-      extends MergeTreeEngine
-      with Replacing
+      extends MergeTreeEngine("ReplacingMergeTree")
 
 }

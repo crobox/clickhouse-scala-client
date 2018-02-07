@@ -85,4 +85,33 @@ class CreateTableTest extends FlatSpecLike with Matchers {
         |) ENGINE = MergeTree(date, int64Hash(client_id), (date, client_id, hit_id), 8192)""".stripMargin)
   }
 
+  it should "make a valid CREATE TABLE query for ReplacingMergeTree" in {
+    val date        = NativeColumn[LocalDate]("date", ColumnType.Date)
+    val clientId    = NativeColumn("client_id", ColumnType.FixedString(16))
+    val hitId       = NativeColumn("hit_id", ColumnType.FixedString(16))
+    val testColumn  = NativeColumn("test_column", ColumnType.String)
+    val testColumn2 = NativeColumn("test_column2", ColumnType.Int8, Default("2"))
+    val result = CreateTable(
+      TestTable(
+        "merge_tree_table",
+        List(
+          date,
+          clientId,
+          hitId,
+          testColumn,
+          testColumn2
+        )
+      ),
+      Engine.ReplacingMergeTree(date, Seq(date, clientId, hitId), Some("int64Hash(client_id)"))
+    ).toString
+
+    result should be("""CREATE TABLE default.merge_tree_table (
+        |  date Date,
+        |  client_id FixedString(16),
+        |  hit_id FixedString(16),
+        |  test_column String,
+        |  test_column2 Int8 DEFAULT 2
+        |) ENGINE = ReplacingMergeTree(date, int64Hash(client_id), (date, client_id, hit_id), 8192)""".stripMargin)
+  }
+
 }
