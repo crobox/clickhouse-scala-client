@@ -51,36 +51,36 @@ object JoinQuery {
 
 }
 
-case class TableJoinedQuery[TargetTable <: Table, OriginalTable <: Table](internalQuery: InternalQuery,
+case class TableJoinedQuery[TargetTable <: Table, OriginalTable <: Table](internal: InternalQuery,
                                                                           `type`: JoinType,
                                                                           table: Table,
                                                                           usingColumns: Set[AnyTableColumn] =
                                                                             Set[AnyTableColumn]())
     extends JoinQuery {
-  override val internalQuery = internalQuery.copy(join = Some(this))
+  override val internalQuery = internal.copy(join = Some(this))
 
   override def using(
       column: AnyTableColumn,
       columns: AnyTableColumn*
   ): OperationalQueryWrapper = {
-    val join = TableJoinedQuery(internalQuery, `type`, table, (columns :+ column).toSet)
+    val join = TableJoinedQuery(internal, `type`, table, (columns :+ column).toSet)
       .asInstanceOf[TableJoinedQuery[TargetTable, OriginalTable]]
     OperationalQueryWrapper(internalQuery.copy(join = Some(join)))
   }
 }
 
-case class InnerJoinedQuery(internalQuery: InternalQuery,
+case class InnerJoinedQuery(internal: InternalQuery,
                             `type`: JoinType,
                             joinQuery: Query,
                             usingColumns: Set[AnyTableColumn] = Set[AnyTableColumn]())
     extends JoinQuery {
-  override val internalQuery = internalQuery.copy(join = Some(this))
+  override val internalQuery = internal.copy(join = Some(this))
 
   override def using(
       column: AnyTableColumn,
       columns: AnyTableColumn*
   ): OperationalQueryWrapper = {
-    val join = InnerJoinedQuery(internalQuery, `type`, joinQuery, (columns :+ column).toSet)
+    val join = InnerJoinedQuery(internal, `type`, joinQuery, (columns :+ column).toSet)
       .asInstanceOf[InnerJoinedQuery]
     OperationalQueryWrapper(internalQuery.copy(join = Some(join)))
   }
