@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.dsl
 
+import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue}
 import com.crobox.clickhouse.time.MultiInterval
@@ -33,7 +34,6 @@ object TableColumn {
   type AnyTableColumn = Column
 }
 
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
 case class RefColumn[V](ref: String) extends TableColumn[V](ref)
 

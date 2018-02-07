@@ -17,7 +17,7 @@ import com.crobox.clickhouse.dsl.{
   TableFromQuery,
   TableJoinedQuery,
   TestSchema,
-  UnderlyingQuery
+  InternalQuery
 }
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 
@@ -29,13 +29,13 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   "building select statement" should "build select statement" in {
     val select = SelectQuery(mutable.LinkedHashSet(shieldId))
     val generatedSql =
-      testSubject.toSql(UnderlyingQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable)))
+      testSubject.toSql(InternalQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable)))
     generatedSql should be("SELECT shield_id FROM default.captainAmerica FORMAT JSON")
   }
 
   it should "build select with alias" in {
     val select = SelectQuery(mutable.LinkedHashSet(shieldId as "preferable"))
-    testSubject.toSql(UnderlyingQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable))) should be(
+    testSubject.toSql(InternalQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable))) should be(
       "SELECT shield_id AS preferable FROM default.captainAmerica FORMAT JSON"
     )
   }
@@ -43,12 +43,12 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   it should "use paging" in {
     val select = SelectQuery(mutable.LinkedHashSet(shieldId))
     val generatedSql = testSubject.toSql(
-      UnderlyingQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable), limit = Some(Limit(15, 30)))
+      InternalQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable), limit = Some(Limit(15, 30)))
     )
     generatedSql should be("SELECT shield_id FROM default.captainAmerica LIMIT 30, 15 FORMAT JSON")
 
     val generatedSql2 = testSubject.toSql(
-      UnderlyingQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable), limit = Some(Limit(45)))
+      InternalQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable), limit = Some(Limit(45)))
     )
     generatedSql2 should be("SELECT shield_id FROM default.captainAmerica LIMIT 0, 45 FORMAT JSON")
   }
@@ -56,7 +56,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   "building where clause" should "add simple condition between columns" in {
     val select = SelectQuery(mutable.LinkedHashSet(shieldId))
     val query = testSubject.toSql(
-      UnderlyingQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable), Some(shieldId < itemId))
+      InternalQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable), Some(shieldId < itemId))
     )
     query should be("SELECT shield_id FROM default.captainAmerica WHERE shield_id < item_id FORMAT JSON")
   }
@@ -66,7 +66,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val uuid   = UUID.randomUUID()
     val query =
       testSubject.toSql(
-        UnderlyingQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable), Some(shieldId < uuid))
+        InternalQuery(select, TableFromQuery[OneTestTable.type](select, OneTestTable), Some(shieldId < uuid))
       )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -75,7 +75,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val select = SelectQuery(mutable.LinkedHashSet(shieldId))
     val uuid   = UUID.randomUUID()
     val query = testSubject.toSql(
-      UnderlyingQuery(select,
+      InternalQuery(select,
                       TableFromQuery[OneTestTable.type](select, OneTestTable),
                       Some(shieldId < uuid and shieldId < itemId))
     )
@@ -89,7 +89,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val select = SelectQuery(mutable.LinkedHashSet(shieldId))
     val uuid   = UUID.randomUUID()
     val query = testSubject.toSql(
-      UnderlyingQuery(select,
+      InternalQuery(select,
                       TableFromQuery[OneTestTable.type](select, OneTestTable),
                       Some(shieldId < uuid and NoOpComparison()))
     )
@@ -100,7 +100,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val select = SelectQuery(mutable.LinkedHashSet(shieldId))
     val uuid   = UUID.randomUUID()
     val query = testSubject.toSql(
-      UnderlyingQuery(select,
+      InternalQuery(select,
                       TableFromQuery[OneTestTable.type](select, OneTestTable),
                       Some(NoOpComparison() and shieldId < uuid))
     )
@@ -110,7 +110,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   "building group by" should "add columns as group by clauses" in {
     val select = SelectQuery(mutable.LinkedHashSet(shieldId))
     val query = testSubject.toSql(
-      UnderlyingQuery(select,
+      InternalQuery(select,
                       TableFromQuery[OneTestTable.type](select, OneTestTable),
                       groupBy = mutable.LinkedHashSet(shieldId))
     )
@@ -121,7 +121,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val alias  = shieldId as "preferable"
     val select = SelectQuery(mutable.LinkedHashSet(alias))
     val query = testSubject.toSql(
-      UnderlyingQuery(select,
+      InternalQuery(select,
                       TableFromQuery[OneTestTable.type](select, OneTestTable),
                       groupBy = mutable.LinkedHashSet(alias))
     )
@@ -131,10 +131,10 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   "building joins" should "build table join using select all style" in {
     val select = SelectQuery(mutable.LinkedHashSet(shieldId))
     val query = testSubject.toSql(
-      UnderlyingQuery(
+      InternalQuery(
         select,
         TableFromQuery[OneTestTable.type](select, OneTestTable),
-        join = Some(TableJoinedQuery(select.underlying, `type` = JoinQuery.AnyInnerJoin, OneTestTable, Set(shieldId)))
+        join = Some(TableJoinedQuery(select.internalQuery, `type` = JoinQuery.AnyInnerJoin, OneTestTable, Set(shieldId)))
       )
     )
     query should be(
@@ -146,11 +146,11 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val select     = SelectQuery(mutable.LinkedHashSet(shieldId))
     val joinSelect = SelectQuery(mutable.LinkedHashSet(itemId as "shield_id"))
     val query = testSubject.toSql(
-      UnderlyingQuery(
+      InternalQuery(
         select,
         TableFromQuery[OneTestTable.type](select, OneTestTable),
         join = Some(
-          InnerJoinedQuery(joinSelect.underlying,
+          InnerJoinedQuery(joinSelect.internalQuery,
                            JoinQuery.AnyLeftJoin,
                            TableFromQuery[TwoTestTable.type](joinSelect, TwoTestTable),
                            Set(shieldId))

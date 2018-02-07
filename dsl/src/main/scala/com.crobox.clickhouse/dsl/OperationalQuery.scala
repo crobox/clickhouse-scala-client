@@ -7,21 +7,21 @@ import scala.collection.mutable
 trait OperationalQuery extends Query with JoinableQuery {
 
   def where(condition: Comparison): OperationalQuery = {
-    val comparison = underlying.where.map(_.and(condition)).getOrElse(condition)
-    OperationalQueryWrapper(underlying.copy(where = Some(comparison)))
+    val comparison = internalQuery.where.map(_.and(condition)).getOrElse(condition)
+    OperationalQueryWrapper(internalQuery.copy(where = Some(comparison)))
   }
 
   def groupBy(columns: AnyTableColumn*): OperationalQuery = {
     val newGroupingColumns: mutable.LinkedHashSet[AnyTableColumn] = mutable.LinkedHashSet(columns: _*)
     val newSelect                                                 = mergeOperationalColumns(newGroupingColumns)
     OperationalQueryWrapper(
-      underlying.copy(selectQuery = newSelect, groupBy = underlying.groupBy ++ newGroupingColumns)
+      internalQuery.copy(selectQuery = newSelect, groupBy = internalQuery.groupBy ++ newGroupingColumns)
     )
   }
 
   def having(condition: Comparison): OperationalQuery = {
-    val comparison = underlying.having.map(_.and(condition)).getOrElse(condition)
-    OperationalQueryWrapper(underlying.copy(having = Option(comparison)))
+    val comparison = internalQuery.having.map(_.and(condition)).getOrElse(condition)
+    OperationalQueryWrapper(internalQuery.copy(having = Option(comparison)))
   }
 
   def orderBy(columns: AnyTableColumn*): OperationalQuery =
@@ -32,15 +32,15 @@ trait OperationalQuery extends Query with JoinableQuery {
       mutable.LinkedHashSet(columns: _*)
     val newSelect: SelectQuery = mergeOperationalColumns(newOrderingColumns.map(_._1))
     OperationalQueryWrapper(
-      underlying.copy(selectQuery = newSelect, orderBy = underlying.orderBy ++ newOrderingColumns)
+      internalQuery.copy(selectQuery = newSelect, orderBy = internalQuery.orderBy ++ newOrderingColumns)
     )
   }
 
   def limit(limit: Option[Limit]): OperationalQuery =
-    OperationalQueryWrapper(underlying.copy(limit = limit))
+    OperationalQueryWrapper(internalQuery.copy(limit = limit))
 
   private def mergeOperationalColumns(newOrderingColumns: mutable.LinkedHashSet[AnyTableColumn]) = {
-    val selectForGroup = underlying.selectQuery
+    val selectForGroup = internalQuery.selectQuery
     val selectWithOrderColumns = selectForGroup.columns ++ newOrderingColumns.filterNot(column => {
       selectForGroup.columns.exists {
         case AliasedColumn(_, alias) => column.name == alias
@@ -52,4 +52,4 @@ trait OperationalQuery extends Query with JoinableQuery {
   }
 }
 
-case class OperationalQueryWrapper(override val underlying: UnderlyingQuery) extends OperationalQuery
+case class OperationalQueryWrapper(override val internalQuery: InternalQuery) extends OperationalQuery

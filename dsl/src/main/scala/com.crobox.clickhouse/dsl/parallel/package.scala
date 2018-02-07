@@ -24,7 +24,7 @@ package object parallel {
    * The Parallel one just adds the results together...so for 1000 and 1000 you will get a result containing 2000 entries
    */
   case class CumulativeQueries(first: OperationalQuery, second: OperationalQuery) extends OperationalQuery {
-    override val underlying = null
+    override val internalQuery = null
 
     override def groupBy(columns: AnyTableColumn*): OperationalQuery = {
       val firstQueryGrouped  = first.groupBy(columns: _*)
@@ -49,7 +49,7 @@ package object parallel {
                             leftTableQry: OperationalQuery,
                             joinType: JoinQuery.JoinType = AllLeftJoin)
       extends OperationalQuery {
-    override val underlying = null
+    override val internalQuery = null
 
     def on(columns: AnyTableColumn*): OperationalQueryWrapper = {
       val rightTableQryGrouped = rightTableQry.groupBy(columns: _*).orderBy(columns: _*)
@@ -69,7 +69,7 @@ package object parallel {
                     groupCols: Seq[AnyTableColumn]): OperationalQueryWrapper = {
 
       def recursiveCollectCols(qry: Query, cols: Set[AnyTableColumn] = Set.empty): Set[AnyTableColumn] = {
-        val uQry = qry.underlying
+        val uQry = qry.internalQuery
 
         val selectAll = uQry.selectQuery.columns.contains(all())
 

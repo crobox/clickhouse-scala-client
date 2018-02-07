@@ -3,8 +3,7 @@ package com.crobox.clickhouse.dsl.execution
 import com.crobox.clickhouse.ClickhouseClient
 import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizerModule}
 import com.crobox.clickhouse.dsl.parallel.CumulativeQueries
-import com.crobox.clickhouse.dsl.{OperationalQuery, Query, Table, TableColumn, UnderlyingQuery}
-import com.typesafe.scalalogging.LazyLogging
+import com.crobox.clickhouse.dsl.{InternalQuery, OperationalQuery, Query, Table}
 import spray.json.{JsonReader, _}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -14,13 +13,13 @@ trait ClickhouseQueryExecutor extends QueryExecutor { self: TokenizerModule =>
 
   def execute[V: JsonReader](query: Query)(implicit executionContext: ExecutionContext): Future[QueryResult[V]] =
     query match {
-      case _: OperationalQuery if query.underlying != null =>
-        executeQuery(query.underlying)
+      case _: OperationalQuery if query.internalQuery != null =>
+        executeQuery(query.internalQuery)
       //TODO support more than 2 queries
       case CumulativeQueries(first, second) =>
         for {
-          res1 <- executeQuery[V](first.underlying)
-          res2 <- executeQuery[V](second.underlying)
+          res1 <- executeQuery[V](first.internalQuery)
+          res2 <- executeQuery[V](second.internalQuery)
         } yield {
           QueryResult(res1.rows ++ res2.rows, None, None)
         }
@@ -34,10 +33,10 @@ trait ClickhouseQueryExecutor extends QueryExecutor { self: TokenizerModule =>
       entity => client.execute(s"INSERT INTO ${client.table(table.name)} FORMAT JSONEachRow", entity)
     )
 
-  private def executeQuery[V: JsonReader](underlying: UnderlyingQuery)(implicit executionContext: ExecutionContext,
-                                                                       client: ClickhouseClient) = {
+  private def executeQuery[V: JsonReader](internal: InternalQuery)(implicit executionContext: ExecutionContext,
+                                                                     client: ClickhouseClient) = {
     import QueryResult._
-    val queryResult = client.query(toSql(underlying)(client.database))
+    val queryResult = client.query(toSql(internal)(client.database))
     queryResult.map(_.parseJson.convertTo[QueryResult[V]])
   }
 

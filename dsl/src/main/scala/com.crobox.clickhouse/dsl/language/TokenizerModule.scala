@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
-import com.crobox.clickhouse.dsl.UnderlyingQuery
+import com.crobox.clickhouse.dsl.InternalQuery
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 
 object TokenizerModule {
@@ -9,5 +9,5 @@ object TokenizerModule {
 
 trait TokenizerModule {
 
-  def toSql(query: UnderlyingQuery, formatting: Option[String] = Some("JSON"))(implicit database: Database): String
+  def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON"))(implicit database: Database): String
 }

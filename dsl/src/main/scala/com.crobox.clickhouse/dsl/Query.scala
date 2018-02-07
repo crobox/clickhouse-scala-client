@@ -10,7 +10,7 @@ trait Table {
 }
 
 trait Query {
-  val underlying: UnderlyingQuery
+  val internalQuery: InternalQuery
 }
 
 case class Limit(size: Long = 100, offset: Long = 0)
@@ -21,12 +21,12 @@ case object ASC extends OrderingDirection
 
 case object DESC extends OrderingDirection
 
-sealed case class UnderlyingQuery(selectQuery: SelectQuery,
-                                  from: FromQuery,
-                                  where: Option[Comparison] = None,
-                                  groupBy: mutable.LinkedHashSet[AnyTableColumn] = mutable.LinkedHashSet.empty,
-                                  having: Option[Comparison] = None,
-                                  join: Option[JoinQuery] = None,
-                                  orderBy: mutable.LinkedHashSet[(AnyTableColumn, OrderingDirection)] =
+sealed case class InternalQuery(selectQuery: SelectQuery,
+                                from: FromQuery,
+                                where: Option[Comparison] = None,
+                                groupBy: mutable.LinkedHashSet[AnyTableColumn] = mutable.LinkedHashSet.empty,
+                                having: Option[Comparison] = None,
+                                join: Option[JoinQuery] = None,
+                                orderBy: mutable.LinkedHashSet[(AnyTableColumn, OrderingDirection)] =
                                     mutable.LinkedHashSet.empty,
-                                  limit: Option[Limit] = None)
+                                limit: Option[Limit] = None)

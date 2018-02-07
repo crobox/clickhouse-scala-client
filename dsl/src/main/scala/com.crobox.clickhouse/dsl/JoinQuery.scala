@@ -6,22 +6,22 @@ import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 trait JoinableQuery extends Query {
 
   def allInnerJoin(query: OperationalQuery): JoinQuery =
-    InnerJoinedQuery(underlying, AllInnerJoin, query)
+    InnerJoinedQuery(internalQuery, AllInnerJoin, query)
 
   def allLeftJoin(query: OperationalQuery): JoinQuery =
-    InnerJoinedQuery(underlying, AllLeftJoin, query)
+    InnerJoinedQuery(internalQuery, AllLeftJoin, query)
 
   def anyLeftJoin(query: OperationalQuery): JoinQuery =
-    InnerJoinedQuery(underlying, AnyLeftJoin, query)
+    InnerJoinedQuery(internalQuery, AnyLeftJoin, query)
 
   def anyInnerJoin(query: OperationalQuery): JoinQuery =
-    InnerJoinedQuery(underlying, AnyInnerJoin, query)
+    InnerJoinedQuery(internalQuery, AnyInnerJoin, query)
 
   def join[TargetTable <: Table](`type`: JoinType, query: OperationalQuery): JoinQuery =
-    InnerJoinedQuery(underlying, `type`, query)
+    InnerJoinedQuery(internalQuery, `type`, query)
 
   def join[TargetTable <: Table](`type`: JoinType, table: TargetTable): JoinQuery =
-    TableJoinedQuery(underlying, `type`, table)
+    TableJoinedQuery(internalQuery, `type`, table)
 
 }
 
@@ -51,37 +51,37 @@ object JoinQuery {
 
 }
 
-case class TableJoinedQuery[TargetTable <: Table, OriginalTable <: Table](underlineQuery: UnderlyingQuery,
+case class TableJoinedQuery[TargetTable <: Table, OriginalTable <: Table](internalQuery: InternalQuery,
                                                                           `type`: JoinType,
                                                                           table: Table,
                                                                           usingColumns: Set[AnyTableColumn] =
                                                                             Set[AnyTableColumn]())
     extends JoinQuery {
-  override val underlying = underlineQuery.copy(join = Some(this))
+  override val internalQuery = internalQuery.copy(join = Some(this))
 
   override def using(
       column: AnyTableColumn,
       columns: AnyTableColumn*
   ): OperationalQueryWrapper = {
-    val join = TableJoinedQuery(underlineQuery, `type`, table, (columns :+ column).toSet)
+    val join = TableJoinedQuery(internalQuery, `type`, table, (columns :+ column).toSet)
       .asInstanceOf[TableJoinedQuery[TargetTable, OriginalTable]]
-    OperationalQueryWrapper(underlying.copy(join = Some(join)))
+    OperationalQueryWrapper(internalQuery.copy(join = Some(join)))
   }
 }
 
-case class InnerJoinedQuery(underlineQuery: UnderlyingQuery,
+case class InnerJoinedQuery(internalQuery: InternalQuery,
                             `type`: JoinType,
                             joinQuery: Query,
                             usingColumns: Set[AnyTableColumn] = Set[AnyTableColumn]())
     extends JoinQuery {
-  override val underlying = underlineQuery.copy(join = Some(this))
+  override val internalQuery = internalQuery.copy(join = Some(this))
 
   override def using(
       column: AnyTableColumn,
       columns: AnyTableColumn*
   ): OperationalQueryWrapper = {
-    val join = InnerJoinedQuery(underlineQuery, `type`, joinQuery, (columns :+ column).toSet)
+    val join = InnerJoinedQuery(internalQuery, `type`, joinQuery, (columns :+ column).toSet)
       .asInstanceOf[InnerJoinedQuery]
-    OperationalQueryWrapper(underlying.copy(join = Some(join)))
+    OperationalQueryWrapper(internalQuery.copy(join = Some(join)))
   }
 }

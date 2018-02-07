@@ -17,7 +17,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
 
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
-  override def toSql(query: UnderlyingQuery,
+  override def toSql(query: InternalQuery,
                      formatting: Option[String] = Some("JSON"))(implicit database: Database): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
     val sql       = (toRawSql(query) + formatSql).replaceAll("\n", "").replaceAll("\r", "").trim().replaceAll(" +", " ")
@@ -25,10 +25,10 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     sql
   }
 
-  private def toRawSql(query: UnderlyingQuery)(implicit database: Database): String =
+  private def toRawSql(query: InternalQuery)(implicit database: Database): String =
     //    require(query != null) because parallel query is null
     query match {
-      case UnderlyingQuery(selectQuery, from, where, groupBy, having, join, orderBy, limit) =>
+      case InternalQuery(selectQuery, from, where, groupBy, having, join, orderBy, limit) =>
         s"""
            |SELECT ${selectQuery.modifier} ${tokenizeColumns(
              selectQuery.columns
@@ -45,7 +45,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   private def tokenizeFrom(from: FromQuery)(implicit database: Database) = {
     require(from != null)
     from match {
-      case fromClause: InnerFromQuery                   => s"(${toRawSql(fromClause.innerQuery.underlying)})"
+      case fromClause: InnerFromQuery                   => s"(${toRawSql(fromClause.innerQuery.internalQuery)})"
       case TableFromQuery(_, table: Table, None)        => s"$database.${table.name}"
       case TableFromQuery(_, table: Table, Some(altDb)) => s"$altDb.${table.name}"
     }
@@ -117,9 +117,9 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case Some(join) =>
         join match {
           case tableJoin: TableJoinedQuery[_, _] =>
-            s"${tokenizeJoinType(tableJoin.`type`)} (${toRawSql((select(all()) from tableJoin.table).underlying)}) USING ${tokenizeColumns(tableJoin.usingColumns)}"
+            s"${tokenizeJoinType(tableJoin.`type`)} (${toRawSql((select(all()) from tableJoin.table).internalQuery)}) USING ${tokenizeColumns(tableJoin.usingColumns)}"
           case innerQueryJoin: InnerJoinedQuery =>
-            s"${tokenizeJoinType(innerQueryJoin.`type`)} (${toRawSql(innerQueryJoin.joinQuery.underlying)}) USING ${tokenizeColumns(innerQueryJoin.usingColumns)}"
+            s"${tokenizeJoinType(innerQueryJoin.`type`)} (${toRawSql(innerQueryJoin.joinQuery.internalQuery)}) USING ${tokenizeColumns(innerQueryJoin.usingColumns)}"
         }
     }
 
