@@ -15,9 +15,7 @@ import scala.util.Random
 
 class QueryIT
     extends ClickhouseClientSpec
-    with ClickhouseSpec
     with TestSchemaClickhouseQuerySpec
-    with TestSchema
     with ScalaFutures {
 
   import scala.concurrent.ExecutionContext.Implicits.global

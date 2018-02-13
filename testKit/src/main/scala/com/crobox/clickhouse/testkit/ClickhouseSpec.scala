@@ -17,7 +17,8 @@ import scala.util.{Random, Try}
 
 trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterAll {
   this: Suite =>
-  def config: Config = ConfigFactory.load()
+
+  val config: Config
   //  actor system needs to be lazy, if wanting to override it please override this method
   def buildClickHouseSystem(): ActorSystem = ActorSystem("clickhouse-test")
 

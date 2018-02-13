@@ -17,7 +17,6 @@ import scala.concurrent.Future
 
 class ClickhouseTimeSeriesIT
     extends ClickhouseClientSpec
-    with ClickhouseSpec
     with TestSchemaClickhouseQuerySpec
     with ScalaFutures
     with TableDrivenPropertyChecks {
