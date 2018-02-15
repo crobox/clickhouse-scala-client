@@ -8,6 +8,8 @@ scalafmtTestOnCompile in ThisBuild := false // all projects
 
 lazy val root = (project in file("."))
   .settings(
+    publish := {},
+    publishArtifact := false,
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
@@ -50,10 +52,10 @@ lazy val root = (project in file("."))
         }
       )
     ),
-    name := "clickhouse-client"
+    name := "clickhouse"
   )
-  .aggregate(clickhouseClient, testKit, clickhouseDsl)
-lazy val clickhouseClient: Project = (project in file("client"))
+  .aggregate(client, dsl, testkit)
+lazy val client: Project = (project in file("client"))
   .settings(
     name := "client",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
@@ -66,19 +68,19 @@ lazy val clickhouseClient: Project = (project in file("client"))
     ) ++ testDependencies.map(_    % Test)
   )
 
-lazy val testKit = (project in file("testKit"))
+lazy val testkit = (project in file("testkit"))
   .settings(
-    name := "testKit",
+    name := "testkit",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++=
       Build.testDependencies
   )
-  .dependsOn(clickhouseClient)
+  .dependsOn(client)
 
-lazy val clickhouseDsl = (project in file("dsl"))
+lazy val dsl = (project in file("dsl"))
   .settings(
     name := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies := Seq("io.spray" %% "spray-json" % "1.3.3", "com.google.guava" % "guava" % "19.0")
   )
-  .dependsOn(clickhouseClient, testKit)
+  .dependsOn(client, testkit)
