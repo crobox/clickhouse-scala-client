@@ -15,7 +15,7 @@ class AlterTableTest extends FlatSpecLike with Matchers {
       "a",
       Seq(
         AddColumn(NativeColumn("b")),
-        AddColumn(NativeColumn("e", ColumnType.Int), Some("d")),
+        AddColumn(NativeColumn("e", ColumnType.UInt32), Some("d")),
         DropColumn("c"),
         ModifyColumn(NativeColumn("d", ColumnType.String))
       )
