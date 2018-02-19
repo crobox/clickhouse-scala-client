@@ -1,10 +1,10 @@
 package com.crobox.clickhouse
 
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, DefaultClickhouseQueryExecutor, QueryResult}
+import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryResult}
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
-import spray.json.{JsonReader, JsonWriter}
 import com.dongxiguo.fastring.Fastring.Implicits._
+import spray.json.{JsonReader, JsonWriter}
 
 import scala.collection.immutable.Iterable
 import scala.concurrent.{ExecutionContext, Future}

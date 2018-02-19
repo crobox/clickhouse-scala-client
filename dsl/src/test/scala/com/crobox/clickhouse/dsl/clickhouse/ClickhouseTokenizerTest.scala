@@ -7,8 +7,6 @@ import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 import com.crobox.clickhouse.dsl.{Case, ColumnOperations, Conditional, InnerFromQuery, InternalQuery, JoinQuery, Limit, NoOpComparison, OperationalQuery, SelectQuery, TableColumn, TableFromQuery, TestSchema}
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 
-import scala.collection.mutable
-
 class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with ClickhouseTokenizerModule {
   val testSubject = this
 

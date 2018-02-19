@@ -3,7 +3,6 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
-import scala.collection.mutable
 import scala.util.Try
 
 object OperationalQuery {

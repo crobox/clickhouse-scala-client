@@ -4,10 +4,9 @@ import java.util.UUID
 
 import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class QueryTest extends ClickhouseClientSpec with TestSchema {
   val clickhouseTokenizer = new ClickhouseTokenizerModule {}

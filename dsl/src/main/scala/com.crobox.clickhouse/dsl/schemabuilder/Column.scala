@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
 import com.crobox.clickhouse.dsl.NativeColumn
-import scala.reflect.runtime.universe._
 
 /**
  * @author Sjoerd Mulder

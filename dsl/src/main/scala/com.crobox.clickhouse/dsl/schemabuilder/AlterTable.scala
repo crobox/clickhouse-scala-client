@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import com.crobox.clickhouse.dsl.{ClickhouseStatement, Column, NativeColumn}
+import com.crobox.clickhouse.dsl.{ClickhouseStatement, NativeColumn}
 
 /**
  * @author Sjoerd Mulder

@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
 package object parallel {
 
-  implicit class ParellelizableQuery(operationalQuery: OperationalQuery) {
+  implicit class ParallelizableQuery(operationalQuery: OperationalQuery) {
 
     /**
      * Merging 2 queries will retaining all grouping and selection of both queries and join them using the grouped columns

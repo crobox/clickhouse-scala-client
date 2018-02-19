@@ -5,8 +5,7 @@ import java.util.UUID
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
-import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
-import com.crobox.clickhouse.testkit.{ClickhouseClientSpec, ClickhouseSpec}
+import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import com.crobox.clickhouse.time.{IntervalStart, MultiDuration, MultiInterval, SimpleDuration, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatest.concurrent.ScalaFutures

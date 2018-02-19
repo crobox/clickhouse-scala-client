@@ -1,11 +1,9 @@
 package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.dsl.JoinQuery.JoinType
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-
-import scala.collection.immutable
-import scala.util.Try
 import com.dongxiguo.fastring.Fastring.Implicits._
+
+import scala.util.Try
 
 trait Table {
   val name: String
