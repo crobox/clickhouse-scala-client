@@ -42,9 +42,12 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
   def isPartial = !isValid
 
   /**
-   * Join 2 internalQueries, overwriting the other on conflicts
-   * @param other
-   */
+    * Merge with another InternalQuery, any conflict on query parts between the 2 joins will be resolved by
+    * preferring the left querypart over the right one.
+    *
+    * @param other The right part to merge with this InternalQuery
+    * @return A merge of this and other InternalQuery
+    */
   def :+>(other: InternalQuery): InternalQuery =
     InternalQuery(
       select.orElse(other.select),
@@ -57,8 +60,21 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
       limit.orElse(other.limit)
     )
 
+  /**
+    * Right associative version of the merge (:+>) operator.
+    *
+    * @param other The left part to merge with this InternalQuery
+    * @return A merge of this and other OperationalQuery
+    */
   def <+:(other: InternalQuery): InternalQuery = :+>(other)
 
+
+  /**
+    * Tries to merge this InternalQuery with other
+    *
+    * @param other The Query parts to merge against
+    * @return A Success on merge without conflict, or Failure of IllegalArgumentException otherwise.
+    */
   def +(other: InternalQuery): Try[InternalQuery] = Try{
     (0 until productArity).foreach(id => {
       require(

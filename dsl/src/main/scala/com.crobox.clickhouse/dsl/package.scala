@@ -30,6 +30,9 @@ package object dsl extends ColumnOperations with QueryFactory with QueryValueFor
     ): Future[String] = clickhouseExecutor.insert(table, values)
   }
 
+  /**
+    * Exposes the OperationalQuery.+ operator on Try[OperationalQuery]
+    */
   implicit class OperationalQueryTryLifter(base: Try[OperationalQuery]) {
     def +(other: OperationalQuery): Try[OperationalQuery] =
       for {

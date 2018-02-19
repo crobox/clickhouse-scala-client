@@ -123,13 +123,32 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(join = Some(newJoin)))
   }
 
+  /**
+    * Merge with another OperationalQuery, any conflict on query parts between the 2 joins will be resolved by
+    * preferring the left querypart over the right one.
+    *
+    * @param other The right part to merge with this OperationalQuery
+    * @return A merge of this and other OperationalQuery
+    */
   def :+>(other: OperationalQuery): OperationalQuery =
     OperationalQuery(this.internalQuery :+> other.internalQuery)
 
-  //right associative
+  /**
+    * Right associative version of the merge (:+>) operator.
+    *
+    * @param other The left part to merge with this OperationalQuery
+    * @return A merge of this and other OperationalQuery
+    */
+
   def <+:(other: OperationalQuery): OperationalQuery =
     OperationalQuery(this.internalQuery :+> other.internalQuery)
 
+  /**
+    * Tries to merge this OperationalQuery with other
+    *
+    * @param other The Query parts to merge against
+    * @return A Success on merge without conflict, or Failure of IllegalArgumentException otherwise.
+    */
   def +(other: OperationalQuery): Try[OperationalQuery] =
     (this.internalQuery + other.internalQuery).map(OperationalQuery.apply)
 
