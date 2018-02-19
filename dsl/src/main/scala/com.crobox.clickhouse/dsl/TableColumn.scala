@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.dsl
 
+import com.dongxiguo.fastring.Fastring.Implicits._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue}
@@ -25,9 +26,9 @@ case class NativeColumn[V](override val name: String,
                            clickhouseType: ColumnType = ColumnType.String,
                            defaultValue: DefaultValue = DefaultValue.NoDefault)
     extends TableColumn[V](name) {
-  require(ClickhouseStatement.isValidIdentifier(name), s"Invalid column name identifier")
+  require(ClickhouseStatement.isValidIdentifier(name), "Invalid column name identifier")
 
-  def query(): String = s"$name $clickhouseType$defaultValue"
+  def query(): String = fast"$name $clickhouseType$defaultValue".toString
 }
 
 object TableColumn {

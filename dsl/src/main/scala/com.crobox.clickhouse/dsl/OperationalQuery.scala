@@ -1,55 +1,140 @@
 package com.crobox.clickhouse.dsl
 
+import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
 import scala.collection.mutable
+import scala.util.Try
 
-trait OperationalQuery extends Query with JoinableQuery {
+object OperationalQuery {
+
+  def apply(_internalQuery: InternalQuery) = new OperationalQuery {
+    override val internalQuery: InternalQuery = _internalQuery
+  }
+}
+
+trait OperationalQuery extends Query {
+
+  def select(columns: AnyTableColumn*): OperationalQuery = {
+    val newSelect = Some(SelectQuery(Seq(columns: _*)))
+    OperationalQuery(internalQuery.copy(select = newSelect))
+  }
+
+  def distinct(columns: AnyTableColumn*): OperationalQuery = {
+    val newSelect = Some(SelectQuery(Seq(columns: _*), "DISTINCT"))
+    OperationalQuery(internalQuery.copy(select = newSelect))
+  }
 
   def where(condition: Comparison): OperationalQuery = {
     val comparison = internalQuery.where.map(_.and(condition)).getOrElse(condition)
-    OperationalQueryWrapper(internalQuery.copy(where = Some(comparison)))
+    OperationalQuery(internalQuery.copy(where = Some(comparison)))
+  }
+
+  def from[T <: Table](table: T, altDb: Option[Any] = None): OperationalQuery = {
+    val from = TableFromQuery(table, altDb)
+    OperationalQuery(internalQuery.copy(from = Some(from)))
+  }
+
+  def from(query: OperationalQuery): OperationalQuery = {
+    val from = InnerFromQuery(query)
+    OperationalQuery(internalQuery.copy(from = Some(from)))
   }
 
   def groupBy(columns: AnyTableColumn*): OperationalQuery = {
-    val newGroupingColumns: mutable.LinkedHashSet[AnyTableColumn] = mutable.LinkedHashSet(columns: _*)
-    val newSelect                                                 = mergeOperationalColumns(newGroupingColumns)
-    OperationalQueryWrapper(
-      internalQuery.copy(selectQuery = newSelect, groupBy = internalQuery.groupBy ++ newGroupingColumns)
+    val newSelect = mergeOperationalColumns(columns)
+    OperationalQuery(
+      internalQuery.copy(select = newSelect, groupBy = internalQuery.groupBy ++ columns)
     )
   }
 
   def having(condition: Comparison): OperationalQuery = {
     val comparison = internalQuery.having.map(_.and(condition)).getOrElse(condition)
-    OperationalQueryWrapper(internalQuery.copy(having = Option(comparison)))
+    OperationalQuery(internalQuery.copy(having = Option(comparison)))
   }
 
   def orderBy(columns: AnyTableColumn*): OperationalQuery =
     orderByWithDirection(columns.map(c => (c, ASC)): _*)
 
   def orderByWithDirection(columns: (AnyTableColumn, OrderingDirection)*): OperationalQuery = {
-    val newOrderingColumns: mutable.LinkedHashSet[(_ <: AnyTableColumn, OrderingDirection)] =
-      mutable.LinkedHashSet(columns: _*)
-    val newSelect: SelectQuery = mergeOperationalColumns(newOrderingColumns.map(_._1))
-    OperationalQueryWrapper(
-      internalQuery.copy(selectQuery = newSelect, orderBy = internalQuery.orderBy ++ newOrderingColumns)
+    val newOrderingColumns: Seq[(_ <: AnyTableColumn, OrderingDirection)] =
+      Seq(columns: _*)
+    val newSelect = mergeOperationalColumns(newOrderingColumns.map(_._1))
+    OperationalQuery(
+      internalQuery.copy(select = newSelect, orderBy = internalQuery.orderBy ++ newOrderingColumns)
     )
   }
 
   def limit(limit: Option[Limit]): OperationalQuery =
-    OperationalQueryWrapper(internalQuery.copy(limit = limit))
+    OperationalQuery(internalQuery.copy(limit = limit))
 
-  private def mergeOperationalColumns(newOrderingColumns: mutable.LinkedHashSet[AnyTableColumn]) = {
-    val selectForGroup = internalQuery.selectQuery
-    val selectWithOrderColumns = selectForGroup.columns ++ newOrderingColumns.filterNot(column => {
-      selectForGroup.columns.exists {
+  private def mergeOperationalColumns(newOrderingColumns: Seq[AnyTableColumn]) = {
+    val selectForGroup     = internalQuery.select
+    val selectForGroupCols = selectForGroup.toSeq.flatMap(_.columns)
+    val selectWithOrderColumns = selectForGroupCols ++ newOrderingColumns.filterNot(column => {
+      selectForGroupCols.exists {
         case AliasedColumn(_, alias) => column.name == alias
         case _                       => false
       }
     })
-    val newSelect = selectForGroup.copy(columns = selectWithOrderColumns)
+    val newSelect = selectForGroup.map(sq => sq.copy(columns = selectWithOrderColumns.toSeq))
     newSelect
   }
-}
 
-case class OperationalQueryWrapper(override val internalQuery: InternalQuery) extends OperationalQuery
+  def allInnerJoin(query: OperationalQuery): OperationalQuery = {
+    val newJoin = JoinQuery(AllInnerJoin, InnerFromQuery(query))
+    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+  }
+
+  def allLeftJoin(query: OperationalQuery): OperationalQuery = {
+    val newJoin = JoinQuery(AllLeftJoin, InnerFromQuery(query))
+    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+  }
+
+  def anyLeftJoin(query: OperationalQuery): OperationalQuery = {
+    val newJoin = JoinQuery(AnyLeftJoin, InnerFromQuery(query))
+    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+  }
+
+  def anyInnerJoin(query: OperationalQuery): OperationalQuery = {
+    val newJoin = JoinQuery(AnyInnerJoin, InnerFromQuery(query))
+    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+  }
+
+  def join[TargetTable <: Table](`type`: JoinType, query: OperationalQuery): OperationalQuery = {
+    val newJoin = JoinQuery(`type`, InnerFromQuery(query))
+    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+  }
+
+  def join[TargetTable <: Table](`type`: JoinType, table: TargetTable): OperationalQuery = {
+    val newJoin = JoinQuery(`type`, TableFromQuery(table))
+    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+  }
+
+  def using(
+    column: AnyTableColumn,
+    columns: AnyTableColumn*
+  ): OperationalQuery = {
+    require(internalQuery.join.isDefined)
+
+    val newUsing = (columns :+ column).toSet
+
+    val newJoin = this.internalQuery.join.get.copy(usingColumns = newUsing)
+
+    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+  }
+
+  def :+>(other: OperationalQuery): OperationalQuery =
+    OperationalQuery(this.internalQuery :+> other.internalQuery)
+
+  //right associative
+  def <+:(other: OperationalQuery): OperationalQuery =
+    OperationalQuery(this.internalQuery :+> other.internalQuery)
+
+  def +(other: OperationalQuery): Try[OperationalQuery] =
+    (this.internalQuery + other.internalQuery).map(OperationalQuery.apply)
+
+  def +(other: Try[OperationalQuery]): Try[OperationalQuery] =
+    other
+      .flatMap(o => this.internalQuery + o.internalQuery)
+      .map(OperationalQuery.apply)
+}

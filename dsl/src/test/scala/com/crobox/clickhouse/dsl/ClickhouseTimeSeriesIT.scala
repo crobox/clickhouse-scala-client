@@ -19,7 +19,7 @@ class ClickhouseTimeSeriesIT
     extends ClickhouseClientSpec
     with TestSchemaClickhouseQuerySpec
     with ScalaFutures
-    with TableDrivenPropertyChecks {
+    with TableDrivenPropertyChecks with QueryFactory {
 
   case class Result(time: IntervalStart, shields: String)
   implicit override val patienceConfig =
@@ -155,7 +155,7 @@ class ClickhouseTimeSeriesIT
 
   private def getEntries(multiInterval: MultiInterval, entriesId: UUID) =
     chExecuter.execute[Result](
-      select(count() as "shields", timeSeries(timestampColumn, multiInterval) as alias) from OneTestTable groupBy alias orderBy alias where (shieldId isEq entriesId)
+      select(count() as "shields", timeSeries(timestampColumn, multiInterval) as alias).from(OneTestTable).groupBy(alias).orderBy(alias).where(shieldId isEq entriesId)
     )
 
   private def validateFullRows(rows: Seq[Result], expectedCountInFullInterval: Int) =
