@@ -1,15 +1,19 @@
 package com.crobox.clickhouse
 
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, DefaultClickhouseQueryExecutor, QueryResult}
+import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryResult}
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
+import com.dongxiguo.fastring.Fastring.Implicits._
 import spray.json.{JsonReader, JsonWriter}
 
 import scala.collection.immutable.Iterable
-import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
-package object dsl extends ColumnOperations {
+package object dsl extends ColumnOperations with QueryFactory with QueryValueFormats {
+
+  implicit def fstr2str(fstr: Fastring): String = fstr.toString
+
   implicit class QueryExecution(query: Query) {
 
     def as[V: JsonReader](
@@ -26,38 +30,51 @@ package object dsl extends ColumnOperations {
     ): Future[String] = clickhouseExecutor.insert(table, values)
   }
 
-  def select(columns: AnyTableColumn*): SelectQuery =
-    SelectQuery(mutable.LinkedHashSet(columns: _*))
+  /**
+    * Exposes the OperationalQuery.+ operator on Try[OperationalQuery]
+    */
+  implicit class OperationalQueryTryLifter(base: Try[OperationalQuery]) {
+    def +(other: OperationalQuery): Try[OperationalQuery] =
+      for {
+        b <- base
+        bo <- b + other
+      } yield OperationalQuery(bo.internalQuery)
 
-  def distinct(columns: AnyTableColumn*): SelectQuery =
-    SelectQuery(mutable.LinkedHashSet(columns: _*), "DISTINCT")
+    def +(other: Try[OperationalQuery]): Try[OperationalQuery] =
+      for {
+        b <- base
+        o <- other
+        bo <- b + o
+      } yield OperationalQuery(bo.internalQuery)
+  }
 
   implicit class StringColumnWithCondition(column: TableColumn[String]) {
+
 
     //TODO switch the starts/ends/contains for iterables to use a one if for lists
     def startsWith(others: Iterable[String])(implicit ev: QueryValue[String],
                                              validator: ComparisonValidator[Iterable[_ >: String]] =
                                                ColumnsWithCondition.notEmptyValidator): Comparison =
-      isLike(others.map(other => s"$other%"))
+      isLike(others.map(other => fast"$other%".toString))
 
     def endsWith(others: Iterable[String])(implicit ev: QueryValue[String],
                                            validator: ComparisonValidator[Iterable[_ >: String]] =
                                              ColumnsWithCondition.notEmptyValidator): Comparison =
-      isLike(others.map(other => s"%$other"))
+      isLike(others.map(other => fast"%$other".toString))
 
     def contains(others: Iterable[String])(implicit ev: QueryValue[String],
                                            validator: ComparisonValidator[Iterable[_ >: String]] =
                                              ColumnsWithCondition.notEmptyValidator): Comparison =
-      isLike(others.map(other => s"%$other%"))
+      isLike(others.map(other => fast"%$other%".toString))
 
     def startsWith(other: String)(implicit ev: QueryValue[String]): Comparison =
-      isLike(s"$other%")
+      isLike(fast"$other%")
 
     def endsWith(other: String)(implicit ev: QueryValue[String]): Comparison =
-      isLike(s"%$other")
+      isLike(fast"%$other")
 
     def contains(other: String)(implicit ev: QueryValue[String]): Comparison =
-      isLike(s"%$other%")
+      isLike(fast"%$other%")
 
     def isLike(other: Iterable[String])(implicit ev: QueryValue[String],
                                         validator: ComparisonValidator[Iterable[_ >: String]] =

@@ -7,78 +7,84 @@ import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.crobox.clickhouse.time.TimeUnit.{Quarter, Total, Year}
 import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration, TimeUnit}
-import com.typesafe.scalalogging.{LazyLogging, Logger}
+import com.dongxiguo.fastring.Fastring.Implicits._
+import com.typesafe.scalalogging.Logger
 import org.joda.time.DateTimeZone
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
-
 trait ClickhouseTokenizerModule extends TokenizerModule {
-
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
   override def toSql(query: InternalQuery,
                      formatting: Option[String] = Some("JSON"))(implicit database: Database): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
     val sql       = (toRawSql(query) + formatSql).replaceAll("\n", "").replaceAll("\r", "").trim().replaceAll(" +", " ")
-    logger.debug(s"Generated sql [$sql]")
+    logger.debug(fast"Generated sql [$sql]")
     sql
   }
 
   private def toRawSql(query: InternalQuery)(implicit database: Database): String =
     //    require(query != null) because parallel query is null
     query match {
-      case InternalQuery(selectQuery, from, where, groupBy, having, join, orderBy, limit) =>
-        s"""
-           |SELECT ${selectQuery.modifier} ${tokenizeColumns(
-             selectQuery.columns
-           )} FROM
-           | ${tokenizeFrom(from)}
+      case InternalQuery(select, from, where, groupBy, having, join, orderBy, limit) =>
+        fast"""
+           |${tokenizeSelect(select)}
+           | FROM ${tokenizeFrom(from)}
            | ${tokenizeJoin(join)}
            | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
-           | ${tokenizeLimit(limit)}""".stripMargin
+           | ${tokenizeLimit(limit)}"""
+          .toString
+          .stripMargin
     }
 
-  private def tokenizeFrom(from: FromQuery)(implicit database: Database) = {
+  private def tokenizeSelect(select: Option[SelectQuery]) = {
+    select match {
+      case Some(s) => fast"SELECT ${s.modifier} ${tokenizeColumns(s.columns)}"
+      case _ => ""
+    }
+  }
+
+  private def tokenizeFrom(from: Option[FromQuery])(implicit database: Database) = {
     require(from != null)
     from match {
-      case fromClause: InnerFromQuery                   => s"(${toRawSql(fromClause.innerQuery.internalQuery)})"
-      case TableFromQuery(_, table: Table, None)        => s"$database.${table.name}"
-      case TableFromQuery(_, table: Table, Some(altDb)) => s"$altDb.${table.name}"
+      case Some(fromClause: InnerFromQuery)                => fast"(${toRawSql(fromClause.innerQuery.internalQuery)})"
+      case Some(TableFromQuery(table: Table, None))        => fast"$database.${table.name}"
+      case Some(TableFromQuery(table: Table, Some(altDb))) => fast"$altDb.${table.name}"
+      case _ => ""
     }
   }
 
   protected def tokenizeColumn(column: AnyTableColumn): String = {
     require(column != null)
     column match {
-      case AliasedColumn(original, alias) => s"${tokenizeColumn(original)} AS $alias"
-      case tuple: TupleColumn[_]          => s"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
-      case Count(countColumn)             => s"count(${countColumn.map(tokenizeColumn).getOrElse("")})"
+      case AliasedColumn(original, alias) => fast"${tokenizeColumn(original)} AS $alias"
+      case tuple: TupleColumn[_]          => fast"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
+      case Count(countColumn)             => fast"count(${countColumn.map(tokenizeColumn).getOrElse("")})"
       case c: Const[_]                    => c.parsed
-      case CountIf(expressionColumn)      => s"countIf(${tokenizeColumn(expressionColumn)})"
-      case ArrayJoin(tableColumn)         => s"arrayJoin(${tokenizeColumn(tableColumn)})"
-      case GroupUniqArray(tableColumn)    => s"groupUniqArray(${tokenizeColumn(tableColumn)})"
+      case CountIf(expressionColumn)      => fast"countIf(${tokenizeColumn(expressionColumn)})"
+      case ArrayJoin(tableColumn)         => fast"arrayJoin(${tokenizeColumn(tableColumn)})"
+      case GroupUniqArray(tableColumn)    => fast"groupUniqArray(${tokenizeColumn(tableColumn)})"
       case All()                          => "*"
       case UniqIf(tableColumn, expressionColumn) =>
-        s"uniqIf(${tokenizeColumn(tableColumn)}, ${tokenizeColumn(expressionColumn)})"
-      case BooleanInt(tableColumn, value) => s"${tokenizeColumn(tableColumn)} = $value"
-      case Empty(tableColumn)             => s"empty(${tokenizeColumn(tableColumn)})"
-      case NotEmpty(tableColumn)          => s"notEmpty(${tokenizeColumn(tableColumn)})"
-      case UInt64(tableColumn)            => s"toUInt64(${tokenizeColumn(tableColumn)})"
-      case Uniq(tableColumn)              => s"uniq(${tokenizeColumn(tableColumn)})"
-      case UniqState(tableColumn)         => s"uniqState(${tokenizeColumn(tableColumn)})"
-      case UniqMerge(tableColumn)         => s"uniqMerge(${tokenizeColumn(tableColumn)})"
-      case Sum(tableColumn)               => s"sum(${tokenizeColumn(tableColumn)})"
-      case Min(tableColumn)               => s"min(${tokenizeColumn(tableColumn)})"
-      case Max(tableColumn)               => s"max(${tokenizeColumn(tableColumn)})"
-      case LowerCaseColumn(tableColumn)   => s"lowerUTF8(${tokenizeColumn(tableColumn)})"
+        fast"uniqIf(${tokenizeColumn(tableColumn)}, ${tokenizeColumn(expressionColumn)})"
+      case BooleanInt(tableColumn, value) => fast"${tokenizeColumn(tableColumn)} = $value"
+      case Empty(tableColumn)             => fast"empty(${tokenizeColumn(tableColumn)})"
+      case NotEmpty(tableColumn)          => fast"notEmpty(${tokenizeColumn(tableColumn)})"
+      case UInt64(tableColumn)            => fast"toUInt64(${tokenizeColumn(tableColumn)})"
+      case Uniq(tableColumn)              => fast"uniq(${tokenizeColumn(tableColumn)})"
+      case UniqState(tableColumn)         => fast"uniqState(${tokenizeColumn(tableColumn)})"
+      case UniqMerge(tableColumn)         => fast"uniqMerge(${tokenizeColumn(tableColumn)})"
+      case Sum(tableColumn)               => fast"sum(${tokenizeColumn(tableColumn)})"
+      case Min(tableColumn)               => fast"min(${tokenizeColumn(tableColumn)})"
+      case Max(tableColumn)               => fast"max(${tokenizeColumn(tableColumn)})"
+      case LowerCaseColumn(tableColumn)   => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
       case timeSeries: TimeSeries         => tokenizeTimeSeries(timeSeries)
       case Conditional(cases, default) =>
-        s"CASE ${cases
-          .map(ccase => s"WHEN ${tokenizeCondition(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
+        fast"CASE ${cases
+          .map(ccase => fast"WHEN ${tokenizeCondition(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
           .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
       case regularColumn: AnyTableColumn => regularColumn.name
     }
@@ -95,38 +101,36 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     val zoneId   = dateZone.getID
     interval.duration match {
       case MultiDuration(value, TimeUnit.Month) =>
-        s"concat(toString(intDiv(toRelativeMonthNum(toDateTime($column / 1000),'$zoneId'), $value) * $value),'_$zoneId')"
+        fast"concat(toString(intDiv(toRelativeMonthNum(toDateTime($column / 1000),'$zoneId'), $value) * $value),'_$zoneId')"
       case MultiDuration(_, Quarter) =>
-        s"concat(toString(toStartOfQuarter(toDateTime($column / 1000),'$zoneId')),'_$zoneId')"
+        fast"concat(toString(toStartOfQuarter(toDateTime($column / 1000),'$zoneId')),'_$zoneId')"
       case MultiDuration(_, Year) =>
-        s"concat(toString(toStartOfYear(toDateTime($column / 1000),'$zoneId')),'_$zoneId')"
-      case SimpleDuration(Total) => s"${interval.getStartMillis}"
+        fast"concat(toString(toStartOfYear(toDateTime($column / 1000),'$zoneId')),'_$zoneId')"
+      case SimpleDuration(Total) => fast"${interval.getStartMillis}"
       //        handles seconds/minutes/hours/days/weeks
       case multiDuration: MultiDuration =>
         //        for fixed duration we calculate the milliseconds for the start of a sub interval relative to our predefined interval start. The first subinterval start would be `interval.startOfInterval()`
         //        if using weeks this would give the milliseconds of the start of the first day of the week, for days it would be the start of the day and so on.
         val intervalStartMillis = interval.startOfInterval().getMillis
-        s"((intDiv($column - $intervalStartMillis, ${multiDuration.millis()}) * ${multiDuration.millis()}) + $intervalStartMillis)"
+        fast"((intDiv($column - $intervalStartMillis, ${multiDuration.millis()}) * ${multiDuration.millis()}) + $intervalStartMillis)"
     }
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
   private def tokenizeJoin(option: Option[JoinQuery])(implicit database: Database): String =
     option match {
-      case None => ""
-      case Some(join) =>
-        join match {
-          case tableJoin: TableJoinedQuery[_, _] =>
-            s"${tokenizeJoinType(tableJoin.`type`)} (${toRawSql((select(all()) from tableJoin.table).internalQuery)}) USING ${tokenizeColumns(tableJoin.usingColumns)}"
-          case innerQueryJoin: InnerJoinedQuery =>
-            s"${tokenizeJoinType(innerQueryJoin.`type`)} (${toRawSql(innerQueryJoin.joinQuery.internalQuery)}) USING ${tokenizeColumns(innerQueryJoin.usingColumns)}"
-        }
+      case None =>
+        ""
+      case Some(JoinQuery(joinType,tableJoin: TableFromQuery[_],usingCols)) =>
+        fast"${tokenizeJoinType(joinType)} (SELECT * FROM ${tokenizeFrom(Some(tableJoin))}) USING ${tokenizeColumns(usingCols)}"
+      case Some(JoinQuery(joinType,innerJoin: InnerFromQuery,usingCols)) =>
+        fast"${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin))} USING ${tokenizeColumns(usingCols)}"
     }
 
   private def tokenizeColumns(columns: Set[AnyTableColumn]): String =
     columns.map(tokenizeColumn).mkString(", ")
 
-  private def tokenizeColumns(columns: mutable.LinkedHashSet[AnyTableColumn]): String =
+  private def tokenizeColumns(columns: Seq[AnyTableColumn]): String =
     columns
       .filterNot {
         case _: EmptyColumn => true
@@ -148,49 +152,49 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   private def tokenizeFiltering(maybeCondition: Option[dsl.Comparison], keyword: String): String =
     maybeCondition match {
       case None            => ""
-      case Some(condition) => s"$keyword ${tokenizeCondition(condition)}"
+      case Some(condition) => fast"$keyword ${tokenizeCondition(condition)}"
     }
 
   protected def tokenizeCondition(condition: Comparison): String =
     condition match {
       case _: NoOpComparison                             => ""
-      case ColRefColumnComparison(left, operator, right) => s"${aliasOrName(left)} $operator ${aliasOrName(right)}"
+      case ColRefColumnComparison(left, operator, right) => fast"${aliasOrName(left)} $operator ${aliasOrName(right)}"
       case vcc @ ValueColumnComparison(left, operator, right) =>
-        s"${aliasOrName(left)} $operator ${vcc.queryValueEvidence(right)}"
-      case FunctionColumnComparison(function, column) => s"$function(${aliasOrName(column)})"
+        fast"${aliasOrName(left)} $operator ${vcc.queryValueEvidence(right)}"
+      case FunctionColumnComparison(function, column) => fast"$function(${aliasOrName(column)})"
       case HigherOrderFunction(function, comparisonColumn, comparison, column) =>
-        s"$function(${tokenizeColumn(comparisonColumn)} -> ${tokenizeCondition(comparison)}, ${tokenizeColumn(column)})"
+        fast"$function(${tokenizeColumn(comparisonColumn)} -> ${tokenizeCondition(comparison)}, ${tokenizeColumn(column)})"
       case ChainableColumnCondition(_: NoOpComparison, _, _: NoOpComparison) => ""
-      case ChainableColumnCondition(left, _, _: NoOpComparison)              => s"${tokenizeCondition(left)}"
-      case ChainableColumnCondition(_: NoOpComparison, _, right)             => s"${tokenizeCondition(right)}"
+      case ChainableColumnCondition(left, _, _: NoOpComparison)              => fast"${tokenizeCondition(left)}"
+      case ChainableColumnCondition(_: NoOpComparison, _, right)             => fast"${tokenizeCondition(right)}"
       case ChainableColumnCondition(left, operator, right) if operator == "OR" =>
-        s"(${tokenizeCondition(left)} $operator ${tokenizeCondition(right)})"
+        fast"(${tokenizeCondition(left)} $operator ${tokenizeCondition(right)})"
       case ChainableColumnCondition(left, operator, right) =>
-        s"${tokenizeCondition(left)} $operator ${tokenizeCondition(right)}"
+        fast"${tokenizeCondition(left)} $operator ${tokenizeCondition(right)}"
     }
 
-  private def tokenizeGroupBy(groupBy: mutable.Set[AnyTableColumn]): String =
+  private def tokenizeGroupBy(groupBy: Seq[AnyTableColumn]): String =
     groupBy.toList match {
       case Nil | null => ""
-      case _          => s"GROUP BY ${tokenizeColumnsAliased(groupBy)}"
+      case _          => fast"GROUP BY ${tokenizeColumnsAliased(groupBy)}"
     }
 
-  private def tokenizeOrderBy(orderBy: mutable.Set[(AnyTableColumn, OrderingDirection)]): String =
+  private def tokenizeOrderBy(orderBy: Seq[(AnyTableColumn, OrderingDirection)]): String =
     orderBy.toList match {
       case Nil | null => ""
-      case _          => s"ORDER BY ${tokenizeTuplesAliased(orderBy)}"
+      case _          => fast"ORDER BY ${tokenizeTuplesAliased(orderBy)}"
     }
 
   private def tokenizeLimit(limit: Option[Limit]): String =
     limit match {
       case None                      => ""
-      case Some(Limit(size, offset)) => s" LIMIT $offset, $size"
+      case Some(Limit(size, offset)) => fast" LIMIT $offset, $size"
     }
 
-  private def tokenizeColumnsAliased(columns: mutable.Set[AnyTableColumn]): String =
+  private def tokenizeColumnsAliased(columns: Seq[AnyTableColumn]): String =
     columns.map(aliasOrName).mkString(", ")
 
-  private def tokenizeTuplesAliased(columns: mutable.Set[(AnyTableColumn, OrderingDirection)]): String =
+  private def tokenizeTuplesAliased(columns: Seq[(AnyTableColumn, OrderingDirection)]): String =
     columns
       .map {
         case (column, dir) =>

@@ -6,8 +6,15 @@ import com.crobox.clickhouse.dsl.ClickhouseStatement
 import com.crobox.clickhouse.partitioning.PartitionDateFormatter
 import org.joda.time.{DateTime, LocalDate}
 
+import scala.annotation.implicitNotFound
 import scala.collection.immutable.Iterable
 
+/**
+  * Parse a value into its Clickhouse SQL representation and vice - versa.
+  *
+  * @tparam V
+  */
+@implicitNotFound("No QueryVal for type ${V} in scope, import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._ or implement a QueryValue for ${V}")
 trait QueryValue[V] {
 
   def apply(value: V): String
@@ -80,6 +87,7 @@ trait QueryValueFormats {
 
     override def unapply(v: String): DateTime = DateTime.parse(unquote(v))
   }
+
   implicit object LocalDateQueryValue extends QueryValue[LocalDate] {
 
     override def apply(v: LocalDate): String = quote(PartitionDateFormatter.dateFormat(v))
