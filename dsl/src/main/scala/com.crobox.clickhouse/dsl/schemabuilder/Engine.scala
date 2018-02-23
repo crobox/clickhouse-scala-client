@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import com.crobox.clickhouse.dsl.{Column, NativeColumn}
+import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats.StringQueryValue
+import com.crobox.clickhouse.dsl.{ClickhouseStatement, Column, NativeColumn}
 import org.joda.time.LocalDate
 
 /**
@@ -36,10 +37,12 @@ object Engine {
     val indexGranularity: Int
     val samplingExpression: Option[String]
 
-    private val samplingString = samplingExpression.map(_ + ", ").getOrElse("")
+    private val primaryKeys = primaryKey.map(_.name) ++ samplingExpression
 
-    override def toString: String =
-      s"$name(${dateColumn.name}, $samplingString(${primaryKey.map(_.name).mkString(", ")}), $indexGranularity)"
+    val arguments = Seq(Some(dateColumn.name), samplingExpression,
+      Some(s"(${primaryKeys.mkString(", ")})"), Some(indexGranularity)).flatten
+
+    override def toString: String = s"$name(${arguments.mkString(", ")})"
   }
 
   case class MergeTree(dateColumn: NativeColumn[LocalDate],
@@ -53,5 +56,14 @@ object Engine {
                                 samplingExpression: Option[String] = None,
                                 indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
       extends MergeTreeEngine("ReplacingMergeTree")
+
+  case class Replicated(zookeeperPath: String,
+                        replicaName: String,
+                        engine: MergeTreeEngine) extends Engine {
+    override def toString: String = {
+      val arguments = Seq(zookeeperPath, replicaName).map(StringQueryValue(_)) ++ engine.arguments
+      s"Replicated${engine.name}(${arguments.mkString(", ")})"
+    }
+  }
 
 }

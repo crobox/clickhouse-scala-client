@@ -7,7 +7,7 @@ import scala.util.Try
 
 trait Table {
   val name: String
-  val columns: List[NativeColumn[_]]
+  val columns: Seq[NativeColumn[_]]
 }
 
 trait Query {

@@ -75,5 +75,5 @@ trait TestSchema {
 }
 
 object TestSchema {
-  case class TestTable(override val name: String, override val columns: List[NativeColumn[_]]) extends Table
+  case class TestTable(override val name: String, override val columns: Seq[NativeColumn[_]]) extends Table
 }
