@@ -21,6 +21,9 @@ for sbt you can use
 libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.2.2"
 ```
 
+## Clickhouse query DSL 
+For more information see: https://github.com/crobox/clickhouse-scala-client/wiki
+
 ## Configuration
 
   All the configuration keys are under the prefix `crobox.clickhouse.client`

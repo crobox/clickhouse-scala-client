@@ -5,8 +5,7 @@ import java.util.UUID
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
-import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
-import com.crobox.clickhouse.testkit.{ClickhouseClientSpec, ClickhouseSpec}
+import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import com.crobox.clickhouse.time.{IntervalStart, MultiDuration, MultiInterval, SimpleDuration, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatest.concurrent.ScalaFutures
@@ -19,7 +18,7 @@ class ClickhouseTimeSeriesIT
     extends ClickhouseClientSpec
     with TestSchemaClickhouseQuerySpec
     with ScalaFutures
-    with TableDrivenPropertyChecks {
+    with TableDrivenPropertyChecks with QueryFactory {
 
   case class Result(time: IntervalStart, shields: String)
   implicit override val patienceConfig =
@@ -155,7 +154,7 @@ class ClickhouseTimeSeriesIT
 
   private def getEntries(multiInterval: MultiInterval, entriesId: UUID) =
     chExecuter.execute[Result](
-      select(count() as "shields", timeSeries(timestampColumn, multiInterval) as alias) from OneTestTable groupBy alias orderBy alias where (shieldId isEq entriesId)
+      select(count() as "shields", timeSeries(timestampColumn, multiInterval) as alias).from(OneTestTable).groupBy(alias).orderBy(alias).where(shieldId isEq entriesId)
     )
 
   private def validateFullRows(rows: Seq[Result], expectedCountInFullInterval: Int) =
