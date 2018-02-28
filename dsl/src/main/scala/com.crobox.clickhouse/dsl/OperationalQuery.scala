@@ -57,7 +57,7 @@ trait OperationalQuery extends Query {
   def orderByWithDirection(columns: (AnyTableColumn, OrderingDirection)*): OperationalQuery = {
     val newOrderingColumns: Seq[(_ <: AnyTableColumn, OrderingDirection)] =
       Seq(columns: _*)
-    val newSelect = mergeOperationalColumns(newOrderingColumns.map(_._1))
+    val newSelect = mergeOperationalColumns(columns.map(_._1))
     OperationalQuery(
       internalQuery.copy(select = newSelect, orderBy = internalQuery.orderBy ++ newOrderingColumns)
     )
@@ -66,16 +66,28 @@ trait OperationalQuery extends Query {
   def limit(limit: Option[Limit]): OperationalQuery =
     OperationalQuery(internalQuery.copy(limit = limit))
 
-  private def mergeOperationalColumns(newOrderingColumns: Seq[AnyTableColumn]) = {
+  private def mergeOperationalColumns(newOrderingColumns: Seq[AnyTableColumn]): Option[SelectQuery] = {
     val selectForGroup     = internalQuery.select
+
     val selectForGroupCols = selectForGroup.toSeq.flatMap(_.columns)
-    val selectWithOrderColumns = selectForGroupCols ++ newOrderingColumns.filterNot(column => {
+
+    val filteredSelectAll = if (selectForGroupCols.contains(all())) {
+      //Only keep aliased, we already select all cols
+      newOrderingColumns.collect{ case c:AliasedColumn[_] => c}
+    }else{
+      newOrderingColumns
+    }
+
+    val filteredDuplicates = filteredSelectAll.filterNot(column => {
       selectForGroupCols.exists {
-        case AliasedColumn(_, alias) => column.name == alias
+        case c: Column => column.name == c.name
         case _                       => false
       }
     })
-    val newSelect = selectForGroup.map(sq => sq.copy(columns = selectWithOrderColumns.toSeq))
+
+    val selectWithOrderColumns = selectForGroupCols ++ filteredDuplicates
+
+    val newSelect = selectForGroup.map(sq => sq.copy(columns = selectWithOrderColumns))
     newSelect
   }
 
