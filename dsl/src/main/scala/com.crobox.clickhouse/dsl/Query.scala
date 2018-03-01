@@ -10,6 +10,19 @@ trait Table {
   val columns: Seq[NativeColumn[_]]
 }
 
+/**
+ * An extension on Table for case classes, 
+ * that provides an implementation of the column list for its own properties.
+ */
+trait CTable extends Table { self: Product =>
+   override val columns: List[NativeColumn[_]] = this
+     .productIterator
+     .collect {
+       case c : NativeColumn[_] => c
+     }
+     .toList
+ }
+
 trait Query {
   val internalQuery: InternalQuery
 }
