@@ -45,8 +45,7 @@ package object parallel {
   case class MergingQueries(rightTableQry: OperationalQuery,
                             leftTableQry: OperationalQuery,
                             joinType: JoinQuery.JoinType = AllLeftJoin)
-      extends OperationalQuery {
-    override val internalQuery = null
+      extends QueryFactory {
 
     def on(columns: AnyTableColumn*): OperationalQuery = {
       val rightTableQryGrouped = rightTableQry.groupBy(columns: _*).orderBy(columns: _*)
@@ -73,6 +72,8 @@ package object parallel {
         val maybeFromCols = uQry.from match {
           case Some(value: InnerFromQuery) if selectAll =>
             recursiveCollectCols(value.innerQuery.internalQuery)
+          case Some(value: TableFromQuery[_]) if selectAll =>
+            value.table.columns.toSet
           case _ =>
             Set.empty
         }

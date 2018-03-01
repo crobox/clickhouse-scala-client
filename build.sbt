@@ -81,7 +81,7 @@ lazy val dsl = (project in file("dsl"))
   .settings(
     name := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    libraryDependencies := Seq(
+    libraryDependencies ++= Seq(
       "io.spray" %% "spray-json" % "1.3.3",
       "com.google.guava" % "guava" % "19.0",
       "com.dongxiguo" %% "fastring" % "0.3.1"

@@ -38,12 +38,19 @@ trait TestSchema {
     override val columns: List[NativeColumn[_]] = List(itemId, col1, col2, col3, col4)
   }
 
+  case object ThreeTestTable extends Table {
+    override val name: String                   = "threeTestTable"
+    override val columns: List[NativeColumn[_]] = List(itemId, col4, col5, col6)
+  }
+
   val shieldId        = NativeColumn[UUID]("shield_id")
   val itemId          = NativeColumn[UUID]("item_id")
   val col1            = NativeColumn[String]("column_1")
   val col2            = NativeColumn[Int]("column_2", ColumnType.UInt32)
   val col3            = NativeColumn[String]("column_3")
   val col4            = NativeColumn[String]("column_4")
+  val col5            = NativeColumn[String]("column_5")
+  val col6            = NativeColumn[String]("column_6")
   val timestampColumn = NativeColumn[Long]("ts", ColumnType.UInt64)
 
   case class Table1Entry(shieldId: UUID, date: DateTime = DateTime.now())
