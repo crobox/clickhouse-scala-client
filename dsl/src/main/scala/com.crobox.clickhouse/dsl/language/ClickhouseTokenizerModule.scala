@@ -64,12 +64,17 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case tuple: TupleColumn[_]          => fast"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
       case Count(countColumn)             => fast"count(${countColumn.map(tokenizeColumn).getOrElse("")})"
       case c: Const[_]                    => c.parsed
-      case CountIf(expressionColumn)      => fast"countIf(${tokenizeColumn(expressionColumn)})"
+      case CountIf(expressionColumn: ExpressionColumn[_]) =>
+        fast"countIf(${tokenizeColumn(expressionColumn)})"
+      case CountIf(comparison: Comparison) =>
+        fast"countIf(${tokenizeCondition(comparison)})"
       case ArrayJoin(tableColumn)         => fast"arrayJoin(${tokenizeColumn(tableColumn)})"
       case GroupUniqArray(tableColumn)    => fast"groupUniqArray(${tokenizeColumn(tableColumn)})"
       case All()                          => "*"
-      case UniqIf(tableColumn, expressionColumn) =>
+      case UniqIf(tableColumn, expressionColumn: ExpressionColumn[_]) =>
         fast"uniqIf(${tokenizeColumn(tableColumn)}, ${tokenizeColumn(expressionColumn)})"
+      case UniqIf(tableColumn, expressionColumn: Comparison) =>
+        fast"uniqIf(${tokenizeColumn(tableColumn)}, ${tokenizeCondition(expressionColumn)})"
       case BooleanInt(tableColumn, value) => fast"${tokenizeColumn(tableColumn)} = $value"
       case Empty(tableColumn)             => fast"empty(${tokenizeColumn(tableColumn)})"
       case NotEmpty(tableColumn)          => fast"notEmpty(${tokenizeColumn(tableColumn)})"

@@ -6,11 +6,16 @@ import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.dongxiguo.fastring.Fastring.Implicits._
 import spray.json.{JsonReader, JsonWriter}
 
+import scala.annotation.implicitNotFound
 import scala.collection.immutable.Iterable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 package object dsl extends ColumnOperations with QueryFactory with QueryValueFormats {
+
+  //Naive union type context bound
+  trait Contra[-A]
+  type Union[A,B] = Contra[A] <:< Contra[B]
 
   implicit def fstr2str(fstr: Fastring): String = fstr.toString
 
@@ -110,6 +115,7 @@ package object dsl extends ColumnOperations with QueryFactory with QueryValueFor
   }
 
   implicit class ColumnsWithCondition[V](column: TableColumn[V]) {
+
 
     def <(other: TableColumn[V]): Comparison =
       ColRefColumnComparison[V](column, "<", other)
