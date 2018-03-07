@@ -1,11 +1,13 @@
 package com.crobox.clickhouse.dsl
 
 import com.dongxiguo.fastring.Fastring.Implicits._
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
+import com.crobox.clickhouse.dsl.TableColumn.{AnyTableColumn, ECondition}
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue}
 import com.crobox.clickhouse.time.MultiInterval
 import org.joda.time.DateTime
+
+import scala.annotation.implicitNotFound
 
 sealed case class EmptyColumn() extends TableColumn("")
 
@@ -14,7 +16,6 @@ trait Column {
 }
 
 class TableColumn[V](val name: String) extends Column {
-
   def as(alias: String): AliasedColumn[V] =
     AliasedColumn(this, alias)
 
@@ -33,8 +34,10 @@ case class NativeColumn[V](override val name: String,
 
 object TableColumn {
   type AnyTableColumn = Column
-}
 
+  @implicitNotFound("Condition can only be provided as a ExpressionColumn[_] or Comparison")
+  type ECondition[E] = Union[E, Comparison with ExpressionColumn[_]]
+}
 
 case class RefColumn[V](ref: String) extends TableColumn[V](ref)
 
@@ -46,10 +49,13 @@ abstract class ExpressionColumn[V](targetColumn: AnyTableColumn) extends TableCo
 
 case class Count(column: Option[TableColumn[_]] = None) extends ExpressionColumn[Long](EmptyColumn())
 
-case class CountIf(expressionColumn: ExpressionColumn[_]) extends ExpressionColumn[Long](EmptyColumn())
+case class CountIf[C : ECondition](condition: C) extends ExpressionColumn[Long](EmptyColumn())
 
-case class UniqIf(tableColumn: AnyTableColumn, expressionColumn: ExpressionColumn[_])
-    extends ExpressionColumn[Long](tableColumn)
+case class UniqIf[C : ECondition](tableColumn: AnyTableColumn, condition: C)
+  extends ExpressionColumn[Long](tableColumn)
+
+case class SumIf[C : ECondition](tableColumn: AnyTableColumn, condition: C)
+  extends ExpressionColumn[Long](tableColumn)
 
 case class ArrayJoin[V](tableColumn: TableColumn[Seq[V]]) extends ExpressionColumn[V](tableColumn)
 
@@ -81,7 +87,8 @@ case class TimeSeries(tableColumn: TableColumn[Long],
     extends ExpressionColumn[Long](tableColumn)
 
 case class All() extends ExpressionColumn[Long](EmptyColumn())
-//TODO allow comparisons to be used in expressions
+
+@deprecated("Use a comparison for this instead", "v0.4.0")
 case class BooleanInt(tableColumn: AnyTableColumn, expected: Int) extends ExpressionColumn[Int](tableColumn)
 
 case class Case[V](column: TableColumn[V], condition: Comparison)
@@ -120,11 +127,23 @@ trait ColumnOperations {
   def count(column: TableColumn[_]): TableColumn[Long] =
     Count(Option(column))
 
+  def countIf[T](condition: Comparison): TableColumn[Long] =
+    CountIf(condition)
+
   def countIf(expressionColumn: ExpressionColumn[_]): TableColumn[Long] =
-    CountIf(expressionColumn)
+    CountIf[ExpressionColumn[_]](expressionColumn)
 
   def uniqIf(tableColumn: AnyTableColumn, condition: ExpressionColumn[_]): TableColumn[Long] =
+    UniqIf[ExpressionColumn[_]](tableColumn, condition)
+
+  def uniqIf(tableColumn: AnyTableColumn, condition: Comparison): TableColumn[Long] =
     UniqIf(tableColumn, condition)
+
+  def sumIf(tableColumn: AnyTableColumn, condition: ExpressionColumn[_]): TableColumn[Long] =
+    SumIf[ExpressionColumn[_]](tableColumn, condition)
+
+  def sumIf(tableColumn: AnyTableColumn, condition: Comparison): TableColumn[Long] =
+    SumIf(tableColumn, condition)
 
   def notEmpty(tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
     NotEmpty(tableColumn)
