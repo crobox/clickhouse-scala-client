@@ -52,7 +52,10 @@ case class Count(column: Option[TableColumn[_]] = None) extends ExpressionColumn
 case class CountIf[C : ECondition](condition: C) extends ExpressionColumn[Long](EmptyColumn())
 
 case class UniqIf[C : ECondition](tableColumn: AnyTableColumn, condition: C)
-    extends ExpressionColumn[Long](tableColumn)
+  extends ExpressionColumn[Long](tableColumn)
+
+case class SumIf[C : ECondition](tableColumn: AnyTableColumn, condition: C)
+  extends ExpressionColumn[Long](tableColumn)
 
 case class ArrayJoin[V](tableColumn: TableColumn[Seq[V]]) extends ExpressionColumn[V](tableColumn)
 
@@ -135,6 +138,12 @@ trait ColumnOperations {
 
   def uniqIf(tableColumn: AnyTableColumn, condition: Comparison): TableColumn[Long] =
     UniqIf(tableColumn, condition)
+
+  def sumIf(tableColumn: AnyTableColumn, condition: ExpressionColumn[_]): TableColumn[Long] =
+    SumIf[ExpressionColumn[_]](tableColumn, condition)
+
+  def sumIf(tableColumn: AnyTableColumn, condition: Comparison): TableColumn[Long] =
+    SumIf(tableColumn, condition)
 
   def notEmpty(tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
     NotEmpty(tableColumn)

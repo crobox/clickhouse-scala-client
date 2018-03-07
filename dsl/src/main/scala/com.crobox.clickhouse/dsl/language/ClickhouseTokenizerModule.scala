@@ -75,6 +75,10 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
         fast"uniqIf(${tokenizeColumn(tableColumn)}, ${tokenizeColumn(expressionColumn)})"
       case UniqIf(tableColumn, expressionColumn: Comparison) =>
         fast"uniqIf(${tokenizeColumn(tableColumn)}, ${tokenizeCondition(expressionColumn)})"
+      case SumIf(tableColumn, expressionColumn: ExpressionColumn[_]) =>
+        fast"sumIf(${tokenizeColumn(tableColumn)}, ${tokenizeColumn(expressionColumn)})"
+      case SumIf(tableColumn, expressionColumn: Comparison) =>
+        fast"sumIf(${tokenizeColumn(tableColumn)}, ${tokenizeCondition(expressionColumn)})"
       case BooleanInt(tableColumn, value) => fast"${tokenizeColumn(tableColumn)} = $value"
       case Empty(tableColumn)             => fast"empty(${tokenizeColumn(tableColumn)})"
       case NotEmpty(tableColumn)          => fast"notEmpty(${tokenizeColumn(tableColumn)})"
