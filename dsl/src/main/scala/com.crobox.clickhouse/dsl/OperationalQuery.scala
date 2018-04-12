@@ -29,8 +29,8 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(where = Some(comparison)))
   }
 
-  def from[T <: Table](table: T, altDb: Option[Any] = None): OperationalQuery = {
-    val from = TableFromQuery(table, altDb)
+  def from[T <: Table](table: T, altDb: Option[Any] = None, fromFinal: Boolean = false): OperationalQuery = {
+    val from = TableFromQuery(table, altDb, fromFinal)
     OperationalQuery(internalQuery.copy(from = Some(from)))
   }
 

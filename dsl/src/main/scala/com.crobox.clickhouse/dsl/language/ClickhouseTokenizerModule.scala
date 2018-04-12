@@ -35,24 +35,27 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
            | ${tokenizeGroupBy(groupBy)}
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
-           | ${tokenizeLimit(limit)}"""
-          .toString
-          .stripMargin
+           | ${tokenizeLimit(limit)}""".toString.stripMargin
     }
 
-  private def tokenizeSelect(select: Option[SelectQuery]) = {
+  private def tokenizeSelect(select: Option[SelectQuery]) =
     select match {
       case Some(s) => fast"SELECT ${s.modifier} ${tokenizeColumns(s.columns)}"
-      case _ => ""
+      case _       => ""
     }
-  }
 
   private def tokenizeFrom(from: Option[FromQuery])(implicit database: Database) = {
     require(from != null)
+
+    def finalKw(f: Boolean): String = if (f) " FINAL" else ""
+
     from match {
-      case Some(fromClause: InnerFromQuery)                => fast"(${toRawSql(fromClause.innerQuery.internalQuery)})"
-      case Some(TableFromQuery(table: Table, None))        => fast"$database.${table.name}"
-      case Some(TableFromQuery(table: Table, Some(altDb))) => fast"$altDb.${table.name}"
+      case Some(fromClause: InnerFromQuery) =>
+        fast"(${toRawSql(fromClause.innerQuery.internalQuery)})"
+      case Some(TableFromQuery(table: Table, None, fromFinal)) =>
+        fast"$database.${table.name}${finalKw(fromFinal)}"
+      case Some(TableFromQuery(table: Table, Some(altDb), fromFinal)) =>
+        fast"$altDb.${table.name}${finalKw(fromFinal)}"
       case _ => ""
     }
   }
@@ -130,9 +133,9 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     option match {
       case None =>
         ""
-      case Some(JoinQuery(joinType,tableJoin: TableFromQuery[_],usingCols)) =>
+      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], usingCols)) =>
         fast"${tokenizeJoinType(joinType)} (SELECT * FROM ${tokenizeFrom(Some(tableJoin))}) USING ${tokenizeColumns(usingCols)}"
-      case Some(JoinQuery(joinType,innerJoin: InnerFromQuery,usingCols)) =>
+      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, usingCols)) =>
         fast"${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin))} USING ${tokenizeColumns(usingCols)}"
     }
 
