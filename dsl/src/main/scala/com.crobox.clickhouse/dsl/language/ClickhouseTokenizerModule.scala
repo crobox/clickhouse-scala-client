@@ -47,15 +47,15 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   private def tokenizeFrom(from: Option[FromQuery])(implicit database: Database) = {
     require(from != null)
 
-    def finalKw(f: Boolean): String = if (f) " FINAL" else ""
+    def tokenizeFinal(f: Boolean): String = if (f) " FINAL" else ""
 
     from match {
       case Some(fromClause: InnerFromQuery) =>
         fast"(${toRawSql(fromClause.innerQuery.internalQuery)})"
       case Some(TableFromQuery(table: Table, None, fromFinal)) =>
-        fast"$database.${table.name}${finalKw(fromFinal)}"
+        fast"$database.${table.name}${tokenizeFinal(fromFinal)}"
       case Some(TableFromQuery(table: Table, Some(altDb), fromFinal)) =>
-        fast"$altDb.${table.name}${finalKw(fromFinal)}"
+        fast"$altDb.${table.name}${tokenizeFinal(fromFinal)}"
       case _ => ""
     }
   }
