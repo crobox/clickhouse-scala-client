@@ -40,7 +40,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   "building where clause" should "add simple condition between columns" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
-      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), Some(shieldId < itemId))
+      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, Some(shieldId < itemId))
     )
     query should be("SELECT shield_id FROM default.captainAmerica WHERE shield_id < item_id FORMAT JSON")
   }
@@ -50,7 +50,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val uuid   = UUID.randomUUID()
     val query =
       testSubject.toSql(
-        InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), Some(shieldId < uuid))
+        InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, Some(shieldId < uuid))
       )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -61,6 +61,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                       Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                      false,
                       Some(shieldId < uuid and shieldId < itemId))
     )
     query should be(
@@ -75,6 +76,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                       Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                      false,
                       Some(shieldId < uuid and NoOpComparison()))
     )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
@@ -86,6 +88,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                       Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                      false,
                       Some(NoOpComparison() and shieldId < uuid))
     )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")

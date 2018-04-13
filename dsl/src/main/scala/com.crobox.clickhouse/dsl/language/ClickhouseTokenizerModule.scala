@@ -26,36 +26,40 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   private def toRawSql(query: InternalQuery)(implicit database: Database): String =
     //    require(query != null) because parallel query is null
     query match {
-      case InternalQuery(select, from, where, groupBy, having, join, orderBy, limit) =>
+      case InternalQuery(select, from, asFinal, where, groupBy, having, join, orderBy, limit) =>
         fast"""
            |${tokenizeSelect(select)}
            | FROM ${tokenizeFrom(from)}
+           | ${tokenizeFinal(asFinal)}
            | ${tokenizeJoin(join)}
            | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
-           | ${tokenizeLimit(limit)}"""
-          .toString
-          .stripMargin
+           | ${tokenizeLimit(limit)}""".toString.stripMargin
     }
 
-  private def tokenizeSelect(select: Option[SelectQuery]) = {
+  private def tokenizeSelect(select: Option[SelectQuery]) =
     select match {
       case Some(s) => fast"SELECT ${s.modifier} ${tokenizeColumns(s.columns)}"
-      case _ => ""
+      case _       => ""
     }
-  }
 
   private def tokenizeFrom(from: Option[FromQuery])(implicit database: Database) = {
     require(from != null)
+
     from match {
-      case Some(fromClause: InnerFromQuery)                => fast"(${toRawSql(fromClause.innerQuery.internalQuery)})"
-      case Some(TableFromQuery(table: Table, None))        => fast"$database.${table.name}"
-      case Some(TableFromQuery(table: Table, Some(altDb))) => fast"$altDb.${table.name}"
+      case Some(fromClause: InnerFromQuery) =>
+        fast"(${toRawSql(fromClause.innerQuery.internalQuery)})"
+      case Some(TableFromQuery(table: Table, None)) =>
+        fast"$database.${table.name}"
+      case Some(TableFromQuery(table: Table, Some(altDb))) =>
+        fast"$altDb.${table.name}"
       case _ => ""
     }
   }
+
+  private def tokenizeFinal(asFinal: Boolean): String = if (asFinal) "FINAL" else ""
 
   protected def tokenizeColumn(column: AnyTableColumn): String = {
     require(column != null)
@@ -130,9 +134,9 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     option match {
       case None =>
         ""
-      case Some(JoinQuery(joinType,tableJoin: TableFromQuery[_],usingCols)) =>
+      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], usingCols)) =>
         fast"${tokenizeJoinType(joinType)} (SELECT * FROM ${tokenizeFrom(Some(tableJoin))}) USING ${tokenizeColumns(usingCols)}"
-      case Some(JoinQuery(joinType,innerJoin: InnerFromQuery,usingCols)) =>
+      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, usingCols)) =>
         fast"${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin))} USING ${tokenizeColumns(usingCols)}"
     }
 

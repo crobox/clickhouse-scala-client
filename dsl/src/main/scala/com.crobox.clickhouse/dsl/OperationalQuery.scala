@@ -39,6 +39,10 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(from = Some(from)))
   }
 
+  def asFinal(asFinal: Boolean = true): OperationalQuery = {
+    OperationalQuery(internalQuery.copy(asFinal = asFinal))
+  }
+
   def groupBy(columns: AnyTableColumn*): OperationalQuery = {
     val newSelect = mergeOperationalColumns(columns)
     OperationalQuery(
