@@ -65,7 +65,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query2 = select(itemId) from OneTestTable where col2 >= 2
     val composed = query + query2
     composed should matchPattern {
-      case t: Failure[IllegalArgumentException] =>
+      case Failure(_:IllegalArgumentException) =>
     }
   }
 

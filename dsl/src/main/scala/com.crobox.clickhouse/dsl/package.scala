@@ -15,7 +15,7 @@ package object dsl extends ColumnOperations with QueryFactory with QueryValueFor
 
   //Naive union type context bound
   trait Contra[-A]
-  type Union[A,B] = Contra[A] <:< Contra[B]
+  type Union[A, B] = Contra[A] <:< Contra[B]
 
   implicit def fstr2str(fstr: Fastring): String = fstr.toString
 
@@ -36,25 +36,25 @@ package object dsl extends ColumnOperations with QueryFactory with QueryValueFor
   }
 
   /**
-    * Exposes the OperationalQuery.+ operator on Try[OperationalQuery]
-    */
+   * Exposes the OperationalQuery.+ operator on Try[OperationalQuery]
+   */
   implicit class OperationalQueryTryLifter(base: Try[OperationalQuery]) {
+
     def +(other: OperationalQuery): Try[OperationalQuery] =
       for {
-        b <- base
+        b  <- base
         bo <- b + other
       } yield OperationalQuery(bo.internalQuery)
 
     def +(other: Try[OperationalQuery]): Try[OperationalQuery] =
       for {
-        b <- base
-        o <- other
+        b  <- base
+        o  <- other
         bo <- b + o
       } yield OperationalQuery(bo.internalQuery)
   }
 
   implicit class StringColumnWithCondition(column: TableColumn[String]) {
-
 
     //TODO switch the starts/ends/contains for iterables to use a one if for lists
     def startsWith(others: Iterable[String])(implicit ev: QueryValue[String],
@@ -115,7 +115,6 @@ package object dsl extends ColumnOperations with QueryFactory with QueryValueFor
   }
 
   implicit class ColumnsWithCondition[V](column: TableColumn[V]) {
-
 
     def <(other: TableColumn[V]): Comparison =
       ColRefColumnComparison[V](column, "<", other)
@@ -268,22 +267,22 @@ package object dsl extends ColumnOperations with QueryFactory with QueryValueFor
   implicit def toComparison(comparisons: Seq[Comparison]): Comparison =
     comparisons.reduceOption(_ and _)
 
-  trait Comparison
+  abstract class Comparison extends TableColumn[Boolean]("")
 
   case class ChainableColumnCondition(left: Comparison, operator: String, right: Comparison) extends Comparison
 
-  abstract class AbstractColumnComparison[V, W](left: TableColumn[V], operator: String) extends Comparison {
+  abstract class ColumnComparison[V, W](left: TableColumn[V], operator: String) extends Comparison {
     val right: W
   }
 
   case class ValueColumnComparison[V, W](left: TableColumn[V], operator: String, override val right: W)(
       implicit ev: QueryValue[W]
-  ) extends AbstractColumnComparison[V, W](left: TableColumn[V], operator: String) {
+  ) extends ColumnComparison[V, W](left: TableColumn[V], operator: String) {
     val queryValueEvidence: QueryValue[W] = ev
   }
 
   case class ColRefColumnComparison[V](left: TableColumn[V], operator: String, override val right: TableColumn[V])
-      extends AbstractColumnComparison[V, TableColumn[V]](left: TableColumn[V], operator: String)
+      extends ColumnComparison[V, TableColumn[V]](left: TableColumn[V], operator: String)
 
   case class FunctionColumnComparison[V](functionName: String, column: TableColumn[V]) extends Comparison
 

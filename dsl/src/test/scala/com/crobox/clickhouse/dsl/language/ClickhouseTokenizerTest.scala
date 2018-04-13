@@ -1,11 +1,30 @@
-package com.crobox.clickhouse.dsl.clickhouse
+package com.crobox.clickhouse.dsl.language
 
 import java.util.UUID
 
-import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
-import com.crobox.clickhouse.dsl.{Case, ColumnOperations, Conditional, InnerFromQuery, InternalQuery, JoinQuery, Limit, NoOpComparison, OperationalQuery, SelectQuery, TableColumn, TableFromQuery, TestSchema}
+import com.crobox.clickhouse.dsl.{
+  AggregateFunction,
+  Case,
+  ColumnOperations,
+  CombinedAggregatedFunction,
+  Conditional,
+  InnerFromQuery,
+  InternalQuery,
+  JoinQuery,
+  Limit,
+  NoOpComparison,
+  OperationalQuery,
+  SelectQuery,
+  TableColumn,
+  TableFromQuery,
+  TestSchema,
+  TimeSeries,
+  Uniq
+}
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
+import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
+import org.joda.time.{DateTime, DateTimeZone}
 
 class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with ClickhouseTokenizerModule {
   val testSubject = this
@@ -61,8 +80,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                       Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,
-                      Some(shieldId < uuid and shieldId < itemId))
+                      false,Some(shieldId < uuid and shieldId < itemId))
     )
     query should be(
       s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
@@ -76,8 +94,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                       Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,
-                      Some(shieldId < uuid and NoOpComparison()))
+                      false,Some(shieldId < uuid and NoOpComparison()))
     )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -88,8 +105,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                       Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,
-                      Some(NoOpComparison() and shieldId < uuid))
+                      false,Some(NoOpComparison() and shieldId < uuid))
     )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -97,9 +113,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   "building group by" should "add columns as group by clauses" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
-      InternalQuery(Some(select),
-                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      groupBy = Seq(shieldId))
+      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), groupBy = Seq(shieldId))
     )
     query should be("SELECT shield_id FROM default.captainAmerica GROUP BY shield_id FORMAT JSON")
   }
@@ -108,9 +122,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val alias  = shieldId as "preferable"
     val select = SelectQuery(Seq(alias))
     val query = testSubject.toSql(
-      InternalQuery(Some(select),
-                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      groupBy = Seq(alias))
+      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), groupBy = Seq(alias))
     )
     query should be("SELECT shield_id AS preferable FROM default.captainAmerica GROUP BY preferable FORMAT JSON")
   }
@@ -137,11 +149,13 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
         join = Some(
-          JoinQuery(JoinQuery.AnyLeftJoin,
-                           InnerFromQuery(OperationalQuery(InternalQuery(
-                             Some(joinSelect),
-                             Some(TableFromQuery[TwoTestTable.type](TwoTestTable))))),
-                           Set(shieldId))
+          JoinQuery(
+            JoinQuery.AnyLeftJoin,
+            InnerFromQuery(
+              OperationalQuery(InternalQuery(Some(joinSelect), Some(TableFromQuery[TwoTestTable.type](TwoTestTable))))
+            ),
+            Set(shieldId)
+          )
         )
       )
     )
@@ -165,5 +179,27 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
         .const(3)
         .as(col2)
     ) shouldBe s"3 AS ${col2.name}"
+  }
+
+  "Aggregated functions" should "build with combinators" in {
+    this.tokenizeColumn(CombinedAggregatedFunction(AggregateFunction.If(col1.isEq("test")), Uniq(col1))) shouldBe s"uniqIf(${col1.name},${col1.name} = 'test')"
+    this.tokenizeColumn(CombinedAggregatedFunction(AggregateFunction.If(col1.isEq("test")), Uniq(col1, Uniq.HLL12))) shouldBe s"uniqHLL12If(${col1.name},${col1.name} = 'test')"
+    this.tokenizeColumn(CombinedAggregatedFunction(AggregateFunction.If(col1.isEq("test")), Uniq(col1, Uniq.Combined))) shouldBe s"uniqCombinedIf(${col1.name},${col1.name} = 'test')"
+    this.tokenizeColumn(
+      CombinedAggregatedFunction(AggregateFunction.If(col1.isEq("test")),
+                                 CombinedAggregatedFunction(AggregateFunction.If(col2.isEq(3)), Uniq(col1, Uniq.Exact)))
+    ) shouldBe s"uniqExactIfIf(${col1.name},${col2.name} = 3,${col1.name} = 'test')"
+  }
+
+  "build time series" should "use zone name for monthly" in {
+    this.tokenizeTimeSeries(
+      TimeSeries(
+        timestampColumn,
+        MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
+                      DateTime.now(DateTimeZone.forOffsetHours(2)),
+                      MultiDuration(TimeUnit.Month)),
+        None
+      )
+    ) shouldBe """concat(toString(intDiv(toRelativeMonthNum(toDateTime(ts / 1000),'Africa/Maputo'), 1) * 1),'_Africa/Maputo')"""
   }
 }
