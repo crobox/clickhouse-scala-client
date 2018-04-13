@@ -4,9 +4,7 @@ import com.crobox.clickhouse.dsl.AggregateFunction.AggregationFunctionsDsl
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue}
-import com.crobox.clickhouse.time.MultiInterval
 import com.dongxiguo.fastring.Fastring.Implicits._
-import org.joda.time.DateTime
 
 sealed case class EmptyColumn() extends TableColumn("")
 

@@ -1,17 +1,33 @@
 package com.crobox.clickhouse
 
+import com.crobox.clickhouse.dsl.AggregateFunction.AggregationFunctionsCombinersDsl
+import com.crobox.clickhouse.dsl.AnyResult.AnyResultDsl
+import com.crobox.clickhouse.dsl.Leveled.LevelModifierDsl
+import com.crobox.clickhouse.dsl.{ColumnOperations, QueryFactory}
+import com.crobox.clickhouse.dsl.Sum.SumDsl
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
+import com.crobox.clickhouse.dsl.Uniq.UniqDsl
 import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryResult}
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.dongxiguo.fastring.Fastring.Implicits._
 import spray.json.{JsonReader, JsonWriter}
 
-import scala.annotation.implicitNotFound
 import scala.collection.immutable.Iterable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-package object dsl extends ColumnOperations with QueryFactory with QueryValueFormats {
+trait DslLanguage
+    extends ColumnOperations
+    with AggregationFunctionsCombinersDsl
+    with UniqDsl
+    with AnyResultDsl
+    with SumDsl
+    with LevelModifierDsl
+    with QueryFactory
+    with QueryValueFormats
+object DslLanguage extends DslLanguage
+
+package object dsl extends DslLanguage {
 
   //Naive union type context bound
   trait Contra[-A]

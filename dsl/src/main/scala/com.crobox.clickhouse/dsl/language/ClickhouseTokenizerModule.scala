@@ -154,9 +154,9 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case Leveled.Normal                      => ("", None)
       case Leveled.Deterministic(determinator) => ("Deterministic", Some(tokenizeColumn(determinator)))
       case Leveled.Timing                      => ("Timing", None)
-      case Leveled.Weighted(weight)            => ("TimingWeighted", Some(weight.toString))
+      case Leveled.TimingWeighted(weight)      => ("TimingWeighted", Some(tokenizeColumn(weight)))
       case Leveled.Exact                       => ("Exact", None)
-      case Leveled.ExactWeighted(weight)       => ("ExactWeighted", Some(weight.toString))
+      case Leveled.ExactWeighted(weight)       => ("ExactWeighted", Some(tokenizeColumn(weight)))
       case Leveled.TDigest                     => ("TDigest", None)
     }
 
