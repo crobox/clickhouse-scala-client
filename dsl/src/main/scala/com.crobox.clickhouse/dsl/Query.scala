@@ -83,6 +83,8 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
             ts.isEmpty || tt.isEmpty
           case (ts: Iterable[_], tt: Iterable[_]) =>
             ts.isEmpty || tt.isEmpty
+          case (ts: Boolean, tt: Boolean) =>
+            true
         },
         fast"Conflicting parts ${productElement(id)} and ${other.productElement(id)}"
       )
