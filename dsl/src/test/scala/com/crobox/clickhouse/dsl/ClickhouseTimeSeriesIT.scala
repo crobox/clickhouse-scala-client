@@ -18,7 +18,8 @@ class ClickhouseTimeSeriesIT
     extends ClickhouseClientSpec
     with TestSchemaClickhouseQuerySpec
     with ScalaFutures
-    with TableDrivenPropertyChecks with QueryFactory {
+    with TableDrivenPropertyChecks
+    with QueryFactory {
 
   case class Result(time: IntervalStart, shields: String)
   implicit override val patienceConfig =
@@ -95,6 +96,21 @@ class ClickhouseTimeSeriesIT
     }
   }
 
+  "grouping on months" should "return correct month" in {
+    val expectedEntriesPerMonth = 1440
+    val multiInterval = MultiInterval(
+      startInterval.withZone(DateTimeZone.forOffsetHours(2)),
+      lastMinuteIntervalDate.withZone(DateTimeZone.forOffsetHours(2)),
+      MultiDuration(1, TimeUnit.Month)
+    )
+    val results: Future[QueryResult[Result]] = getEntries(multiInterval, minutesId)
+    val expectedIntervalStarts               = multiInterval.subIntervals().map(_.getStart).map(_.withZone(DateTimeZone.UTC))
+    val rows                                 = results.futureValue.rows
+    val expectedCountInFullInterval          = expectedEntriesPerMonth
+    validateFullRows(rows, expectedCountInFullInterval)
+    rows.map(_.time) should contain theSameElementsInOrderAs expectedIntervalStarts
+  }
+
   "Grouping on days" should "properly group intervals" in {
     forAll(Table("Day", 1, 2, 6, 7, 12, 15)) { duration =>
       val expectedEntriesPerDay                = 1440
@@ -154,7 +170,11 @@ class ClickhouseTimeSeriesIT
 
   private def getEntries(multiInterval: MultiInterval, entriesId: UUID) =
     chExecuter.execute[Result](
-      select(count() as "shields", timeSeries(timestampColumn, multiInterval) as alias).from(OneTestTable).groupBy(alias).orderBy(alias).where(shieldId isEq entriesId)
+      select(count() as "shields", timeSeries(timestampColumn, multiInterval) as alias)
+        .from(OneTestTable)
+        .groupBy(alias)
+        .orderBy(alias)
+        .where(shieldId isEq entriesId)
     )
 
   private def validateFullRows(rows: Seq[Result], expectedCountInFullInterval: Int) =
