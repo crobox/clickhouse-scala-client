@@ -63,7 +63,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
         fast"$database.${table.name}"
       case Some(TableFromQuery(table: Table, Some(altDb))) =>
         fast"$altDb.${table.name}"
-      case _                                               => ""
+      case _ => ""
     }
   }
 
@@ -126,14 +126,14 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     agg match {
       case Avg(column)   => ("avg", tokenizeColumn(column))
       case Count(column) => ("count", tokenizeColumn(column.getOrElse(EmptyColumn())))
-      case Median(column, modifier, level) =>
+      case Median(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (fast"median$modifierName", fast"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
-      case Quantile(column, modifier, Left(level)) =>
+      case Quantile(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (fast"quantile$modifierName",
          fast"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")})")
-      case Quantile(column, modifier, Right(levels)) =>
+      case Quantiles(column, levels, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (fast"quantiles$modifierName",
          fast"${levels.mkString(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
@@ -193,10 +193,9 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     }
 
   private[language] def tokenizeTimeSeries(timeSeries: TimeSeries): String = {
-    val column   = tokenizeColumn(timeSeries.tableColumn)
+    val column = tokenizeColumn(timeSeries.tableColumn)
     tokenizeDuration(timeSeries, column)
   }
-
 
   private def tokenizeDuration(timeSeries: TimeSeries, column: String) = {
     val interval = timeSeries.interval
@@ -223,8 +222,8 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   //TODO this is a fallback to find a similar timezone when the provided interval does not have a set timezone id. We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries (probably default to failing)
   private def determineZoneId(start: DateTime) = {
     val provider = DateTimeZone.getProvider
-    val zones = provider.getAvailableIDs.asScala.map(provider.getZone)
-    val zone = start.getZone
+    val zones    = provider.getAvailableIDs.asScala.map(provider.getZone)
+    val zone     = start.getZone
     val targetZone = zones
       .find(_.getID == zone.getID)
       .orElse(

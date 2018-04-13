@@ -55,6 +55,12 @@ object AggregateFunction {
     def uniq(tableColumn: AnyTableColumn) =
       Uniq(tableColumn)
 
+    def average[T: Numeric](tableColumn: TableColumn[T]) =
+      Avg(tableColumn)
+
+    def any[T](tableColumn: TableColumn[T]) =
+      AnyResult(tableColumn)
+
     def sum[T: Numeric](tableColumn: TableColumn[T]) =
       Sum(tableColumn)
 
@@ -71,6 +77,12 @@ object AggregateFunction {
 
     def groupUniqArray[V](tableColumn: TableColumn[V]) =
       GroupUniqArray(tableColumn)
+
+    def median[V: Numeric](target: TableColumn[V], level: Float = 0.5F) = Median(target, level = level)
+
+    def quantile[V: Numeric](target: TableColumn[V], level: Float = 0.5F) = Quantile(target, level = level)
+
+    def quantiles[V: Numeric](target: TableColumn[V], levels: Float*) = Quantiles(target, levels)
 
   }
 }
@@ -96,7 +108,7 @@ object Uniq {
 }
 
 case class AnyResult[T](tableColumn: TableColumn[T], modifier: AnyModifier = AnyResult.Normal)
-    extends AggregateFunction[Long](tableColumn)
+    extends AggregateFunction[T](tableColumn)
 
 object AnyResult {
   sealed trait AnyModifier
@@ -112,7 +124,7 @@ object AnyResult {
 }
 
 case class Sum[T: Numeric](tableColumn: TableColumn[T], modifier: SumModifier = Sum.Normal)
-    extends AggregateFunction[Long](tableColumn)
+    extends AggregateFunction[Double](tableColumn)
 
 object Sum {
   sealed trait SumModifier
@@ -128,7 +140,7 @@ object Sum {
 
 }
 
-case class Avg[T: Numeric](tableColumn: AnyTableColumn) extends AggregateFunction[Long](tableColumn)
+case class Avg[T: Numeric](tableColumn: TableColumn[T]) extends AggregateFunction[Double](tableColumn)
 
 case class ArrayJoin[V](tableColumn: TableColumn[Seq[V]]) extends ExpressionColumn[V](tableColumn)
 
@@ -138,18 +150,20 @@ case class GroupArray[V](tableColumn: TableColumn[V], maxValues: Option[Long])
     extends AggregateFunction[Seq[V]](tableColumn)
 
 /*Works for numbers, dates, and dates with times. Returns: for numbers – Float64; for dates – a date; for dates with times – a date with time.Works for numbers, dates, and dates with times. Returns: for numbers – Float64; for dates – a date; for dates with times – a date with time.*/
-case class Quantile[T](tableColumn: TableColumn[T],
-                       modifier: LevelModifier,
-                       level: Either[Float, Seq[Float]] = Left(0.5F))
-    extends AggregateFunction[Long](tableColumn) {
-  level match {
-    case Left(quantileLevel) => require(quantileLevel >= 0 && quantileLevel <= 1)
-    case Right(levels)       => levels.foreach(level => require(level >= 0 && level <= 1))
-  }
+case class Quantile[T: Numeric](tableColumn: TableColumn[T],
+                                level: Float = 0.5F,
+                                modifier: LevelModifier = Leveled.Normal)
+    extends AggregateFunction[T](tableColumn) {
+  require(level >= 0 && level <= 1)
 }
-
-case class Median[T](tableColumn: TableColumn[T], modifier: LevelModifier, level: Float = 0.5F)
-    extends AggregateFunction[Long](tableColumn) {
+case class Quantiles[T: Numeric](tableColumn: TableColumn[T],
+                                 levels: Seq[Float],
+                                 modifier: LevelModifier = Leveled.Normal)
+    extends AggregateFunction[Seq[T]](tableColumn) {
+  levels.foreach(level => require(level >= 0 && level <= 1))
+}
+case class Median[T: Numeric](tableColumn: TableColumn[T], level: Float, modifier: LevelModifier = Leveled.Normal)
+    extends AggregateFunction[T](tableColumn) {
   require(level > 0 && level < 1)
 }
 
