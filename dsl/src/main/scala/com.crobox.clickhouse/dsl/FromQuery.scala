@@ -6,4 +6,4 @@ sealed trait FromQuery extends Query with OperationalQuery {
 
 sealed case class InnerFromQuery(private[dsl] val innerQuery: OperationalQuery) extends FromQuery
 
-sealed case class TableFromQuery[T <: Table](table: T, altDb: Option[Any] = None, fromFinal: Boolean = false) extends FromQuery
+sealed case class TableFromQuery[T <: Table](table: T, altDb: Option[Any] = None) extends FromQuery

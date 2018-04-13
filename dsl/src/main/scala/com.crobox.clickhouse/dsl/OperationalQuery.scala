@@ -29,14 +29,18 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(where = Some(comparison)))
   }
 
-  def from[T <: Table](table: T, altDb: Option[Any] = None, fromFinal: Boolean = false): OperationalQuery = {
-    val from = TableFromQuery(table, altDb, fromFinal)
+  def from[T <: Table](table: T, altDb: Option[Any] = None): OperationalQuery = {
+    val from = TableFromQuery(table, altDb)
     OperationalQuery(internalQuery.copy(from = Some(from)))
   }
 
   def from(query: OperationalQuery): OperationalQuery = {
     val from = InnerFromQuery(query)
     OperationalQuery(internalQuery.copy(from = Some(from)))
+  }
+
+  def asFinal(asFinal: Boolean = true): OperationalQuery = {
+    OperationalQuery(internalQuery.copy(asFinal = asFinal))
   }
 
   def groupBy(columns: AnyTableColumn*): OperationalQuery = {

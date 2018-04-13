@@ -26,10 +26,11 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   private def toRawSql(query: InternalQuery)(implicit database: Database): String =
     //    require(query != null) because parallel query is null
     query match {
-      case InternalQuery(select, from, where, groupBy, having, join, orderBy, limit) =>
+      case InternalQuery(select, from, asFinal, where, groupBy, having, join, orderBy, limit) =>
         fast"""
            |${tokenizeSelect(select)}
            | FROM ${tokenizeFrom(from)}
+           | ${tokenizeFinal(asFinal)}
            | ${tokenizeJoin(join)}
            | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
@@ -47,18 +48,18 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   private def tokenizeFrom(from: Option[FromQuery])(implicit database: Database) = {
     require(from != null)
 
-    def tokenizeFinal(f: Boolean): String = if (f) " FINAL" else ""
-
     from match {
       case Some(fromClause: InnerFromQuery) =>
         fast"(${toRawSql(fromClause.innerQuery.internalQuery)})"
-      case Some(TableFromQuery(table: Table, None, fromFinal)) =>
-        fast"$database.${table.name}${tokenizeFinal(fromFinal)}"
-      case Some(TableFromQuery(table: Table, Some(altDb), fromFinal)) =>
-        fast"$altDb.${table.name}${tokenizeFinal(fromFinal)}"
+      case Some(TableFromQuery(table: Table, None)) =>
+        fast"$database.${table.name}"
+      case Some(TableFromQuery(table: Table, Some(altDb))) =>
+        fast"$altDb.${table.name}"
       case _ => ""
     }
   }
+
+  private def tokenizeFinal(asFinal: Boolean): String = if (asFinal) "FINAL" else ""
 
   protected def tokenizeColumn(column: AnyTableColumn): String = {
     require(column != null)
