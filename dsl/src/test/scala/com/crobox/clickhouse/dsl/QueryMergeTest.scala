@@ -6,7 +6,6 @@ import com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.parallel._
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
-import org.scalactic.{AbstractStringUniformity, Uniformity}
 
 class QueryMergeTest extends ClickhouseClientSpec with TestSchema {
   val clickhouseTokenizer = new ClickhouseTokenizerModule {}
@@ -17,7 +16,7 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema {
     val right: OperationalQuery = select(dsl.all()) from OneTestTable where shieldId.isEq(expectedUUID)
     val query                   = right merge left on timestampColumn
     clickhouseTokenizer.toSql(query.internalQuery).replaceAll("[\\s\\n]","") should be(
-      s"""SELECT shield_id, * FROM (
+      s"""SELECT shield_id,numbers, * FROM (
          |  SELECT item_id, ts FROM $tokenizerDatabase.twoTestTable WHERE column_3 = 'wompalama' GROUP BY ts ORDER BY ts ASC
          |) ALL LEFT JOIN (
          |  SELECT * FROM $tokenizerDatabase.captainAmerica WHERE shield_id = '$expectedUUID' GROUP BY ts ORDER BY ts ASC

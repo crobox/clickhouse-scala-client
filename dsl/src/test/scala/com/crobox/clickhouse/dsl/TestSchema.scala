@@ -30,7 +30,7 @@ trait TestSchema {
 
   case object OneTestTable extends Table {
     override val name: String                   = "captainAmerica"
-    override val columns: List[NativeColumn[_]] = List(shieldId, timestampColumn)
+    override val columns: List[NativeColumn[_]] = List(shieldId, timestampColumn, numbers)
   }
 
   case object TwoTestTable extends Table {
@@ -45,6 +45,7 @@ trait TestSchema {
 
   val shieldId        = NativeColumn[UUID]("shield_id")
   val itemId          = NativeColumn[UUID]("item_id")
+  val numbers         = NativeColumn[Seq[Int]]("numbers", ColumnType.Array(ColumnType.UInt32))
   val col1            = NativeColumn[String]("column_1")
   val col2            = NativeColumn[Int]("column_2", ColumnType.UInt32)
   val col3            = NativeColumn[String]("column_3")
@@ -53,7 +54,7 @@ trait TestSchema {
   val col6            = NativeColumn[String]("column_6")
   val timestampColumn = NativeColumn[Long]("ts", ColumnType.UInt64)
 
-  case class Table1Entry(shieldId: UUID, date: DateTime = DateTime.now())
+  case class Table1Entry(shieldId: UUID, date: DateTime = DateTime.now(), numbers: Seq[Int] = Seq())
 
   object Table1Entry {
 
@@ -62,10 +63,11 @@ trait TestSchema {
       override def write(obj: Table1Entry): JsValue =
         JsObject(
           "shield_id" -> JsString(obj.shieldId.toString),
-          "ts"        -> JsNumber(obj.date.getMillis)
+          "ts"        -> JsNumber(obj.date.getMillis),
+          "numbers"   -> JsArray(obj.numbers.map(JsNumber(_)).toVector)
         )
     }
-    val reader: RootJsonFormat[Table1Entry] = jsonFormat(Table1Entry.apply, "shield_id", "ts")
+    val reader: RootJsonFormat[Table1Entry] = jsonFormat(Table1Entry.apply, "shield_id", "ts", "numbers")
     implicit val format                     = jsonFormat(reader, Format)
   }
 

@@ -139,6 +139,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
          fast"${levels.mkString(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
       case Uniq(column, modifier)      => (s"uniq${tokenizeUniqModifier(modifier)}", tokenizeColumn(column))
       case Sum(column, modifier)       => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
+      case SumMap(key, value)          => (s"sumMap", tokenizeColumns(Seq(key, value)))
       case AnyResult(column, modifier) => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
       case Min(tableColumn)            => ("min", tokenizeColumn(tableColumn))
       case Max(tableColumn)            => ("max", tokenizeColumn(tableColumn))
@@ -151,7 +152,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
 
   def tokenizeLevelModifier(level: LevelModifier): (String, Option[String]) =
     level match {
-      case Leveled.Normal                      => ("", None)
+      case Leveled.Simple                      => ("", None)
       case Leveled.Deterministic(determinator) => ("Deterministic", Some(tokenizeColumn(determinator)))
       case Leveled.Timing                      => ("Timing", None)
       case Leveled.TimingWeighted(weight)      => ("TimingWeighted", Some(tokenizeColumn(weight)))
@@ -162,7 +163,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
 
   def tokenizeUniqModifier(modifier: UniqModifier): String =
     modifier match {
-      case Uniq.Normal   => ""
+      case Uniq.Simple   => ""
       case Uniq.Combined => "Combined"
       case Uniq.Exact    => "Exact"
       case Uniq.HLL12    => "HLL12"
@@ -171,14 +172,14 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
 
   def tokenizeSumModifier(modifier: SumModifier): String =
     modifier match {
-      case Sum.Normal       => ""
+      case Sum.Simple       => ""
       case Sum.WithOverflow => "WithOverflow"
       case Sum.Map          => "Map"
     }
 
   def tokenizeAnyModifier(modifier: AnyModifier): String =
     modifier match {
-      case AnyResult.Normal => ""
+      case AnyResult.Simple => ""
       case AnyResult.Heavy  => "Heavy"
       case AnyResult.Last   => "Last"
     }

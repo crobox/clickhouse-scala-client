@@ -17,8 +17,7 @@ class TableColumn[V](val name: String) extends Column {
   def as(alias: String): AliasedColumn[V] =
     AliasedColumn(this, alias)
 
-  def as(alias: TableColumn[V]): AliasedColumn[V] =
-    AliasedColumn(this, alias.name)
+  def as[C <: TableColumn[V]](alias: C): AliasedColumn[V] = AliasedColumn(this, alias.name)
 }
 
 case class NativeColumn[V](override val name: String,
@@ -57,7 +56,7 @@ case class Conditional[V](cases: Seq[Case[V]], default: AnyTableColumn) extends 
 /**
  * Used when referencing to a column in an expression
  */
-case class RawColumn(tableColumn: AnyTableColumn)   extends ExpressionColumn[Boolean](tableColumn)
+case class RawColumn(tableColumn: AnyTableColumn) extends ExpressionColumn[Boolean](tableColumn)
 
 /**
  * Parse the supplied value as a constant value column in the query
@@ -111,7 +110,6 @@ trait ColumnOperations extends AggregationFunctionsDsl {
     Conditional(cases, defaultValue)
 
   def columnCase[V](condition: Comparison, value: TableColumn[V]) = Case[V](value, condition)
-
 
   def arrayJoin[V](tableColumn: TableColumn[Seq[V]]) =
     ArrayJoin(tableColumn)
