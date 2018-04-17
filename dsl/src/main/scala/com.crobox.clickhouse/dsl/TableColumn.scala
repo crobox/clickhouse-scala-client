@@ -1,13 +1,10 @@
 package com.crobox.clickhouse.dsl
 
-import com.dongxiguo.fastring.Fastring.Implicits._
-import com.crobox.clickhouse.dsl.TableColumn.{AnyTableColumn, ECondition}
+import com.crobox.clickhouse.dsl.AggregateFunction.AggregationFunctionsDsl
+import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue}
-import com.crobox.clickhouse.time.MultiInterval
-import org.joda.time.DateTime
-
-import scala.annotation.implicitNotFound
+import com.dongxiguo.fastring.Fastring.Implicits._
 
 sealed case class EmptyColumn() extends TableColumn("")
 
@@ -16,11 +13,11 @@ trait Column {
 }
 
 class TableColumn[V](val name: String) extends Column {
+
   def as(alias: String): AliasedColumn[V] =
     AliasedColumn(this, alias)
 
-  def as(alias: TableColumn[V]): AliasedColumn[V] =
-    AliasedColumn(this, alias.name)
+  def as[C <: TableColumn[V]](alias: C): AliasedColumn[V] = AliasedColumn(this, alias.name)
 }
 
 case class NativeColumn[V](override val name: String,
@@ -34,9 +31,8 @@ case class NativeColumn[V](override val name: String,
 
 object TableColumn {
   type AnyTableColumn = Column
+  val emptyColumn = EmptyColumn()
 
-  @implicitNotFound("Condition can only be provided as a ExpressionColumn[_] or Comparison")
-  type ECondition[E] = Union[E, Comparison with ExpressionColumn[_]]
 }
 
 case class RefColumn[V](ref: String) extends TableColumn[V](ref)
@@ -47,49 +43,11 @@ case class TupleColumn[V](elements: AnyTableColumn*) extends TableColumn[V]("")
 
 abstract class ExpressionColumn[V](targetColumn: AnyTableColumn) extends TableColumn[V](targetColumn.name)
 
-case class Count(column: Option[TableColumn[_]] = None) extends ExpressionColumn[Long](EmptyColumn())
-
-case class CountIf[C : ECondition](condition: C) extends ExpressionColumn[Long](EmptyColumn())
-
-case class UniqIf[C : ECondition](tableColumn: AnyTableColumn, condition: C)
-  extends ExpressionColumn[Long](tableColumn)
-
-case class SumIf[C : ECondition](tableColumn: AnyTableColumn, condition: C)
-  extends ExpressionColumn[Long](tableColumn)
-
-case class ArrayJoin[V](tableColumn: TableColumn[Seq[V]]) extends ExpressionColumn[V](tableColumn)
-
-case class GroupUniqArray[V](tableColumn: TableColumn[V]) extends ExpressionColumn[Seq[V]](tableColumn)
-
 case class UInt64(tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
-
-case class Uniq(tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
-
-case class UniqState(tableColumn: AnyTableColumn) extends ExpressionColumn[String](tableColumn)
-
-case class UniqMerge(tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
-
-case class Sum(tableColumn: AnyTableColumn) extends ExpressionColumn[Long](tableColumn)
-
-case class Min[V](tableColumn: TableColumn[V]) extends ExpressionColumn[V](tableColumn)
-
-case class Max[V](tableColumn: TableColumn[V]) extends ExpressionColumn[V](tableColumn)
-
-case class Empty(tableColumn: AnyTableColumn) extends ExpressionColumn[Boolean](tableColumn)
-
-case class NotEmpty(tableColumn: AnyTableColumn) extends ExpressionColumn[Boolean](tableColumn)
 
 case class LowerCaseColumn(tableColumn: AnyTableColumn) extends ExpressionColumn[String](tableColumn)
 
-case class TimeSeries(tableColumn: TableColumn[Long],
-                      interval: MultiInterval,
-                      dateColumn: Option[TableColumn[DateTime]])
-    extends ExpressionColumn[Long](tableColumn)
-
 case class All() extends ExpressionColumn[Long](EmptyColumn())
-
-@deprecated("Use a comparison for this instead", "v0.4.0")
-case class BooleanInt(tableColumn: AnyTableColumn, expected: Int) extends ExpressionColumn[Int](tableColumn)
 
 case class Case[V](column: TableColumn[V], condition: Comparison)
 
@@ -107,103 +65,59 @@ case class Const[V: QueryValue](const: V) extends ExpressionColumn[V](EmptyColum
   val parsed = implicitly[QueryValue[V]].apply(const)
 }
 
-trait ColumnOperations {
+trait ColumnOperations extends AggregationFunctionsDsl {
+  implicit val booleanNumeric: Numeric[Boolean] = new Numeric[Boolean] {
+    override def plus(x: Boolean, y: Boolean) = x || y
 
-  def conditional(column: AnyTableColumn, condition: Boolean): AnyTableColumn =
+    override def minus(x: Boolean, y: Boolean) = x ^ y
+
+    override def times(x: Boolean, y: Boolean) = x && y
+
+    override def negate(x: Boolean) = !x
+
+    override def fromInt(x: Int) = if (x <= 0) false else true
+
+    override def toInt(x: Boolean) = if (x) 1 else 0
+
+    override def toLong(x: Boolean) = if (x) 1 else 0
+
+    override def toFloat(x: Boolean) = if (x) 1 else 0
+
+    override def toDouble(x: Boolean) = if (x) 1 else 0
+
+    override def compare(x: Boolean, y: Boolean) = ???
+  }
+
+  def conditional(column: AnyTableColumn, condition: Boolean) =
     if (condition) column else EmptyColumn()
 
-  def ref[V](refName: String): TableColumn[V] =
+  def ref[V](refName: String) =
     new RefColumn[V](refName)
 
-  def const[V: QueryValue](const: V): Const[V] =
+  def const[V: QueryValue](const: V) =
     Const(const)
 
-  def toUInt64(tableColumn: TableColumn[Long]): UInt64 =
+  def toUInt64(tableColumn: TableColumn[Long]) =
     UInt64(tableColumn)
 
-  def count(): TableColumn[Long] =
-    Count()
-
-  def count(column: TableColumn[_]): TableColumn[Long] =
-    Count(Option(column))
-
-  def countIf[T](condition: Comparison): TableColumn[Long] =
-    CountIf(condition)
-
-  def countIf(expressionColumn: ExpressionColumn[_]): TableColumn[Long] =
-    CountIf[ExpressionColumn[_]](expressionColumn)
-
-  def uniqIf(tableColumn: AnyTableColumn, condition: ExpressionColumn[_]): TableColumn[Long] =
-    UniqIf[ExpressionColumn[_]](tableColumn, condition)
-
-  def uniqIf(tableColumn: AnyTableColumn, condition: Comparison): TableColumn[Long] =
-    UniqIf(tableColumn, condition)
-
-  def sumIf(tableColumn: AnyTableColumn, condition: ExpressionColumn[_]): TableColumn[Long] =
-    SumIf[ExpressionColumn[_]](tableColumn, condition)
-
-  def sumIf(tableColumn: AnyTableColumn, condition: Comparison): TableColumn[Long] =
-    SumIf(tableColumn, condition)
-
-  def notEmpty(tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
-    NotEmpty(tableColumn)
-
-  def empty(tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
-    Empty(tableColumn)
-
-  def is(tableColumn: AnyTableColumn): ExpressionColumn[Int] =
-    BooleanInt(tableColumn, 1)
-
-  def not(tableColumn: AnyTableColumn): ExpressionColumn[Int] =
-    BooleanInt(tableColumn, 0)
-
-  def rawColumn(tableColumn: AnyTableColumn): ExpressionColumn[Boolean] =
+  def rawColumn(tableColumn: AnyTableColumn) =
     RawColumn(tableColumn)
 
-  def uniq(tableColumn: AnyTableColumn): ExpressionColumn[Long] =
-    Uniq(tableColumn)
-
-  def uniqState(tableColumn: AnyTableColumn): ExpressionColumn[String] =
-    UniqState(tableColumn)
-
-  def uniqMerge(tableColumn: AnyTableColumn): ExpressionColumn[Long] =
-    UniqMerge(tableColumn)
-
-  def sum(tableColumn: AnyTableColumn): ExpressionColumn[Long] =
-    Sum(tableColumn)
-
-  def min[V](tableColumn: TableColumn[V]): ExpressionColumn[V] =
-    Min(tableColumn)
-
-  def max[V](tableColumn: TableColumn[V]): ExpressionColumn[V] =
-    Max(tableColumn)
-
-  def all(): All =
+  def all() =
     All()
 
-  def switch[V](defaultValue: TableColumn[V], cases: Case[V]*): TableColumn[V] =
+  def switch[V](defaultValue: TableColumn[V], cases: Case[V]*) =
     Conditional(cases, defaultValue)
 
-  def columnCase[V](condition: Comparison, value: TableColumn[V]): Case[V] = Case[V](value, condition)
+  def columnCase[V](condition: Comparison, value: TableColumn[V]) = Case[V](value, condition)
 
-  /*
-   * @dateColumn Optional column
-   * */
-  def timeSeries(tableColumn: TableColumn[Long],
-                 interval: MultiInterval,
-                 dateColumn: Option[TableColumn[DateTime]] = None): ExpressionColumn[Long] =
-    TimeSeries(tableColumn, interval, dateColumn)
-
-  def arrayJoin[V](tableColumn: TableColumn[Seq[V]]): ExpressionColumn[V] =
+  def arrayJoin[V](tableColumn: TableColumn[Seq[V]]) =
     ArrayJoin(tableColumn)
 
-  def groupUniqArray[V](tableColumn: TableColumn[V]): ExpressionColumn[Seq[V]] =
-    GroupUniqArray(tableColumn)
-
-  def tuple[T1, T2](firstColumn: TableColumn[T1], secondColumn: TableColumn[T2]): TupleColumn[(T1, T2)] =
+  def tuple[T1, T2](firstColumn: TableColumn[T1], secondColumn: TableColumn[T2]) =
     TupleColumn[(T1, T2)](firstColumn, secondColumn)
 
-  def lowercase(tableColumn: TableColumn[String]): ExpressionColumn[String] =
+  def lowercase(tableColumn: TableColumn[String]) =
     LowerCaseColumn(tableColumn)
 
 }

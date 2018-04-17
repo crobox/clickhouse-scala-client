@@ -1,16 +1,24 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl
+import com.crobox.clickhouse.dsl.AggregateFunction._
+import com.crobox.clickhouse.dsl.AnyResult.AnyModifier
 import com.crobox.clickhouse.dsl.JoinQuery._
+import com.crobox.clickhouse.dsl.Leveled.LevelModifier
+import com.crobox.clickhouse.dsl.Sum.SumModifier
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
+import com.crobox.clickhouse.dsl.Uniq.UniqModifier
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.crobox.clickhouse.time.TimeUnit.{Quarter, Total, Year}
 import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration, TimeUnit}
 import com.dongxiguo.fastring.Fastring.Implicits._
+import com.google.common.base.Strings
 import com.typesafe.scalalogging.Logger
-import org.joda.time.DateTimeZone
+import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
+
+import scala.collection.JavaConverters._
 
 trait ClickhouseTokenizerModule extends TokenizerModule {
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
@@ -64,61 +72,144 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   protected def tokenizeColumn(column: AnyTableColumn): String = {
     require(column != null)
     column match {
-      case AliasedColumn(original, alias) => fast"${tokenizeColumn(original)} AS $alias"
-      case tuple: TupleColumn[_]          => fast"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
-      case Count(countColumn)             => fast"count(${countColumn.map(tokenizeColumn).getOrElse("")})"
-      case c: Const[_]                    => c.parsed
-      case CountIf(expressionColumn: ExpressionColumn[_]) =>
-        fast"countIf(${tokenizeColumn(expressionColumn)})"
-      case CountIf(comparison: Comparison) =>
-        fast"countIf(${tokenizeCondition(comparison)})"
-      case ArrayJoin(tableColumn)         => fast"arrayJoin(${tokenizeColumn(tableColumn)})"
-      case GroupUniqArray(tableColumn)    => fast"groupUniqArray(${tokenizeColumn(tableColumn)})"
-      case All()                          => "*"
-      case UniqIf(tableColumn, expressionColumn: ExpressionColumn[_]) =>
-        fast"uniqIf(${tokenizeColumn(tableColumn)}, ${tokenizeColumn(expressionColumn)})"
-      case UniqIf(tableColumn, expressionColumn: Comparison) =>
-        fast"uniqIf(${tokenizeColumn(tableColumn)}, ${tokenizeCondition(expressionColumn)})"
-      case SumIf(tableColumn, expressionColumn: ExpressionColumn[_]) =>
-        fast"sumIf(${tokenizeColumn(tableColumn)}, ${tokenizeColumn(expressionColumn)})"
-      case SumIf(tableColumn, expressionColumn: Comparison) =>
-        fast"sumIf(${tokenizeColumn(tableColumn)}, ${tokenizeCondition(expressionColumn)})"
-      case BooleanInt(tableColumn, value) => fast"${tokenizeColumn(tableColumn)} = $value"
-      case Empty(tableColumn)             => fast"empty(${tokenizeColumn(tableColumn)})"
-      case NotEmpty(tableColumn)          => fast"notEmpty(${tokenizeColumn(tableColumn)})"
-      case UInt64(tableColumn)            => fast"toUInt64(${tokenizeColumn(tableColumn)})"
-      case Uniq(tableColumn)              => fast"uniq(${tokenizeColumn(tableColumn)})"
-      case UniqState(tableColumn)         => fast"uniqState(${tokenizeColumn(tableColumn)})"
-      case UniqMerge(tableColumn)         => fast"uniqMerge(${tokenizeColumn(tableColumn)})"
-      case Sum(tableColumn)               => fast"sum(${tokenizeColumn(tableColumn)})"
-      case Min(tableColumn)               => fast"min(${tokenizeColumn(tableColumn)})"
-      case Max(tableColumn)               => fast"max(${tokenizeColumn(tableColumn)})"
-      case LowerCaseColumn(tableColumn)   => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
-      case timeSeries: TimeSeries         => tokenizeTimeSeries(timeSeries)
-      case Conditional(cases, default) =>
-        fast"CASE ${cases
-          .map(ccase => fast"WHEN ${tokenizeCondition(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
-          .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
+      case AliasedColumn(original, alias) =>
+        val originalColumnToken = tokenizeColumn(original)
+        if (Strings.isNullOrEmpty(originalColumnToken)) alias else fast"$originalColumnToken AS $alias"
+      case tuple: TupleColumn[_]         => fast"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
+      case col: ExpressionColumn[_]      => tokenizeExpressionColumn(col)
       case regularColumn: AnyTableColumn => regularColumn.name
     }
   }
 
-  private def tokenizeTimeSeries(timeSeries: TimeSeries): String = {
+  private def tokenizeExpressionColumn(col: ExpressionColumn[_]): String =
+    col match {
+      case agg: AggregateFunction[_]    => tokenizeAggregateFunction(agg)
+      case ArrayJoin(tableColumn)       => fast"arrayJoin(${tokenizeColumn(tableColumn)})"
+      case All()                        => "*"
+      case UInt64(tableColumn)          => fast"toUInt64(${tokenizeColumn(tableColumn)})"
+      case LowerCaseColumn(tableColumn) => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
+      case Conditional(cases, default) =>
+        fast"CASE ${cases
+          .map(ccase => fast"WHEN ${tokenizeCondition(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
+          .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
+      case c: Const[_] => c.parsed
+    }
+
+  private def tokenizeAggregateFunction(agg: AggregateFunction[_]): String =
+    agg match {
+      case nested: CombinedAggregatedFunction[_, _] =>
+        val tokenizedCombinators = collectCombinators(nested).map(tokenizeCombinator)
+        val combinators          = tokenizedCombinators.map(_._1).mkString("")
+        val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkString(",")
+        val (function, values)   = tokenizeInnerAggregatedFunction(extractTarget(nested))
+        val separator            = if (Strings.isNullOrEmpty(values) || Strings.isNullOrEmpty(combinatorsValues)) "" else ","
+        fast"$function$combinators($values$separator$combinatorsValues)"
+      case timeSeries: TimeSeries => tokenizeTimeSeries(timeSeries)
+      case aggregated: AggregateFunction[_] =>
+        val (function, values) = tokenizeInnerAggregatedFunction(aggregated)
+        fast"$function($values)"
+    }
+
+  def collectCombinators(function: AggregateFunction[_]): Seq[Combinator[_, _]] =
+    function match {
+      case CombinedAggregatedFunction(combinator, aggregated) => collectCombinators(aggregated) :+ combinator
+      case _                                                  => Seq()
+    }
+
+  def extractTarget(function: AggregateFunction[_]): AggregateFunction[_] =
+    function match {
+      case CombinedAggregatedFunction(_, aggregated) => extractTarget(aggregated)
+      case value                                     => value
+    }
+
+  private def tokenizeInnerAggregatedFunction(agg: AggregateFunction[_]): (String, String) =
+    agg match {
+      case Avg(column)   => ("avg", tokenizeColumn(column))
+      case Count(column) => ("count", tokenizeColumn(column.getOrElse(EmptyColumn())))
+      case Median(column, level, modifier) =>
+        val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
+        (fast"median$modifierName", fast"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
+      case Quantile(column, level, modifier) =>
+        val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
+        (fast"quantile$modifierName",
+         fast"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")})")
+      case Quantiles(column, levels, modifier) =>
+        val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
+        (fast"quantiles$modifierName",
+         fast"${levels.mkString(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
+      case Uniq(column, modifier)      => (s"uniq${tokenizeUniqModifier(modifier)}", tokenizeColumn(column))
+      case Sum(column, modifier)       => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
+      case SumMap(key, value)          => (s"sumMap", tokenizeColumns(Seq(key, value)))
+      case AnyResult(column, modifier) => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
+      case Min(tableColumn)            => ("min", tokenizeColumn(tableColumn))
+      case Max(tableColumn)            => ("max", tokenizeColumn(tableColumn))
+      case GroupUniqArray(tableColumn) => ("groupUniqArray", tokenizeColumn(tableColumn))
+      case GroupArray(tableColumn, maxValues) =>
+        ("groupArray", fast"${maxValues.map(_.toString + ")(").getOrElse("")}${tokenizeColumn(tableColumn)}")
+      case f: AggregateFunction[_] =>
+        throw new IllegalArgumentException(s"Cannot use $f aggregated function with combinator")
+    }
+
+  def tokenizeLevelModifier(level: LevelModifier): (String, Option[String]) =
+    level match {
+      case Leveled.Simple                      => ("", None)
+      case Leveled.Deterministic(determinator) => ("Deterministic", Some(tokenizeColumn(determinator)))
+      case Leveled.Timing                      => ("Timing", None)
+      case Leveled.TimingWeighted(weight)      => ("TimingWeighted", Some(tokenizeColumn(weight)))
+      case Leveled.Exact                       => ("Exact", None)
+      case Leveled.ExactWeighted(weight)       => ("ExactWeighted", Some(tokenizeColumn(weight)))
+      case Leveled.TDigest                     => ("TDigest", None)
+    }
+
+  def tokenizeUniqModifier(modifier: UniqModifier): String =
+    modifier match {
+      case Uniq.Simple   => ""
+      case Uniq.Combined => "Combined"
+      case Uniq.Exact    => "Exact"
+      case Uniq.HLL12    => "HLL12"
+
+    }
+
+  def tokenizeSumModifier(modifier: SumModifier): String =
+    modifier match {
+      case Sum.Simple       => ""
+      case Sum.WithOverflow => "WithOverflow"
+      case Sum.Map          => "Map"
+    }
+
+  def tokenizeAnyModifier(modifier: AnyModifier): String =
+    modifier match {
+      case AnyResult.Simple => ""
+      case AnyResult.Heavy  => "Heavy"
+      case AnyResult.Last   => "Last"
+    }
+
+  private def tokenizeCombinator(combinator: AggregateFunction.Combinator[_, _]): (String, Option[String]) =
+    combinator match {
+      case If(condition)     => ("If", Some(tokenizeCondition(condition)))
+      case CombinatorArray() => ("Array", None)
+      case ArrayForEach()    => ("ForEach", None)
+      case State()           => ("State", None)
+      case Merge()           => ("Merge", None)
+    }
+
+  private[language] def tokenizeTimeSeries(timeSeries: TimeSeries): String = {
     val column = tokenizeColumn(timeSeries.tableColumn)
-    val zone   = timeSeries.interval.getStart.getZone
-    tokenizeDuration(timeSeries, column, zone)
+    tokenizeDuration(timeSeries, column)
   }
 
-  private def tokenizeDuration(timeSeries: TimeSeries, column: String, dateZone: DateTimeZone) = {
+  private def tokenizeDuration(timeSeries: TimeSeries, column: String) = {
     val interval = timeSeries.interval
-    val zoneId   = dateZone.getID
     interval.duration match {
       case MultiDuration(value, TimeUnit.Month) =>
-        fast"concat(toString(intDiv(toRelativeMonthNum(toDateTime($column / 1000),'$zoneId'), $value) * $value),'_$zoneId')"
+        val dateZone = determineZoneId(interval.rawStart)
+        fast"concat(toString(intDiv(toRelativeMonthNum(toDateTime($column / 1000),'$dateZone'), $value) * $value),'_$dateZone')"
       case MultiDuration(_, Quarter) =>
-        fast"concat(toString(toStartOfQuarter(toDateTime($column / 1000),'$zoneId')),'_$zoneId')"
+        val dateZone = determineZoneId(interval.rawStart)
+        fast"concat(toString(toStartOfQuarter(toDateTime($column / 1000),'$dateZone')),'_$dateZone')"
       case MultiDuration(_, Year) =>
-        fast"concat(toString(toStartOfYear(toDateTime($column / 1000),'$zoneId')),'_$zoneId')"
+        val dateZone = determineZoneId(interval.rawStart)
+        fast"concat(toString(toStartOfYear(toDateTime($column / 1000),'$dateZone')),'_$dateZone')"
       case SimpleDuration(Total) => fast"${interval.getStartMillis}"
       //        handles seconds/minutes/hours/days/weeks
       case multiDuration: MultiDuration =>
@@ -129,6 +220,20 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     }
   }
 
+  //TODO this is a fallback to find a similar timezone when the provided interval does not have a set timezone id. We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries (probably default to failing)
+  private def determineZoneId(start: DateTime) = {
+    val provider = DateTimeZone.getProvider
+    val zones    = provider.getAvailableIDs.asScala.map(provider.getZone)
+    val zone     = start.getZone
+    val targetZone = zones
+      .find(_.getID == zone.getID)
+      .orElse(
+        zones.find(targetZone => targetZone.getOffset(start.getMillis) == start.getZone.getOffset(start.getMillis))
+      )
+      .getOrElse(throw new IllegalArgumentException(s"Could not determine the zone from source $zone"))
+      .getID
+    targetZone
+  }
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
   private def tokenizeJoin(option: Option[JoinQuery])(implicit database: Database): String =
     option match {
