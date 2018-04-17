@@ -38,11 +38,11 @@ object AggregateFunction {
      * Having a column with type array, it aggregates all the results for that column by running the provided aggregation functions for each vertical slice of the array elements.
      * Therefore, for the query result:
      * \array_col|
-     * |[x1, y1, z1]
+     * |[x1, y1, z1, u1]
      * |[x2, y2, z2]
      * |[x3, y3, z3]
      *
-     * if you run sumForEach(array_col) you will get an array result with the following entries: [sum(x1,x3,x3), sum(y1,y2,y3), sum(z1, z2, z3)]
+     * if you run sumForEach(array_col) you will get an array result with the following entries: [sum(x1,x3,x3), sum(y1,y2,y3), sum(z1, z2, z3), sum(u1)]
      *
      * */
     def forEach[V, T <: TableColumn[Seq[V]], Res](
