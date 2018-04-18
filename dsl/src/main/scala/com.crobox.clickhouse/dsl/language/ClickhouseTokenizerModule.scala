@@ -77,6 +77,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
         if (Strings.isNullOrEmpty(originalColumnToken)) alias else fast"$originalColumnToken AS $alias"
       case tuple: TupleColumn[_]         => fast"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
       case col: ExpressionColumn[_]      => tokenizeExpressionColumn(col)
+      case col: Comparison               => tokenizeCondition(col)
       case regularColumn: AnyTableColumn => regularColumn.name
     }
   }
