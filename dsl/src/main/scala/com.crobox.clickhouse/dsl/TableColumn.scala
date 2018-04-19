@@ -85,16 +85,16 @@ case class Float64(tableColumn: AnyTableColumn, orZero: Boolean = false)
     extends TypeCastColumn[Float](tableColumn)
     with Reinterpretable
 
-case class Date(tableColumn: AnyTableColumn)
+case class DateRep(tableColumn: AnyTableColumn)
     extends TypeCastColumn[org.joda.time.LocalDate](tableColumn)
     with Reinterpretable
-case class DateTime(tableColumn: AnyTableColumn)
+case class DateTimeRep(tableColumn: AnyTableColumn)
     extends TypeCastColumn[org.joda.time.DateTime](tableColumn)
     with Reinterpretable
 
 case class StringRep(tableColumn: AnyTableColumn)           extends TypeCastColumn[String](tableColumn) with Reinterpretable
 case class FixedString(tableColumn: AnyTableColumn, n: Int) extends TypeCastColumn[String](tableColumn)
-case class StringCutToZeros(tableColumn: AnyTableColumn)    extends TypeCastColumn[String](tableColumn)
+case class StringCutToZero(tableColumn: AnyTableColumn)    extends TypeCastColumn[String](tableColumn)
 
 case class Cast[V](tableColumn: TableColumn[V], simpleColumnType: SimpleColumnType)
     extends TypeCastColumn[V](tableColumn)
@@ -201,12 +201,12 @@ trait TypeCastColumnOperations {
   def toFloat32OrZero(tableColumn: AnyTableColumn) = Float32(tableColumn, true)
   def toFloat64OrZero(tableColumn: AnyTableColumn) = Float64(tableColumn, true)
 
-  def toDate(tableColumn: AnyTableColumn) = Date(tableColumn)
-  def toDateTime(tableColumn: AnyTableColumn) = DateTime(tableColumn)
+  def toDate(tableColumn: AnyTableColumn) = DateRep(tableColumn)
+  def toDateTime(tableColumn: AnyTableColumn) = DateTimeRep(tableColumn)
 
   def toStringRep(tableColumn: AnyTableColumn) = StringRep(tableColumn)
   def toFixedString(tableColumn: AnyTableColumn, n: Int) = FixedString(tableColumn, n)
-  def toStringCutToZeros(tableColumn: AnyTableColumn) = StringCutToZeros(tableColumn)
+  def toStringCutToZero(tableColumn: AnyTableColumn) = StringCutToZero(tableColumn)
 
   def reinterpret[V](typeCastColumn: TypeCastColumn[V] with Reinterpretable) = Reinterpret(typeCastColumn)
 
