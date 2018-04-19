@@ -38,7 +38,9 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
   }
 
   it should "perform typecasts" in {
-    type TakeIntGiveIntTypes = AnyTableColumn => (TypeCastColumn[_$1] with Reinterpretable) forSome {type _$1 >: Long with String with Float}
+    implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(1500, Millis),Span(150, Millis))
+
+    type TakeIntGiveIntTypes = Column => (TypeCastColumn[_$1] with Reinterpretable) forSome {type _$1 >: Long with String with Float with Serializable}
 
     val takeIntGiveIntCast: Set[TakeIntGiveIntTypes] = Set(
       toUInt8 _,
@@ -80,10 +82,6 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
       toStringCutToZero _
     )
 
-    val takeInt = takeIntGiveIntCast ++ takeIntGiveStringCast
-
-    implicit val patienceConfig = PatienceConfig(Span(1500, Millis),Span(150, Millis))
-
     val reinterpToIntResults = reinterpToIntCast.map(caster => runQry(
       select(reinterpret(caster(col1)) as "result") from TwoTestTable
     ))
@@ -96,9 +94,12 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
       select(caster(col1) as "result") from TwoTestTable
     ))
 
-    val takeIntResults = takeInt.map(caster => runQry(
+    val takeIntResults = takeIntGiveIntCast.map(caster => runQry(
+      select(caster(col2) as "result") from TwoTestTable
+    )) ++ takeIntGiveStringCast.map(caster => runQry(
       select(caster(col2) as "result") from TwoTestTable
     ))
+
 
     val outcomes = takeIntResults ++ reinterpToStringResults ++
       reinterpToIntResults ++ stringToNum
