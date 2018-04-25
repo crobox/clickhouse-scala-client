@@ -17,14 +17,15 @@ case class CombinedAggregatedFunction[T <: TableColumn[_], Res](combinator: Comb
     extends AggregateFunction[Res](EmptyColumn())
 
 object AggregateFunction {
-  type StateResult = String
+  sealed trait StateResult[V]
+
   sealed trait Combinator[T <: Column, Result]
 
   case class If[T <: Column, Res](condition: Comparison)    extends Combinator[T, Res]
   case class CombinatorArray[T <: TableColumn[Seq[V]], V]() extends Combinator[T, V]
   case class ArrayForEach[T <: TableColumn[Seq[_]], Res]()  extends Combinator[T, Seq[Res]]
-  case class State[T <: Column]()                           extends Combinator[T, StateResult]
-  case class Merge[T <: TableColumn[StateResult], Res]()    extends Combinator[T, Res]
+  case class State[T <: Column, Res]()                      extends Combinator[T, StateResult[Res]]
+  case class Merge[T <: TableColumn[_], Res]()              extends Combinator[T, Res]
 
   trait AggregationFunctionsCombinersDsl {
 
@@ -50,10 +51,12 @@ object AggregateFunction {
     )(forEachFunc: TableColumn[V] => AggregateFunction[Res]): AggregateFunction[Seq[Res]] =
       CombinedAggregatedFunction(ArrayForEach(), forEachFunc(ref[V](column.name)))
 
-    def state[T <: TableColumn[_]](aggregated: AggregateFunction[_]) =
-      CombinedAggregatedFunction(State[T](), aggregated)
+    def state[T <: TableColumn[Res],Res](aggregated: AggregateFunction[Res]) =
+      CombinedAggregatedFunction(
+        State[T, Res](),
+        aggregated.asInstanceOf[AggregateFunction[StateResult[Res]]])
 
-    def merge[T <: TableColumn[StateResult], Res](aggregated: AggregateFunction[Res]) =
+    def merge[T <: TableColumn[StateResult[Res]], Res](aggregated: AggregateFunction[Res]) =
       CombinedAggregatedFunction(Merge[T, Res](), aggregated)
   }
 
