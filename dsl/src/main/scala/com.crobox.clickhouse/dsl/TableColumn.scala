@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.column.AggregationFunctions.AggregationFunctionsDsl
 import com.crobox.clickhouse.dsl.column.ArithmeticFunctions.ArithmeticFunctionsDsl
-import com.crobox.clickhouse.dsl.column.DateTimeFunctions.DateTimeFunctionsDsl
+import com.crobox.clickhouse.dsl.column.DateTimeFunctionsMagnets.DateTimeFunctionsDsl
 import com.crobox.clickhouse.dsl.column.TypeCastFunctions.TypeCastFunctionsDsl
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue}
