@@ -5,6 +5,7 @@ import java.util.UUID
 import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
+import org.joda.time.{DateTime, LocalDate}
 
 import scala.util.{Failure, Success}
 
@@ -75,6 +76,13 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     composed should matchPattern {
       case Failure(_:IllegalArgumentException) =>
     }
+  }
+
+  it should "parse datefunction" in {
+    val query = select(toYear(NativeColumn[DateTime]("foo"))) from OneTestTable
+    val s = clickhouseTokenizer.toSql(query.internalQuery)
+
+    s.nonEmpty shouldBe true
   }
 
   it should "succeed on safe override of non-conflicting multi part queries" in {

@@ -6,6 +6,7 @@ import com.crobox.clickhouse.dsl.column.TypeCastFunctions._
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.column.DateTimeFunctions.DateTimeFunction
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.crobox.clickhouse.time.TimeUnit.{Quarter, Total, Year}
 import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration, TimeUnit}
@@ -21,6 +22,7 @@ trait ClickhouseTokenizerModule
   extends TokenizerModule
   with AggregationFunctionTokenizer
   with TypeCastFunctionTokenizer
+  with DateTimeFunctionTokenizer
 {
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
@@ -98,9 +100,10 @@ trait ClickhouseTokenizerModule
   private def tokenizeExpressionColumn(col: ExpressionColumn[_])(implicit database: Database): String =
     col match {
       case agg: AggregateFunction[_]    => tokenizeAggregateFunction(agg)
+      case col: TypeCastColumn[_]       => tokenizeTypeCastColumn(col)
+      case col: DateTimeFunction[_,_]   => tokenizeDateTimeColumn(col)
       case ArrayJoin(tableColumn)       => fast"arrayJoin(${tokenizeColumn(tableColumn)})"
       case All()                        => "*"
-      case col: TypeCastColumn[_]       => tokenizeTypeCastColumn(col)
       case LowerCaseColumn(tableColumn) => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
       case Conditional(cases, default) =>
         fast"CASE ${cases

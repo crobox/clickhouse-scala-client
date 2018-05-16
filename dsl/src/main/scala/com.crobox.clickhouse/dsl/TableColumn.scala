@@ -77,8 +77,6 @@ trait ColumnOperations
     with ArithmeticFunctionsDsl
     with DateTimeFunctionsDsl {
 
-  toYear(TableColumn[LocalDate])
-
   implicit val booleanNumeric: Numeric[Boolean] = new Numeric[Boolean] {
     override def plus(x: Boolean, y: Boolean) = x || y
 
