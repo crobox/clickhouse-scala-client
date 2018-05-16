@@ -35,7 +35,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     )
   }
 
-  it should "propagate the evidence when negating isIn()" in {
+  it should "propagate the queryvalue parser from super, when negating isIn()" in {
     val ids = Seq.fill(3)(UUID.randomUUID())
     val query = select(shieldId) from OneTestTable where shieldId.not().isIn(ids.toSet)
     clickhouseTokenizer.toSql(query.internalQuery) should be(
