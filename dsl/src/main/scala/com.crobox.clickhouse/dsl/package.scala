@@ -222,8 +222,9 @@ package object dsl extends DslLanguage {
     override def isIn(other: Iterable[V])(implicit ev: QueryValue[V],
                                           validator: ComparisonValidator[Iterable[_ >: V]]): Comparison =
       super.isIn(other) match {
-        case comparison: ValueColumnComparison[_, V] => comparison.copy(operator = "NOT IN")
-        case other: Comparison                       => other
+        case comparison: ValueColumnComparison[_, V] =>
+          comparison.copy(operator = "NOT IN")(comparison.queryValueEvidence)
+        case other: Comparison => other
       }
   }
 
