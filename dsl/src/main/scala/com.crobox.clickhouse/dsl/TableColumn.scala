@@ -2,11 +2,13 @@ package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.column.AggregationFunctions.AggregationFunctionsDsl
+import com.crobox.clickhouse.dsl.column.ArithmeticFunctions.ArithmeticFunctionsDsl
+import com.crobox.clickhouse.dsl.column.DateTimeFunctions.DateTimeFunctionsDsl
 import com.crobox.clickhouse.dsl.column.TypeCastFunctions.TypeCastFunctionsDsl
-import com.crobox.clickhouse.dsl.column.{AggregationFunctions, TypeCastFunctions, ArithmeticFunctions}
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue}
 import com.dongxiguo.fastring.Fastring.Implicits._
+import org.joda.time.LocalDate
 
 sealed case class EmptyColumn() extends TableColumn("")
 
@@ -71,7 +73,11 @@ case class Const[V: QueryValue](const: V) extends ExpressionColumn[V](EmptyColum
 
 trait ColumnOperations
   extends AggregationFunctionsDsl
-    with TypeCastFunctionsDsl {
+    with TypeCastFunctionsDsl
+    with ArithmeticFunctionsDsl
+    with DateTimeFunctionsDsl {
+
+  toYear(TableColumn[LocalDate])
 
   implicit val booleanNumeric: Numeric[Boolean] = new Numeric[Boolean] {
     override def plus(x: Boolean, y: Boolean) = x || y
