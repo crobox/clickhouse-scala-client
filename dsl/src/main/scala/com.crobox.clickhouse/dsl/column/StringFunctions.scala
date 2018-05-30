@@ -27,8 +27,8 @@ trait StringFunctions { self: Magnets =>
       extends StringFunctionCol[String](col)
   // TODO: Enum the charsets?
 
-  def empty(col: EmptyNonEmptyCol)                                = Empty(col: EmptyNonEmptyCol)
-  def notEmpty(col: EmptyNonEmptyCol)                             = NotEmpty(col: EmptyNonEmptyCol)
+  def empty(col: EmptyNonEmptyCol)                        = Empty(col: EmptyNonEmptyCol)
+  def notEmpty(col: EmptyNonEmptyCol)                     = NotEmpty(col: EmptyNonEmptyCol)
   def length(col: TableColumn[String])                    = Length(col: TableColumn[String])
   def lengthUTF8(col: TableColumn[String])                = LengthUTF8(col: TableColumn[String])
   def lower(col: TableColumn[String])                     = Lower(col: TableColumn[String])

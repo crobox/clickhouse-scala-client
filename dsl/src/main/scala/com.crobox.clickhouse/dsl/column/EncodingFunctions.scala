@@ -6,12 +6,12 @@ import com.crobox.clickhouse.dsl.{ExpressionColumn, TableColumn}
 trait EncodingFunctions { self: Magnets =>
   abstract class EncodingFunction[O](col: AnyTableColumn) extends ExpressionColumn[O](col)
 
-  case class Hex(col: HexCompatible)                   extends EncodingFunction[String](col.column)
+  case class Hex(col: HexCompatible)               extends EncodingFunction[String](col.column)
   case class Unhex[I](col: StringColMagnet)        extends EncodingFunction[I](col.column)
   case class UUIDStringToNum(col: StringColMagnet) extends EncodingFunction[Long](col.column)
   case class UUIDNumToString(col: StringColMagnet) extends EncodingFunction[Long](col.column)
-  case class BitmaskToList(col: NumericCol)            extends EncodingFunction[String](col.column)  //TODO Add type
-  case class BitmaskToArray(col: NumericCol)           extends EncodingFunction[Iterable[Long]](col.column)
+  case class BitmaskToList(col: NumericCol)        extends EncodingFunction[String](col.column)  //TODO Add type
+  case class BitmaskToArray(col: NumericCol)       extends EncodingFunction[Iterable[Long]](col.column)
 
   def hex(col: HexCompatible)                   = Hex(col)
   def unhex(col: StringColMagnet)           = Unhex(col)
