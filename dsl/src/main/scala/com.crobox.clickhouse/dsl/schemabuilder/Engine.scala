@@ -1,8 +1,7 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
+import com.crobox.clickhouse.dsl.Column
 import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats.StringQueryValue
-import com.crobox.clickhouse.dsl.{ClickhouseStatement, Column, NativeColumn}
-import org.joda.time.LocalDate
 
 /**
  * @author Sjoerd Mulder
@@ -32,37 +31,47 @@ object Engine {
   }
 
   private[Engine] abstract class MergeTreeEngine(val name: String) extends Engine {
-    val dateColumn: NativeColumn[LocalDate]
+    val partition: Seq[String]
     val primaryKey: Seq[Column]
     val indexGranularity: Int
     val samplingExpression: Option[String]
 
-    private val primaryKeys = primaryKey.map(_.name) ++ samplingExpression
+    private val partitionArgument = Option(partition.mkString(", ")).filter(_.nonEmpty)
+    private val orderByArgument = Option(
+      (primaryKey.map(col => Option(col.name)) ++ Seq(samplingExpression)).flatten.mkString(", ")
+    ).filter(_.nonEmpty)
+    private val settingsArgument = s"index_granularity=$indexGranularity"
 
-    val arguments = Seq(Some(dateColumn.name), samplingExpression,
-      Some(s"(${primaryKeys.mkString(", ")})"), Some(indexGranularity)).flatten
+    val statements = Seq(
+      partitionArgument.map(partitionExp => s"PARTITION BY ($partitionExp)"),
+      orderByArgument.map(cols => s"ORDER BY ($cols)"),
+      samplingExpression.map(exp => s"SAMPLE BY $exp"),
+      Option(s"SETTINGS $settingsArgument")
+    ).flatten
 
-    override def toString: String = s"$name(${arguments.mkString(", ")})"
+    override def toString: String =
+      s"""$name
+      |${statements.mkString("\n")}""".stripMargin
   }
 
-  case class MergeTree(dateColumn: NativeColumn[LocalDate],
+  case class MergeTree(partition: Seq[String],
                        primaryKey: Seq[Column],
                        samplingExpression: Option[String] = None,
                        indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
       extends MergeTreeEngine("MergeTree")
 
-  case class ReplacingMergeTree(dateColumn: NativeColumn[LocalDate],
+  case class ReplacingMergeTree(partition: Seq[String],
                                 primaryKey: Seq[Column],
                                 samplingExpression: Option[String] = None,
                                 indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
       extends MergeTreeEngine("ReplacingMergeTree")
 
-  case class Replicated(zookeeperPath: String,
-                        replicaName: String,
-                        engine: MergeTreeEngine) extends Engine {
+  case class Replicated(zookeeperPath: String, replicaName: String, engine: MergeTreeEngine) extends Engine {
     override def toString: String = {
-      val arguments = Seq(zookeeperPath, replicaName).map(StringQueryValue(_)) ++ engine.arguments
-      s"Replicated${engine.name}(${arguments.mkString(", ")})"
+      val replicationArgs = Seq(zookeeperPath, replicaName).map(StringQueryValue(_)).mkString(", ")
+
+      s"""Replicated${engine.name}($replicationArgs)
+         |${engine.statements.mkString("\n")}""".stripMargin
     }
   }
 
