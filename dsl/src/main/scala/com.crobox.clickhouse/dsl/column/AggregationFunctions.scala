@@ -3,23 +3,23 @@ package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.column.AggregationFunctions._
 import com.crobox.clickhouse.time.MultiInterval
 import org.joda.time.DateTime
 
-object AggregationFunctions 
+trait AggregationFunctions
   extends SumFunctions 
   with AnyResultFunctions 
   with UniqFunctions 
-  with Leveled 
-  with AggregationFunctionsCombiners {
+  with Leveled
+  with AggregationFunctionsCombiners { self: Magnets with ClickhouseColumnFunctions =>
 
   //https://clickhouse.yandex/docs/en/agg_functions/reference
+
   abstract class AggregateFunction[V](targetColumn: AnyTableColumn) extends ExpressionColumn[V](targetColumn)
 
   case class Count(column: Option[AnyTableColumn] = None) extends AggregateFunction[Long](column.getOrElse(EmptyColumn()))
 
-  case class Avg[T: Numeric](tableColumn: TableColumn[T]) extends AggregateFunction[Double](tableColumn)
+  case class Avg[V](tableColumn: TableColumn[V]) extends AggregateFunction[Double](tableColumn)
 
   case class GroupUniqArray[V](tableColumn: TableColumn[V]) extends AggregateFunction[Seq[V]](tableColumn)
 
@@ -36,12 +36,12 @@ object AggregationFunctions
     extends AggregateFunction[Long](tableColumn)
   
  
-  trait AggregationFunctionsDsl
-    extends AggregationFunctionsCombinersDsl
-      with UniqDsl
-      with AnyResultDsl
-      with SumDsl
-      with LevelModifierDsl {
+//  trait AggregationFunctionsDsl
+//    extends AggregationFunctionsCombinersDsl
+//      with UniqDsl
+//      with AnyResultDsl
+//      with SumDsl
+//      with LevelModifierDsl {
     
     def count() =
       Count()
@@ -65,10 +65,10 @@ object AggregationFunctions
   
     def groupUniqArray[V](tableColumn: TableColumn[V]) =
       GroupUniqArray(tableColumn)
-  }
+ // }
 }
 
-trait AggregationFunctionsCombiners {
+trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
   
   case class CombinedAggregatedFunction[T <: TableColumn[_], Res](combinator: Combinator[T, Res],
     target: AggregateFunction[_])
@@ -86,7 +86,7 @@ trait AggregationFunctionsCombiners {
     case class Merge[T <: TableColumn[_], Res]()              extends Combinator[T, Res]
   }
   
-  trait AggregationFunctionsCombinersDsl {
+ // trait AggregationFunctionsCombinersDsl {
 
     def aggIf[T <: TableColumn[Res], Res](condition: Comparison)(aggregated: AggregateFunction[Res]) =
       CombinedAggregatedFunction(Combinator.If(condition), aggregated)
@@ -117,13 +117,13 @@ trait AggregationFunctionsCombiners {
 
     def merge[T <: TableColumn[StateResult[Res]], Res](aggregated: AggregateFunction[Res]) =
       CombinedAggregatedFunction(Combinator.Merge[T, Res](), aggregated)
-  }
+ // }
 
 }
 
-trait UniqFunctions {
+trait UniqFunctions { self: Magnets with AggregationFunctions =>
   sealed trait UniqModifier
-  
+
   case class Uniq(tableColumn: AnyTableColumn, modifier: UniqModifier = UniqModifier.Simple)
     extends AggregateFunction[Long](tableColumn)
   
@@ -134,17 +134,17 @@ trait UniqFunctions {
     case object Exact    extends UniqModifier
   }
   
-  trait UniqDsl {
+  //trait UniqDsl {
     def uniq(tableColumn: AnyTableColumn) =
       Uniq(tableColumn)
     def uniqCombined(tableColumn: AnyTableColumn): Uniq = Uniq(tableColumn, UniqModifier.Combined)
     def uniqExact(tableColumn: AnyTableColumn): Uniq    = Uniq(tableColumn, UniqModifier.Exact)
     def uniqHLL12(tableColumn: AnyTableColumn): Uniq    = Uniq(tableColumn, UniqModifier.HLL12)
-  }
+  //}
 }
 
 
-trait AnyResultFunctions {
+trait AnyResultFunctions { self: Magnets with AggregationFunctions =>
   case class AnyResult[T](tableColumn: TableColumn[T], modifier: AnyModifier = AnyModifier.Simple)
     extends AggregateFunction[T](tableColumn)
 
@@ -155,7 +155,7 @@ trait AnyResultFunctions {
     case object Last   extends AnyModifier
   }
   
-  trait AnyResultDsl {
+  //trait AnyResultDsl {
 
     def any[T](tableColumn: TableColumn[T]): AnyResult[T] =
       AnyResult(tableColumn)
@@ -165,10 +165,10 @@ trait AnyResultFunctions {
 
     def anyLast[T](tableColumn: TableColumn[T]): AnyResult[T] =
       AnyResult(tableColumn, AnyModifier.Last)
-  }
+  //}
 }
 
-trait SumFunctions {
+trait SumFunctions { self: Magnets with AggregationFunctions =>
   case class Sum[T: Numeric](tableColumn: TableColumn[T], modifier: SumModifier = SumModifier.Simple)
     extends AggregateFunction[Double](tableColumn)
 
@@ -183,7 +183,7 @@ trait SumFunctions {
     case object Map          extends SumModifier
   }
     
-  trait SumDsl {
+  //trait SumDsl {
     def sum[T: Numeric](tableColumn: TableColumn[T]) =
       Sum(tableColumn)
 
@@ -192,12 +192,12 @@ trait SumFunctions {
 
     def sumMap[T: Numeric, V: Numeric](key: TableColumn[Seq[T]], value: TableColumn[Seq[V]]) =
       SumMap(key, value)
-  }
+ // }
 
 }
 
 
-trait Leveled {
+trait Leveled { self: Magnets with AggregationFunctions =>
   sealed abstract class LeveledAggregatedFunction[T](target: AnyTableColumn) extends AggregateFunction[T](target)
   
   sealed trait LevelModifier
@@ -230,7 +230,7 @@ trait Leveled {
     require(level > 0 && level < 1)
   }
   
-  trait LevelModifierDsl {
+  //trait LevelModifierDsl {
 
     def median[V](target: TableColumn[V], level: Float = 0.5F) = Median(target, level = level)
 
@@ -285,7 +285,7 @@ trait Leveled {
     def quantilesDeterministic[V, T: Numeric](target: TableColumn[V], determinator: TableColumn[T], levels: Float*) =
       Quantiles(target, levels, LevelModifier.Deterministic(determinator))
 
-  }
+ // }
 
 }
 

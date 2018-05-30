@@ -3,8 +3,6 @@ package com.crobox.clickhouse.dsl.language
 import java.util.UUID
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.column.AggregationFunctions
-import com.crobox.clickhouse.dsl.column.AggregationFunctions._
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
@@ -158,8 +156,8 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
 
   it should "use constant" in {
     this.tokenizeColumn(
-      ColumnOperations
-        .const(3)
+
+        column.const(3)
         .as(col2)
     ) shouldBe s"3 AS ${col2.name}"
   }

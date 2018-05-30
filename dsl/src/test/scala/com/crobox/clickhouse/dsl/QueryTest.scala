@@ -79,11 +79,28 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
   }
 
   it should "parse datefunction" in {
-    val query = select(toYear(NativeColumn[DateTime]("foo"))) from OneTestTable
+    val query = select(toYear(NativeColumn[DateTime]("dateTime"))) from OneTestTable
     val s = clickhouseTokenizer.toSql(query.internalQuery)
 
     s.nonEmpty shouldBe true
   }
+
+  it should "parse column function in filter" in {
+
+    val query = select(minus(NativeColumn[LocalDate]("date"), NativeColumn[Double]("double"))) from OneTestTable
+    where(sum(col2) > 0)
+    val s = clickhouseTokenizer.toSql(query.internalQuery)
+
+    s shouldBe "SELECT minus(date, double) FROM default.captainAmerica WHERE sum(shield_id) > 0 FORMAT JSON"
+  }
+
+  it should "parse const as column for magnets" in {
+    val query = select(minus(1,col2),intDiv(2,3)) from OneTestTable
+    where(sum(col2) > 0)
+    val s = clickhouseTokenizer.toSql(query.internalQuery)
+    s shouldBe "SELECT minus(date, double) FROM default.captainAmerica WHERE sum(shield_id) > 0 FORMAT JSON"
+  }
+
 
   it should "succeed on safe override of non-conflicting multi part queries" in {
     val query = select(shieldId)

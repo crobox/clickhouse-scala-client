@@ -1,14 +1,11 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl
-import com.crobox.clickhouse.dsl.column.AggregationFunctions._
-import com.crobox.clickhouse.dsl.column.TypeCastFunctions._
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.column.DateTimeFunctionsMagnets.DateTimeFunction
+import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
-import com.crobox.clickhouse.time.TimeUnit.{Quarter, Total, Year}
 import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration, TimeUnit}
 import com.dongxiguo.fastring.Fastring.Implicits._
 import com.google.common.base.Strings
@@ -19,11 +16,13 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 
 trait ClickhouseTokenizerModule
-  extends TokenizerModule
-  with AggregationFunctionTokenizer
-  with TypeCastFunctionTokenizer
-  with DateTimeFunctionMagnetsTokenizer
-{
+    extends TokenizerModule
+    with AggregationFunctionTokenizer
+    with TypeCastFunctionTokenizer
+    with DateTimeFunctionTokenizer
+    with ArithmeticFunctionTokenizer
+    with ClickhouseColumnFunctions {
+
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
   override def toSql(query: InternalQuery,
@@ -99,12 +98,15 @@ trait ClickhouseTokenizerModule
 
   private def tokenizeExpressionColumn(col: ExpressionColumn[_])(implicit database: Database): String =
     col match {
-      case agg: AggregateFunction[_]    => tokenizeAggregateFunction(agg)
-      case col: TypeCastColumn[_]       => tokenizeTypeCastColumn(col)
-      case col: DateTimeFunction[_]   => tokenizeDateTimeColumn(col)
-      case ArrayJoin(tableColumn)       => fast"arrayJoin(${tokenizeColumn(tableColumn)})"
-      case All()                        => "*"
-      case LowerCaseColumn(tableColumn) => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
+      case agg: AggregateFunction[_]     => tokenizeAggregateFunction(agg)
+      case col: TypeCastColumn[_]        => tokenizeTypeCastColumn(col)
+      case col: DateTimeFunctionCol[_]   => tokenizeDateTimeColumn(col)
+      case col: DateTimeConst[_]         => tokenizeDateTimeConst(col)
+      case col: ArithmeticFunctionCol[_] => tokenizeArithmeticFunctionColumn(col)
+      case col: ArithmeticFunctionOp[_]  => tokenizeArithmeticFunctionOperator(col)
+      case ArrayJoin(tableColumn)        => fast"arrayJoin(${tokenizeColumn(tableColumn.column)})"
+      case All()                         => "*"
+      case LowerCaseColumn(tableColumn)  => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
       case Conditional(cases, default) =>
         fast"CASE ${cases
           .map(ccase => fast"WHEN ${tokenizeCondition(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
@@ -112,7 +114,6 @@ trait ClickhouseTokenizerModule
       case c: Const[_] => c.parsed
       case QueryColumn(query) => s"(${toRawSql(query.internalQuery)})"
     }
-
 
   private[language] def tokenizeTimeSeries(timeSeries: TimeSeries)(implicit database: Database): String = {
     val column = tokenizeColumn(timeSeries.tableColumn)
@@ -125,13 +126,13 @@ trait ClickhouseTokenizerModule
       case MultiDuration(value, TimeUnit.Month) =>
         val dateZone = determineZoneId(interval.rawStart)
         fast"concat(toString(intDiv(toRelativeMonthNum(toDateTime($column / 1000),'$dateZone'), $value) * $value),'_$dateZone')"
-      case MultiDuration(_, Quarter) =>
+      case MultiDuration(_, TimeUnit.Quarter) =>
         val dateZone = determineZoneId(interval.rawStart)
         fast"concat(toString(toStartOfQuarter(toDateTime($column / 1000),'$dateZone')),'_$dateZone')"
-      case MultiDuration(_, Year) =>
+      case MultiDuration(_, TimeUnit.Year) =>
         val dateZone = determineZoneId(interval.rawStart)
         fast"concat(toString(toStartOfYear(toDateTime($column / 1000),'$dateZone')),'_$dateZone')"
-      case SimpleDuration(Total) => fast"${interval.getStartMillis}"
+      case SimpleDuration(TimeUnit.Total) => fast"${interval.getStartMillis}"
       //        handles seconds/minutes/hours/days/weeks
       case multiDuration: MultiDuration =>
         //        for fixed duration we calculate the milliseconds for the start of a sub interval relative to our predefined interval start. The first subinterval start would be `interval.startOfInterval()`

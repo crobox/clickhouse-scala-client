@@ -1,61 +1,44 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
-object ArithmeticFunctions {
-  abstract class ArithmeticFunctionCol[V](val targetColumn: AnyTableColumn) extends ExpressionColumn[V](targetColumn)
+trait ArithmeticFunctions { self: Magnets =>
 
-  abstract class ArithmeticFunctionOp[V](val left: AnyTableColumn, val right: AnyTableColumn)
+  sealed trait ArithmeticFunction
+
+  abstract class ArithmeticFunctionCol[V](val numericCol: NumericCol)
+    extends ExpressionColumn[V](numericCol.column)
+  with ArithmeticFunction
+
+  abstract class ArithmeticFunctionOp[V](val left: AddSubtractAble, val right: AddSubtractAble)
       extends ExpressionColumn[V](EmptyColumn())
+        with ArithmeticFunction
 
-  case class Plus(l: AnyTableColumn, r: AnyTableColumn)         extends ArithmeticFunctionOp(l, r)
-  case class Minus(l: AnyTableColumn, r: AnyTableColumn)        extends ArithmeticFunctionOp(l, r)
-  case class Multiply(l: AnyTableColumn, r: AnyTableColumn)     extends ArithmeticFunctionOp(l, r)
-  case class Divide(l: AnyTableColumn, r: AnyTableColumn)       extends ArithmeticFunctionOp(l, r)
-  case class IntDiv(l: AnyTableColumn, r: AnyTableColumn)       extends ArithmeticFunctionOp(l, r)
-  case class IntDivOrZero(l: AnyTableColumn, r: AnyTableColumn) extends ArithmeticFunctionOp(l, r)
-  case class Modulo(l: AnyTableColumn, r: AnyTableColumn)       extends ArithmeticFunctionOp(l, r)
-  case class Gcd(l: AnyTableColumn, r: AnyTableColumn)          extends ArithmeticFunctionOp(l, r)
-  case class Lcm(l: AnyTableColumn, r: AnyTableColumn)          extends ArithmeticFunctionOp(l, r)
+  case class Plus(l: AddSubtractAble, r: AddSubtractAble)    extends ArithmeticFunctionOp(l, r)
+  case class Minus(l: AddSubtractAble, r: AddSubtractAble)   extends ArithmeticFunctionOp(l, r)
+  case class Multiply(l: NumericCol, r: NumericCol)     extends ArithmeticFunctionOp(l, r)
+  case class Divide(l: NumericCol, r: NumericCol)       extends ArithmeticFunctionOp(l, r)
+  case class IntDiv(l: NumericCol, r: NumericCol)       extends ArithmeticFunctionOp(l, r)
+  case class IntDivOrZero(l: NumericCol, r: NumericCol) extends ArithmeticFunctionOp(l, r)
+  case class Modulo(l: NumericCol, r: NumericCol)       extends ArithmeticFunctionOp(l, r)
+  case class Gcd(l: NumericCol, r: NumericCol)          extends ArithmeticFunctionOp(l, r)
+  case class Lcm(l: NumericCol, r: NumericCol)          extends ArithmeticFunctionOp(l, r)
 
-  case class Negate(t: AnyTableColumn) extends ArithmeticFunctionCol(t)
-  case class Abs(t: AnyTableColumn)    extends ArithmeticFunctionCol(t)
+  case class Negate(t: NumericCol) extends ArithmeticFunctionCol(t)
+  case class Abs(t: NumericCol)    extends ArithmeticFunctionCol(t)
 
-  trait ArithmeticFunctionsDsl {
+  //trait ArithmeticFunctionsDsl {
 
-    implicit class ColumnSymbolOps(column: AnyTableColumn) {
-      def +(other: AnyTableColumn) = Plus(column, other)
-
-      def -(other: AnyTableColumn) = Minus(column, other)
-
-      def *(other: AnyTableColumn) = Multiply(column, other)
-
-      def /(other: AnyTableColumn) = Divide(column, other)
-
-      def %(other: AnyTableColumn) = Modulo(column, other)
-    }
-
-    def plus(left: AnyTableColumn, right: AnyTableColumn) = Plus(left, right)
-
-    def minus(left: AnyTableColumn, right: AnyTableColumn) = Minus(left, right)
-
-    def multiply(left: AnyTableColumn, right: AnyTableColumn) = Multiply(left, right)
-
-    def divide(left: AnyTableColumn, right: AnyTableColumn) = Divide(left, right)
-
-    def intDiv(left: AnyTableColumn, right: AnyTableColumn) = IntDiv(left, right)
-
-    def intDivOrZero(left: AnyTableColumn, right: AnyTableColumn) = IntDivOrZero(left, right)
-
-    def modulo(left: AnyTableColumn, right: AnyTableColumn) = Modulo(left, right)
-
-    def gcd(left: AnyTableColumn, right: AnyTableColumn) = Gcd(left, right)
-
-    def lcm(left: AnyTableColumn, right: AnyTableColumn) = Lcm(left, right)
-
-    def negate(targetColumn: AnyTableColumn) = Negate(targetColumn)
-
-    def abs(targetColumn: AnyTableColumn) = Abs(targetColumn)
-  }
+    def plus(left: AddSubtractAble, right: AddSubtractAble)    = Plus(left, right)
+    def minus(left: AddSubtractAble, right: AddSubtractAble)   = Minus(left, right)
+    def multiply(left: NumericCol, right: NumericCol)     = Multiply(left, right)
+    def divide(left: NumericCol, right: NumericCol)       = Divide(left, right)
+    def intDiv(left: NumericCol, right: NumericCol)       = IntDiv(left, right)
+    def intDivOrZero(left: NumericCol, right: NumericCol) = IntDivOrZero(left, right)
+    def modulo(left: NumericCol, right: NumericCol)       = Modulo(left, right)
+    def gcd(left: NumericCol, right: NumericCol)          = Gcd(left, right)
+    def lcm(left: NumericCol, right: NumericCol)          = Lcm(left, right)
+    def negate(targetColumn: NumericCol)                  = Negate(targetColumn)
+    def abs(targetColumn: NumericCol)                     = Abs(targetColumn)
+ // }
 }

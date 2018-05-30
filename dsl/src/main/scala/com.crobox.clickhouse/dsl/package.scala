@@ -1,21 +1,20 @@
 package com.crobox.clickhouse
 
-import com.crobox.clickhouse.dsl.column.AggregationFunctions.AggregationFunctionsCombinersDsl
-
-import com.crobox.clickhouse.dsl.{ColumnOperations, QueryFactory}
+import com.crobox.clickhouse.dsl.QueryFactory
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
+import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
 import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryResult}
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.dongxiguo.fastring.Fastring.Implicits._
 import spray.json.{JsonReader, JsonWriter}
+import com.crobox.clickhouse.dsl.column._
 
 import scala.collection.immutable.Iterable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 trait DslLanguage
-    extends ColumnOperations
-    with AggregationFunctionsCombinersDsl
+    extends ClickhouseColumnFunctions
     with QueryFactory
     with QueryValueFormats
 object DslLanguage extends DslLanguage
@@ -178,7 +177,7 @@ package object dsl extends DslLanguage {
       FunctionColumnComparison("empty", column)
 
     def exists(condition: (TableColumn[V] => Comparison)) = {
-      val conditionColumn = ColumnOperations.ref[V]("x")
+      val conditionColumn = ref[V]("x")
       HigherOrderFunction("arrayExists", conditionColumn, condition(conditionColumn), column)
     }
 
@@ -224,7 +223,7 @@ package object dsl extends DslLanguage {
   case class NegateColumn[V](column: TableColumn[V])
 
   implicit class NegateComparison[V](column: TableColumn[V]) {
-
+//TODO use as wrapper around isIn and Like
     def not(): NegateColumn[V] =
       NegateColumn(column)
   }
@@ -268,6 +267,12 @@ package object dsl extends DslLanguage {
       (columnComparison, other) match {
         case (_: NoOpComparison, _: NoOpComparison) => NoOpComparison()
         case _                                      => ChainableColumnCondition(columnComparison, "OR", other)
+      }
+
+    def xor(other: Comparison): Comparison =
+      (columnComparison, other) match {
+        case (_: NoOpComparison, _: NoOpComparison) => NoOpComparison()
+        case _                                      => ChainableColumnCondition(columnComparison, "XOR", other)
       }
   }
 

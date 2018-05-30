@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.dsl
 
+import column._
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 

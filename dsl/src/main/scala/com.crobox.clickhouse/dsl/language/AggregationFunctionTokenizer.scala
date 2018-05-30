@@ -1,9 +1,9 @@
 package com.crobox.clickhouse.dsl.language
 
-import com.crobox.clickhouse.dsl.column.AggregationFunctions._
 import com.crobox.clickhouse.dsl.{fstr2str, _}
 import com.dongxiguo.fastring.Fastring.Implicits._
 import com.google.common.base.Strings
+
 
 trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
