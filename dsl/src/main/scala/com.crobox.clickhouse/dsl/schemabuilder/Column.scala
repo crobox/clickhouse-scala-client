@@ -72,8 +72,8 @@ object ColumnType {
   }
 
 //  TODO modifi this to accept and expression column
-  case class AggregateFunctionColumn(function: String, columnType: ColumnType)
-      extends SimpleColumnType(s"AggregateFunction($function, ${columnType.toString})")
+  case class AggregateFunctionColumn(function: String, columnType: ColumnType, nextTypes: ColumnType*)
+      extends SimpleColumnType(s"AggregateFunction($function, ${(columnType +: nextTypes).map(_.toString).mkString(", ")})")
 
 }
 

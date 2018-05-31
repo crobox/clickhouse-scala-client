@@ -21,4 +21,14 @@ class ColumnTypeTest extends FlatSpecLike with Matchers {
     }
   }
 
+  it should "support multiple arguments for AggregateFunction column" in {
+    ColumnType.AggregateFunctionColumn("uniq", ColumnType.String).toString should be(
+      "AggregateFunction(uniq, String)"
+    )
+
+    ColumnType.AggregateFunctionColumn("uniqIf", ColumnType.String, ColumnType.UInt8).toString should be(
+      "AggregateFunction(uniqIf, String, UInt8)"
+    )
+  }
+
 }
