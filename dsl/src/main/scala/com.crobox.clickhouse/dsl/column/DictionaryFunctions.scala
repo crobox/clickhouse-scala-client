@@ -43,6 +43,8 @@ trait DictionaryFunctions { self: Magnets =>
   case class DictGetHierarchy(dictName: StringColMagnet, id: NumericCol)
   case class DictHas(dictName: StringColMagnet, id: NumericCol)
 
+
+  //todo implement '...orDefault'
   def dictGetUInt8(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol) = DictGetUInt8(dictName, attrName, id)
   def dictGetUInt16(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol) = DictGetUInt16(dictName, attrName, id)
   def dictGetUInt32(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol) = DictGetUInt32(dictName, attrName, id)

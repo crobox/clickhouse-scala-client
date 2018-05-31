@@ -11,7 +11,7 @@ trait MathematicalFunctions { self: Magnets =>
   case class E() extends MathConst()
   case class Pi() extends MathConst()
   
-  case class Exp(col: NumericCol) extends MathFunctionCol(col)
+  case class Exp(col: NumericCol) extends MathFunctionCol(col)//TODO: Correct types
   case class Log(col: NumericCol) extends MathFunctionCol(col)
   case class Exp2(col: NumericCol) extends MathFunctionCol(col)
   case class Log2(col: NumericCol) extends MathFunctionCol(col)

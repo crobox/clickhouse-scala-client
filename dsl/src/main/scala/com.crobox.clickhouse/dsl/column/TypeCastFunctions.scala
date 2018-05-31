@@ -8,7 +8,7 @@ trait TypeCastFunctions  { self: Magnets =>
 
   abstract class TypeCastColumn[V](targetColumn: AnyTableColumn) extends ExpressionColumn[V](targetColumn)
 
-  case class Reinterpret[V](typeCastColumn: TypeCastColumn[V] with Reinterpretable)
+  case class Reinterpret[V](typeCastColumn: TypeCastColumn[_] with Reinterpretable)
       extends TypeCastColumn[V](typeCastColumn)
 
   //Tagging of compatible
@@ -96,7 +96,7 @@ trait TypeCastFunctions  { self: Magnets =>
     def toFixedString(tableColumn: AnyTableColumn, n: Int) = FixedString(tableColumn, n)
     def toStringCutToZero(tableColumn: AnyTableColumn)     = StringCutToZero(tableColumn)
 
-    def reinterpret[V](typeCastColumn: TypeCastColumn[V] with Reinterpretable) = Reinterpret(typeCastColumn)
+    def reinterpret[V](typeCastColumn: TypeCastColumn[_] with Reinterpretable) = Reinterpret[V](typeCastColumn)
 
     def cast(tableColumn: TableColumn[Long], simpleColumnType: SimpleColumnType) = Cast(tableColumn, simpleColumnType)
   //}

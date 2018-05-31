@@ -7,8 +7,8 @@ trait SplitMergeFunctions { self: Magnets =>
 
   abstract class SplitMergeFunction[V](col: AnyTableColumn) extends ExpressionColumn[V](col)
 
-  case class SplitByChar(sep: StringColMagnet, col: ArrayColMagnet) extends SplitMergeFunction[Iterable[_]](col.column)
-  case class SplitByString(sep: StringColMagnet, col: ArrayColMagnet) extends SplitMergeFunction[Iterable[_]](col.column)
+  case class SplitByChar(sep: StringColMagnet, col: ArrayColMagnet) extends SplitMergeFunction[Iterable[String]](col.column)
+  case class SplitByString(sep: StringColMagnet, col: ArrayColMagnet) extends SplitMergeFunction[Iterable[String]](col.column)
   case class ArrayStringConcat(col: StringColMagnet, sep: StringColMagnet = "") extends SplitMergeFunction[String](col.column)
   case class AlphaTokens(col: StringColMagnet) extends SplitMergeFunction[Iterable[String]](col.column)
 
