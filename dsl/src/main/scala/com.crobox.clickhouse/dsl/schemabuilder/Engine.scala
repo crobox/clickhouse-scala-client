@@ -110,6 +110,32 @@ object Engine {
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity)
   }
 
+  case class AggregatingMergeTree(partition: Seq[String],
+                                primaryKey: Seq[Column],
+                                samplingExpression: Option[String] = None,
+                                indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
+    extends MergeTreeEngine("AggregatingMergeTree")
+
+  object AggregatingMergeTree {
+
+    def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column]): AggregatingMergeTree =
+      apply(monthPartitionCompat(dateColumn), primaryKey)
+
+    def apply(dateColumn: NativeColumn[LocalDate],
+              primaryKey: Seq[Column],
+              samplingExpression: Option[String]): AggregatingMergeTree =
+      apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression = samplingExpression)
+
+    def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column], indexGranularity: Int): AggregatingMergeTree =
+      apply(monthPartitionCompat(dateColumn), primaryKey, indexGranularity = indexGranularity)
+
+    def apply(dateColumn: NativeColumn[LocalDate],
+              primaryKey: Seq[Column],
+              samplingExpression: Option[String],
+              indexGranularity: Int): AggregatingMergeTree =
+      apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity)
+  }
+
   case class Replicated(zookeeperPath: String, replicaName: String, engine: MergeTreeEngine) extends Engine {
     override def toString: String = {
       val replicationArgs = Seq(zookeeperPath, replicaName).map(StringQueryValue(_)).mkString(", ")

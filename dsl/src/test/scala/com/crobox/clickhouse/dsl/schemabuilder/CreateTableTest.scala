@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
+import com.crobox.clickhouse.dsl.AggregateFunction.StateResult
 import com.crobox.clickhouse.dsl.{NativeColumn, RefColumn, TableColumn, UInt32}
 import com.crobox.clickhouse.dsl.TestSchema.TestTable
 import com.crobox.clickhouse.dsl.schemabuilder.DefaultValue.Default
@@ -221,6 +222,31 @@ class CreateTableTest extends FlatSpecLike with Matchers {
                        |PARTITION BY (toYYYYMM(date))
                        |ORDER BY (date, client_id, hit_id)
                        |SETTINGS index_granularity=8192""".stripMargin)
+  }
+
+  it should "create a table with an AggregatingMergeTree engine" in {
+    val date        = NativeColumn[LocalDate]("date", ColumnType.Date)
+    val clientId    = NativeColumn("client_id", ColumnType.FixedString(16))
+    val uniqHits    = NativeColumn[StateResult[Long]]("hits", ColumnType.AggregateFunctionColumn("uniq", ColumnType.String))
+
+
+    val create = CreateTable(
+      TestTable(
+        "test_table_agg",
+        Seq(date, clientId, uniqHits)
+      ),
+      Engine.AggregatingMergeTree(Seq(s"toYYYYMM(${date.name})"), Seq(date, clientId))
+    )
+
+    create.toString should be (
+      """CREATE TABLE default.test_table_agg (
+        |  date Date,
+        |  client_id FixedString(16),
+        |  hits AggregateFunction(uniq, String)
+        |) ENGINE = AggregatingMergeTree
+        |PARTITION BY (toYYYYMM(date))
+        |ORDER BY (date, client_id)
+        |SETTINGS index_granularity=8192""".stripMargin)
   }
 
 }
