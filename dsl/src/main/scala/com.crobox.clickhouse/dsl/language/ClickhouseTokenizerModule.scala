@@ -34,7 +34,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   private def toRawSql(query: InternalQuery)(implicit database: Database): String =
     //    require(query != null) because parallel query is null
     query match {
-      case InternalQuery(select, from, asFinal, where, groupBy, having, join, orderBy, limit) =>
+      case InternalQuery(select, from, asFinal, where, groupBy, having, join, orderBy, limit, union) =>
         fast"""
            |${tokenizeSelect(select)}
            | FROM ${tokenizeFrom(from)}
@@ -44,8 +44,19 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
            | ${tokenizeGroupBy(groupBy)}
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
-           | ${tokenizeLimit(limit)}""".toString.stripMargin
+           | ${tokenizeLimit(limit)}
+           |${tokenizeUnionAll(union)}""".toString.trim.stripMargin
     }
+
+  private def tokenizeUnionAll(unions : Seq[OperationalQuery])(implicit database: Database) = {
+    if (unions.nonEmpty) {
+      unions.map(q =>
+        fast"""UNION ALL
+               | ${toRawSql(q.internalQuery)}""".toString.stripMargin).mkString
+    } else {
+      ""
+    }
+  }
 
   private def tokenizeSelect(select: Option[SelectQuery]) =
     select match {

@@ -100,4 +100,37 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
       "SELECT shield_id FROM default.captainAmerica WHERE column_2 >= 4 FORMAT JSON"
     )
   }
+
+  it should "throw an exception if the union doesn't have the same number of columns" in {
+    val query = select(shieldId) from OneTestTable
+    val query2 = select(shieldId, itemId) from OneTestTable
+
+    an[IllegalArgumentException] should be thrownBy  {
+      query.unionAll(query2)
+    }
+  }
+
+  it should "perform the union of multiple tables" in {
+    val query = select(shieldId) from OneTestTable
+    val query2 = select(itemId) from TwoTestTable
+    val query3 = select(itemId) from ThreeTestTable
+    val union = query.unionAll(query2).unionAll(query3)
+    val generatedSql = clickhouseTokenizer.toSql(union.internalQuery)
+
+    generatedSql should be (
+      s"SELECT shield_id FROM $tokenizerDatabase.captainAmerica UNION ALL SELECT item_id FROM $tokenizerDatabase.twoTestTable UNION ALL SELECT item_id FROM $tokenizerDatabase.threeTestTable FORMAT JSON"
+    )
+  }
+
+  it should "select from an union of two tables" in {
+    val query2 = select(itemId) from TwoTestTable
+    val query3 = select(itemId) from ThreeTestTable
+    val query = select(itemId) from query2.unionAll(query3)
+
+    val generatedSql = clickhouseTokenizer.toSql(query.internalQuery)
+
+    generatedSql should be (
+      s"SELECT item_id FROM (SELECT item_id FROM $tokenizerDatabase.twoTestTable UNION ALL SELECT item_id FROM $tokenizerDatabase.threeTestTable) FORMAT JSON"
+    )
+  }
 }

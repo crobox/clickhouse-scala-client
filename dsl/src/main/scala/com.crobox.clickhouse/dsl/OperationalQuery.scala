@@ -70,6 +70,15 @@ trait OperationalQuery extends Query {
   def limit(limit: Option[Limit]): OperationalQuery =
     OperationalQuery(internalQuery.copy(limit = limit))
 
+  def unionAll(otherQuery : OperationalQuery): OperationalQuery = {
+    require(internalQuery.select.isDefined && otherQuery.internalQuery.select.isDefined, "Trying to apply UNION ALL on non SELECT queries.")
+    require(otherQuery.internalQuery.select.get.columns.size == internalQuery.select.get.columns.size,
+      "SELECT queries needs to have the same number of columns to perform UNION ALL."
+    )
+
+    OperationalQuery(internalQuery.copy(unionAll = internalQuery.unionAll :+ otherQuery))
+  }
+
   private def mergeOperationalColumns(newOrderingColumns: Seq[AnyTableColumn]): Option[SelectQuery] = {
     val selectForGroup     = internalQuery.select
 

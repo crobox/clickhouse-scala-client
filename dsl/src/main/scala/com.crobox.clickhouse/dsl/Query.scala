@@ -30,7 +30,9 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
                                 having: Option[Comparison] = None,
                                 join: Option[JoinQuery] = None,
                                 orderBy: Seq[(AnyTableColumn, OrderingDirection)] = Seq.empty,
-                                limit: Option[Limit] = None) {
+                                limit: Option[Limit] = None,
+                                unionAll: Seq[OperationalQuery] = Seq.empty
+                               ) {
 
   def isValid = {
     val validGroupBy = groupBy.isEmpty && having.isEmpty || groupBy.nonEmpty
