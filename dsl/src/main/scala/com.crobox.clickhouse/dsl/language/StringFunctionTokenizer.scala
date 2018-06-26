@@ -26,9 +26,4 @@ trait StringFunctionTokenizer {
       case AppendTrailingCharIfAbsent(c, char)         => fast"appendTrailingCharIfAbsent(${tokenizeColumn(c)},$char)"
       case ConvertCharset(c, from: String, to: String) => fast"convertCharset(${tokenizeColumn(c)},$from,$to)"
     }
-
-  private def tokenizeSeqCol[C <: TableColumn[String]](colSeq: Seq[C]): String = {
-    val prefix = if (colSeq.isEmpty) "" else ", "
-    colSeq.map(tokenizeColumn).mkString(", ")
-  }
 }

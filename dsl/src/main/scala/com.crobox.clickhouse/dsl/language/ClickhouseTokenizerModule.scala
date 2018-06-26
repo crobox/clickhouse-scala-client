@@ -25,6 +25,11 @@ trait ClickhouseTokenizerModule
 
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
+  protected def tokenizeSeqCol[C <: TableColumn[String]](colSeq: Seq[C]): String = {
+    val prefix = if (colSeq.isEmpty) "" else ", "
+    colSeq.map(tokenizeColumn).mkString(", ")
+  }
+
   override def toSql(query: InternalQuery,
                      formatting: Option[String] = Some("JSON"))(implicit database: Database): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")

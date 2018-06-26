@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.dsl.column
 
+import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
 
 trait ComparisonFunctions { self: Magnets =>
@@ -16,12 +17,11 @@ trait ComparisonFunctions { self: Magnets =>
     def >=(other: T) = ComparisonColumn[T](self, ">=", other)
   }
 
-  /*
-equals
-notEquals
-less
-greater
-lessOrEquals
-greaterOrEquals
-   */
+  def equals(col1: AnyTableColumn, col2: AnyTableColumn) = ComparisonColumn(col1 , "=", col2)
+  def notEquals(col1: AnyTableColumn, col2: AnyTableColumn) = ComparisonColumn(col1 , "!=", col2)
+  def less(col1: AnyTableColumn, col2: AnyTableColumn) = ComparisonColumn(col1 , "<", col2)
+  def greater(col1: AnyTableColumn, col2: AnyTableColumn) = ComparisonColumn(col1 , ">", col2)
+  def lessOrEquals(col1: AnyTableColumn, col2: AnyTableColumn) = ComparisonColumn(col1 , "<=", col2)
+  def greaterOrEquals(col1: AnyTableColumn, col2: AnyTableColumn) = ComparisonColumn(col1 , ">=", col2)
+
 }
