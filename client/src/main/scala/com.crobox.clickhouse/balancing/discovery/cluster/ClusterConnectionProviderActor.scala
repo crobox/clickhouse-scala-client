@@ -35,8 +35,7 @@ class ClusterConnectionProviderActor(manager: ActorRef, executor: ActorRef) exte
   }
 
   def resolveHosts(config: ConnectionConfig): Future[Connections] =
-    (executor ? Execute(config.host,
-                        Some(s"SELECT host_address FROM system.clusters WHERE cluster='${config.cluster}'")))
+    (executor ? Execute(config.host, s"SELECT host_address FROM system.clusters WHERE cluster='${config.cluster}'"))
       .mapTo[Seq[String]]
       .map(_.toSet)
       .map(result => {

@@ -7,7 +7,7 @@ import akka.util.Timeout
 import akka.util.Timeout.durationToTimeout
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{HostStatus, IsAlive}
-import com.crobox.clickhouse.internal.InternalExecutorActor.Execute
+import com.crobox.clickhouse.internal.InternalExecutorActor.{Execute, HealthCheck}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.duration._
@@ -18,7 +18,7 @@ class HostHealthChecker(host: Uri, executor: ActorRef)(implicit val timeout: Tim
 
   override def receive = {
     case IsAlive() =>
-      (executor ? Execute(host, None))
+      (executor ? HealthCheck(host))
         .mapTo[Seq[String]]
         .map(result => {
           if (result.equals(Seq("Ok."))) {

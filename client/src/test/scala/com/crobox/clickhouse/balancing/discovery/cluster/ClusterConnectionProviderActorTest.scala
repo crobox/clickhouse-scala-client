@@ -17,7 +17,7 @@ class ClusterConnectionProviderActorTest extends ClickhouseClientSpec {
     val cluster = "test_cluster"
     provider ! ScanHosts(ConnectionConfig(ClickhouseHostBuilder.toHost("localhost", Some(8123)), cluster))
     internalExecutor.expectMsgPF() {
-      case Execute(_, Some(query)) if query.contains(cluster) =>
+      case Execute(_, query) if query.contains(cluster) =>
         internalExecutor.reply(hosts.toSeq)
     }
     expectMsg(
