@@ -4,9 +4,9 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.Uri
 import akka.pattern.ask
 import akka.util.Timeout
+import com.crobox.clickhouse.balancing.discovery.ConnectionConfig
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.GetConnection
 import com.crobox.clickhouse.balancing.discovery.cluster.ClusterConnectionProviderActor.ScanHosts
-import com.crobox.clickhouse.discovery.ConnectionConfig
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

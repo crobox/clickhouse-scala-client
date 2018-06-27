@@ -24,7 +24,7 @@ private[clickhouse] trait ClickhouseResponseParser {
           entityToString(entity, encoding).flatMap(
             response =>
               Future.failed(
-                new ClickhouseException(s"Server [$host] returned code $code; $response", query, statusCode = code)
+                ClickhouseException(s"Server [$host] returned code $code; $response", query, statusCode = code)
             )
           )
       }

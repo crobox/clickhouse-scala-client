@@ -66,8 +66,8 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
         logHostStatus(status)
         hostsStatus.put(host, status)
         status.status match {
-          case Alive => connectionIterator.add(host)
-          case Dead  => connectionIterator.remove(host)
+          case Alive   => connectionIterator.add(host)
+          case Dead(_) => connectionIterator.remove(host)
         }
       } else {
         log.info(
@@ -95,8 +95,13 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
     if (!hostsStatus.contains(host)) {
       log.info(s"Adding host status $status")
     } else {
-      if (hostsStatus(host) != status) {
-        log.info(s"Updating host status from ${hostsStatus(host)} to $status")
+      if (hostsStatus(host).status.code != status.status.code) {
+        status.status match {
+          case Alive =>
+            log.info(s"Host ${status.host} is back online. Updating and reintroducing the host as viable connection.")
+          case Dead(ex) =>
+            log.info(s"Host ${status.host} is offline. Removing from viable connections because of exception.", ex)
+        }
       }
     }
   }
@@ -104,7 +109,7 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
 
 object ConnectionManagerActor {
 
-  def props(healthProvider: (Uri) => Props, config: Config): Props =
+  def props(healthProvider: Uri => Props, config: Config): Props =
     Props(new ConnectionManagerActor(healthProvider, config))
 
   def healthCheckActorName(host: Uri) =

@@ -18,21 +18,20 @@ class HostHealthChecker(host: Uri, executor: ActorRef)(implicit val timeout: Tim
 
   override def receive = {
     case IsAlive() =>
-      (executor ? Execute(host, "SELECT 1"))
+      (executor ? Execute(host, None))
         .mapTo[Seq[String]]
         .map(result => {
-          if (result.equals(Seq("1"))) {
+          if (result.equals(Seq("Ok."))) {
             logger.trace(s"Host is alive for host ${host.toString()}")
             HostStatus(host, Alive)
           } else {
             logger.warn(s"Host ${host.toString()} status is DEAD because of response $result")
-            HostStatus(host, Dead)
+            HostStatus(host, Dead(new IllegalArgumentException(s"Got wrong result $result")))
           }
         })
         .recover {
           case ex: Throwable =>
-            logger.error(s"Host ${host.toString()} status is DEAD because of exception", ex)
-            HostStatus(host, Dead)
+            HostStatus(host, Dead(ex))
         } pipeTo sender
   }
 }
@@ -44,13 +43,19 @@ object HostHealthChecker {
 
   case class IsAlive()
 
-  trait Status
+  sealed trait Status {
+    val code: String
+  }
 
   object Status {
 
-    case object Alive extends Status
+    case object Alive extends Status {
+      override val code: String = "ok"
+    }
 
-    case object Dead extends Status
+    case class Dead(reason: Throwable) extends Status {
+      override val code: String = "nok"
+    }
   }
 
   case class HostStatus(host: Uri, status: Status)

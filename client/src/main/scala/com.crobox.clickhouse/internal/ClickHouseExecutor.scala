@@ -15,7 +15,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   this: ClickhouseResponseParser with ClickhouseQueryBuilder =>
 
   protected implicit val system: ActorSystem
-  private implicit lazy val materializer: Materializer = ActorMaterializer()
+  protected implicit lazy val materializer: Materializer = ActorMaterializer()
 
   override protected def config: Config
 
@@ -26,8 +26,8 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     .queue[(HttpRequest, Promise[HttpResponse])](bufferSize, OverflowStrategy.dropNew)
     .via(pool)
     .toMat(Sink.foreach {
-      case ((Success(resp), p)) => p.success(resp)
-      case ((Failure(e), p))    => p.failure(e)
+      case (Success(resp), p) => p.success(resp)
+      case (Failure(e), p)    => p.failure(e)
     })(Keep.left)
     .run
 

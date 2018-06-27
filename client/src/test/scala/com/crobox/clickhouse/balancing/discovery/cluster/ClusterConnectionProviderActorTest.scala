@@ -2,9 +2,9 @@ package com.crobox.clickhouse.balancing.discovery.cluster
 
 import akka.testkit.TestProbe
 import com.crobox.clickhouse.ClickhouseClientSpec
+import com.crobox.clickhouse.balancing.discovery.ConnectionConfig
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
 import com.crobox.clickhouse.balancing.discovery.cluster.ClusterConnectionProviderActor.ScanHosts
-import com.crobox.clickhouse.discovery.ConnectionConfig
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.crobox.clickhouse.internal.InternalExecutorActor.Execute
 
