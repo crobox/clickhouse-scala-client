@@ -5,11 +5,23 @@ trait ClickhouseColumnFunctions
   with AggregationFunctions
   with ArithmeticFunctions
   with ArrayFunctions
+  with BitFunctions
   with ComparisonFunctions
   with DateTimeFunctions
+  with HashFunctions
   with HigherOrderFunctions
-  with TypeCastFunctions
+  with IPFunctions
+  with JsonFunctions
+  with LogicalFunctions
+  with MathematicalFunctions
+  with MiscellaneousFunctions
+  with RandomFunctions
+  with RoundingFunctions
+  with SplitMergeFunctions
   with StringFunctions
+  with StringSearchFunctions
+  with TypeCastFunctions
+  with URLFunctions
 
 
 
