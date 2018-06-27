@@ -9,6 +9,7 @@ import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.{Connections, GetConnection}
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
+import com.typesafe.config.ConfigValueFactory
 import org.scalatest.Assertion
 
 import scala.concurrent.Future
@@ -83,6 +84,28 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
     manager ! Connections(Set(uri))
     Future {
       client.expectMsg(1 second, uri)
+      succeed
+    }
+  }
+
+  it should "return config connection when no connections were received yet" in {
+    val client      = TestProbe()
+    val managerName = UUID.randomUUID().toString
+    val host        = "default-mega-host"
+    val manager =
+      system.actorOf(
+        ConnectionManagerActor.props(
+          uri => uris(uri)(uri),
+          config
+            .withValue("crobox.clickhouse.client.connection.fallback-to-config-host-during-initialization",
+                       ConfigValueFactory.fromAnyRef(true))
+            .withValue("crobox.clickhouse.client.connection.host", ConfigValueFactory.fromAnyRef(host))
+        ),
+        managerName
+      )
+    manager.tell(GetConnection(), client.ref)
+    Future {
+      client.expectMsg(1 second, ClickhouseHostBuilder.toHost(host, Some(8123)))
       succeed
     }
   }

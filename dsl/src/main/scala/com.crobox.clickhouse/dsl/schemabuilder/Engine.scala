@@ -34,7 +34,7 @@ object Engine {
   private def monthPartitionCompat(dateColumn: NativeColumn[LocalDate]): Seq[String] =
     Seq(s"toYYYYMM(${dateColumn.name})")
 
-  private[Engine] abstract class MergeTreeEngine(val name: String) extends Engine {
+  sealed abstract class MergeTreeEngine(val name: String) extends Engine {
     val partition: Seq[String]
     val primaryKey: Seq[Column]
     val indexGranularity: Int
@@ -111,10 +111,10 @@ object Engine {
   }
 
   case class AggregatingMergeTree(partition: Seq[String],
-                                primaryKey: Seq[Column],
-                                samplingExpression: Option[String] = None,
-                                indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
-    extends MergeTreeEngine("AggregatingMergeTree")
+                                  primaryKey: Seq[Column],
+                                  samplingExpression: Option[String] = None,
+                                  indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
+      extends MergeTreeEngine("AggregatingMergeTree")
 
   object AggregatingMergeTree {
 
@@ -126,7 +126,9 @@ object Engine {
               samplingExpression: Option[String]): AggregatingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression = samplingExpression)
 
-    def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column], indexGranularity: Int): AggregatingMergeTree =
+    def apply(dateColumn: NativeColumn[LocalDate],
+              primaryKey: Seq[Column],
+              indexGranularity: Int): AggregatingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, indexGranularity = indexGranularity)
 
     def apply(dateColumn: NativeColumn[LocalDate],

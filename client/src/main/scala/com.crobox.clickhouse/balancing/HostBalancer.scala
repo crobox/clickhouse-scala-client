@@ -21,14 +21,16 @@ trait HostBalancer extends LazyLogging {
 }
 
 object HostBalancer extends ClickhouseHostBuilder {
+  val ConnectionConfigPrefix = "crobox.clickhouse.client.connection"
 
   def apply(config: Config)(implicit system: ActorSystem): HostBalancer = {
     val connectionConfig =
-      config.getConfig("crobox.clickhouse.client.connection")
-    val internalExecutor = system.actorOf(InternalExecutorActor.props(config))
-    val connectionType   = ConnectionType(connectionConfig.getString("type"))
+      config.getConfig(ConnectionConfigPrefix)
+    val internalExecutor         = system.actorOf(InternalExecutorActor.props(config))
+    val connectionType           = ConnectionType(connectionConfig.getString("type"))
+    val connectionHostFromConfig = extractHost(connectionConfig)
     connectionType match {
-      case SingleHost => SingleHostBalancer(extractHost(connectionConfig))
+      case SingleHost => SingleHostBalancer(connectionHostFromConfig)
       case BalancingHosts =>
         val manager = system.actorOf(
           ConnectionManagerActor
@@ -57,7 +59,7 @@ object HostBalancer extends ClickhouseHostBuilder {
         )
         val provider = system.actorOf(ClusterConnectionProviderActor.props(manager, internalExecutor))
         ClusterAwareHostBalancer(
-          extractHost(connectionConfig),
+          connectionHostFromConfig,
           connectionConfig.getString("cluster"),
           manager,
           provider,
@@ -66,7 +68,7 @@ object HostBalancer extends ClickhouseHostBuilder {
     }
   }
 
-  private def extractHost(connectionConfig: Config): Uri =
+  def extractHost(connectionConfig: Config): Uri =
     toHost(connectionConfig.getString("host"),
            if (connectionConfig.hasPath("port")) Option(connectionConfig.getInt("port")) else None)
 }
