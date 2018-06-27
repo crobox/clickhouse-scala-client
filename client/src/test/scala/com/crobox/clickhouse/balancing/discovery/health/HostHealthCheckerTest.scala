@@ -15,7 +15,7 @@ class HostHealthCheckerTest extends ClickhouseClientSpec with ImplicitSender {
     .toHost("localhost", Some(8123))
 
   val checker = system.actorOf(
-    HostHealthChecker.props(host, system.actorOf(InternalExecutorActor.props(config)), 2 seconds)
+    HostHealthChecker.props(host, system.actorOf(InternalExecutorActor.props(config)), 5 seconds)
   )
 
   it should "return health" in {
