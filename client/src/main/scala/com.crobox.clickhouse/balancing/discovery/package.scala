@@ -1,4 +1,4 @@
-package com.crobox.clickhouse
+package com.crobox.clickhouse.balancing
 
 import akka.http.scaladsl.model.Uri
 

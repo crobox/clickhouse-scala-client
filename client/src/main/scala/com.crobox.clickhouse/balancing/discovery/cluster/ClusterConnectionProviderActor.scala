@@ -5,9 +5,9 @@ import akka.pattern.{ask, pipe}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import akka.util.Timeout.durationToTimeout
+import com.crobox.clickhouse.balancing.discovery.ConnectionConfig
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
 import com.crobox.clickhouse.balancing.discovery.cluster.ClusterConnectionProviderActor.ScanHosts
-import com.crobox.clickhouse.discovery.ConnectionConfig
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.crobox.clickhouse.internal.InternalExecutorActor.Execute
 
