@@ -20,7 +20,7 @@ class HostHealthCheckerTest extends ClickhouseClientSpec with ImplicitSender {
 
   it should "return health" in {
     checker ! IsAlive()
-    expectMsg(HostStatus(host, Alive))
+    expectMsg(5 seconds, HostStatus(host, Alive))
   }
 
 }
