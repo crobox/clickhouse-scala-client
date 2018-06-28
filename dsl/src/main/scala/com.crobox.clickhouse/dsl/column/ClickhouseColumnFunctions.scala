@@ -8,6 +8,7 @@ trait ClickhouseColumnFunctions
   with BitFunctions
   with ComparisonFunctions
   with DateTimeFunctions
+  with DictionaryFunctions
   with HashFunctions
   with HigherOrderFunctions
   with IPFunctions

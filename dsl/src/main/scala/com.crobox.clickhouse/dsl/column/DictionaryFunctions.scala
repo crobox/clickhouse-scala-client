@@ -7,41 +7,44 @@ import org.joda.time.{DateTime, LocalDate}
 
 trait DictionaryFunctions { self: Magnets =>
 
-  sealed abstract class DictionaryColumn[V](dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[V]] = None) extends
+  sealed abstract class DictionaryGetFuncColumn[V](val dictName: StringColMagnet, val attrName: StringColMagnet, val id: NumericCol, val default: Option[TableColumn[V]] = None) extends
+    DictionaryFuncColumn[V]
+
+  sealed abstract class DictionaryFuncColumn[V] extends
     ExpressionColumn[V](EmptyColumn())
 
-  case class DictGetUInt8(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[Long]] = None)
-    extends DictionaryColumn[Long](dictName,attrName,id,default)
-  case class DictGetUInt16(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[Long]] = None)
-    extends DictionaryColumn[Long](dictName,attrName,id,default)
-  case class DictGetUInt32(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[Long]] = None)
-    extends DictionaryColumn[Long](dictName,attrName,id,default)
-  case class DictGetUInt64(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[Long]] = None)
-    extends DictionaryColumn[Long](dictName,attrName,id,default)
-  case class DictGetInt8(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[Long]] = None)
-    extends DictionaryColumn[Long](dictName,attrName,id,default)
-  case class DictGetInt16(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[Long]] = None)
-    extends DictionaryColumn[Long](dictName,attrName,id,default)
-  case class DictGetInt32(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[Long]] = None)
-    extends DictionaryColumn[Long](dictName,attrName,id,default)
-  case class DictGetInt64(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[Long]] = None)
-    extends DictionaryColumn[Long](dictName,attrName,id,default)
-  case class DictGetFloat32(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[Float]] = None)
-    extends DictionaryColumn[Float](dictName,attrName,id,default)
-  case class DictGetFloat64(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[Float]] = None)
-    extends DictionaryColumn[Float](dictName,attrName,id,default)
-  case class DictGetDate(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[LocalDate]] = None)
-    extends DictionaryColumn[LocalDate](dictName,attrName,id,default)
-  case class DictGetDateTime(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[DateTime]] = None)
-    extends DictionaryColumn[DateTime](dictName,attrName,id,default)
-  case class DictGetUUID(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[UUID]] = None)
-    extends DictionaryColumn[UUID](dictName,attrName,id,default)
-  case class DictGetString(dictName: StringColMagnet, attrName: StringColMagnet, id: NumericCol, default: Option[TableColumn[String]] = None)
-    extends DictionaryColumn[String](dictName,attrName,id,default)
+  case class DictGetUInt8(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Long]] = None)
+    extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
+  case class DictGetUInt16(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Long]] = None)
+    extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
+  case class DictGetUInt32(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Long]] = None)
+    extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
+  case class DictGetUInt64(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Long]] = None)
+    extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
+  case class DictGetInt8(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Long]] = None)
+    extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
+  case class DictGetInt16(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Long]] = None)
+    extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
+  case class DictGetInt32(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Long]] = None)
+    extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
+  case class DictGetInt64(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Long]] = None)
+    extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
+  case class DictGetFloat32(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Float]] = None)
+    extends DictionaryGetFuncColumn[Float](_dictName,_attrName,_id,_default)
+  case class DictGetFloat64(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Float]] = None)
+    extends DictionaryGetFuncColumn[Float](_dictName,_attrName,_id,_default)
+  case class DictGetDate(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[LocalDate]] = None)
+    extends DictionaryGetFuncColumn[LocalDate](_dictName,_attrName,_id,_default)
+  case class DictGetDateTime(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[DateTime]] = None)
+    extends DictionaryGetFuncColumn[DateTime](_dictName,_attrName,_id,_default)
+  case class DictGetUUID(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[UUID]] = None)
+    extends DictionaryGetFuncColumn[UUID](_dictName,_attrName,_id,_default)
+  case class DictGetString(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[String]] = None)
+    extends DictionaryGetFuncColumn[String](_dictName,_attrName,_id,_default)
 
-  case class DictIsIn(dictName: StringColMagnet, childId: NumericCol, ancestorId: NumericCol)
-  case class DictGetHierarchy(dictName: StringColMagnet, id: NumericCol)
-  case class DictHas(dictName: StringColMagnet, id: NumericCol)
+  case class DictIsIn(dictName: StringColMagnet, childId: NumericCol, ancestorId: NumericCol) extends DictionaryFuncColumn[Boolean]
+  case class DictGetHierarchy(dictName: StringColMagnet, id: NumericCol) extends DictionaryFuncColumn[String]
+  case class DictHas(dictName: StringColMagnet, id: NumericCol) extends DictionaryFuncColumn[Boolean]
 
 
   //todo implement '...orDefault'
