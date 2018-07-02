@@ -3,19 +3,19 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.dsl.{ExpressionColumn, TableColumn}
 
 trait HigherOrderFunctions { self: Magnets =>
-  abstract class HigherOrderFunction[I,O](func: Option[(TableColumn[I] => ExpressionColumn[O])], arr1: ArrayColMagnet, arrn: ArrayColMagnet*)
+  abstract class HigherOrderFunction[I,O](val func: Option[(TableColumn[I] => ExpressionColumn[O])], val arr1: ArrayColMagnet, val arrn: ArrayColMagnet*)
 
-  case class ArrayMap[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
-  case class ArrayFilter[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
-  case class ArrayCount[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
-  case class ArrayExists[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
-  case class ArrayAll[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
-  case class ArraySum[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
-  case class ArrayFirst[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
-  case class ArrayFirstIndex[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
-  case class ArrayCumSum[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
-  case class ArraySort[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
-  case class ArrayReverseSort[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(func), arr1, arrn:_*)
+  case class ArrayMap[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*)         extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
+  case class ArrayFilter[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*)      extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
+  case class ArrayCount[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*)       extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
+  case class ArrayExists[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*)      extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
+  case class ArrayAll[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*)         extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
+  case class ArraySum[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*)         extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
+  case class ArrayFirst[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*)       extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
+  case class ArrayFirstIndex[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*)  extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
+  case class ArrayCumSum[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*)      extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
+  case class ArraySort[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*)        extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
+  case class ArrayReverseSort[I,O](_func: (TableColumn[I] => ExpressionColumn[O]), _arr1: ArrayColMagnet, _arrn: ArrayColMagnet*) extends HigherOrderFunction[I,O](Some(_func), _arr1, _arrn:_*)
 
   def arrayMap[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) = ArrayMap(func,arr1,arrn:_*)
   def arrayFilter[I,O](func: (TableColumn[I] => ExpressionColumn[O]), arr1: ArrayColMagnet, arrn: ArrayColMagnet*) = ArrayMap(func,arr1,arrn:_*)

@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl._
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 
-trait EncodingFunctionTokenizer {
+trait StringSearchFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
   def tokenizeEncodingFunction(col: EncodingFunction[_]): String = {""}

@@ -9,6 +9,7 @@ trait ClickhouseColumnFunctions
   with ComparisonFunctions
   with DateTimeFunctions
   with DictionaryFunctions
+  with EncodingFunctions
   with HashFunctions
   with HigherOrderFunctions
   with IPFunctions
@@ -23,8 +24,5 @@ trait ClickhouseColumnFunctions
   with StringSearchFunctions
   with TypeCastFunctions
   with URLFunctions
-
-
-
 
 object ClickhouseColumnFunctions extends ClickhouseColumnFunctions{}

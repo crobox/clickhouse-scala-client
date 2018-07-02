@@ -11,7 +11,9 @@ trait DictionaryFunctionTokenizer {
       .map(col => "," + tokenizeColumn(col))
       .getOrElse("")
 
-    fast"dictGet$typeName(${tokenizeColumn(col.dictName.column)},${tokenizeColumn(col.attrName.column)},${tokenizeColumn(col.id.column)}$default)"
+    val orDefault = col.default.map(_ => "orDefault").getOrElse("")
+
+    fast"dictGet$typeName$orDefault(${tokenizeColumn(col.dictName.column)},${tokenizeColumn(col.attrName.column)},${tokenizeColumn(col.id.column)}$default)"
   }
 
   def tokenizeDictionaryFunction(col: DictionaryFuncColumn[_]): String = col match {
