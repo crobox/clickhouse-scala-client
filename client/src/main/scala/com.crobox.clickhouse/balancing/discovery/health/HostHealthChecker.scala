@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.balancing.discovery.health
 
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.UnaryOperator
 
 import akka.actor.{Actor, ActorRef, Props}
 import akka.http.scaladsl.model.Uri
@@ -22,11 +23,13 @@ class HostHealthChecker(host: Uri, executor: ActorRef)(implicit val timeout: Tim
 
   override def receive = {
     case IsAlive() =>
-      currentCheck.updateAndGet((current: Future[HostStatus]) => {
-        if (current.isCompleted) {
-          doHostCheck
-        } else {
-          current
+      currentCheck.updateAndGet(new UnaryOperator[Future[HostStatus]] {
+        override def apply(current: Future[HostStatus]): Future[HostStatus] = {
+          if (current.isCompleted) {
+            doHostCheck
+          } else {
+            current
+          }
         }
       }) pipeTo sender
 
