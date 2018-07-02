@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.internal
 
 import akka.actor.{Actor, ActorSystem, Props}
-import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, Uri}
 import akka.pattern.pipe
 import com.crobox.clickhouse.internal.InternalExecutorActor.{Execute, HealthCheck}
