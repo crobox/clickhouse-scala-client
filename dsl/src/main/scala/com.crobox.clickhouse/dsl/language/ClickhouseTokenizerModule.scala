@@ -316,10 +316,10 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   protected def tokenizeCondition(condition: Comparison): String =
     condition match {
       case _: NoOpComparison                             => ""
-      case ColRefColumnComparison(left, operator, right) => fast"${aliasOrName(left)} $operator ${aliasOrName(right)}"
+      case ColRefColumnComparison(left, operator, right) => fast"${tokenizeRetainAlias(left)} $operator ${tokenizeRetainAlias(right)}"
       case vcc @ ValueColumnComparison(left, operator, right) =>
-        fast"${aliasOrName(left)} $operator ${vcc.queryValueEvidence(right)}"
-      case FunctionColumnComparison(function, column) => fast"$function(${aliasOrName(column)})"
+        fast"${tokenizeRetainAlias(left)} $operator ${vcc.queryValueEvidence(right)}"
+      case FunctionColumnComparison(function, column) => fast"$function(${tokenizeRetainAlias(column)})"
       case HigherOrderFunction(function, comparisonColumn, comparison, column) =>
         fast"$function(${tokenizeColumn(comparisonColumn)} -> ${tokenizeCondition(comparison)}, ${tokenizeColumn(column)})"
       case ChainableColumnCondition(_: NoOpComparison, _, _: NoOpComparison) => ""
@@ -350,20 +350,20 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     }
 
   private def tokenizeColumnsAliased(columns: Seq[AnyTableColumn]): String =
-    columns.map(aliasOrName).mkString(", ")
+    columns.map(tokenizeRetainAlias).mkString(", ")
 
   private def tokenizeTuplesAliased(columns: Seq[(AnyTableColumn, OrderingDirection)]): String =
     columns
       .map {
         case (column, dir) =>
-          aliasOrName(column) + " " + direction(dir)
+          tokenizeRetainAlias(column) + " " + direction(dir)
       }
       .mkString(", ")
 
-  private def aliasOrName(column: AnyTableColumn) =
+  private def tokenizeRetainAlias(column: AnyTableColumn) =
     column match {
       case AliasedColumn(_, alias)       => alias
-      case regularColumn: AnyTableColumn => regularColumn.name
+      case regularColumn: AnyTableColumn => tokenizeColumn(regularColumn)
     }
 
   private def direction(dir: OrderingDirection): String =
