@@ -2,6 +2,7 @@ package com.crobox.clickhouse.balancing.discovery
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, PoisonPill, Props, Stash, Status}
 import akka.http.scaladsl.model.Uri
+import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
 import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{HostStatus, IsAlive}
 import com.crobox.clickhouse.balancing.iterator.CircularIteratorSet
@@ -19,8 +20,11 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
 
   private val healthCheckInterval: FiniteDuration =
     config
-      .getDuration("crobox.clickhouse.client.connection.health-check.interval")
+      .getDuration(s"${HostBalancer.ConnectionConfigPrefix}.health-check.interval")
       .getSeconds seconds
+  private val configHost: Uri = HostBalancer.extractHost(config.getConfig(HostBalancer.ConnectionConfigPrefix))
+  private val fallbackToConfigurationHost =
+    config.getBoolean(s"${HostBalancer.ConnectionConfigPrefix}.fallback-to-config-host-during-initialization")
 
   //  state
   val connectionIterator: CircularIteratorSet[Uri] =
@@ -48,8 +52,13 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
 
     case GetConnection() =>
       if (!initialized) {
-        log.warning("Stashing get connection message until connection message is sent to initialize the manager.")
-        stash()
+        if (fallbackToConfigurationHost) {
+          log.warning("Not yet initialized, returning the config host.")
+          sender ! configHost
+        } else {
+          log.warning("Stashing get connection message until connection message is sent to initialize the manager.")
+          stash()
+        }
       } else {
         if (connectionIterator.hasNext) {
           val uri = connectionIterator.next()
@@ -78,8 +87,11 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
       }
       if (!initialized) {
         initialized = true
-        log.info(s"Received first status. Unstashing all previous messages.")
-        unstashAll()
+        if (!fallbackToConfigurationHost) {
+          log.info(s"Received first status. Unstashing all previous messages.")
+          unstashAll()
+        }
+        log.info("Connection manager initialized")
       }
   }
 
