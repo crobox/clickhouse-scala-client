@@ -15,41 +15,42 @@ class HostHealthCheckerTest extends ClickhouseClientSpec with ImplicitSender {
     .toHost("host", None)
   val executorProbe = TestProbe()
 
+  private val duration: FiniteDuration = 5 seconds
   val checker = system.actorOf(
-    HostHealthChecker.props(host, executorProbe.ref, 5 seconds)
+    HostHealthChecker.props(host, executorProbe.ref, duration)
   )
   it should "cache a health check" in {
     checker ! IsAlive()
     checker ! IsAlive()
     checker ! IsAlive()
-    executorProbe.expectMsgPF() {
+    executorProbe.expectMsgPF(max = duration) {
       case msg @ HealthCheck(`host`) =>
         executorProbe.reply(Seq("Ok."))
         msg
     }
-    expectMsgAllOf(2 seconds, HostStatus(host, Alive), HostStatus(host, Alive), HostStatus(host, Alive))
+    expectMsgAllOf(duration, HostStatus(host, Alive), HostStatus(host, Alive), HostStatus(host, Alive))
     executorProbe.expectNoMessage()
   }
 
   it should "run new health check when completed" in {
     checker ! IsAlive()
-    executorProbe.expectMsgPF() {
+    executorProbe.expectMsgPF(duration) {
       case msg @ HealthCheck(`host`) =>
         executorProbe.reply(Seq("Ok."))
         msg
     }
-    expectMsg(HostStatus(host, Alive))
+    expectMsg(duration, HostStatus(host, Alive))
     checker ! IsAlive()
     checker ! IsAlive()
-    executorProbe.expectMsgPF() {
+    executorProbe.expectMsgPF(duration) {
       case msg @ HealthCheck(`host`) =>
         executorProbe.reply(Seq("nok."))
         msg
     }
-    expectMsgPF(1 second) {
+    expectMsgPF(duration) {
       case HostStatus(`host`, _: Dead) =>
     }
-    expectMsgPF(1 second) {
+    expectMsgPF(duration) {
       case HostStatus(`host`, _: Dead) =>
     }
     executorProbe.expectNoMessage()
