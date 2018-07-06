@@ -34,7 +34,7 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
   var currentConfiguredHosts: Set[Uri] = Set.empty
   var initialized                      = false
 
-  context.system.scheduler.schedule(30 seconds, 30 seconds, self, LogDeadConnections)
+  context.system.scheduler.schedule(30 seconds, 30 seconds, self, LogDeadConnections)(context.system.dispatcher)
 
   override def receive = {
     case Connections(hosts) =>
