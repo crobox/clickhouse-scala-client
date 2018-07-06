@@ -100,7 +100,8 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
       val deadHosts = hostsStatus.values.collect {
         case HostStatus(host, Dead(_)) => host
       }
-      log.error(s"Hosts ${deadHosts.mkString(" - ")} are still unreachable")
+      if (deadHosts.nonEmpty)
+        log.error(s"Hosts ${deadHosts.mkString(" - ")} are still unreachable")
   }
 
   private def cleanUpHost(host: Uri) = {
