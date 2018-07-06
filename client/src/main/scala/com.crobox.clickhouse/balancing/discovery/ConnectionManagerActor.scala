@@ -34,6 +34,8 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
   var currentConfiguredHosts: Set[Uri] = Set.empty
   var initialized                      = false
 
+  context.system.scheduler.schedule(30 seconds, 30 seconds, self, LogDeadConnections)
+
   override def receive = {
     case Connections(hosts) =>
       hosts
@@ -93,6 +95,12 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
         }
         log.info("Connection manager initialized")
       }
+
+    case LogDeadConnections =>
+      val deadHosts = hostsStatus.values.collect {
+        case HostStatus(host, Dead(_)) => host
+      }
+      log.error(s"Hosts ${deadHosts.mkString(" - ")} are still unreachable")
   }
 
   private def cleanUpHost(host: Uri) = {
@@ -132,4 +140,5 @@ object ConnectionManagerActor {
   case class Connections(hosts: Set[Uri])
 
   case class NoHostAvailableException(msg: String) extends IllegalStateException(msg)
+  private case object LogDeadConnections
 }
