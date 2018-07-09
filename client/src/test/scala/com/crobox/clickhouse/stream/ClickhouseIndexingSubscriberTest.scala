@@ -33,7 +33,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     super.beforeAll()
 
     Await.ready(for {
-      db     <- client.execute(createDb)
+      _ <- client.execute(createDb)
       create <- client.execute(createTable)
     } yield create, timeout.duration)
 
@@ -46,16 +46,16 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     Await.ready(client.execute(dropDb), timeout.duration)
   }
 
-  val unparsedInserts: Seq[Map[String, Any]] = (1 to 10).map(
+  def unparsedInserts(key: String): Seq[Map[String, Any]] = (1 to 10).map(
     _ =>
       Map(
         "i" -> Random.nextInt(100),
-        "s" -> "two",
+        "s" -> key,
         "a" -> (1 to Random.nextInt(20)).map(_ => Random.nextInt(200))
     )
   )
 
-  val parsedInserts = unparsedInserts.map(
+  def parsedInserts(key: String) = unparsedInserts(key).map(
     _.mapValues({
       case value: Int           => value.toString
       case value: String        => "\"" + value + "\""
@@ -78,19 +78,31 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     )
 
   it should "inject sql parsed rows" in {
-    val sink = Sink.fromSubscriber(testSubscriber)
-
+    val sink    = Sink.fromSubscriber(testSubscriber)
+    val inserts = parsedInserts("one")
     Source
-      .fromIterator(() => parsedInserts.toIterator)
+      .fromIterator(() => inserts.toIterator)
       .map(data => Insert("test.insert", "{" + data + "}"))
       .toMat(sink)(Keep.left)
       .run()
 
     //Note that this would time-out if the subscriber fails to write the inserts
     Await.ready(subscriberCompletes.future, 5.seconds)
-    checkRowCount().map(_ shouldBe parsedInserts.size)
+    checkRowCount("one").map(_ shouldBe inserts.size)
   }
 
-  private def checkRowCount(): Future[Int] =
-    client.query("SELECT count(*) FROM test.insert").map(res => Try(res.stripLineEnd.toInt).getOrElse(0))
+  it should "index items" in {
+    val inserts = parsedInserts("two")
+    val res = Source
+      .fromIterator(() => inserts.toIterator)
+      .map(data => Insert("test.insert", "{" + data + "}"))
+      .runWith(ClickhouseSink.insertSink(config, client))
+    Await.ready(res, 5.seconds)
+    checkRowCount("two").map(_ shouldBe inserts.size)
+  }
+
+  private def checkRowCount(key: String): Future[Int] =
+    client
+      .query(s"SELECT count(*) FROM test.insert WHERE s = '$key'")
+      .map(res => Try(res.stripLineEnd.toInt).getOrElse(0))
 }
