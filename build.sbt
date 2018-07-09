@@ -6,6 +6,8 @@ scalafmtVersion in ThisBuild := "1.0.0"
 scalafmtOnCompile in ThisBuild := false     // all projects
 scalafmtTestOnCompile in ThisBuild := false // all projects
 
+releaseCrossBuild := true
+
 lazy val root = (project in file("."))
   .settings(
     publish := {},
