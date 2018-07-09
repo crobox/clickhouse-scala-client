@@ -96,7 +96,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     val res = Source
       .fromIterator(() => inserts.toIterator)
       .map(data => Insert("test.insert", "{" + data + "}"))
-      .runWith(ClickhouseSink.insertSink(config, client))
+      .runWith(ClickhouseSink.insertSink(config, client, Some("no-overrides")))
     Await.ready(res, 5.seconds)
     checkRowCount("two").map(_ shouldBe inserts.size)
   }
