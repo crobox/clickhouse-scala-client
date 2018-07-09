@@ -80,13 +80,21 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
    * @param sql a valid Clickhouse SQL string
    */
   def source(sql: String): Source[String, NotUsed] =
+    sourceByteString(sql)
+      .via(Framing.delimiter(ByteString("\n"), MaximumFrameLength))
+      .map(_.utf8String)
+
+  /**
+   * Creates a stream of the SQL query that will emit every result as a ByteString
+   *
+   * @param sql a valid Clickhouse SQL string
+   */
+  def sourceByteString(sql: String): Source[ByteString, NotUsed] =
     Source
       .fromFuture(hostBalancer.nextHost.flatMap { host =>
         singleRequest(toRequest(host, sql))
       })
       .flatMapConcat(response => response.entity.withoutSizeLimit().dataBytes)
-      .via(Framing.delimiter(ByteString("\n"), MaximumFrameLength))
-      .map(_.utf8String)
 
   /**
    * Accepts a source of Strings that it will stream to Clickhouse
