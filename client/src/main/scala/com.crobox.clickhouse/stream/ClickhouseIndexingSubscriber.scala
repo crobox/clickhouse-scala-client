@@ -10,6 +10,7 @@ import org.reactivestreams.{Subscriber, Subscription}
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Future, Promise}
 
+
 object ClickhouseIndexingSubscriber extends LazyLogging {
 
   /**
@@ -52,6 +53,8 @@ object ClickhouseIndexingSubscriber extends LazyLogging {
 /**
  * @author Sjoerd Mulder
  * @since 16-9-16
+  * @deprecated 18-07-09 - Use `ClickhouseSink.sink` for the akka streams implementation
+  *
  */
 class ClickhouseIndexingSubscriber(client: ClickhouseClient, config: SubscriberConfig)(
     implicit actorRefFactory: ActorRefFactory
