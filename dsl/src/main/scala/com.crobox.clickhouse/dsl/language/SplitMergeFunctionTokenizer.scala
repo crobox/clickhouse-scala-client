@@ -7,6 +7,6 @@ import com.dongxiguo.fastring.Fastring.Implicits._
 trait SplitMergeFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeEncodingFunction(col: EncodingFunction[_]): String = {""}
+  def tokenizeSplitMergeFunctionn(col: SplitMergeFunction[_]): String = {""}
 
 }

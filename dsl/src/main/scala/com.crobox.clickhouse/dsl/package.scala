@@ -9,7 +9,7 @@ import com.dongxiguo.fastring.Fastring.Implicits._
 import spray.json.{JsonReader, JsonWriter}
 import com.crobox.clickhouse.dsl.column._
 
-import scala.collection.immutable.Iterable
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
@@ -158,11 +158,11 @@ package object dsl extends DslLanguage {
       else
         NoOpComparison()
 
-    def isIn(other: Iterable[V])(implicit ev: QueryValue[V],
-                                 validator: ComparisonValidator[Iterable[_ >: V]] =
+    def isIn(other: scala.Iterable[V])(implicit ev: QueryValue[V],
+                                 validator: ComparisonValidator[scala.Iterable[_ >: V]] =
                                    ColumnsWithCondition.notEmptyValidator): Comparison =
       if (validator.isValid(other))
-        ValueColumnComparison[V, Iterable[V]](column, "IN", other)(QueryValueFormats.queryValueToSeq[V](ev))
+        ValueColumnComparison[V, scala.Iterable[V]](column, "IN", other)(QueryValueFormats.queryValueToSeq[V](ev))
       else
         NoOpComparison()
 
@@ -252,7 +252,7 @@ package object dsl extends DslLanguage {
 
     implicit def defaultValidator[T] = new NotEmptyValidator[T]
 
-    implicit val notEmptyValidator = new NotEmptyValidator[Iterable[_]]
+    implicit val notEmptyValidator = new NotEmptyValidator[scala.Iterable[_]]
   }
 
   implicit class ChainableColumns(columnComparison: Comparison) {

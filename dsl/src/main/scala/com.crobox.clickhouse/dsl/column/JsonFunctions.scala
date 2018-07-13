@@ -3,15 +3,15 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.dsl.ExpressionColumn
 
 trait JsonFunctions { self: Magnets =>
-  abstract class JsonFunction[T](params: StringColMagnet) extends ExpressionColumn[T](params.column)
+  abstract class JsonFunction[T](val params: StringColMagnet, val fieldName: StringColMagnet) extends ExpressionColumn[T](params.column)
 
-  case class VisitParamHas(params: StringColMagnet, fieldName: StringColMagnet)   extends JsonFunction[Boolean](params)
-  case class VisitParamExtractUInt(params: StringColMagnet, fieldName: StringColMagnet) extends JsonFunction[Long](params)
-  case class VisitParamExtractInt(params: StringColMagnet, fieldName: StringColMagnet) extends JsonFunction[Long](params)
-  case class VisitParamExtractFloat(params: StringColMagnet, fieldName: StringColMagnet) extends JsonFunction[Float](params)
-  case class VisitParamExtractBool(params: StringColMagnet, fieldName: StringColMagnet) extends JsonFunction[Boolean](params)
-  case class VisitParamExtractRaw[T](params: StringColMagnet, fieldName: StringColMagnet) extends JsonFunction[T](params)
-  case class VisitParamExtractString(params: StringColMagnet, fieldName: StringColMagnet) extends JsonFunction[String](params)
+  case class VisitParamHas(_params: StringColMagnet, _fieldName: StringColMagnet)   extends JsonFunction[Boolean](_params, _fieldName)
+  case class VisitParamExtractUInt(_params: StringColMagnet, _fieldName: StringColMagnet) extends JsonFunction[Long](_params, _fieldName)
+  case class VisitParamExtractInt(_params: StringColMagnet, _fieldName: StringColMagnet) extends JsonFunction[Long](_params, _fieldName)
+  case class VisitParamExtractFloat(_params: StringColMagnet, _fieldName: StringColMagnet) extends JsonFunction[Float](_params, _fieldName)
+  case class VisitParamExtractBool(_params: StringColMagnet, _fieldName: StringColMagnet) extends JsonFunction[Boolean](_params, _fieldName)
+  case class VisitParamExtractRaw[T](_params: StringColMagnet, _fieldName: StringColMagnet) extends JsonFunction[T](_params, _fieldName)
+  case class VisitParamExtractString(_params: StringColMagnet, _fieldName: StringColMagnet) extends JsonFunction[String](_params, _fieldName)
 
   def visitParamHas(params: StringColMagnet, fieldName: StringColMagnet) =                  VisitParamHas(params, fieldName)
   def visitParamExtractUInt(params: StringColMagnet, fieldName: StringColMagnet) =          VisitParamExtractUInt(params, fieldName)

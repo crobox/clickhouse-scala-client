@@ -41,7 +41,7 @@ trait MiscellaneousFunctions { self: Magnets =>
   case class MACStringToNum(col: StringColMagnet)           extends MiscellaneousOp[Long](col.column)
   case class MACStringToOUI(col: StringColMagnet)           extends MiscellaneousOp[Long](col.column)
 
-  //Todo: Where does this belong?
+  //Todo: Where does this belong? Custom Column Type?
   //case class Tuple() extends MiscellaneousOp[Long](col)
 
   def hostName()                        = HostName()
@@ -77,6 +77,8 @@ trait MiscellaneousFunctions { self: Magnets =>
   def mACNumToString(col: NumericCol)                = MACNumToString(col)
   def mACStringToNum(col: StringColMagnet)           = MACStringToNum(col)
   def mACStringToOUI(col: StringColMagnet)           = MACStringToOUI(col)
+
+
   /*
 
   hostName()

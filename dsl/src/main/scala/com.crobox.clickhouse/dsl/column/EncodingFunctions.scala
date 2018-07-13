@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.{ExpressionColumn, TableColumn}
 
 trait EncodingFunctions { self: Magnets =>
-  abstract class EncodingFunction[O](col: AnyTableColumn) extends ExpressionColumn[O](col)
+  abstract class EncodingFunction[O](val column: AnyTableColumn) extends ExpressionColumn[O](column)
 
   case class Hex(col: HexCompatible)               extends EncodingFunction[String](col.column)
   case class Unhex(col: StringColMagnet)           extends EncodingFunction[String](col.column)

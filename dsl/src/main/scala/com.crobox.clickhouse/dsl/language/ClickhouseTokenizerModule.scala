@@ -18,9 +18,27 @@ import scala.collection.JavaConverters._
 trait ClickhouseTokenizerModule
     extends TokenizerModule
     with AggregationFunctionTokenizer
-    with TypeCastFunctionTokenizer
-    with DateTimeFunctionTokenizer
     with ArithmeticFunctionTokenizer
+    with ArrayFunctionTokenizer
+    with BitFunctionTokenizer
+    with ComparisonFunctionTokenizer
+    with DateTimeFunctionTokenizer
+    with DictionaryFunctionTokenizer
+    with EncodingFunctionTokenizer
+    with HashFunctionTokenizer
+    with HigherOrderFunctionTokenizer
+    with IPFunctionTokenizer
+    with JsonFunctionTokenizer
+    with LogicalFunctionTokenizer
+    with MathematicalFunctionTokenizer
+    with MiscellaneousFunctionTokenizer
+    with RandomFunctionTokenizer
+    with RoundingFunctionTokenizer
+    with SplitMergeFunctionTokenizer
+    with StringFunctionTokenizer
+    with StringSearchFunctionTokenizer
+    with TypeCastFunctionTokenizer
+    with URLFunctionTokenizer
     with ClickhouseColumnFunctions {
 
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))

@@ -3,19 +3,20 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.dsl.ExpressionColumn
 
 trait StringSearchFunctions { self: Magnets =>
-  abstract class StringSearchFun[V](col: StringColMagnet) extends ExpressionColumn[V](col.column)
+  abstract class StringSearchFunc[V](val col1: StringColMagnet, val col2: StringColMagnet) extends ExpressionColumn[V](col1.column)
+  abstract class StringSearchReplaceFunc(col1: StringColMagnet, col2: StringColMagnet, val replace: StringColMagnet) extends StringSearchFunc[String](col1, col2)
   
-  case class Position(col: StringColMagnet, needle: StringColMagnet, caseSensitive: Boolean = true) extends StringSearchFun[Long](col)
-  case class PositionUTF8(col: StringColMagnet, needle: StringColMagnet, caseSensitive: Boolean = true) extends StringSearchFun[Long](col)
-  case class StrMatch(col: StringColMagnet, pattern: StringColMagnet) extends StringSearchFun[Boolean](col)
-  case class Extract(col: StringColMagnet, pattern: StringColMagnet) extends StringSearchFun[String](col)
-  case class ExtractAll(col: StringColMagnet, pattern: StringColMagnet) extends StringSearchFun[String](col)
-  case class Like(col: StringColMagnet, pattern: StringColMagnet) extends StringSearchFun[Boolean](col)
-  case class NotLike(col: StringColMagnet, pattern: StringColMagnet) extends StringSearchFun[Boolean](col)
-  case class ReplaceOne(col: StringColMagnet, pattern: StringColMagnet, replacement: StringColMagnet) extends StringSearchFun[String](col)
-  case class ReplaceAll(col: StringColMagnet, pattern: StringColMagnet, replacement: StringColMagnet) extends StringSearchFun[String](col)
-  case class ReplaceRegexpOne(col: StringColMagnet, pattern: StringColMagnet, replacement: StringColMagnet) extends StringSearchFun[String](col)
-  case class ReplaceRegexpAll(col: StringColMagnet, pattern: StringColMagnet, replacement: StringColMagnet) extends StringSearchFun[String](col)
+  case class Position(col: StringColMagnet, needle: StringColMagnet, caseSensitive: Boolean = true) extends StringSearchFunc[Long](col,needle)
+  case class PositionUTF8(col: StringColMagnet, needle: StringColMagnet, caseSensitive: Boolean = true) extends StringSearchFunc[Long](col,needle)
+  case class StrMatch(col: StringColMagnet, pattern: StringColMagnet) extends StringSearchFunc[Boolean](col, pattern)
+  case class Extract(col: StringColMagnet, pattern: StringColMagnet) extends StringSearchFunc[String](col, pattern)
+  case class ExtractAll(col: StringColMagnet, pattern: StringColMagnet) extends StringSearchFunc[String](col, pattern)
+  case class Like(col: StringColMagnet, pattern: StringColMagnet) extends StringSearchFunc[Boolean](col, pattern)
+  case class NotLike(col: StringColMagnet, pattern: StringColMagnet) extends StringSearchFunc[Boolean](col, pattern)
+  case class ReplaceOne(col: StringColMagnet, pattern: StringColMagnet, replacement: StringColMagnet) extends StringSearchReplaceFunc(col, pattern, replacement)
+  case class ReplaceAll(col: StringColMagnet, pattern: StringColMagnet, replacement: StringColMagnet) extends StringSearchReplaceFunc(col, pattern, replacement)
+  case class ReplaceRegexpOne(col: StringColMagnet, pattern: StringColMagnet, replacement: StringColMagnet) extends StringSearchReplaceFunc(col, pattern, replacement)
+  case class ReplaceRegexpAll(col: StringColMagnet, pattern: StringColMagnet, replacement: StringColMagnet) extends StringSearchReplaceFunc(col, pattern, replacement)
   
   def position(col: StringColMagnet, needle: StringColMagnet) = Position(col, needle)
   def positionCaseInsensitive(col: StringColMagnet, needle: StringColMagnet) = Position(col, needle, false)

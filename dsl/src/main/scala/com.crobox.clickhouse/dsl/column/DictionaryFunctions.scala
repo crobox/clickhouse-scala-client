@@ -13,6 +13,8 @@ trait DictionaryFunctions { self: Magnets =>
   sealed abstract class DictionaryFuncColumn[V] extends
     ExpressionColumn[V](EmptyColumn())
 
+  //TODO :magnetize default params
+
   case class DictGetUInt8(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Long]] = None)
     extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
   case class DictGetUInt16(_dictName: StringColMagnet, _attrName: StringColMagnet, _id: NumericCol, _default: Option[TableColumn[Long]] = None)

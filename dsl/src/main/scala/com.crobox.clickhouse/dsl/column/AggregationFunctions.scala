@@ -13,6 +13,8 @@ trait AggregationFunctions
   with Leveled
   with AggregationFunctionsCombiners { self: Magnets with ClickhouseColumnFunctions =>
 
+  //TODO: Magnetize
+
   //https://clickhouse.yandex/docs/en/agg_functions/reference
 
   abstract class AggregateFunction[V](targetColumn: AnyTableColumn) extends ExpressionColumn[V](targetColumn)

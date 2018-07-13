@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn, TableColumn}
+import com.crobox.clickhouse.dsl._
 import org.joda.time.{DateTime, LocalDate}
 
 trait ArrayFunctions { this: Magnets =>
@@ -34,15 +33,15 @@ trait ArrayFunctions { this: Magnets =>
   case class Array[V](col1: ArrayColMagnet, coln: ArrayColMagnet*) extends ArrayFunctionOp[V](col1)
   case class ArrayConcat(col1: ArrayColMagnet, col2: ArrayColMagnet,coln: ArrayColMagnet*) extends ArrayFunctionOp(col1)
   case class ArrayElement(col: ArrayColMagnet, n: NumericCol) extends ArrayFunctionOp(col)
-  case class Has(col: ArrayColMagnet, elm: AnyTableColumn) extends ArrayFunctionOp(col)
-  case class IndexOf(col: ArrayColMagnet, elm: AnyTableColumn) extends ArrayFunctionOp(col)
-  case class CountEqual(col: ArrayColMagnet, elm: AnyTableColumn) extends ArrayFunctionOp(col)
+  case class Has(col: ArrayColMagnet, elm: Magnet) extends ArrayFunctionOp(col)
+  case class IndexOf(col: ArrayColMagnet, elm: ConstOrColMagnet) extends ArrayFunctionOp(col)
+  case class CountEqual(col: ArrayColMagnet, elm: ConstOrColMagnet) extends ArrayFunctionOp(col)
   case class ArrayEnumerate(col: ArrayColMagnet) extends ArrayFunctionOp(col)
   case class ArrayEnumerateUniq(col1: ArrayColMagnet,coln: ArrayColMagnet*) extends ArrayFunctionOp(col1)
   case class ArrayPopBack(col: ArrayColMagnet) extends ArrayFunctionOp(col)
   case class ArrayPopFront(col: ArrayColMagnet) extends ArrayFunctionOp(col)
-  case class ArrayPushBack(col: ArrayColMagnet, elm: AnyTableColumn) extends ArrayFunctionOp(col)
-  case class ArrayPushFront(col: ArrayColMagnet, elm: AnyTableColumn) extends ArrayFunctionOp(col)
+  case class ArrayPushBack(col: ArrayColMagnet, elm: ConstOrColMagnet) extends ArrayFunctionOp(col)
+  case class ArrayPushFront(col: ArrayColMagnet, elm: ConstOrColMagnet) extends ArrayFunctionOp(col)
   case class ArraySlice(col: ArrayColMagnet, offset: NumericCol, length: NumericCol = 0) extends ArrayFunctionOp(col)
   case class ArrayUniq(col1: ArrayColMagnet,coln: ArrayColMagnet*) extends ArrayFunctionOp(col1)
   case class ArrayJoin(col: ArrayColMagnet) extends ArrayFunctionOp(col)
@@ -66,18 +65,19 @@ trait ArrayFunctions { this: Magnets =>
 
   def arrayConcat(col1: ArrayColMagnet,col2: ArrayColMagnet,coln: ArrayColMagnet*) = ArrayConcat(col1, col2, coln:_*)
   def arrayElement(col: ArrayColMagnet, n: NumericCol) = ArrayElement(col, n)
-  def has[V, C <: Iterable[V]](col: ArrayColMagnet, elm: TableColumn[V]) = Has(col, elm)
-  def indexOf[V, C <: Iterable[V]](col: ArrayColMagnet, elm: TableColumn[V]) = IndexOf(col, elm)
-  def countEqual[V, C <: Iterable[V]](col: ArrayColMagnet, elm: TableColumn[V]) = CountEqual(col, elm)
+  def has(col: ArrayColMagnet, elm: ConstOrColMagnet) = Has(col, elm)
+  def indexOf(col: ArrayColMagnet, elm: ConstOrColMagnet) = IndexOf(col, elm)
+  def countEqual(col: ArrayColMagnet, elm: ConstOrColMagnet) = CountEqual(col, elm)
   def arrayEnumerate(col: ArrayColMagnet) = ArrayEnumerate(col)
   def arrayEnumerateUniq(col1: ArrayColMagnet,coln: ArrayColMagnet*) = ArrayEnumerateUniq(col1, coln:_*)
   def arrayPopBack(col: ArrayColMagnet) = ArrayPopBack(col)
   def arrayPopFront(col: ArrayColMagnet) = ArrayPopFront(col)
-  def arrayPushBack[V, C <: Iterable[V]](col: ArrayColMagnet, elm: TableColumn[V]) = ArrayPushBack(col, elm)
-  def arrayPushFront[V, C <: Iterable[V]](col: ArrayColMagnet, elm: TableColumn[V]) = ArrayPushFront(col, elm)
+  def arrayPushBack(col: ArrayColMagnet, elm: ConstOrColMagnet) = ArrayPushBack(col, elm)
+  def arrayPushFront(col: ArrayColMagnet, elm: ConstOrColMagnet) = ArrayPushFront(col, elm)
   def arraySlice(col: ArrayColMagnet, offset: NumericCol, length: NumericCol = 0) = ArraySlice(col, offset, length)
   def arrayUniq(col1: ArrayColMagnet,coln: ArrayColMagnet*) = ArrayUniq(col1, coln:_*)
   def arrayJoin(col: ArrayColMagnet) = ArrayJoin(col)
+
   /*
 emptyArrayUInt8,
 emptyArrayUInt16,

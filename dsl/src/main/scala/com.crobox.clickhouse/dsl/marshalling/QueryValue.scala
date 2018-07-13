@@ -95,16 +95,16 @@ trait QueryValueFormats {
     override def unapply(v: String): LocalDate = LocalDate.parse(unquote(v))
   }
 
-  implicit def queryValueToSeq[V](ev: QueryValue[V]): QueryValue[Iterable[V]] =
+  implicit def queryValueToSeq[V](ev: QueryValue[V]): QueryValue[scala.Iterable[V]] =
     new IterableQueryValue(ev)
 
-  class IterableQueryValue[V](ev: QueryValue[V]) extends QueryValue[Iterable[V]] {
+  class IterableQueryValue[V](ev: QueryValue[V]) extends QueryValue[scala.Iterable[V]] {
 
-    override def apply(value: Iterable[V]): String =
+    override def apply(value: scala.Iterable[V]): String =
       s"""(${value.map(ev.apply).mkString(",")})"""
 
-    override def unapply(queryRep: String): Iterable[V] =
-      unquote(queryRep).split(",").map(ev.unapply).asInstanceOf[Iterable[V]]
+    override def unapply(queryRep: String): scala.Iterable[V] =
+      unquote(queryRep).split(",").map(ev.unapply).asInstanceOf[scala.Iterable[V]]
   }
 
   private def unquote(v: String) =

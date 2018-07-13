@@ -1,9 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.marshalling.QueryValue
+import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
+import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.crobox.clickhouse.dsl.{Const, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
-
 
 trait Magnets { self: ArithmeticFunctions with ComparisonFunctions =>
 
@@ -18,12 +18,29 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions =>
     val column: TableColumn[_]
   }
 
+  sealed trait ConstOrColMagnet extends Magnet
+
+  implicit def constOrColMagnetFromCol(s: TableColumn[_]) =
+    new ConstOrColMagnet {
+      override type ColumnType = AnyTableColumn
+      override val column = s
+    }
+
+  implicit def constOrColMagnetFromConst[T : QueryValue](s: T) =
+    new ConstOrColMagnet {
+      override type ColumnType = Const[T]
+      override val column = Const(s)
+    }
+
   sealed trait ArrayColMagnet extends Magnet
 
-  implicit def arrayColMagnetFromIterable[T <: Iterable[_] : QueryValue](s: T) =
+  implicit def arrayColMagnetFromIterable[T : QueryValue](s: Iterable[T]) =
     new ArrayColMagnet {
       override type ColumnType = T
-      override val column = Const(s)
+
+      val qvForIterable = QueryValueFormats.queryValueToSeq(implicitly[QueryValue[T]])
+
+      override val column = Const(s)(qvForIterable)
     }
 
   implicit def arrayColMagnetFromIterableCol[S <: Iterable[_], T <: TableColumn[S]](s: T) =

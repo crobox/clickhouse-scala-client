@@ -58,8 +58,8 @@ trait TypeCastFunctions  { self: Magnets =>
   case class FixedString(tableColumn: AnyTableColumn, n: Int) extends TypeCastColumn[String](tableColumn)
   case class StringCutToZero(tableColumn: AnyTableColumn)     extends TypeCastColumn[String](tableColumn)
 
-  case class Cast[V](tableColumn: TableColumn[V], simpleColumnType: SimpleColumnType)
-      extends TypeCastColumn[V](tableColumn)
+  case class Cast(tableColumn: AnyTableColumn, simpleColumnType: SimpleColumnType)
+      extends TypeCastColumn(tableColumn)
 
   //trait TypeCastFunctionsDsl {
 
@@ -98,6 +98,6 @@ trait TypeCastFunctions  { self: Magnets =>
 
     def reinterpret[V](typeCastColumn: TypeCastColumn[_] with Reinterpretable) = Reinterpret[V](typeCastColumn)
 
-    def cast(tableColumn: TableColumn[Long], simpleColumnType: SimpleColumnType) = Cast(tableColumn, simpleColumnType)
+    def cast(tableColumn: AnyTableColumn, simpleColumnType: SimpleColumnType) = Cast(tableColumn, simpleColumnType)
   //}
 }

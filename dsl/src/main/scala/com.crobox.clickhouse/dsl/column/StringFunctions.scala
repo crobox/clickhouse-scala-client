@@ -25,7 +25,9 @@ trait StringFunctions { self: Magnets =>
       extends StringFunctionCol[String](col)
   case class ConvertCharset[C <: TableColumn[String]](col: TableColumn[String], from: String, to: String)
       extends StringFunctionCol[String](col)
+
   // TODO: Enum the charsets?
+  // TODO: MAgnetize
 
   def empty(col: EmptyNonEmptyCol)                        = Empty(col: EmptyNonEmptyCol)
   def notEmpty(col: EmptyNonEmptyCol)                     = NotEmpty(col: EmptyNonEmptyCol)

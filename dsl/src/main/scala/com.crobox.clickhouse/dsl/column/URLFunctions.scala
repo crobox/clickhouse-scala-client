@@ -3,9 +3,9 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.dsl.ExpressionColumn
 
 trait URLFunctions { self: Magnets =>
-  sealed trait URLFunction
-  abstract class URLStrFunction(col: StringColMagnet) extends ExpressionColumn[String](col.column) with URLFunction
-  abstract class URLArrFunction(col: StringColMagnet) extends ExpressionColumn[String](col.column) with URLFunction
+  sealed abstract class URLFunction[V](column: StringColMagnet) extends ExpressionColumn[V](column.column)
+  abstract class URLStrFunction(col: StringColMagnet) extends URLFunction[String](col)
+  abstract class URLArrFunction(col: StringColMagnet) extends URLFunction[Seq[String]](col)
 
   case class Protocol(col: StringColMagnet) extends URLStrFunction(col)
   case class Domain(col: StringColMagnet) extends URLStrFunction(col)
@@ -24,7 +24,6 @@ trait URLFunctions { self: Magnets =>
   case class URLHierarchy(col: StringColMagnet) extends URLArrFunction(col)
   case class URLPathHierarchy(col: StringColMagnet) extends URLArrFunction(col)
   case class DecodeURLComponent(col: StringColMagnet) extends URLStrFunction(col)
-
   case class CutWWW(col: StringColMagnet) extends URLStrFunction(col)
   case class CutQueryString(col: StringColMagnet) extends URLStrFunction(col)
   case class CutFragment(col: StringColMagnet) extends URLStrFunction(col)
