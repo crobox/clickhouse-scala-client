@@ -1,12 +1,11 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.{ExpressionColumn, TableColumn}
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
+import com.crobox.clickhouse.dsl.ExpressionColumn
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
 
 trait TypeCastFunctions  { self: Magnets =>
 
-  abstract class TypeCastColumn[V](targetColumn: AnyTableColumn) extends ExpressionColumn[V](targetColumn)
+  abstract class TypeCastColumn[V](targetColumn: ConstOrColMagnet) extends ExpressionColumn[V](targetColumn.column)
 
   case class Reinterpret[V](typeCastColumn: TypeCastColumn[_] with Reinterpretable)
       extends TypeCastColumn[V](typeCastColumn)
@@ -14,90 +13,90 @@ trait TypeCastFunctions  { self: Magnets =>
   //Tagging of compatible
   sealed trait Reinterpretable
 
-  case class UInt8(tableColumn: AnyTableColumn, orZero: Boolean = false)
+  case class UInt8(tableColumn: ConstOrColMagnet, orZero: Boolean = false)
       extends TypeCastColumn[Long](tableColumn)
       with Reinterpretable
-  case class UInt16(tableColumn: AnyTableColumn, orZero: Boolean = false)
+  case class UInt16(tableColumn: ConstOrColMagnet, orZero: Boolean = false)
       extends TypeCastColumn[Long](tableColumn)
       with Reinterpretable
-  case class UInt32(tableColumn: AnyTableColumn, orZero: Boolean = false)
+  case class UInt32(tableColumn: ConstOrColMagnet, orZero: Boolean = false)
       extends TypeCastColumn[Long](tableColumn)
       with Reinterpretable
-  case class UInt64(tableColumn: AnyTableColumn, orZero: Boolean = false)
-      extends TypeCastColumn[Long](tableColumn)
-      with Reinterpretable
-
-  case class Int8(tableColumn: AnyTableColumn, orZero: Boolean = false)
-      extends TypeCastColumn[Long](tableColumn)
-      with Reinterpretable
-  case class Int16(tableColumn: AnyTableColumn, orZero: Boolean = false)
-      extends TypeCastColumn[Long](tableColumn)
-      with Reinterpretable
-  case class Int32(tableColumn: AnyTableColumn, orZero: Boolean = false)
-      extends TypeCastColumn[Long](tableColumn)
-      with Reinterpretable
-  case class Int64(tableColumn: AnyTableColumn, orZero: Boolean = false)
+  case class UInt64(tableColumn: ConstOrColMagnet, orZero: Boolean = false)
       extends TypeCastColumn[Long](tableColumn)
       with Reinterpretable
 
-  case class Float32(tableColumn: AnyTableColumn, orZero: Boolean = false)
+  case class Int8(tableColumn: ConstOrColMagnet, orZero: Boolean = false)
+      extends TypeCastColumn[Long](tableColumn)
+      with Reinterpretable
+  case class Int16(tableColumn: ConstOrColMagnet, orZero: Boolean = false)
+      extends TypeCastColumn[Long](tableColumn)
+      with Reinterpretable
+  case class Int32(tableColumn: ConstOrColMagnet, orZero: Boolean = false)
+      extends TypeCastColumn[Long](tableColumn)
+      with Reinterpretable
+  case class Int64(tableColumn: ConstOrColMagnet, orZero: Boolean = false)
+      extends TypeCastColumn[Long](tableColumn)
+      with Reinterpretable
+
+  case class Float32(tableColumn: ConstOrColMagnet, orZero: Boolean = false)
       extends TypeCastColumn[Float](tableColumn)
       with Reinterpretable
-  case class Float64(tableColumn: AnyTableColumn, orZero: Boolean = false)
+  case class Float64(tableColumn: ConstOrColMagnet, orZero: Boolean = false)
       extends TypeCastColumn[Float](tableColumn)
       with Reinterpretable
 
-  case class DateRep(tableColumn: AnyTableColumn)
+  case class DateRep(tableColumn: ConstOrColMagnet)
       extends TypeCastColumn[org.joda.time.LocalDate](tableColumn)
       with Reinterpretable
-  case class DateTimeRep(tableColumn: AnyTableColumn)
+  case class DateTimeRep(tableColumn: ConstOrColMagnet)
       extends TypeCastColumn[org.joda.time.DateTime](tableColumn)
       with Reinterpretable
 
-  case class StringRep(tableColumn: AnyTableColumn)           extends TypeCastColumn[String](tableColumn) with Reinterpretable
-  case class FixedString(tableColumn: AnyTableColumn, n: Int) extends TypeCastColumn[String](tableColumn)
-  case class StringCutToZero(tableColumn: AnyTableColumn)     extends TypeCastColumn[String](tableColumn)
+  case class StringRep(tableColumn: ConstOrColMagnet)           extends TypeCastColumn[String](tableColumn) with Reinterpretable
+  case class FixedString(tableColumn: ConstOrColMagnet, n: Int) extends TypeCastColumn[String](tableColumn)
+  case class StringCutToZero(tableColumn: ConstOrColMagnet)     extends TypeCastColumn[String](tableColumn)
 
-  case class Cast(tableColumn: AnyTableColumn, simpleColumnType: SimpleColumnType)
+  case class Cast(tableColumn: ConstOrColMagnet, simpleColumnType: SimpleColumnType)
       extends TypeCastColumn(tableColumn)
 
   //trait TypeCastFunctionsDsl {
 
-    def toUInt8(tableColumn: AnyTableColumn)  = UInt8(tableColumn)
-    def toUInt16(tableColumn: AnyTableColumn) = UInt16(tableColumn)
-    def toUInt32(tableColumn: AnyTableColumn) = UInt32(tableColumn)
-    def toUInt64(tableColumn: AnyTableColumn) = UInt64(tableColumn)
+    def toUInt8(tableColumn: ConstOrColMagnet)  = UInt8(tableColumn)
+    def toUInt16(tableColumn: ConstOrColMagnet) = UInt16(tableColumn)
+    def toUInt32(tableColumn: ConstOrColMagnet) = UInt32(tableColumn)
+    def toUInt64(tableColumn: ConstOrColMagnet) = UInt64(tableColumn)
 
-    def toInt8(tableColumn: AnyTableColumn)  = Int8(tableColumn)
-    def toInt16(tableColumn: AnyTableColumn) = Int16(tableColumn)
-    def toInt32(tableColumn: AnyTableColumn) = Int32(tableColumn)
-    def toInt64(tableColumn: AnyTableColumn) = Int64(tableColumn)
+    def toInt8(tableColumn: ConstOrColMagnet)  = Int8(tableColumn)
+    def toInt16(tableColumn: ConstOrColMagnet) = Int16(tableColumn)
+    def toInt32(tableColumn: ConstOrColMagnet) = Int32(tableColumn)
+    def toInt64(tableColumn: ConstOrColMagnet) = Int64(tableColumn)
 
-    def toFloat32(tableColumn: AnyTableColumn) = Float32(tableColumn)
-    def toFloat64(tableColumn: AnyTableColumn) = Float64(tableColumn)
+    def toFloat32(tableColumn: ConstOrColMagnet) = Float32(tableColumn)
+    def toFloat64(tableColumn: ConstOrColMagnet) = Float64(tableColumn)
 
-    def toUInt8OrZero(tableColumn: AnyTableColumn)  = UInt8(tableColumn, true)
-    def toUInt16OrZero(tableColumn: AnyTableColumn) = UInt16(tableColumn, true)
-    def toUInt32OrZero(tableColumn: AnyTableColumn) = UInt32(tableColumn, true)
-    def toUInt64OrZero(tableColumn: AnyTableColumn) = UInt64(tableColumn, true)
+    def toUInt8OrZero(tableColumn: ConstOrColMagnet)  = UInt8(tableColumn, true)
+    def toUInt16OrZero(tableColumn: ConstOrColMagnet) = UInt16(tableColumn, true)
+    def toUInt32OrZero(tableColumn: ConstOrColMagnet) = UInt32(tableColumn, true)
+    def toUInt64OrZero(tableColumn: ConstOrColMagnet) = UInt64(tableColumn, true)
 
-    def toInt8OrZero(tableColumn: AnyTableColumn)  = Int8(tableColumn, true)
-    def toInt16OrZero(tableColumn: AnyTableColumn) = Int16(tableColumn, true)
-    def toInt32OrZero(tableColumn: AnyTableColumn) = Int32(tableColumn, true)
-    def toInt64OrZero(tableColumn: AnyTableColumn) = Int64(tableColumn, true)
+    def toInt8OrZero(tableColumn: ConstOrColMagnet)  = Int8(tableColumn, true)
+    def toInt16OrZero(tableColumn: ConstOrColMagnet) = Int16(tableColumn, true)
+    def toInt32OrZero(tableColumn: ConstOrColMagnet) = Int32(tableColumn, true)
+    def toInt64OrZero(tableColumn: ConstOrColMagnet) = Int64(tableColumn, true)
 
-    def toFloat32OrZero(tableColumn: AnyTableColumn) = Float32(tableColumn, true)
-    def toFloat64OrZero(tableColumn: AnyTableColumn) = Float64(tableColumn, true)
+    def toFloat32OrZero(tableColumn: ConstOrColMagnet) = Float32(tableColumn, true)
+    def toFloat64OrZero(tableColumn: ConstOrColMagnet) = Float64(tableColumn, true)
 
-    def toDate(tableColumn: AnyTableColumn)     = DateRep(tableColumn)
-    def toDateTime(tableColumn: AnyTableColumn) = DateTimeRep(tableColumn)
+    def toDate(tableColumn: ConstOrColMagnet)     = DateRep(tableColumn)
+    def toDateTime(tableColumn: ConstOrColMagnet) = DateTimeRep(tableColumn)
 
-    def toStringRep(tableColumn: AnyTableColumn)           = StringRep(tableColumn)
-    def toFixedString(tableColumn: AnyTableColumn, n: Int) = FixedString(tableColumn, n)
-    def toStringCutToZero(tableColumn: AnyTableColumn)     = StringCutToZero(tableColumn)
+    def toStringRep(tableColumn: ConstOrColMagnet)           = StringRep(tableColumn)
+    def toFixedString(tableColumn: ConstOrColMagnet, n: Int) = FixedString(tableColumn, n)
+    def toStringCutToZero(tableColumn: ConstOrColMagnet)     = StringCutToZero(tableColumn)
 
     def reinterpret[V](typeCastColumn: TypeCastColumn[_] with Reinterpretable) = Reinterpret[V](typeCastColumn)
 
-    def cast(tableColumn: AnyTableColumn, simpleColumnType: SimpleColumnType) = Cast(tableColumn, simpleColumnType)
+    def cast(tableColumn: ConstOrColMagnet, simpleColumnType: SimpleColumnType) = Cast(tableColumn, simpleColumnType)
   //}
 }
