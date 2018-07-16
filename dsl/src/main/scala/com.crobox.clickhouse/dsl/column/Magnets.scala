@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.crobox.clickhouse.dsl.{Const, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
 
-trait Magnets { self: ArithmeticFunctions with ComparisonFunctions =>
+trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalFunctions =>
 
   /**
     * Magnet pattern
@@ -18,7 +18,8 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions =>
     val column: TableColumn[_]
   }
 
-  sealed trait ConstOrColMagnet extends Magnet
+  sealed trait ConstOrColMagnet extends Magnet with LogicalOps
+
 
   implicit def constOrColMagnetFromCol(s: TableColumn[_]) =
     new ConstOrColMagnet {
@@ -96,7 +97,7 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions =>
       override val column = Const(s)
     }
 
-  sealed trait NumericCol extends Magnet with AddSubtractAble with ComparableWith[NumericCol] {
+  sealed trait NumericCol extends Magnet with AddSubtractAble with ComparableWith[NumericCol] with LogicalOps {
     def *(other: NumericCol) = Multiply(this, other)
     def /(other: NumericCol) = Divide(this, other)
     def %(other: NumericCol) = Modulo(this, other)
