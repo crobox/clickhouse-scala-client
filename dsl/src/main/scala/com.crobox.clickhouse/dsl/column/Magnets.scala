@@ -18,8 +18,7 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalF
     val column: TableColumn[_]
   }
 
-  sealed trait ConstOrColMagnet extends Magnet with LogicalOps
-
+  sealed trait ConstOrColMagnet extends Magnet
 
   implicit def constOrColMagnetFromCol(s: TableColumn[_]) =
     new ConstOrColMagnet {
@@ -64,11 +63,6 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalF
       override val column: TableColumn[String] = s
     }
 
-  trait AddSubtractAble extends Magnet with HexCompatible {
-    def +(other: AddSubtractAble) = Plus(this, other)
-    def -(other: AddSubtractAble) = Minus(this, other)
-  }
-
   sealed trait HexCompatible extends Magnet
 
   sealed trait DateOrDateTime extends Magnet with AddSubtractAble with ComparableWith[DateOrDateTime]
@@ -97,11 +91,9 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalF
       override val column = Const(s)
     }
 
-  sealed trait NumericCol extends Magnet with AddSubtractAble with ComparableWith[NumericCol] with LogicalOps {
-    def *(other: NumericCol) = Multiply(this, other)
-    def /(other: NumericCol) = Divide(this, other)
-    def %(other: NumericCol) = Modulo(this, other)
-  }
+  sealed trait AddSubtractAble extends Magnet with AddSubtractOps
+
+  sealed trait NumericCol extends Magnet with AddSubtractAble with ComparableWith[NumericCol] with LogicalOps with ArithmeticOps
 
   implicit def numericFromLong[T <: Long : QueryValue](s: T) =
     new NumericCol {
@@ -175,7 +167,7 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalF
       override val column = s
     }
 
-
+  //Marks types that can be checked on empty/nonempty and length (atleast collections and strings)
   sealed trait EmptyNonEmptyCol extends Magnet
 
   implicit def emptyNonEmptyFromStringCol[T <: TableColumn[String]](s: T) =

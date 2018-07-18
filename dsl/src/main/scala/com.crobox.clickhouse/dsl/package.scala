@@ -63,6 +63,7 @@ package object dsl extends DslLanguage {
   }
 
   implicit class StringColumnWithCondition(column: TableColumn[String]) {
+    //TODO: Add this to stringcolmagnet?
 
     //TODO switch the starts/ends/contains for iterables to use a one if for lists
     def startsWith(others: Iterable[String])(implicit ev: QueryValue[String],

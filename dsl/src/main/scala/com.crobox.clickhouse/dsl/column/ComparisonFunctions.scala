@@ -22,4 +22,6 @@ trait ComparisonFunctions { self: Magnets =>
   def greater[T <: Magnet](col1: T, col2: T) = ComparisonColumn(col1 , ">", col2)
   def lessOrEquals[T <: Magnet](col1: T, col2: T) = ComparisonColumn(col1 , "<=", col2)
   def greaterOrEquals[T <: Magnet](col1: T, col2: T) = ComparisonColumn(col1 , ">=", col2)
+
+  //TODO add 'IS (NOT) LIKE' here?
 }

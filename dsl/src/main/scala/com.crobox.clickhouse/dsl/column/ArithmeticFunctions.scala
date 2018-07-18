@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
+import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn, TableColumn}
 
 trait ArithmeticFunctions { self: Magnets =>
 
@@ -13,6 +13,21 @@ trait ArithmeticFunctions { self: Magnets =>
   abstract class ArithmeticFunctionOp[V](val left: AddSubtractAble, val right: AddSubtractAble)
       extends ExpressionColumn[V](EmptyColumn())
         with ArithmeticFunction
+
+  trait AddSubtractOps { self: AddSubtractAble =>
+    def +(other: AddSubtractAble) = Plus(this, other)
+    def -(other: AddSubtractAble) = Minus(this, other)
+  }
+
+  trait ArithmeticOps { self: NumericCol =>
+    def *(other: NumericCol) = Multiply(this, other)
+    def /(other: NumericCol) = Divide(this, other)
+    def %(other: NumericCol) = Modulo(this, other)
+  }
+
+  import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
+
+  plus(1,3)
 
   case class Plus(l: AddSubtractAble, r: AddSubtractAble)    extends ArithmeticFunctionOp(l, r)
   case class Minus(l: AddSubtractAble, r: AddSubtractAble)   extends ArithmeticFunctionOp(l, r)

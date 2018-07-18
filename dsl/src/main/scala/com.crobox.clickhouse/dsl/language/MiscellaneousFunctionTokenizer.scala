@@ -6,7 +6,7 @@ import com.crobox.clickhouse.dsl._
 trait MiscellaneousFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeMiscellaneousFunction(col: MiscellaneousFunction): String = {
+  def tokenizeMiscellaneousFunction(col: MiscellaneousFunction): String = col match {
     case col: MiscellaneousOp[_]    => tokenizeMiscOp(col)
     case col: MiscellaneousConst[_] => tokenizeMiscConst(col)
   }
