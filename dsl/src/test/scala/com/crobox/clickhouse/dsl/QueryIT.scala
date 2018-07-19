@@ -44,7 +44,7 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
 
     type TakeIntGiveIntTypes = Column => (TypeCastColumn[_$1] with Reinterpretable) forSome {type _$1 >: Long with String with Float with Serializable}
 
-    val takeIntGiveIntCast: Set[TakeIntGiveIntTypes] = Set(
+    val takeIntGiveIntCast = Set(
       toUInt8 _,
       toUInt16 _,
       toUInt32 _,
@@ -80,7 +80,7 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
       toInt64OrZero _,
       toFloat32OrZero _,
       toFloat64OrZero _,
-      (col: AnyTableColumn) => toFixedString(col,10),
+      (col: TableColumn[_]) => toFixedString(col,10),
       toStringCutToZero _
     )
 
