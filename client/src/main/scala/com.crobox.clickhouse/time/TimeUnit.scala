@@ -1,5 +1,7 @@
 package com.crobox.clickhouse.time
 
+import org.joda.time.Period
+
 sealed trait TimeUnit {
   val labels: Array[String]
   val mainLabel: String
@@ -11,6 +13,18 @@ sealed trait TimeUnit {
       case unit: MultiTimeUnit =>
         MultiDuration(value, unit)
     }
+
+  def apply(period: Period): Option[TimeUnit] = period match {
+    case p if p.getSeconds == 1 => Some(TimeUnit.Second)
+    case p if p.getMinutes == 1 => Some(TimeUnit.Minute)
+    case p if p.getHours == 1   => Some(TimeUnit.Hour)
+    case p if p.getDays == 1    => Some(TimeUnit.Day)
+    case p if p.getWeeks == 1   => Some(TimeUnit.Week)
+    case p if p.getMonths == 1  => Some(TimeUnit.Month)
+    case p if p.getMonths == 3  => Some(TimeUnit.Quarter)
+    case p if p.getYears == 1   => Some(TimeUnit.Year)
+    case _ => None
+  }
 }
 
 sealed trait FixedTimeUnit { this: TimeUnit =>
