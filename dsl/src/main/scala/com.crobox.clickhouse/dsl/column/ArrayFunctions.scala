@@ -6,7 +6,7 @@ import org.joda.time.{DateTime, LocalDate}
 trait ArrayFunctions { this: Magnets =>
   sealed trait ArrayFunction
 
-  abstract class ArrayFunctionOp[V](col: ArrayColMagnet)
+  abstract class ArrayFunctionOp[V](col: ArrayColMagnet[_])
     extends ExpressionColumn[V](col.column)
     with ArrayFunction
 
@@ -27,24 +27,24 @@ trait ArrayFunctions { this: Magnets =>
   case class EmptyArrayDate()   extends ArrayFunctionConst[LocalDate]
   case class EmptyArrayDateTime() extends ArrayFunctionConst[DateTime]
   case class EmptyArrayString() extends ArrayFunctionConst[String]
-  case class Range[V](n: NumericCol)   extends ArrayFunctionConst[V]
+  case class Range[V](n: NumericCol[V])   extends ArrayFunctionConst[V]
 
-  case class EmptyArrayToSingle[V](col: ArrayColMagnet) extends ArrayFunctionOp[V](col)
-  case class Array[V](col1: ArrayColMagnet, coln: ArrayColMagnet*) extends ArrayFunctionOp[V](col1)
-  case class ArrayConcat(col1: ArrayColMagnet, col2: ArrayColMagnet,coln: ArrayColMagnet*) extends ArrayFunctionOp(col1)
-  case class ArrayElement(col: ArrayColMagnet, n: NumericCol) extends ArrayFunctionOp(col)
-  case class Has(col: ArrayColMagnet, elm: Magnet) extends ArrayFunctionOp(col)
-  case class IndexOf(col: ArrayColMagnet, elm: ConstOrColMagnet) extends ArrayFunctionOp(col)
-  case class CountEqual(col: ArrayColMagnet, elm: ConstOrColMagnet) extends ArrayFunctionOp(col)
-  case class ArrayEnumerate(col: ArrayColMagnet) extends ArrayFunctionOp(col)
-  case class ArrayEnumerateUniq(col1: ArrayColMagnet,coln: ArrayColMagnet*) extends ArrayFunctionOp(col1)
-  case class ArrayPopBack(col: ArrayColMagnet) extends ArrayFunctionOp(col)
-  case class ArrayPopFront(col: ArrayColMagnet) extends ArrayFunctionOp(col)
-  case class ArrayPushBack(col: ArrayColMagnet, elm: ConstOrColMagnet) extends ArrayFunctionOp(col)
-  case class ArrayPushFront(col: ArrayColMagnet, elm: ConstOrColMagnet) extends ArrayFunctionOp(col)
-  case class ArraySlice(col: ArrayColMagnet, offset: NumericCol, length: NumericCol = 0) extends ArrayFunctionOp(col)
-  case class ArrayUniq(col1: ArrayColMagnet,coln: ArrayColMagnet*) extends ArrayFunctionOp(col1)
-  case class ArrayJoin(col: ArrayColMagnet) extends ArrayFunctionOp(col)
+  case class EmptyArrayToSingle[V](col: ArrayColMagnet[_]) extends ArrayFunctionOp[V](col)
+  case class Array[V](col1: ArrayColMagnet[_], coln: ArrayColMagnet[_]*) extends ArrayFunctionOp[V](col1)
+  case class ArrayConcat(col1: ArrayColMagnet[_], col2: ArrayColMagnet[_],coln: ArrayColMagnet[_]*) extends ArrayFunctionOp(col1)
+  case class ArrayElement(col: ArrayColMagnet[_], n: NumericCol[_]) extends ArrayFunctionOp(col)
+  case class Has(col: ArrayColMagnet[_], elm: Magnet[_]) extends ArrayFunctionOp(col)
+  case class IndexOf(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) extends ArrayFunctionOp(col)
+  case class CountEqual(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) extends ArrayFunctionOp(col)
+  case class ArrayEnumerate(col: ArrayColMagnet[_]) extends ArrayFunctionOp(col)
+  case class ArrayEnumerateUniq(col1: ArrayColMagnet[_],coln: ArrayColMagnet[_]*) extends ArrayFunctionOp(col1)
+  case class ArrayPopBack(col: ArrayColMagnet[_]) extends ArrayFunctionOp(col)
+  case class ArrayPopFront(col: ArrayColMagnet[_]) extends ArrayFunctionOp(col)
+  case class ArrayPushBack(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) extends ArrayFunctionOp(col)
+  case class ArrayPushFront(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) extends ArrayFunctionOp(col)
+  case class ArraySlice(col: ArrayColMagnet[_], offset: NumericCol[_], length: NumericCol[_] = 0) extends ArrayFunctionOp(col)
+  case class ArrayUniq(col1: ArrayColMagnet[_],coln: ArrayColMagnet[_]*) extends ArrayFunctionOp(col1)
+  case class ArrayJoin(col: ArrayColMagnet[_]) extends ArrayFunctionOp(col)
 
   def emptyArrayUInt8 = EmptyArrayUInt8()
   def emptyArrayUInt16 = EmptyArrayUInt16()
@@ -59,24 +59,24 @@ trait ArrayFunctions { this: Magnets =>
   def emptyArrayDate = EmptyArrayDate()
   def emptyArrayDateTime = EmptyArrayDateTime()
   def emptyArrayString = EmptyArrayString()
-  def emptyArrayToSingle(col: ArrayColMagnet) = EmptyArrayToSingle[col.ColumnType](col)
-  def range(n: NumericCol) = Range(n)
+  def emptyArrayToSingle[O](col: ArrayColMagnet[O]) = EmptyArrayToSingle[O](col)
+  def range[V](n: NumericCol[V]) = Range[V](n)
 
 
-  def arrayConcat(col1: ArrayColMagnet,col2: ArrayColMagnet,coln: ArrayColMagnet*) = ArrayConcat(col1, col2, coln:_*)
-  def arrayElement(col: ArrayColMagnet, n: NumericCol) = ArrayElement(col, n)
-  def has(col: ArrayColMagnet, elm: ConstOrColMagnet) = Has(col, elm)
-  def indexOf(col: ArrayColMagnet, elm: ConstOrColMagnet) = IndexOf(col, elm)
-  def countEqual(col: ArrayColMagnet, elm: ConstOrColMagnet) = CountEqual(col, elm)
-  def arrayEnumerate(col: ArrayColMagnet) = ArrayEnumerate(col)
-  def arrayEnumerateUniq(col1: ArrayColMagnet,coln: ArrayColMagnet*) = ArrayEnumerateUniq(col1, coln:_*)
-  def arrayPopBack(col: ArrayColMagnet) = ArrayPopBack(col)
-  def arrayPopFront(col: ArrayColMagnet) = ArrayPopFront(col)
-  def arrayPushBack(col: ArrayColMagnet, elm: ConstOrColMagnet) = ArrayPushBack(col, elm)
-  def arrayPushFront(col: ArrayColMagnet, elm: ConstOrColMagnet) = ArrayPushFront(col, elm)
-  def arraySlice(col: ArrayColMagnet, offset: NumericCol, length: NumericCol = 0) = ArraySlice(col, offset, length)
-  def arrayUniq(col1: ArrayColMagnet,coln: ArrayColMagnet*) = ArrayUniq(col1, coln:_*)
-  def arrayJoin(col: ArrayColMagnet) = ArrayJoin(col)
+  def arrayConcat(col1: ArrayColMagnet[_],col2: ArrayColMagnet[_],coln: ArrayColMagnet[_]*) = ArrayConcat(col1, col2, coln:_*)
+  def arrayElement(col: ArrayColMagnet[_], n: NumericCol[_]) = ArrayElement(col, n)
+  def has(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) = Has(col, elm)
+  def indexOf(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) = IndexOf(col, elm)
+  def countEqual(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) = CountEqual(col, elm)
+  def arrayEnumerate(col: ArrayColMagnet[_]) = ArrayEnumerate(col)
+  def arrayEnumerateUniq(col1: ArrayColMagnet[_],coln: ArrayColMagnet[_]*) = ArrayEnumerateUniq(col1, coln:_*)
+  def arrayPopBack(col: ArrayColMagnet[_]) = ArrayPopBack(col)
+  def arrayPopFront(col: ArrayColMagnet[_]) = ArrayPopFront(col)
+  def arrayPushBack(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) = ArrayPushBack(col, elm)
+  def arrayPushFront(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) = ArrayPushFront(col, elm)
+  def arraySlice(col: ArrayColMagnet[_], offset: NumericCol[_], length: NumericCol[_] = 0) = ArraySlice(col, offset, length)
+  def arrayUniq(col1: ArrayColMagnet[_], coln: ArrayColMagnet[_]*) = ArrayUniq(col1, coln:_*)
+  def arrayJoin(col: ArrayColMagnet[_]) = ArrayJoin(col)
 
   /*
 emptyArrayUInt8,

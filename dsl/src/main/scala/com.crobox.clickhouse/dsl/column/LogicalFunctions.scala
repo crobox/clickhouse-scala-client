@@ -5,22 +5,22 @@ import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
 trait LogicalFunctions { this: Magnets =>
   //TODO remove the original logic
 
-  abstract class LogicalFunction(val left: NumericCol, val right: NumericCol)
+  abstract class LogicalFunction(val left: NumericCol[_], val right: NumericCol[_])
       extends ExpressionColumn[Boolean](EmptyColumn())
 
-  trait LogicalOps { this: NumericCol =>
-    def AND(other: NumericCol) = And(this, other)
-    def OR(other: NumericCol)  = Or(this, other)
-    def XOR(other: NumericCol) = Xor(this, other)
+  trait LogicalOps { this: NumericCol[_] =>
+    def AND(other: NumericCol[_]) = And(this, other)
+    def OR(other: NumericCol[_])  = Or(this, other)
+    def XOR(other: NumericCol[_]) = Xor(this, other)
   }
 
-  case class And(_left: NumericCol, _right: NumericCol) extends LogicalFunction(_left, _right)
-  case class Or(_left: NumericCol, _right: NumericCol)  extends LogicalFunction(_left, _right)
-  case class Xor(_left: NumericCol, _right: NumericCol) extends LogicalFunction(_left, _right)
+  case class And(_left: NumericCol[_], _right: NumericCol[_]) extends LogicalFunction(_left, _right)
+  case class Or(_left: NumericCol[_], _right: NumericCol[_])  extends LogicalFunction(_left, _right)
+  case class Xor(_left: NumericCol[_], _right: NumericCol[_]) extends LogicalFunction(_left, _right)
 
-  def and(_left: NumericCol, _right: NumericCol) = And(_left, _right)
-  def or(_left: NumericCol, _right: NumericCol)  = Or(_left, _right)
-  def xor(_left: NumericCol, _right: NumericCol) = Xor(_left, _right)
+  def and(_left: NumericCol[_], _right: NumericCol[_]) = And(_left, _right)
+  def or(_left: NumericCol[_], _right: NumericCol[_])  = Or(_left, _right)
+  def xor(_left: NumericCol[_], _right: NumericCol[_]) = Xor(_left, _right)
 
   /*
   and()

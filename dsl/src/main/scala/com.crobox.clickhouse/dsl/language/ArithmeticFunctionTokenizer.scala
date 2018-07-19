@@ -11,8 +11,8 @@ trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
   protected def tokenizeArithmeticFunctionColumn(col: ArithmeticFunctionCol[_]): String = {
     val op = col match {
-      case s: Negate => "negate"
-      case s: Abs    => "abs"
+      case s: Negate[_] => "negate"
+      case s: Abs[_]    => "abs"
     }
 
     fast"$op(${tokenizeColumn(col.numericCol.column)})"
@@ -20,15 +20,15 @@ trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
   protected def tokenizeArithmeticFunctionOperator(col: ArithmeticFunctionOp[_]): String = {
     val op = col match {
-      case s: Plus         => "plus"
-      case s: Minus        => "minus"
-      case s: Multiply     => "multiply"
-      case s: Divide       => "divide"
-      case s: IntDiv       => "intDiv"
-      case s: IntDivOrZero => "intDivOrZero"
-      case s: Modulo       => "modulo"
-      case s: Gcd          => "gcd"
-      case s: Lcm          => "lcm"
+      case s: Plus[_]         => "plus"
+      case s: Minus[_]        => "minus"
+      case s: Multiply[_]     => "multiply"
+      case s: Divide[_]       => "divide"
+      case s: IntDiv[_]       => "intDiv"
+      case s: IntDivOrZero[_] => "intDivOrZero"
+      case s: Modulo[_]       => "modulo"
+      case s: Gcd[_]          => "gcd"
+      case s: Lcm[_]          => "lcm"
     }
 
     fast"$op(${tokenizeColumn(col.left.column)},${tokenizeColumn(col.right.column)})"

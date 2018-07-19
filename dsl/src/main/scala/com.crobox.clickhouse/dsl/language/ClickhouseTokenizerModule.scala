@@ -213,13 +213,13 @@ trait ClickhouseTokenizerModule
       case AllInnerJoin => "ALL INNER JOIN"
     }
 
-  private def tokenizeFiltering(maybeCondition: Option[dsl.Comparison], keyword: String)(implicit database: Database): String =
+  private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]], keyword: String)(implicit database: Database): String =
     maybeCondition match {
       case None            => ""
       case Some(condition) => fast"$keyword ${tokenizeCondition(condition)}"
     }
 
-  protected def tokenizeCondition(condition: Comparison)(implicit database: Database): String =
+  protected def tokenizeCondition(condition: TableColumn[Boolean])(implicit database: Database): String =
     condition match {
       case _: NoOpComparison                             => ""
       case ColRefColumnComparison(left, operator, right) => fast"${aliasOrName(left)} $operator ${aliasOrName(right)}"

@@ -12,32 +12,32 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
   }
 
   protected def tokenizeArrayFunctionOp(col: ArrayFunctionOp[_]): String = col match {
-    case EmptyArrayToSingle(col: ArrayColMagnet) => fast"emptyArrayToSingle(${tokenizeColumn(col.column)})"
-    case Array(col1: ArrayColMagnet, coln: Seq[ArrayColMagnet]) =>
+    case EmptyArrayToSingle(col: ArrayColMagnet[_]) => fast"emptyArrayToSingle(${tokenizeColumn(col.column)})"
+    case Array(col1: ArrayColMagnet[_], coln: Seq[ArrayColMagnet[_]]) =>
       fast"array(${tokenizeColumn(col)}${tokenizeSeqCol(coln.map(_.column))})"
-    case ArrayConcat(col1: ArrayColMagnet, col2: ArrayColMagnet, coln: Seq[ArrayColMagnet]) =>
+    case ArrayConcat(col1: ArrayColMagnet[_], col2: ArrayColMagnet[_], coln: Seq[ArrayColMagnet[_]]) =>
       fast"arrayConcat(${tokenizeColumn(col)}${tokenizeColumn(col2.column)}${tokenizeSeqCol(coln.map(_.column))})"
-    case ArrayElement(col: ArrayColMagnet, n: NumericCol) =>
+    case ArrayElement(col: ArrayColMagnet[_], n: NumericCol[_]) =>
       fast"arrayElement(${tokenizeColumn(col.column)},${tokenizeColumn(n.column)})"
-    case Has(col: ArrayColMagnet, elm: AnyTableColumn) => fast"has(${tokenizeColumn(col.column)}${tokenizeColumn(elm)})"
-    case IndexOf(col: ArrayColMagnet, elm: AnyTableColumn) =>
+    case Has(col: ArrayColMagnet[_], elm: AnyTableColumn) => fast"has(${tokenizeColumn(col.column)}${tokenizeColumn(elm)})"
+    case IndexOf(col: ArrayColMagnet[_], elm: AnyTableColumn) =>
       fast"indexOf(${tokenizeColumn(col.column)}${tokenizeColumn(elm)})"
-    case CountEqual(col: ArrayColMagnet, elm: AnyTableColumn) =>
+    case CountEqual(col: ArrayColMagnet[_], elm: AnyTableColumn) =>
       fast"countEqual(${tokenizeColumn(col.column)}${tokenizeColumn(elm)})"
-    case ArrayEnumerate(col: ArrayColMagnet) => fast"arrayEnumerate(${tokenizeColumn(col.column)})"
-    case ArrayEnumerateUniq(col1: ArrayColMagnet, coln: Seq[ArrayColMagnet]) =>
+    case ArrayEnumerate(col: ArrayColMagnet[_]) => fast"arrayEnumerate(${tokenizeColumn(col.column)})"
+    case ArrayEnumerateUniq(col1: ArrayColMagnet[_], coln: Seq[ArrayColMagnet[_]]) =>
       fast"arrayEnumerateUniq(${tokenizeColumn(col)}${tokenizeSeqCol(coln.map(_.column))})"
-    case ArrayPopBack(col: ArrayColMagnet)  => fast"arrayPopBack(${tokenizeColumn(col.column)})"
-    case ArrayPopFront(col: ArrayColMagnet) => fast"arrayPopFront(${tokenizeColumn(col.column)})"
-    case ArrayPushBack(col: ArrayColMagnet, elm: AnyTableColumn) =>
+    case ArrayPopBack(col: ArrayColMagnet[_])  => fast"arrayPopBack(${tokenizeColumn(col.column)})"
+    case ArrayPopFront(col: ArrayColMagnet[_]) => fast"arrayPopFront(${tokenizeColumn(col.column)})"
+    case ArrayPushBack(col: ArrayColMagnet[_], elm: AnyTableColumn) =>
       fast"arrayPushBack(${tokenizeColumn(col.column)}${tokenizeColumn(elm)})"
-    case ArrayPushFront(col: ArrayColMagnet, elm: AnyTableColumn) =>
+    case ArrayPushFront(col: ArrayColMagnet[_], elm: AnyTableColumn) =>
       fast"arrayPushFront(${tokenizeColumn(col.column)}${tokenizeColumn(elm)})"
-    case ArraySlice(col: ArrayColMagnet, offset: NumericCol, length: NumericCol) =>
+    case ArraySlice(col: ArrayColMagnet[_], offset: NumericCol[_], length: NumericCol[_]) =>
       fast"arraySlice(${tokenizeColumn(col.column)}${tokenizeColumn(offset.column)}${tokenizeColumn(length.column)})"
-    case ArrayUniq(col1: ArrayColMagnet, coln: Seq[ArrayColMagnet]) =>
+    case ArrayUniq(col1: ArrayColMagnet[_], coln: Seq[ArrayColMagnet[_]]) =>
       fast"arrayUniq(${tokenizeColumn(col)}${tokenizeSeqCol(coln.map(_.column))})"
-    case ArrayJoin(col: ArrayColMagnet) => fast"arrayJoin(${tokenizeColumn(col.column)})"
+    case ArrayJoin(col: ArrayColMagnet[_]) => fast"arrayJoin(${tokenizeColumn(col.column)})"
   }
 
   protected def tokenizeArrayFunctionConst(col: ArrayFunctionConst[_]): String = col match {
@@ -54,6 +54,6 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
     case _: EmptyArrayDate     => "emptyArrayDate()"
     case _: EmptyArrayDateTime => "emptyArrayDateTime()"
     case _: EmptyArrayString   => "emptyArrayString()"
-    case Range(n: NumericCol)  => fast"range(${tokenizeColumn(n.column)})"
+    case Range(n: NumericCol[_])  => fast"range(${tokenizeColumn(n.column)})"
   }
 }

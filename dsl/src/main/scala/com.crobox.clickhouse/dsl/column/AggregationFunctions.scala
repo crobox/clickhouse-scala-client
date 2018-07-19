@@ -81,7 +81,7 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
   sealed trait Combinator[T <: Column, Result]
 
   object Combinator {
-    case class If[T <: Column, Res](condition: Comparison)    extends Combinator[T, Res]
+    case class If[T <: Column, Res](condition: TableColumn[Boolean])    extends Combinator[T, Res]
     case class CombinatorArray[T <: TableColumn[Seq[V]], V]() extends Combinator[T, V]
     case class ArrayForEach[T <: TableColumn[Seq[_]], Res]()  extends Combinator[T, Seq[Res]]
     case class State[T <: Column, Res]()                      extends Combinator[T, StateResult[Res]]
@@ -90,7 +90,7 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
   
  // trait AggregationFunctionsCombinersDsl {
 
-    def aggIf[T <: TableColumn[Res], Res](condition: Comparison)(aggregated: AggregateFunction[Res]) =
+    def aggIf[T <: TableColumn[Res], Res](condition: TableColumn[Boolean])(aggregated: AggregateFunction[Res]) =
       CombinedAggregatedFunction(Combinator.If(condition), aggregated)
 
     def array[T <: TableColumn[Seq[Res]], Res](aggregated: AggregateFunction[Res]) =

@@ -7,7 +7,7 @@ trait MathematicalFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
   def tokenizeMathematicalFunction(col: MathFuncColumn): String = col match {
-    case Pow(x: NumericCol, y: NumericCol) => fast"pow(${tokenizeColumn(x.column)},${tokenizeColumn(y.column)})"
+    case Pow(x: NumericCol[_], y: NumericCol[_]) => fast"pow(${tokenizeColumn(x.column)},${tokenizeColumn(y.column)})"
     case c: MathConst                      => tokenizeMathConst(c)
     case c: MathTransformation             => tokenizeMathTransformation(c)
 

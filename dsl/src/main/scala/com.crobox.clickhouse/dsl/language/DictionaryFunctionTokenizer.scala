@@ -8,7 +8,7 @@ trait DictionaryFunctionTokenizer {
 
   private def tokenizeDictionaryGet(col: DictionaryGetFuncColumn[_], typeName: String) = {
     val default = col.default
-      .map(col => "," + tokenizeColumn(col))
+      .map(col => "," + tokenizeColumn(col.column))
       .getOrElse("")
 
     val orDefault = col.default.map(_ => "orDefault").getOrElse("")
@@ -31,11 +31,11 @@ trait DictionaryFunctionTokenizer {
     case col: DictGetDateTime => tokenizeDictionaryGet(col, "DateTime")
     case col: DictGetUUID     => tokenizeDictionaryGet(col, "UUID")
     case col: DictGetString   => tokenizeDictionaryGet(col, "String")
-    case DictIsIn(dictName: StringColMagnet, childId: NumericCol, ancestorId: NumericCol) =>
+    case DictIsIn(dictName: StringColMagnet[_], childId: ConstOrColMagnet[_], ancestorId: ConstOrColMagnet[_]) =>
       fast"dictIsIn(${tokenizeColumn(dictName.column)},${tokenizeColumn(childId.column)},${tokenizeColumn(ancestorId.column)})"
-    case DictGetHierarchy(dictName: StringColMagnet, id: NumericCol) =>
+    case DictGetHierarchy(dictName: StringColMagnet[_], id: ConstOrColMagnet[_]) =>
       fast"dictGetHierarchy(${tokenizeColumn(dictName.column)},${tokenizeColumn(id.column)})"
-    case DictHas(dictName: StringColMagnet, id: NumericCol) =>
+    case DictHas(dictName: StringColMagnet[_], id: ConstOrColMagnet[_]) =>
       fast"dictHas(${tokenizeColumn(dictName.column)},${tokenizeColumn(id.column)})"
   }
 }
