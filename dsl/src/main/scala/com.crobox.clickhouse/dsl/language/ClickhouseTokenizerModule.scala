@@ -121,6 +121,7 @@ trait ClickhouseTokenizerModule
   private def tokenizeExpressionColumn(col: ExpressionColumn[_])(implicit database: Database): String =
     col match {
       case agg: AggregateFunction[_]     => tokenizeAggregateFunction(agg)
+      case col: ComparisonColumn         => tokenizeComparisonColumn(col)
       case col: TypeCastColumn[_]        => tokenizeTypeCastColumn(col)
       case col: DateTimeFunctionCol[_]   => tokenizeDateTimeColumn(col)
       case col: DateTimeConst[_]         => tokenizeDateTimeConst(col)
