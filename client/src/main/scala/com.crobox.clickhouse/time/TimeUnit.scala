@@ -14,16 +14,16 @@ sealed trait TimeUnit {
         MultiDuration(value, unit)
     }
 
-  def apply(period: Period): Option[TimeUnit] = period match {
-    case p if p.getSeconds == 1 => Some(TimeUnit.Second)
-    case p if p.getMinutes == 1 => Some(TimeUnit.Minute)
-    case p if p.getHours == 1   => Some(TimeUnit.Hour)
-    case p if p.getDays == 1    => Some(TimeUnit.Day)
-    case p if p.getWeeks == 1   => Some(TimeUnit.Week)
-    case p if p.getMonths == 1  => Some(TimeUnit.Month)
-    case p if p.getMonths == 3  => Some(TimeUnit.Quarter)
-    case p if p.getYears == 1   => Some(TimeUnit.Year)
-    case _ => None
+  def apply(period: Period): Option[TimeUnit] = period.toString match {
+    case "PT1S" => Some(TimeUnit.Second)
+    case "PT1M" => Some(TimeUnit.Minute)
+    case "PT1H" => Some(TimeUnit.Hour)
+    case "P1D"  => Some(TimeUnit.Day)
+    case "P1W"  => Some(TimeUnit.Week)
+    case "P1M"  => Some(TimeUnit.Month)
+    case "P3M"  => Some(TimeUnit.Quarter)
+    case "P1Y"  => Some(TimeUnit.Year)
+    case _      => None
   }
 }
 
