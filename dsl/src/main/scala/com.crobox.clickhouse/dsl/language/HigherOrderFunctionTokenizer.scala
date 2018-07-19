@@ -11,13 +11,13 @@ trait HigherOrderFunctionTokenizer {
     "x -> " + tokenizeColumn(func(in))
   }
 
-  private def tokenizeHOParams(col: HigherOrderFunction[_, _]): String = {
+  private def tokenizeHOParams(col: HigherOrderFunction[_, _, _]): String = {
 
     val arrn = tokenizeSeqCol(col.arrn.map(_.column))
     fast"${tokenizeColumn(col.arr1.column)},$arrn"
   }
 
-  def tokenizeHigherOrderFunction(col: HigherOrderFunction[_, _]): String = col match {
+  def tokenizeHigherOrderFunction(col: HigherOrderFunction[_, _, _]): String = col match {
     case col: ArrayMap[_, _]         => fast"arrayMap(${tokenizeHOParams(col)})"
     case col: ArrayFilter[_, _]      => fast"arrayFilter(${tokenizeHOParams(col)})"
     case col: ArrayCount[_, _]       => fast"arrayCount(${tokenizeHOParams(col)})"

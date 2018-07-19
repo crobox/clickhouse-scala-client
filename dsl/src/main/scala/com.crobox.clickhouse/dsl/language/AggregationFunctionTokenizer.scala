@@ -98,7 +98,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
   private def tokenizeCombinator(combinator: Combinator[_, _]): (String, Option[String]) =
     combinator match {
-      case Combinator.If(condition)     => ("If", Some(tokenizeCondition(condition)))
+      case Combinator.If(condition)     => ("If", Some(tokenizeColumn(condition)))
       case Combinator.CombinatorArray() => ("Array", None)
       case Combinator.ArrayForEach()    => ("ForEach", None)
       case Combinator.State()           => ("State", None)

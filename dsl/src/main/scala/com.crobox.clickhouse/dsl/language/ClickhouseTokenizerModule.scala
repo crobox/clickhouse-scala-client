@@ -114,7 +114,6 @@ trait ClickhouseTokenizerModule
         if (Strings.isNullOrEmpty(originalColumnToken)) alias else fast"$originalColumnToken AS $alias"
       case tuple: TupleColumn[_]         => fast"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
       case col: ExpressionColumn[_]      => tokenizeExpressionColumn(col)
-      case col: Comparison               => tokenizeCondition(col)
       case regularColumn: AnyTableColumn => regularColumn.name
     }
   }
@@ -132,7 +131,7 @@ trait ClickhouseTokenizerModule
       case LowerCaseColumn(tableColumn)  => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
       case Conditional(cases, default) =>
         fast"CASE ${cases
-          .map(ccase => fast"WHEN ${tokenizeCondition(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
+          .map(ccase => fast"WHEN ${tokenizeColumn(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
           .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
       case c: Const[_] => c.parsed
       case QueryColumn(query) => s"(${toRawSql(query.internalQuery)})"
@@ -216,25 +215,7 @@ trait ClickhouseTokenizerModule
   private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]], keyword: String)(implicit database: Database): String =
     maybeCondition match {
       case None            => ""
-      case Some(condition) => fast"$keyword ${tokenizeCondition(condition)}"
-    }
-
-  protected def tokenizeCondition(condition: TableColumn[Boolean])(implicit database: Database): String =
-    condition match {
-      case _: NoOpComparison                             => ""
-      case ColRefColumnComparison(left, operator, right) => fast"${aliasOrName(left)} $operator ${aliasOrName(right)}"
-      case vcc @ ValueColumnComparison(left, operator, right) =>
-        fast"${aliasOrName(left)} $operator ${vcc.queryValueEvidence(right)}"
-      case FunctionColumnComparison(function, column) => fast"$function(${aliasOrName(column)})"
-      case HigherOrderFunction(function, comparisonColumn, comparison, column) =>
-        fast"$function(${tokenizeColumn(comparisonColumn)} -> ${tokenizeCondition(comparison)}, ${tokenizeColumn(column)})"
-      case ChainableColumnCondition(_: NoOpComparison, _, _: NoOpComparison) => ""
-      case ChainableColumnCondition(left, _, _: NoOpComparison)              => fast"${tokenizeCondition(left)}"
-      case ChainableColumnCondition(_: NoOpComparison, _, right)             => fast"${tokenizeCondition(right)}"
-      case ChainableColumnCondition(left, operator, right) if operator == "OR" =>
-        fast"(${tokenizeCondition(left)} $operator ${tokenizeCondition(right)})"
-      case ChainableColumnCondition(left, operator, right) =>
-        fast"${tokenizeCondition(left)} $operator ${tokenizeCondition(right)}"
+      case Some(condition) => fast"$keyword ${tokenizeColumn(condition)}"
     }
 
   private def tokenizeGroupBy(groupBy: Seq[AnyTableColumn])(implicit database: Database): String =

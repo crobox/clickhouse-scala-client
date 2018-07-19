@@ -49,7 +49,7 @@ case class LowerCaseColumn(tableColumn: AnyTableColumn) extends ExpressionColumn
 
 case class All() extends ExpressionColumn[Long](EmptyColumn())
 
-case class Case[V](column: TableColumn[V], condition: Comparison)
+case class Case[V](column: TableColumn[V], condition: TableColumn[Boolean])
 
 case class Conditional[V](cases: Seq[Case[V]], default: AnyTableColumn) extends ExpressionColumn[V](EmptyColumn())
 

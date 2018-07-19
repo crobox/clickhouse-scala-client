@@ -66,29 +66,6 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     query should be(
       s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
     )
-
-  }
-
-  it should "ignore noOp right condition" in {
-    val select = SelectQuery(Seq(shieldId))
-    val uuid   = UUID.randomUUID()
-    val query = testSubject.toSql(
-      InternalQuery(Some(select),
-                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,Some(shieldId < uuid and NoOpComparison()))
-    )
-    query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
-  }
-
-  it should "ignore noOp left condition" in {
-    val select = SelectQuery(Seq(shieldId))
-    val uuid   = UUID.randomUUID()
-    val query = testSubject.toSql(
-      InternalQuery(Some(select),
-                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,Some(NoOpComparison() and shieldId < uuid))
-    )
-    query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
 
   "building group by" should "add columns as group by clauses" in {
@@ -146,8 +123,8 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   }
 
   it should "generate higher order function" in {
-    val col = new TableColumn[Seq[Int]]("table_column") {}
-    this.tokenizeCondition(col.exists(_.isEq(3))) shouldBe "arrayExists(x -> x = 3, table_column)"
+    val col = new TableColumn[Iterable[Int]]("table_column") {}
+    this.tokenizeColumn(arrayExists[Int,Boolean](x => x.isEq(3),col)) shouldBe "arrayExists(x -> x = 3, table_column)"
   }
 
   it should "generate cases" in {

@@ -44,7 +44,7 @@ package object column {
   def switch[V](defaultValue: TableColumn[V], cases: Case[V]*) =
     Conditional(cases, defaultValue)
 
-  def columnCase[V](condition: Comparison, value: TableColumn[V]) = Case[V](value, condition)
+  def columnCase[V](condition: TableColumn[Boolean], value: TableColumn[V]) = Case[V](value, condition)
 
   def tuple[T1, T2](firstColumn: TableColumn[T1], secondColumn: TableColumn[T2]) =
     TupleColumn[(T1, T2)](firstColumn, secondColumn)

@@ -9,9 +9,9 @@ trait LogicalFunctions { this: Magnets =>
       extends ExpressionColumn[Boolean](EmptyColumn())
 
   trait LogicalOps { this: NumericCol[_] =>
-    def AND(other: NumericCol[_]) = And(this, other)
-    def OR(other: NumericCol[_])  = Or(this, other)
-    def XOR(other: NumericCol[_]) = Xor(this, other)
+    def and(other: NumericCol[_]) = And(this, other)
+    def or(other: NumericCol[_])  = Or(this, other)
+    def xor(other: NumericCol[_]) = Xor(this, other)
   }
 
   case class And(_left: NumericCol[_], _right: NumericCol[_]) extends LogicalFunction(_left, _right)

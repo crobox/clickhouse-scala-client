@@ -26,7 +26,7 @@ trait OperationalQuery extends Query {
   }
 
   def where(condition: TableColumn[Boolean]): OperationalQuery = {
-    val comparison = internalQuery.where.map(_.AND(condition)).getOrElse(condition)
+    val comparison = internalQuery.where.map(_.and(condition)).getOrElse(condition)
     OperationalQuery(internalQuery.copy(where = Some(comparison)))
   }
 

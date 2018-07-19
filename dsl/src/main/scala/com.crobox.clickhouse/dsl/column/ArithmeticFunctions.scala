@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
+import org.joda.time.{DateTime, LocalDate}
 
 trait ArithmeticFunctions { self: Magnets =>
 
@@ -82,6 +83,21 @@ trait ArithmeticFunctions { self: Magnets =>
   implicit object BigIntFloatBinding extends AritRetType[BigInt,Float,BigDecimal]
   implicit object BigIntBigDecimalBinding extends AritRetType[BigInt,BigDecimal,BigDecimal]
   implicit object BigIntBigIntBinding extends AritRetType[BigInt,BigInt,BigInt]
+
+  implicit object LocalDateIntBinding extends AritRetType[LocalDate,Int,LocalDate]
+  implicit object LocalDateLongBinding extends AritRetType[LocalDate,Long,LocalDate]
+  implicit object LocalDateDoubleBinding extends AritRetType[LocalDate,Double,LocalDate]
+  implicit object LocalDateFloatBinding extends AritRetType[LocalDate,Float,LocalDate]
+  implicit object LocalDateBigDecimalBinding extends AritRetType[LocalDate,BigDecimal,LocalDate]
+  implicit object LocalDateBigIntBinding extends AritRetType[LocalDate,BigInt,LocalDate]
+
+  implicit object DateTimeIntBinding extends AritRetType[DateTime,Int,DateTime]
+  implicit object DateTimeLongBinding extends AritRetType[DateTime,Long,DateTime]
+  implicit object DateTimeDoubleBinding extends AritRetType[DateTime,Double,DateTime]
+  implicit object DateTimeFloatBinding extends AritRetType[DateTime,Float,DateTime]
+  implicit object DateTimeBigDecimalBinding extends AritRetType[DateTime,BigDecimal,DateTime]
+  implicit object DateTimeBigIntBinding extends AritRetType[DateTime,BigInt,DateTime]
+  
 
   def plus[L, R, O](left: AddSubtractable[L], right: AddSubtractable[R])(implicit ev: AritRetType[L,R,O])    = Plus[O](left, right)
   def minus[L, R, O](left: AddSubtractable[L], right: AddSubtractable[R])(implicit ev: AritRetType[L,R,O])   = Minus[O](left, right)
