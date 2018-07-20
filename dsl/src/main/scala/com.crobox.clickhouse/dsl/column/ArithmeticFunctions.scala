@@ -16,8 +16,8 @@ trait ArithmeticFunctions { self: Magnets =>
         with ArithmeticFunction
 
   trait AddSubtractOps[L] { self: AddSubtractable[_] =>
-    def +[R,O](other: AddSubtractable[_])(implicit ev: AritRetType[L,R,O]) = Plus[O](this, other)
-    def -[R,O](other: AddSubtractable[_])(implicit ev: AritRetType[L,R,O]) = Minus[O](this, other)
+    def +[R,O](other: AddSubtractable[R])(implicit ev: AritRetType[L,R,O]) = Plus[O](this, other)
+    def -[R,O](other: AddSubtractable[R])(implicit ev: AritRetType[L,R,O]) = Minus[O](this, other)
   }
 
   trait ArithmeticOps[L] { self: NumericCol[_] =>

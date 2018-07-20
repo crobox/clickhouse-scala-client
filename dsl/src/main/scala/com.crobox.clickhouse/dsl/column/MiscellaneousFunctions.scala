@@ -29,11 +29,11 @@ trait MiscellaneousFunctions { self: Magnets =>
                               passWord: Option[StringColMagnet[_]] = None)
       extends MiscellaneousConst[Boolean]()
   case class Bar(col: ConstOrColMagnet[_]) extends MiscellaneousOp[String](col)
-  case class Transform(col: ConstOrColMagnet[_],
-                       arrayFrom: ArrayColMagnet[_],
-                       arrayTo: ArrayColMagnet[_],
-                       default: ConstOrColMagnet[_])
-      extends MiscellaneousOp[Long](col) //TODO: Could we match the col with arrayFrom element type? Could we also do the same for arrayTo and default?
+  case class Transform[L,R](col: ConstOrColMagnet[L],
+                       arrayFrom: ArrayColMagnet[L],
+                       arrayTo: ArrayColMagnet[R],
+                       default: ConstOrColMagnet[R])
+      extends MiscellaneousOp[Long](col)
   case class FormatReadableSize(col: NumericCol[_])                extends MiscellaneousOp[String](col.column)
   case class Least(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_])    extends MiscellaneousOp[Long](a)
   case class Greatest(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_]) extends MiscellaneousOp[Long](a)

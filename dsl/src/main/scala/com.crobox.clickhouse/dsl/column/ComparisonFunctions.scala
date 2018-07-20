@@ -4,16 +4,16 @@ import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
 
 trait ComparisonFunctions { self: Magnets =>
 
-  case class ComparisonColumn(left: ConstOrColMagnet[_], operator: String, right: ConstOrColMagnet[_]) extends ExpressionColumn[Boolean](EmptyColumn())
+  case class ComparisonColumn(left: Magnet[_], operator: String, right: Magnet[_]) extends ExpressionColumn[Boolean](EmptyColumn())
 
-  trait ComparableWith { self: ConstOrColMagnet[_] =>
-    def <(other: ConstOrColMagnet[_]) = ComparisonColumn(self, "<", other)
-    def >(other: ConstOrColMagnet[_]) = ComparisonColumn(self, ">", other)
-    def <>(other: ConstOrColMagnet[_]) = ComparisonColumn(self, "<>", other)
-    def isEq(other: ConstOrColMagnet[_]) = ComparisonColumn(self, "=", other)
-    def ==(other: ConstOrColMagnet[_]) = ComparisonColumn(self, "=", other)
-    def <=(other: ConstOrColMagnet[_]) = ComparisonColumn(self, "<=", other)
-    def >=(other: ConstOrColMagnet[_]) = ComparisonColumn(self, ">=", other)
+  trait ComparableWith[M <: Magnet[_]] { self: Magnet[_] =>
+    def <(other: M) = ComparisonColumn(self, "<", other)
+    def >(other: M) = ComparisonColumn(self, ">", other)
+    def <>(other: M) = ComparisonColumn(self, "<>", other)
+    def isEq(other: M) = ComparisonColumn(self, "=", other)
+    def ==(other: M) = ComparisonColumn(self, "=", other)
+    def <=(other: M) = ComparisonColumn(self, "<=", other)
+    def >=(other: M) = ComparisonColumn(self, ">=", other)
   }
 
   def equals(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]) = ComparisonColumn(col1 , "=", col2)

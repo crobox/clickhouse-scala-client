@@ -31,7 +31,7 @@ trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case s: Lcm[_]          => "lcm"
     }
 
-    fast"$op(${tokenizeColumn(col.left.column)},${tokenizeColumn(col.right.column)})"
+    fast"$op(${tokenizeColumn(col.left.column)}, ${tokenizeColumn(col.right.column)})"
   }
 
 }

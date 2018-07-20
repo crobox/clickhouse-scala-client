@@ -50,11 +50,11 @@ trait DictionaryFunctions { self: Magnets =>
 
 
   //todo implement '...orDefault'
-  def dictGetUInt8(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetUInt8(dictName, attrName, id)
+  def dictGetUInt8 (dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetUInt8(dictName, attrName, id)
   def dictGetUInt16(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetUInt16(dictName, attrName, id)
   def dictGetUInt32(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetUInt32(dictName, attrName, id)
   def dictGetUInt64(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetUInt64(dictName, attrName, id)
-  def dictGetInt8(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetInt8(dictName, attrName, id)
+  def dictGetInt8  (dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetInt8(dictName, attrName, id)
   def dictGetInt16(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetInt16(dictName, attrName, id)
   def dictGetInt32(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetInt32(dictName, attrName, id)
   def dictGetInt64(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetInt64(dictName, attrName, id)

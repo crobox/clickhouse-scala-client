@@ -1,13 +1,11 @@
 package com.crobox.clickhouse
 
 import com.crobox.clickhouse.dsl.QueryFactory
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
 import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryResult}
-import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
+import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats
 import com.dongxiguo.fastring.Fastring.Implicits._
 import spray.json.{JsonReader, JsonWriter}
-import com.crobox.clickhouse.dsl.column._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try

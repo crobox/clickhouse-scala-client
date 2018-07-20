@@ -1,10 +1,8 @@
 package com.crobox.clickhouse.dsl.language
 
-import com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration, TimeUnit}
 import com.dongxiguo.fastring.Fastring.Implicits._
@@ -38,8 +36,7 @@ trait ClickhouseTokenizerModule
     with StringFunctionTokenizer
     with StringSearchFunctionTokenizer
     with TypeCastFunctionTokenizer
-    with URLFunctionTokenizer
-    with ClickhouseColumnFunctions {
+    with URLFunctionTokenizer {
 
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
@@ -118,18 +115,35 @@ trait ClickhouseTokenizerModule
     }
   }
 
-  private def tokenizeExpressionColumn(col: ExpressionColumn[_])(implicit database: Database): String =
-    col match {
-      case agg: AggregateFunction[_]     => tokenizeAggregateFunction(agg)
-      case col: ComparisonColumn         => tokenizeComparisonColumn(col)
-      case col: TypeCastColumn[_]        => tokenizeTypeCastColumn(col)
-      case col: DateTimeFunctionCol[_]   => tokenizeDateTimeColumn(col)
-      case col: DateTimeConst[_]         => tokenizeDateTimeConst(col)
-      case col: ArithmeticFunctionCol[_] => tokenizeArithmeticFunctionColumn(col)
-      case col: ArithmeticFunctionOp[_]  => tokenizeArithmeticFunctionOperator(col)
-      case ArrayJoin(tableColumn)        => fast"arrayJoin(${tokenizeColumn(tableColumn.column)})"
-      case All()                         => "*"
-      case LowerCaseColumn(tableColumn)  => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
+  private def tokenizeExpressionColumn(inCol: ExpressionColumn[_])(implicit database: Database): String =
+    inCol match {
+      case agg: AggregateFunction[_]         => tokenizeAggregateFunction(agg)
+      case col: ArithmeticFunctionCol[_]     => tokenizeArithmeticFunctionColumn(col)
+      case col: ArithmeticFunctionOp[_]      => tokenizeArithmeticFunctionOperator(col)
+      case col: ArrayFunction                => tokenizeArrayFunction(col)
+      case col: BitFunction                  => tokenizeBitFunction(col)
+      case col: ComparisonColumn             => tokenizeComparisonColumn(col)
+      case col: DateTimeFunctionCol[_]       => tokenizeDateTimeColumn(col)
+      case col: DateTimeConst[_]             => tokenizeDateTimeConst(col)
+      case col: DictionaryFuncColumn[_]      => tokenizeDictionaryFunction(col)
+      case col: EncodingFunction[_]          => tokenizeEncodingFunction(col)
+      case col: HashFunction                 => tokenizeHashFunction(col)
+      case col: HigherOrderFunction[_, _, _] => tokenizeHigherOrderFunction(col)
+      case col: IPFunction[_]                => tokenizeIPFunction(col)
+      case col: JsonFunction[_]              => tokenizeJsonFunction(col)
+      case col: LogicalFunction              => tokenizeLogicalFunction(col)
+      case col: MathFuncColumn               => tokenizeMathematicalFunction(col)
+      case col: MiscellaneousFunction        => tokenizeMiscellaneousFunction(col)
+      case col: RandomFunction               => tokenizeRandomFunction(col)
+      case col: RoundingFunction             => tokenizeRoundingFunction(col)
+      case col: SplitMergeFunction[_]        => tokenizeSplitMergeFunction(col)
+      case col: StringFunctionCol[_]         => tokenizeStringCol(col)
+      case col: StringSearchFunc[_]          => tokenizeStringSearchFunction(col)
+      case col: TypeCastColumn[_]            => tokenizeTypeCastColumn(col)
+      case col: URLFunction[_]               => tokenizeURLFunction(col)
+      case ArrayJoin(tableColumn)            => fast"arrayJoin(${tokenizeColumn(tableColumn.column)})"
+      case All()                             => "*"
+      case LowerCaseColumn(tableColumn)      => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
       case Conditional(cases, default) =>
         fast"CASE ${cases
           .map(ccase => fast"WHEN ${tokenizeColumn(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")

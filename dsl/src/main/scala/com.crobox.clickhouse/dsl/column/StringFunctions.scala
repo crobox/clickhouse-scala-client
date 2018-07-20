@@ -28,11 +28,12 @@ trait StringFunctions { self: Magnets =>
       extends StringFunctionCol[String](col.column)
 
   // TODO: Enum the charsets?
+  //TODO: Introduce string ops, with the || operator
 
   def empty(col: EmptyNonEmptyCol[_])      = Empty(col: EmptyNonEmptyCol[_])
   def notEmpty(col: EmptyNonEmptyCol[_])   = NotEmpty(col: EmptyNonEmptyCol[_])
-  def length(col: EmptyNonEmptyCol[_])      = Length(col: EmptyNonEmptyCol[_])
-  def lengthUTF8(col: EmptyNonEmptyCol[_])  = LengthUTF8(col: EmptyNonEmptyCol[_])
+  def length(col: EmptyNonEmptyCol[_])     = Length(col: EmptyNonEmptyCol[_])
+  def lengthUTF8(col: EmptyNonEmptyCol[_]) = LengthUTF8(col: EmptyNonEmptyCol[_])
   def lower(col: StringColMagnet[_])       = Lower(col: StringColMagnet[_])
   def upper(col: StringColMagnet[_])       = Upper(col: StringColMagnet[_])
   def lowerUTF8(col: StringColMagnet[_])   = LowerUTF8(col: StringColMagnet[_])

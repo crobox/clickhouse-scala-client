@@ -45,7 +45,7 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalF
       override val column = s
     }
 
-  sealed trait StringColMagnet[C] extends Magnet[C] with HexCompatible[C] with ComparableWith[StringColMagnet]
+  sealed trait StringColMagnet[C] extends Magnet[C] with HexCompatible[C] with ComparableWith[StringColMagnet[_]]
 
   implicit def stringColMagnetFromString[T <: String : QueryValue](s: T) =
     new StringColMagnet[String] {
