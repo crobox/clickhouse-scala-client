@@ -13,18 +13,6 @@ sealed trait TimeUnit {
       case unit: MultiTimeUnit =>
         MultiDuration(value, unit)
     }
-
-  def apply(period: Period): Option[TimeUnit] = period.toString match {
-    case "PT1S" => Some(TimeUnit.Second)
-    case "PT1M" => Some(TimeUnit.Minute)
-    case "PT1H" => Some(TimeUnit.Hour)
-    case "P1D"  => Some(TimeUnit.Day)
-    case "P1W"  => Some(TimeUnit.Week)
-    case "P1M"  => Some(TimeUnit.Month)
-    case "P3M"  => Some(TimeUnit.Quarter)
-    case "P1Y"  => Some(TimeUnit.Year)
-    case _      => None
-  }
 }
 
 sealed trait FixedTimeUnit { this: TimeUnit =>
@@ -74,6 +62,18 @@ object TimeUnit {
 
   def lookup(label: String): TimeUnit =
     extractUnit(label)
+
+  def apply(period: Period): Option[TimeUnit] = period.toString match {
+    case "PT1S" => Some(TimeUnit.Second)
+    case "PT1M" => Some(TimeUnit.Minute)
+    case "PT1H" => Some(TimeUnit.Hour)
+    case "P1D"  => Some(TimeUnit.Day)
+    case "P1W"  => Some(TimeUnit.Week)
+    case "P1M"  => Some(TimeUnit.Month)
+    case "P3M"  => Some(TimeUnit.Quarter)
+    case "P1Y"  => Some(TimeUnit.Year)
+    case _      => None
+  }
 
   private[time] def extractUnit(unitLabel: String) =
     allUnits
