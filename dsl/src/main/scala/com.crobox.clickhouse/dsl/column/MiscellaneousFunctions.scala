@@ -66,8 +66,8 @@ trait MiscellaneousFunctions { self: Magnets =>
     HasColumnInTable(database, table, column, hostName, userName, passWord)
   def bar(col: ConstOrColMagnet[_]) = Bar(col: ConstOrColMagnet[_])
 
-  def transform(col: ConstOrColMagnet[_], arrayFrom: ArrayColMagnet[_], arrayTo: ArrayColMagnet[_], default: ConstOrColMagnet[_]) =
-    Transform(col: ConstOrColMagnet[_], arrayFrom: ArrayColMagnet[_], arrayTo: ArrayColMagnet[_], default)
+  def transform[L,R](col: ConstOrColMagnet[L], arrayFrom: ArrayColMagnet[L], arrayTo: ArrayColMagnet[R], default: ConstOrColMagnet[R]) =
+    Transform[L,R](col, arrayFrom, arrayTo, default)
   def formatReadableSize(col: NumericCol[_])                = FormatReadableSize(col)
   def least(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_])    = Least(a: ConstOrColMagnet[_], b)
   def greatest(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_]) = Greatest(a: ConstOrColMagnet[_], b)
