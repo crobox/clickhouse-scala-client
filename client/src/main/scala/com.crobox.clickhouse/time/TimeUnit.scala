@@ -13,6 +13,8 @@ sealed trait TimeUnit {
       case unit: MultiTimeUnit =>
         MultiDuration(value, unit)
     }
+
+  val asPeriod: Option[Period]
 }
 
 sealed trait FixedTimeUnit { this: TimeUnit =>
@@ -34,31 +36,44 @@ object TimeUnit {
 
   case object Second extends MultiTimeUnit(Array("s", "second", "seconds"), "second") with FixedTimeUnit {
     override protected[time] val standardMillis: Long = 1000
+    override val asPeriod: Option[Period] = Some(Period.seconds(1))
   }
 
   case object Minute extends MultiTimeUnit(Array("m", "minute", "minutes"), "minute") with FixedTimeUnit {
     override protected[time] val standardMillis: Long = Second.standardMillis * 60
+    override val asPeriod: Option[Period] = Some(Period.minutes(1))
   }
 
   case object Hour extends MultiTimeUnit(Array("h", "hour", "hours"), "hour") with FixedTimeUnit {
     override protected[time] val standardMillis: Long = Minute.standardMillis * 60
+    override val asPeriod: Option[Period] = Some(Period.hours(1))
   }
 
   case object Day extends MultiTimeUnit(Array("d", "day", "days"), "day") with FixedTimeUnit {
     override protected[time] val standardMillis: Long = Hour.standardMillis * 24
+    override val asPeriod: Option[Period] = Some(Period.days(1))
   }
 
   case object Week extends MultiTimeUnit(Array("w", "week", "weeks"), "week") with FixedTimeUnit {
     override protected[time] val standardMillis: Long = Day.standardMillis * 7
+    override val asPeriod: Option[Period] = Some(Period.weeks(1))
   }
 
-  case object Month extends MultiTimeUnit(Array("M", "month", "months"), "month")
+  case object Month extends MultiTimeUnit(Array("M", "month", "months"), "month") {
+    override val asPeriod: Option[Period] = Some(Period.months(1))
+  }
 
-  case object Quarter extends MultiTimeUnit(Array("q", "quarter"), "quarter")
+  case object Quarter extends MultiTimeUnit(Array("q", "quarter"), "quarter"){
+    override val asPeriod: Option[Period] = Some(Period.months(3))
+  }
 
-  case object Year extends MultiTimeUnit(Array("y", "year"), "year")
+  case object Year extends MultiTimeUnit(Array("y", "year"), "year"){
+    override val asPeriod: Option[Period] = Some(Period.years(1))
+  }
 
-  case object Total extends SimpleTimeUnit(Array("t", "total"), "total")
+  case object Total extends SimpleTimeUnit(Array("t", "total"), "total"){
+    override val asPeriod: Option[Period] = None
+  }
 
   def lookup(label: String): TimeUnit =
     extractUnit(label)
@@ -74,6 +89,8 @@ object TimeUnit {
     case "P1Y"  => Some(TimeUnit.Year)
     case _      => None
   }
+
+
 
   private[time] def extractUnit(unitLabel: String) =
     allUnits
