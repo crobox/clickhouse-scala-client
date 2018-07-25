@@ -1,5 +1,7 @@
 package com.crobox.clickhouse.time
 
+import org.joda.time.Period
+
 sealed trait Duration {
   val unit: TimeUnit
 }
@@ -28,6 +30,8 @@ case class MultiDuration(value: Int, override val unit: MultiTimeUnit) extends D
   def this(unit: MultiTimeUnit) = {
     this(1, unit)
   }
+
+  val asPeriod: Option[Period] = unit.asPeriod.map(_.multipliedBy(value))
 }
 
 object MultiDuration {
