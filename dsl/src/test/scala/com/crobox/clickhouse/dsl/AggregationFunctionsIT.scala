@@ -13,8 +13,7 @@ import com.crobox.clickhouse.dsl.column._
 class AggregationFunctionsIT
     extends ClickhouseClientSpec
     with TestSchemaClickhouseQuerySpec
-    with ScalaFutures
-    with DslLanguage {
+    with ScalaFutures {
 
   private val entries = 200145
   override val table1Entries: Seq[Table1Entry] =

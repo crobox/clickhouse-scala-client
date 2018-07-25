@@ -14,6 +14,8 @@ trait AggregationFunctions
   with AggregationFunctionsCombiners { self: Magnets with ClickhouseColumnFunctions =>
 
   //TODO: Magnetize
+  // Aggregate functions are a whole different beast, they are intercompatible and type passing in a different way then
+  // what most other functions work like
 
   //https://clickhouse.yandex/docs/en/agg_functions/reference
 
@@ -70,7 +72,7 @@ trait AggregationFunctions
  // }
 }
 
-trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
+trait AggregationFunctionsCombiners { self: Magnets =>
   
   case class CombinedAggregatedFunction[T <: TableColumn[_], Res](combinator: Combinator[T, Res],
     target: AggregateFunction[_])
@@ -123,7 +125,7 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
 
 }
 
-trait UniqFunctions { self: Magnets with AggregationFunctions =>
+trait UniqFunctions { self: Magnets =>
   sealed trait UniqModifier
 
   case class Uniq(tableColumn: AnyTableColumn, modifier: UniqModifier = UniqModifier.Simple)
@@ -135,7 +137,7 @@ trait UniqFunctions { self: Magnets with AggregationFunctions =>
     case object HLL12    extends UniqModifier
     case object Exact    extends UniqModifier
   }
-  
+
   //trait UniqDsl {
     def uniq(tableColumn: AnyTableColumn) =
       Uniq(tableColumn)
@@ -146,7 +148,7 @@ trait UniqFunctions { self: Magnets with AggregationFunctions =>
 }
 
 
-trait AnyResultFunctions { self: Magnets with AggregationFunctions =>
+trait AnyResultFunctions { self: Magnets =>
   case class AnyResult[T](tableColumn: TableColumn[T], modifier: AnyModifier = AnyModifier.Simple)
     extends AggregateFunction[T](tableColumn)
 
@@ -170,7 +172,7 @@ trait AnyResultFunctions { self: Magnets with AggregationFunctions =>
   //}
 }
 
-trait SumFunctions { self: Magnets with AggregationFunctions =>
+trait SumFunctions { self: Magnets =>
   case class Sum[T: Numeric](tableColumn: TableColumn[T], modifier: SumModifier = SumModifier.Simple)
     extends AggregateFunction[Double](tableColumn)
 
@@ -199,7 +201,7 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
 }
 
 
-trait Leveled { self: Magnets with AggregationFunctions =>
+trait Leveled { self: Magnets =>
   sealed abstract class LeveledAggregatedFunction[T](target: AnyTableColumn) extends AggregateFunction[T](target)
   
   sealed trait LevelModifier

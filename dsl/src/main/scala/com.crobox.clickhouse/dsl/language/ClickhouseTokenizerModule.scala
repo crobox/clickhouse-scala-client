@@ -150,6 +150,7 @@ trait ClickhouseTokenizerModule
           .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
       case c: Const[_] => c.parsed
       case QueryColumn(query) => s"(${toRawSql(query.internalQuery)})"
+      case a@_ => throw new NotImplementedError(a.getClass.getCanonicalName + " with superclass " + a.getClass.getSuperclass.getCanonicalName + " could not be matched.")
     }
 
   private[language] def tokenizeTimeSeries(timeSeries: TimeSeries)(implicit database: Database): String = {
