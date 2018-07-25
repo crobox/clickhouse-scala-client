@@ -56,31 +56,6 @@ package object dsl extends DslLanguage {
       } yield OperationalQuery(bo.internalQuery)
   }
 
-  trait ComparisonValidator[V] {
-
-    def isValid(value: V): Boolean
-  }
-
-  object ColumnsWithCondition {
-
-    case object NoValidator extends ComparisonValidator[Any] {
-
-      override def isValid(value: Any): Boolean = true
-    }
-
-    class NotEmptyValidator[T] extends ComparisonValidator[T] {
-
-      override def isValid(value: T): Boolean = value match {
-        case x: Iterable[_] => x.nonEmpty
-        case x: String      => x.nonEmpty
-        case null           => false
-        case _              => true
-      }
-    }
-
-    implicit def defaultValidator[T] = new NotEmptyValidator[T]
-
-    implicit val notEmptyValidator = new NotEmptyValidator[scala.Iterable[_]]
-  }
+ 
 
 }
