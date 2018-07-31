@@ -82,10 +82,22 @@ object AggregateFunction {
     def max[V](tableColumn: TableColumn[V]) =
       Max(tableColumn)
 
+    /**
+      * This function will push back the timestamp represented by tableColumn to the start of this interval,
+      * this happens deterministically.
+      *
+      * Meaning that as long as the duration is the same, your groups will be in the same from/to timestamps
+      *
+      * This is useful for aggregating results by periods of time (group by month, 2 months, days, etc.)
+      *
+      * @param tableColumn
+      * @param interval
+      * @return
+      */
     def timeSeries(tableColumn: TableColumn[Long],
-                   interval: MultiInterval,
-                   dateColumn: Option[TableColumn[DateTime]] = None) =
-      TimeSeries(tableColumn, interval, dateColumn)
+      interval: MultiInterval,
+      dateColumn: Option[TableColumn[DateTime]] = None) =
+      TimeSeries(tableColumn, interval)
 
     def groupUniqArray[V](tableColumn: TableColumn[V]) =
       GroupUniqArray(tableColumn)
@@ -262,7 +274,5 @@ case class Min[V](tableColumn: TableColumn[V]) extends AggregateFunction[V](tabl
 
 case class Max[V](tableColumn: TableColumn[V]) extends AggregateFunction[V](tableColumn)
 
-case class TimeSeries(tableColumn: TableColumn[Long],
-                      interval: MultiInterval,
-                      dateColumn: Option[TableColumn[DateTime]])
-    extends AggregateFunction[Long](tableColumn)
+case class TimeSeries(tableColumn: TableColumn[Long], interval: MultiInterval)
+  extends AggregateFunction[Long](tableColumn)

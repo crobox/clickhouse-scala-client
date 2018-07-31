@@ -10,8 +10,8 @@ import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.Uniq.UniqModifier
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
-import com.crobox.clickhouse.time.TimeUnit.{Quarter, Total, Year}
-import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration, TimeUnit}
+import com.crobox.clickhouse.time.TimeUnit.{apply => _, _}
+import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration}
 import com.dongxiguo.fastring.Fastring.Implicits._
 import com.google.common.base.Strings
 import com.typesafe.scalalogging.Logger
@@ -239,24 +239,46 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   }
 
   private def tokenizeDuration(timeSeries: TimeSeries, column: String) = {
+    
+    def toNthMonth(nth: Int, dateZone: String) =
+      fast"addMonths(toStartOfMonth(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeMonthNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+    
     val interval = timeSeries.interval
+    
+    val dateZone = determineZoneId(interval.rawStart)
+    
     interval.duration match {
-      case MultiDuration(value, TimeUnit.Month) =>
-        val dateZone = determineZoneId(interval.rawStart)
-        fast"concat(toString(intDiv(toRelativeMonthNum(toDateTime($column / 1000),'$dateZone'), $value) * $value),'_$dateZone')"
-      case MultiDuration(_, Quarter) =>
-        val dateZone = determineZoneId(interval.rawStart)
-        fast"concat(toString(toStartOfQuarter(toDateTime($column / 1000),'$dateZone')),'_$dateZone')"
-      case MultiDuration(_, Year) =>
-        val dateZone = determineZoneId(interval.rawStart)
-        fast"concat(toString(toStartOfYear(toDateTime($column / 1000),'$dateZone')),'_$dateZone')"
+      case MultiDuration(1, Year) =>
+        fast"toStartOfYear(toDateTime($column / 1000), '$dateZone')"
+      case MultiDuration(1, Month) =>
+        fast"toStartOfMonth(toDateTime($column / 1000), '$dateZone')"
+      case MultiDuration(1, Week) =>
+        fast"toMonday(toDateTime($column / 1000), '$dateZone'))"
+      case MultiDuration(1, Day) =>
+        fast"toStartOfDay(toDateTime($column / 1000), '$dateZone'))"
+      case MultiDuration(1, Hour) =>
+        fast"toStartOfHour(toDateTime($column / 1000), '$dateZone'))"
+      case MultiDuration(1, Minute) =>
+        fast"toStartOfMinute(toDateTime($column / 1000), '$dateZone'))"
+      case MultiDuration(1, Second) =>
+        fast"toDateTime($column / 1000, '$dateZone')"
+      case MultiDuration(nth, Year) =>
+        fast"addYears(toStartOfYear(toDateTime($column / 1000), '$dateZone'), 0 - (toYear(toDateTime($column / 1000), '$dateZone') % $nth))"
+      case MultiDuration(nth, Quarter) =>
+        toNthMonth(nth * 3,dateZone)
+      case MultiDuration(nth, Month) =>
+        toNthMonth(nth,dateZone)
+      case MultiDuration(nth, Week) =>
+        fast"addWeeks(toMonday(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeWeekNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+      case MultiDuration(nth, Day) =>
+        fast"addDays(toStartOfDay(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeDayNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+      case MultiDuration(nth, Hour) =>
+        fast"addHours(toStartOfHour(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeHourNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+      case MultiDuration(nth, Minute) =>
+        fast"addMinutes(toStartOfMinute(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeMinuteNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+      case MultiDuration(nth, Second) =>
+        fast"addSeconds(toDateTime($column / 1000, '$dateZone'), 0 - (toRelativeSecondNum(toDateTime($column / 1000), '$dateZone') % $nth))"
       case SimpleDuration(Total) => fast"${interval.getStartMillis}"
-      //        handles seconds/minutes/hours/days/weeks
-      case multiDuration: MultiDuration =>
-        //        for fixed duration we calculate the milliseconds for the start of a sub interval relative to our predefined interval start. The first subinterval start would be `interval.startOfInterval()`
-        //        if using weeks this would give the milliseconds of the start of the first day of the week, for days it would be the start of the day and so on.
-        val intervalStartMillis = interval.startOfInterval().getMillis
-        fast"((intDiv($column - $intervalStartMillis, ${multiDuration.millis()}) * ${multiDuration.millis()}) + $intervalStartMillis)"
     }
   }
 

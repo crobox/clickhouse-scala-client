@@ -29,7 +29,7 @@ class HostHealthCheckerTest extends ClickhouseClientSpec with ImplicitSender {
         msg
     }
     expectMsgAllOf(duration, HostStatus(host, Alive), HostStatus(host, Alive), HostStatus(host, Alive))
-    executorProbe.expectNoMessage()
+    executorProbe.expectNoMessage(1.seconds)
   }
 
   it should "run new health check when completed" in {
@@ -53,7 +53,7 @@ class HostHealthCheckerTest extends ClickhouseClientSpec with ImplicitSender {
     expectMsgPF(duration) {
       case HostStatus(`host`, _: Dead) =>
     }
-    executorProbe.expectNoMessage()
+    executorProbe.expectNoMessage(1.seconds)
   }
 
 }
