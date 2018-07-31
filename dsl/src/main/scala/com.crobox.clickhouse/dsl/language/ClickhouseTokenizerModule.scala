@@ -239,13 +239,17 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   }
 
   private def tokenizeDuration(timeSeries: TimeSeries, column: String) = {
-    
-    def toNthMonth(nth: Int, dateZone: String) =
-      fast"addMonths(toStartOfMonth(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeMonthNum(toDateTime($column / 1000), '$dateZone') % $nth))"
-    
     val interval = timeSeries.interval
-    
     val dateZone = determineZoneId(interval.rawStart)
+
+    def toNthMonth(nth: Int) = {
+      val startOfMonth = fast"toStartOfMonth(toDateTime($column / 1000), '$dateZone')"
+      if (nth == 1) {
+        startOfMonth
+      } else {
+        fast"addMonths($startOfMonth, 0 - (toRelativeMonthNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+      }
+    }
     
     interval.duration match {
       case MultiDuration(1, Year) =>
@@ -265,9 +269,9 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case MultiDuration(nth, Year) =>
         fast"addYears(toStartOfYear(toDateTime($column / 1000), '$dateZone'), 0 - (toYear(toDateTime($column / 1000), '$dateZone') % $nth))"
       case MultiDuration(nth, Quarter) =>
-        toNthMonth(nth * 3,dateZone)
+        toNthMonth(1 + ((nth - 1) * 3))
       case MultiDuration(nth, Month) =>
-        toNthMonth(nth,dateZone)
+        toNthMonth(nth)
       case MultiDuration(nth, Week) =>
         fast"addWeeks(toMonday(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeWeekNum(toDateTime($column / 1000), '$dateZone') % $nth))"
       case MultiDuration(nth, Day) =>
