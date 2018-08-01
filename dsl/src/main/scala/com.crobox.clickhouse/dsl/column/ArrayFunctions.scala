@@ -62,7 +62,7 @@ trait ArrayFunctions { this: Magnets =>
   def emptyArrayToSingle[O](col: ArrayColMagnet[O]) = EmptyArrayToSingle[O](col)
   def range[V](n: NumericCol[V]) = Range[V](n)
 
-
+  //TODO add generics
   def arrayConcat(col1: ArrayColMagnet[_],col2: ArrayColMagnet[_],coln: ArrayColMagnet[_]*) = ArrayConcat(col1, col2, coln:_*)
   def arrayElement(col: ArrayColMagnet[_], n: NumericCol[_]) = ArrayElement(col, n)
   def has(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) = Has(col, elm)

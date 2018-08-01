@@ -4,7 +4,6 @@ import java.util.UUID
 
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.execution.{DefaultClickhouseQueryExecutor, QueryResult}
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import org.scalatest.concurrent.ScalaFutures
