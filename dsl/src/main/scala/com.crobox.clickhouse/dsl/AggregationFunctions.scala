@@ -94,9 +94,7 @@ object AggregateFunction {
       * @param interval
       * @return
       */
-    def timeSeries(tableColumn: TableColumn[Long],
-      interval: MultiInterval,
-      dateColumn: Option[TableColumn[DateTime]] = None) =
+    def timeSeries(tableColumn: TableColumn[Long], interval: MultiInterval) =
       TimeSeries(tableColumn, interval)
 
     def groupUniqArray[V](tableColumn: TableColumn[V]) =

@@ -16,7 +16,8 @@ trait ClickhouseJsonSupport {
 
     val month                        = """(\d+)_(.*)""".r
     val date                         = """(.+)_(.*)""".r
-    val timestamp                    = """^(\d{13})$""".r
+    val msTimestamp                  = """^(\d{13})$""".r
+    val timestamp                    = """^(\d{10})$""".r
     val RelativeMonthsSinceUnixStart = 23641
 
     val UnixStartTimeWithoutTimeZone            = "1970-01-01T00:00:00.000"
@@ -48,7 +49,8 @@ trait ClickhouseJsonSupport {
                 .parseDateTime(dateOnly)
                 .withZoneRetainFields(DateTimeZone.forID(timezoneId))
                 .withZone(DateTimeZone.UTC)
-            case timestamp(millis) => new DateTime(millis.toLong, DateTimeZone.UTC)
+            case msTimestamp(millis) => new DateTime(millis.toLong, DateTimeZone.UTC)
+            case timestamp(secs) => new DateTime(secs.toLong * 1000, DateTimeZone.UTC)
             case _ =>
               try {
                 formatter.parseDateTime(value)

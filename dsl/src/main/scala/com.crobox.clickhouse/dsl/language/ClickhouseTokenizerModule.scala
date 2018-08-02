@@ -243,45 +243,43 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     val dateZone = determineZoneId(interval.rawStart)
 
     def toNthMonth(nth: Int) = {
-      val startOfMonth = fast"toStartOfMonth(toDateTime($column / 1000), '$dateZone')"
+      val startOfMonth = fast"toStartOfMonth(toDateTime($column / 1000) , '$dateZone')"
       if (nth == 1) {
-        startOfMonth
+        fast"toDateTime($startOfMonth,'$dateZone')"
       } else {
-        fast"addMonths($startOfMonth, 0 - (toRelativeMonthNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+        fast"toDateTime(addMonths($startOfMonth, 0 - (toRelativeMonthNum(toDateTime($column / 1000), '$dateZone') % $nth)), '$dateZone')"
       }
     }
     
     interval.duration match {
       case MultiDuration(1, Year) =>
-        fast"toStartOfYear(toDateTime($column / 1000), '$dateZone')"
-      case MultiDuration(1, Month) =>
-        fast"toStartOfMonth(toDateTime($column / 1000), '$dateZone')"
+        fast"toDateTime(toStartOfYear(toDateTime($column / 1000), '$dateZone'), '$dateZone')"
       case MultiDuration(1, Week) =>
-        fast"toMonday(toDateTime($column / 1000), '$dateZone'))"
+        fast"toDateTime(toMonday(toDateTime($column / 1000), '$dateZone'), '$dateZone')"
       case MultiDuration(1, Day) =>
-        fast"toStartOfDay(toDateTime($column / 1000), '$dateZone'))"
+        fast"toStartOfDay(toDateTime($column / 1000), '$dateZone')"
       case MultiDuration(1, Hour) =>
-        fast"toStartOfHour(toDateTime($column / 1000), '$dateZone'))"
+        fast"toStartOfHour(toDateTime($column / 1000), '$dateZone')"
       case MultiDuration(1, Minute) =>
-        fast"toStartOfMinute(toDateTime($column / 1000), '$dateZone'))"
+        fast"toStartOfMinute(toDateTime($column / 1000), '$dateZone')"
       case MultiDuration(1, Second) =>
         fast"toDateTime($column / 1000, '$dateZone')"
       case MultiDuration(nth, Year) =>
-        fast"addYears(toStartOfYear(toDateTime($column / 1000), '$dateZone'), 0 - (toYear(toDateTime($column / 1000), '$dateZone') % $nth))"
+        fast"toDateTime(addYears(toStartOfYear(toDateTime($column / 1000), '$dateZone'), 0 - (toYear(toDateTime($column / 1000), '$dateZone') % $nth)), '$dateZone')"
       case MultiDuration(nth, Quarter) =>
-        toNthMonth(1 + ((nth - 1) * 3))
+        toNthMonth(nth * 3)
       case MultiDuration(nth, Month) =>
         toNthMonth(nth)
       case MultiDuration(nth, Week) =>
-        fast"addWeeks(toMonday(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeWeekNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+        fast"toDateTime(addWeeks(toMonday(toDateTime($column / 1000), '$dateZone'), 0 - ((toRelativeWeekNum(toDateTime($column / 1000), '$dateZone') - 1) % $nth)), '$dateZone')"
       case MultiDuration(nth, Day) =>
-        fast"addDays(toStartOfDay(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeDayNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+        fast"addDays(toStartOfDay(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeDayNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
       case MultiDuration(nth, Hour) =>
-        fast"addHours(toStartOfHour(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeHourNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+        fast"addHours(toStartOfHour(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeHourNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
       case MultiDuration(nth, Minute) =>
-        fast"addMinutes(toStartOfMinute(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeMinuteNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+        fast"addMinutes(toStartOfMinute(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeMinuteNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
       case MultiDuration(nth, Second) =>
-        fast"addSeconds(toDateTime($column / 1000, '$dateZone'), 0 - (toRelativeSecondNum(toDateTime($column / 1000), '$dateZone') % $nth))"
+        fast"addSeconds(toDateTime($column / 1000, '$dateZone'), 0 - (toRelativeSecondNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
       case SimpleDuration(Total) => fast"${interval.getStartMillis}"
     }
   }
