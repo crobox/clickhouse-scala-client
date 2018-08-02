@@ -243,9 +243,9 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     val dateZone = determineZoneId(interval.rawStart)
 
     def toNthMonth(nth: Int) = {
-      val startOfMonth = fast"toStartOfMonth(toDateTime($column / 1000) , '$dateZone')"
+      val startOfMonth = fast"toStartOfMonth(toDateTime($column / 1000), '$dateZone')"
       if (nth == 1) {
-        fast"toDateTime($startOfMonth,'$dateZone')"
+        fast"toDateTime($startOfMonth, '$dateZone')"
       } else {
         fast"toDateTime(addMonths($startOfMonth, 0 - (toRelativeMonthNum(toDateTime($column / 1000), '$dateZone') % $nth)), '$dateZone')"
       }

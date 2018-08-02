@@ -196,6 +196,6 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       TimeSeries(timestampColumn, MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
                             DateTime.now(DateTimeZone.forOffsetHours(2)),
                             MultiDuration(TimeUnit.Month)))
-    ) shouldBe """toStartOfMonth(toDateTime(ts / 1000), 'Africa/Maputo')"""
+    ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Africa/Maputo'), 'Africa/Maputo')"
   }
 }
