@@ -3,7 +3,7 @@ package com.crobox.clickhouse.time
 import com.crobox.clickhouse.time.MultiInterval._
 import com.crobox.clickhouse.time.TimeUnit._
 import org.joda.time.base.BaseInterval
-import org.joda.time.{DateTime, DateTimeConstants, Interval}
+import org.joda.time.{DateTime, DateTimeConstants, DateTimeZone, Interval}
 
 /**
  * A multi interval is a interval that contains subintervals,
@@ -33,42 +33,79 @@ object MultiInterval {
 
   private def startFromDate(start: DateTime, duration: Duration) =
     duration match {
-      case MultiDuration(_, Second) =>
-        start.withMillisOfSecond(0)
-      case MultiDuration(value, Minute) =>
-        val minute = (start.getMinuteOfHour / value) * value
+      case MultiDuration(value, Second) =>
+        val ref = start.withMillisOfSecond(0)
 
-        start
-          .withMinuteOfHour(minute)
+        val secs = ref.getMillis / 1000
+        val detSecs = secs - (secs % value)
+
+        ref.withMillis(detSecs * 1000)
+      case MultiDuration(value, Minute) =>
+        val ref = start
           .withSecondOfMinute(0)
           .withMillisOfSecond(0)
-      case MultiDuration(value, Hour) =>
-        val hour = (start.getHourOfDay / value) * value
 
-        start
-          .withHourOfDay(hour)
+
+        val mins = ref.getMillis / Minute.standardMillis
+        val detMin = mins - (mins % value)
+
+        ref.withMillis(detMin * Minute.standardMillis)
+      case MultiDuration(value, Hour) =>
+        val ref = start
           .withMinuteOfHour(0)
           .withSecondOfMinute(0)
           .withMillisOfSecond(0)
-      case MultiDuration(_, Day) =>
-        start.withTimeAtStartOfDay()
-      case MultiDuration(_, Week) =>
-        start.withTimeAtStartOfDay.withDayOfWeek(DateTimeConstants.MONDAY)
-      case MultiDuration(_, Month) =>
-        start.withTimeAtStartOfDay.withDayOfMonth(1)
-      case MultiDuration(_, Quarter) =>
-        val month = calculateQuarterStart(start.getMonthOfYear)
 
-        start.withTimeAtStartOfDay
-          .withDayOfMonth(1)
-          .withMonthOfYear(month)
-      case MultiDuration(_, Year) =>
-        start.withTimeAtStartOfDay
+        val hours = ref.getMillis / Hour.standardMillis
+        val detHours = hours - (hours % value)
+
+        ref.withMillis(detHours * Hour.standardMillis)
+      case MultiDuration(value, Day) =>
+        val ref = start.withTimeAtStartOfDay()
+        val tzOffset = ref.getZone.getOffset(ref.withZone(DateTimeZone.UTC))
+
+        val days = (ref.getMillis + tzOffset) / Day.standardMillis
+        val detDays = days - (days % value)
+
+        ref.withMillis((detDays * Day.standardMillis) - tzOffset)
+      case MultiDuration(value, Week) =>
+        val ref = start.withTimeAtStartOfDay.withDayOfWeek(DateTimeConstants.MONDAY)
+        val tzOffset = ref.getZone.getOffset(ref.withZone(DateTimeZone.UTC))
+
+        //Week 1 (since epoch) starts at the 5th of January 1970, hence we subtract the 4 days of week 0
+        val msWeek1 = ref.getMillis - (Day.standardMillis * 4) + tzOffset
+
+        val weeks = msWeek1 / Week.standardMillis
+        val detWeeks = weeks - (weeks % value)
+
+        ref.withMillis((detWeeks * Week.standardMillis) + (Day.standardMillis * 4) - tzOffset)
+      case MultiDuration(value, Month) =>
+        toStartOfMonth(start, value)
+      case MultiDuration(value, Quarter) =>
+        toStartOfMonth(start, value * 3)
+      case MultiDuration(value, Year) =>
+        val ref = start.withTimeAtStartOfDay
           .withDayOfYear(1)
+
+        val detYear = ref.getYear - (ref.getYear % value)
+
+        ref.withYear(detYear)
       case SimpleDuration(Total) =>
         start
       case d => throw new IllegalArgumentException(s"Invalid duration: $d")
     }
+
+  private def toStartOfMonth(start: IntervalStart, value: Int) = {
+    val ref = start.withTimeAtStartOfDay.withDayOfMonth(1)
+
+    val months = (ref.getYear * 12) + ref.getMonthOfYear
+    val detRelMonths = (months - 1) - (months % (value))
+
+    val detMonthOfYearZeroBased = detRelMonths % 12
+    val detYear = (detRelMonths - detMonthOfYearZeroBased) / 12
+
+    ref.withYear(detYear).withMonthOfYear(detMonthOfYearZeroBased + 1)
+  }
 
   private def calculateQuarterStart(month: Int) =
     if (month <= 3) 1

@@ -193,13 +193,9 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
 
   "build time series" should "use zone name for monthly" in {
     this.tokenizeTimeSeries(
-      TimeSeries(
-        timestampColumn,
-        MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
-                      DateTime.now(DateTimeZone.forOffsetHours(2)),
-                      MultiDuration(TimeUnit.Month)),
-        None
-      )
-    ) shouldBe """concat(toString(intDiv(toRelativeMonthNum(toDateTime(ts / 1000),'Africa/Maputo'), 1) * 1),'_Africa/Maputo')"""
+      TimeSeries(timestampColumn, MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
+                            DateTime.now(DateTimeZone.forOffsetHours(2)),
+                            MultiDuration(TimeUnit.Month)))
+    ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Africa/Maputo'), 'Africa/Maputo')"
   }
 }
