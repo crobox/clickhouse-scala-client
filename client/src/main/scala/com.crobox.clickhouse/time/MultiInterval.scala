@@ -80,25 +80,9 @@ object MultiInterval {
 
         ref.withMillis((detWeeks * Week.standardMillis) + (Day.standardMillis * 4) - tzOffset)
       case MultiDuration(value, Month) =>
-        val ref = start.withTimeAtStartOfDay.withDayOfMonth(1)
-
-        val months = (ref.getYear * 12) + ref.getMonthOfYear
-        val detRelMonths = (months - 1) - (months % value)
-
-        val detMonthOfYearZeroBased = detRelMonths % 12
-        val detYear = (detRelMonths - detMonthOfYearZeroBased) / 12
-
-        ref.withYear(detYear).withMonthOfYear(detMonthOfYearZeroBased + 1)
+        toStartOfMonth(start, value)
       case MultiDuration(value, Quarter) =>
-        val ref = start.withTimeAtStartOfDay.withDayOfMonth(1)
-
-        val months = (ref.getYear * 12) + ref.getMonthOfYear
-        val detRelMonths = (months - 1) - (months % (value*3))
-
-        val detMonthOfYearZeroBased = detRelMonths % 12
-        val detYear = (detRelMonths - detMonthOfYearZeroBased) / 12
-
-        ref.withYear(detYear).withMonthOfYear(detMonthOfYearZeroBased + 1)
+        toStartOfMonth(start, value * 3)
       case MultiDuration(value, Year) =>
         val ref = start.withTimeAtStartOfDay
           .withDayOfYear(1)
@@ -110,6 +94,18 @@ object MultiInterval {
         start
       case d => throw new IllegalArgumentException(s"Invalid duration: $d")
     }
+
+  private def toStartOfMonth(start: IntervalStart, value: Int) = {
+    val ref = start.withTimeAtStartOfDay.withDayOfMonth(1)
+
+    val months = (ref.getYear * 12) + ref.getMonthOfYear
+    val detRelMonths = (months - 1) - (months % (value))
+
+    val detMonthOfYearZeroBased = detRelMonths % 12
+    val detYear = (detRelMonths - detMonthOfYearZeroBased) / 12
+
+    ref.withYear(detYear).withMonthOfYear(detMonthOfYearZeroBased + 1)
+  }
 
   private def calculateQuarterStart(month: Int) =
     if (month <= 3) 1
