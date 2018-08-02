@@ -72,6 +72,7 @@ object MultiInterval {
         val ref = start.withTimeAtStartOfDay.withDayOfWeek(DateTimeConstants.MONDAY)
         val tzOffset = ref.getZone.getOffset(ref.withZone(DateTimeZone.UTC))
 
+        //Week 1 (since epoch) starts at the 5th of January 1970, hence we subtract the 4 days of week 0
         val msWeek1 = ref.getMillis - (Day.standardMillis * 4) + tzOffset
 
         val weeks = msWeek1 / Week.standardMillis
