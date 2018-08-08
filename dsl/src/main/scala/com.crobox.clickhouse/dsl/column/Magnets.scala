@@ -40,8 +40,8 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalF
       override val column = Const(s)(qvForIterable)
     }
 
-  implicit def arrayColMagnetFromIterableCol[S <: Iterable[_], T <: TableColumn[S]](s: T) =
-    new ArrayColMagnet[S] {
+  implicit def arrayColMagnetFromIterableCol[Elem, Collection[B] <: Iterable[B], ColType[A] <: TableColumn[A]](s: ColType[Collection[Elem]]) =
+    new ArrayColMagnet[Collection[Elem]] {
       override val column = s
     }
 
@@ -182,9 +182,9 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalF
       override val column: TableColumn[String] = s
     }
 
-  implicit def emptyNonEmptyFromIterableCol[C <: Iterable[_], T <: TableColumn[C]](s: T) =
-    new EmptyNonEmptyCol[C] {
-      override val column: TableColumn[C] = s
+  implicit def emptyNonEmptyFromIterableCol[Elem, Collection[B] <: Iterable[B], ColType[A] <: TableColumn[A]](s: ColType[Collection[Elem]]) =
+    new EmptyNonEmptyCol[Collection[Elem]] {
+      override val column: TableColumn[Collection[Elem]] = s
     }
 
   implicit def emptyNonEmptyFromString[T <: String : QueryValue](s: T) =
