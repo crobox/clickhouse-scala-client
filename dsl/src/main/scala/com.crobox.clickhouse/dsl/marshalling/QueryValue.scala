@@ -101,7 +101,7 @@ trait QueryValueFormats {
   class IterableQueryValue[V](ev: QueryValue[V]) extends QueryValue[scala.Iterable[V]] {
 
     override def apply(value: scala.Iterable[V]): String =
-      s"""(${value.map(ev.apply).mkString(",")})"""
+      s"""[${value.map(ev.apply).mkString(",")}]"""
 
     override def unapply(queryRep: String): scala.Iterable[V] =
       unquote(queryRep).split(",").map(ev.unapply).asInstanceOf[scala.Iterable[V]]

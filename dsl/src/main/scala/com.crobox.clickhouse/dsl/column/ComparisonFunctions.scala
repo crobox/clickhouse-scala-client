@@ -11,12 +11,11 @@ trait ComparisonFunctions { self: Magnets =>
     def >(other: M) = ComparisonColumn(self, ">", other)
     def <>(other: M) = ComparisonColumn(self, "<>", other)
     def isEq(other: M) = ComparisonColumn(self, "=", other)
-    def ==(other: M) = ComparisonColumn(self, "=", other)
     def <=(other: M) = ComparisonColumn(self, "<=", other)
     def >=(other: M) = ComparisonColumn(self, ">=", other)
   }
 
-  def equals(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]) = ComparisonColumn(col1 , "=", col2)
+  def _equals(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]) = ComparisonColumn(col1 , "=", col2)
   def notEquals(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]) = ComparisonColumn(col1 , "!=", col2)
   def less(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]) = ComparisonColumn(col1 , "<", col2)
   def greater(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]) = ComparisonColumn(col1 , ">", col2)
