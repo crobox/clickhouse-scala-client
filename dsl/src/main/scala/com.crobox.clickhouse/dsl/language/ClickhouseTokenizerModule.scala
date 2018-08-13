@@ -56,12 +56,13 @@ trait ClickhouseTokenizerModule
   private def toRawSql(query: InternalQuery)(implicit database: Database): String =
     //    require(query != null) because parallel query is null
     query match {
-      case InternalQuery(select, from, asFinal, where, groupBy, having, join, orderBy, limit, union) =>
+      case InternalQuery(select, from, asFinal, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
         fast"""
            |${tokenizeSelect(select)}
            | ${tokenizeFrom(from)}
            | ${tokenizeFinal(asFinal)}
            | ${tokenizeJoin(join)}
+           | ${tokenizeFiltering(prewhere, "PREWHERE")}
            | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
            | ${tokenizeFiltering(having, "HAVING")}
