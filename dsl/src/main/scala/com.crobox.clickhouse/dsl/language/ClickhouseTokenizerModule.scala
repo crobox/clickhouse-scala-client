@@ -100,7 +100,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
         if (separator.length == 1) {
           fast"splitByChar(${StringQueryValue(separator)},${tokenizeColumn(tableColumn)})"
         } else {
-          fast"splitByString(${StringQueryValue(separator)} ,${tokenizeColumn(tableColumn)})"
+          fast"splitByString(${StringQueryValue(separator)},${tokenizeColumn(tableColumn)})"
         }
       case ConcatString(tableColumn, separator) =>
         fast"arrayStringConcat(${tokenizeColumn(tableColumn)},${StringQueryValue(separator)})"
