@@ -140,8 +140,10 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
   }
 
   it should "succeed for DateTimeFunctions" in {
-    def now = new DateTime().withZone(DateTimeZone.UTC)
+    val now = new DateTime().withZone(DateTimeZone.UTC)
     val epoch = new DateTime(0).withZone(DateTimeZone.UTC)
+
+    def dynNow = new DateTime().withZone(DateTimeZone.UTC)
 
     r(toYear(now)) shouldBe now.getYear.toString
     r(toYYYYMM(now)) shouldBe now.printAsYYYYMM
@@ -152,6 +154,13 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(toMinute(now)) shouldBe now.getMinuteOfHour.toString
     r(toSecond(now)) shouldBe now.getSecondOfMinute.toString
     r(toMonday(now)) shouldBe now.withDayOfWeek(1).printAsDate
+    r(addSeconds(now,2)) shouldBe now.plusSeconds(2).printAsDateTime
+    r(addMinutes(now,2)) shouldBe now.plusMinutes(2).printAsDateTime
+    r(addHours(now,2)) shouldBe now.plusHours(2).printAsDateTime
+    r(addDays(now,2)) shouldBe now.plusDays(2).printAsDateTime
+    r(addWeeks(now,2)) shouldBe now.plusWeeks(2).printAsDateTime
+    r(addMonths(now,2)) shouldBe now.plusMonths(2).printAsDateTime
+    r(addYears(now,2)) shouldBe now.plusYears(2).printAsDateTime
     r(toStartOfMonth(now)) shouldBe now.withDayOfMonth(1).printAsDate
     r(toStartOfQuarter(now)) shouldBe now.toStartOfQuarter.printAsDate
     r(toStartOfYear(now)) shouldBe now.withDayOfYear(1).printAsDate
@@ -168,9 +177,9 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(toRelativeHourNum(now)) shouldBe Hours.hoursBetween(epoch, now).getHours.toString
     r(toRelativeMinuteNum(now)) shouldBe Minutes.minutesBetween(epoch, now).getMinutes.toString
     r(toRelativeSecondNum(now)) shouldBe Seconds.secondsBetween(epoch, now).getSeconds.toString
-    r(chNow()) shouldBe now.printAsDateTime
-    r(chYesterday()) shouldBe now.minusDays(1).printAsDate
-    r(chToday()) shouldBe now.withTimeAtStartOfDay().printAsDate
+    r(chNow()) should (equal(dynNow.printAsDateTime) or equal(dynNow.minusSeconds(1).printAsDateTime))
+    r(chYesterday()) shouldBe dynNow.minusDays(1).printAsDate
+    r(chToday()) shouldBe dynNow.withTimeAtStartOfDay().printAsDate
     r(timeSlot(now)) shouldBe now.toStartOfMin(30).printAsDateTime
     r(timeSlots(now,toUInt32(1800))) shouldBe s"['${now.toStartOfMin(30).printAsDateTime}','${now.plusMinutes(30).toStartOfMin(30).printAsDateTime}']"
   }
