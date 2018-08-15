@@ -3,7 +3,7 @@ package com.crobox.clickhouse
 import com.crobox.clickhouse.dsl.AggregateFunction.AggregationFunctionsCombinersDsl
 import com.crobox.clickhouse.dsl.AnyResult.AnyResultDsl
 import com.crobox.clickhouse.dsl.Leveled.LevelModifierDsl
-import com.crobox.clickhouse.dsl.{ColumnOperations, QueryFactory}
+import com.crobox.clickhouse.dsl.{ColumnOperations, QueryFactory, StringFunctions}
 import com.crobox.clickhouse.dsl.Sum.SumDsl
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.Uniq.UniqDsl
@@ -25,6 +25,7 @@ trait DslLanguage
     with LevelModifierDsl
     with QueryFactory
     with QueryValueFormats
+    with StringFunctions
 object DslLanguage extends DslLanguage
 
 package object dsl extends DslLanguage {
