@@ -5,6 +5,7 @@ import com.crobox.clickhouse.dsl.AggregateFunction._
 import com.crobox.clickhouse.dsl.AnyResult.AnyModifier
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.Leveled.LevelModifier
+import com.crobox.clickhouse.dsl.StringFunctions.{ConcatString, SplitString}
 import com.crobox.clickhouse.dsl.Sum.SumModifier
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.Uniq.UniqModifier
@@ -48,15 +49,13 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
            |${tokenizeUnionAll(union)}""".toString.trim.stripMargin
     }
 
-  private def tokenizeUnionAll(unions : Seq[OperationalQuery])(implicit database: Database) = {
+  private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit database: Database) =
     if (unions.nonEmpty) {
-      unions.map(q =>
-        fast"""UNION ALL
+      unions.map(q => fast"""UNION ALL
                | ${toRawSql(q.internalQuery)}""".toString.stripMargin).mkString
     } else {
       ""
     }
-  }
 
   private def tokenizeSelect(select: Option[SelectQuery]) =
     select match {
@@ -95,8 +94,16 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
 
   private def tokenizeExpressionColumn(col: ExpressionColumn[_]): String =
     col match {
-      case agg: AggregateFunction[_]    => tokenizeAggregateFunction(agg)
-      case ArrayJoin(tableColumn)       => fast"arrayJoin(${tokenizeColumn(tableColumn)})"
+      case agg: AggregateFunction[_] => tokenizeAggregateFunction(agg)
+      case ArrayJoin(tableColumn)    => fast"arrayJoin(${tokenizeColumn(tableColumn)})"
+      case SplitString(tableColumn, separator) =>
+        if (separator.length == 1) {
+          fast"splitByChar(${StringQueryValue(separator)},${tokenizeColumn(tableColumn)})"
+        } else {
+          fast"splitByString(${StringQueryValue(separator)} ,${tokenizeColumn(tableColumn)})"
+        }
+      case ConcatString(tableColumn, separator) =>
+        fast"arrayStringConcat(${tokenizeColumn(tableColumn)},${StringQueryValue(separator)})"
       case All()                        => "*"
       case col: TypeCastColumn[_]       => tokenizeTypeCastColumn(col)
       case LowerCaseColumn(tableColumn) => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
@@ -110,23 +117,23 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   private def tokenizeTypeCastColumn(col: TypeCastColumn[_]): String = {
     def tknz(orZero: Boolean): String =
       if (orZero) "OrZero" else ""
-    
+
     col match {
-      case UInt8(tableColumn, orZero) => fast"toUInt8${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
-      case UInt16(tableColumn, orZero) => fast"toUInt16${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
-      case UInt32(tableColumn, orZero) => fast"toUInt32${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
-      case UInt64(tableColumn, orZero) => fast"toUInt64${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
-      case Int8(tableColumn, orZero) => fast"toInt8${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
-      case Int16(tableColumn, orZero) => fast"toInt16${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
-      case Int32(tableColumn, orZero) => fast"toInt32${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
-      case Int64(tableColumn, orZero) => fast"toInt64${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
+      case UInt8(tableColumn, orZero)   => fast"toUInt8${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
+      case UInt16(tableColumn, orZero)  => fast"toUInt16${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
+      case UInt32(tableColumn, orZero)  => fast"toUInt32${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
+      case UInt64(tableColumn, orZero)  => fast"toUInt64${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
+      case Int8(tableColumn, orZero)    => fast"toInt8${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
+      case Int16(tableColumn, orZero)   => fast"toInt16${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
+      case Int32(tableColumn, orZero)   => fast"toInt32${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
+      case Int64(tableColumn, orZero)   => fast"toInt64${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
       case Float32(tableColumn, orZero) => fast"toFloat32${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
       case Float64(tableColumn, orZero) => fast"toFloat64${tknz(orZero)}(${tokenizeColumn(tableColumn)})"
-      case DateRep(tableColumn) => fast"toDate(${tokenizeColumn(tableColumn)})"
-      case DateTimeRep(tableColumn) => fast"toDateTime(${tokenizeColumn(tableColumn)})"
+      case DateRep(tableColumn)         => fast"toDate(${tokenizeColumn(tableColumn)})"
+      case DateTimeRep(tableColumn)     => fast"toDateTime(${tokenizeColumn(tableColumn)})"
 
-      case StringRep(tableColumn) => fast"toString(${tokenizeColumn(tableColumn)})"
-      case FixedString(tableColumn, n) => fast"toFixedString(${tokenizeColumn(tableColumn)},$n)"
+      case StringRep(tableColumn)       => fast"toString(${tokenizeColumn(tableColumn)})"
+      case FixedString(tableColumn, n)  => fast"toFixedString(${tokenizeColumn(tableColumn)},$n)"
       case StringCutToZero(tableColumn) => fast"toStringCutToZero(${tokenizeColumn(tableColumn)})"
 
       case Reinterpret(typeCastColumn) => "reinterpretAs" + tokenizeTypeCastColumn(typeCastColumn).substring(2)
@@ -250,7 +257,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
         fast"toDateTime(addMonths($startOfMonth, 0 - (toRelativeMonthNum(toDateTime($column / 1000), '$dateZone') % $nth)), '$dateZone')"
       }
     }
-    
+
     interval.duration match {
       case MultiDuration(1, Year) =>
         fast"toDateTime(toStartOfYear(toDateTime($column / 1000), '$dateZone'), '$dateZone')"

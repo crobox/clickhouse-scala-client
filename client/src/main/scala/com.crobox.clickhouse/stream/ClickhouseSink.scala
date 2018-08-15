@@ -30,7 +30,8 @@ object ClickhouseSink extends LazyLogging {
                      mergedIndexerConfig.getDuration("flush-interval").getSeconds seconds)
       .mapAsync(mergedIndexerConfig.getInt("concurrent-requests"))(inserts => {
         val table       = inserts.head.table
-        val insertQuery = s"INSERT INTO $table FORMAT JSONEachRow"
+        val buildTable  = if (table.contains(".")) table else client.table(table)
+        val insertQuery = s"INSERT INTO $buildTable FORMAT JSONEachRow"
         val payload     = inserts.map(_.jsonRow)
         val payloadSql  = payload.mkString("\n")
         client.execute(insertQuery, payloadSql) recover {

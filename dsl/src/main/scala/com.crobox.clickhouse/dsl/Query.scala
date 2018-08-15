@@ -34,13 +34,13 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
                                 unionAll: Seq[OperationalQuery] = Seq.empty
                                ) {
 
-  def isValid = {
+  def isValid: Boolean = {
     val validGroupBy = groupBy.isEmpty && having.isEmpty || groupBy.nonEmpty
 
     select.isDefined && validGroupBy
   }
 
-  def isPartial = !isValid
+  def isPartial: Boolean = !isValid
 
   /**
     * Merge with another InternalQuery, any conflict on query parts between the 2 joins will be resolved by
