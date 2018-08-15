@@ -6,7 +6,7 @@ import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.crobox.clickhouse.dsl.{Const, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
 
-trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalFunctions =>
+trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalFunctions with TypeCastFunctions =>
 
   /**
     * Magnet pattern
@@ -83,12 +83,12 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalF
 
   implicit def ddtFromDate[T <: LocalDate : QueryValue](s: T) =
     new DateOrDateTime[LocalDate] {
-      override val column = Const(s)
+      override val column = toDate(s)
     }
 
   implicit def ddtFromDateTime[T <: DateTime : QueryValue](s: T) =
     new DateOrDateTime[DateTime] {
-      override val column = Const(s)
+      override val column = toDateTime(s)
     }
 
   sealed trait AddSubtractable[C] extends Magnet[C] with AddSubtractOps[C]

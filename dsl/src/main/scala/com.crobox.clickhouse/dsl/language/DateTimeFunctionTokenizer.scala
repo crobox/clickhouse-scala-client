@@ -9,6 +9,7 @@ trait DateTimeFunctionTokenizer {
   protected def tokenizeDateTimeColumn(col: DateTimeFunctionCol[_]): String =
     col match {
       case Year(d: DateOrDateTime[_]) => fast"toYear(${tokenizeColumn(d.column)})"
+      case YYYYMM(d: DateOrDateTime[_]) => fast"toYYYYMM(${tokenizeColumn(d.column)})"
       case Month(d: DateOrDateTime[_]) => fast"toMonth(${tokenizeColumn(d.column)})"
       case DayOfMonth(d: DateOrDateTime[_]) => fast"toDayOfMonth(${tokenizeColumn(d.column)})"
       case DayOfWeek(d: DateOrDateTime[_]) => fast"toDayOfWeek(${tokenizeColumn(d.column)})"
@@ -32,8 +33,8 @@ trait DateTimeFunctionTokenizer {
       case RelativeHourNum(d: DateOrDateTime[_]) => fast"toRelativeHourNum(${tokenizeColumn(d.column)})"
       case RelativeMinuteNum(d: DateOrDateTime[_]) => fast"toRelativeMinuteNum(${tokenizeColumn(d.column)})"
       case RelativeSecondNum(d: DateOrDateTime[_]) => fast"toRelativeSecondNum(${tokenizeColumn(d.column)})"
-      case TimeSlot(d: DateOrDateTime[_]) => fast"toTimeSlot(${tokenizeColumn(d.column)})"
-      case TimeSlots(d: DateOrDateTime[_], duration: NumericCol[_]) => fast"toTimeSlots(${tokenizeColumn(d.column)},${tokenizeColumn(duration.column)}"
+      case TimeSlot(d: DateOrDateTime[_]) => fast"TimeSlot(${tokenizeColumn(d.column)})"
+      case TimeSlots(d: DateOrDateTime[_], duration: NumericCol[_]) => fast"TimeSlots(${tokenizeColumn(d.column)},${tokenizeColumn(duration.column)}"
     }
 
   protected def tokenizeDateTimeConst(col: DateTimeConst[_]): String =

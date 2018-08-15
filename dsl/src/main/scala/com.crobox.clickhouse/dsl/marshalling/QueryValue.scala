@@ -4,6 +4,7 @@ import java.util.UUID
 
 import com.crobox.clickhouse.dsl.ClickhouseStatement
 import com.crobox.clickhouse.partitioning.PartitionDateFormatter
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, LocalDate}
 
 import scala.annotation.implicitNotFound
@@ -82,10 +83,10 @@ trait QueryValueFormats {
   }
 
   implicit object DateTimeQueryValue extends QueryValue[DateTime] {
+    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+    override def apply(v: DateTime): String = quote(formatter.print(v))
 
-    override def apply(v: DateTime): String = quote(PartitionDateFormatter.dateFormat(v))
-
-    override def unapply(v: String): DateTime = DateTime.parse(unquote(v))
+    override def unapply(v: String): DateTime = formatter.parseDateTime(unquote(v))
   }
 
   implicit object LocalDateQueryValue extends QueryValue[LocalDate] {

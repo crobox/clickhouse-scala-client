@@ -11,7 +11,6 @@ trait DateTimeFunctions { self: Magnets =>
       with DateTimeFunction
 
   abstract class DateTimeConst[V]() extends ExpressionColumn[V](EmptyColumn()) with DateTimeFunction
-
   case class Year(d: DateOrDateTime[_])                     extends DateTimeFunctionCol[Int](d)
   case class YYYYMM(d: DateOrDateTime[_])                   extends DateTimeFunctionCol[String](d)
   case class Month(d: DateOrDateTime[_])                    extends DateTimeFunctionCol[Int](d)
@@ -43,7 +42,6 @@ trait DateTimeFunctions { self: Magnets =>
   case class TimeSlot(d: DateOrDateTime[_])                 extends DateTimeFunctionCol[DateTime](d)
   case class TimeSlots(d: DateOrDateTime[_], duration: NumericCol[_]) extends DateTimeFunctionCol[DateTime](d)
 
-  //trait DateTimeFunctionsDsl {
   def toYear(col: DateOrDateTime[_])                   = Year(col)
   def toYYYYMM(col: DateOrDateTime[_])                 = YYYYMM(col)
   def toMonth(col: DateOrDateTime[_])                  = Month(col)
@@ -72,8 +70,6 @@ trait DateTimeFunctions { self: Magnets =>
   def chNow()                                             = Now()
   def chYesterday()                                       = Yesterday()
   def chToday()                                           = Today()
-
   def timeSlot(col: DateOrDateTime[_])                 = TimeSlot(col)
   def timeSlots(col: DateOrDateTime[_], duration: NumericCol[_]) = TimeSlots(col, duration)
-  //}
 }

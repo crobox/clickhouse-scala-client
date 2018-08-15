@@ -1,5 +1,7 @@
 package com.crobox.clickhouse.dsl.language
 
+import java.time.format.DateTimeFormatter
+
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
@@ -7,6 +9,8 @@ import com.crobox.clickhouse.dsl.column._
 import com.crobox.clickhouse.dsl.execution.ClickhouseQueryExecutor
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
+import org.joda.time.format.DateTimeFormat
+import org.joda.time._
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.Future
@@ -105,7 +109,72 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(greaterOrEquals(1,2)) shouldBe "0"
   }
 
-  it should "succeed for DateTimeFunctions" in {}
+  implicit class DDTStringify(ddt: DateTime) {
+    def printAsDate: String = DateTimeFormat.forPattern("yyyy-MM-dd").print(ddt)
+
+    def printAsDateTime: String = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").print(ddt)
+
+    def printAsYYYYMM: String = DateTimeFormat.forPattern("yyyyMM").print(ddt)
+
+    def toStartOfQuarter = {
+      val remainder = (ddt.getMonthOfYear - 1) % 3
+
+      ddt.withDayOfMonth(1).minusMonths(remainder)
+    }
+
+    def toStartOfMin(min: Int) = {
+      val remainder = ddt.getMinuteOfHour % min
+
+      ddt
+        .withSecondOfMinute(0)
+        .withMillisOfSecond(0)
+        .minusMinutes(remainder)
+    }
+
+    def toStartOfHr = {
+      ddt
+        .withMinuteOfHour(0)
+        .withSecondOfMinute(0)
+        .withMillisOfSecond(0)
+    }
+  }
+
+  it should "succeed for DateTimeFunctions" in {
+    val now = new DateTime().withZone(DateTimeZone.UTC)
+    val epoch = new DateTime(0).withZone(DateTimeZone.UTC)
+    val y2k = new DateTime(0).withYear(2000).withZone(DateTimeZone.UTC)
+
+    r(toYear(now)) shouldBe now.getYear.toString
+    r(toYYYYMM(now)) shouldBe now.printAsYYYYMM
+    r(toMonth(now)) shouldBe now.getMonthOfYear.toString
+    r(toDayOfMonth(now)) shouldBe now.getDayOfMonth.toString
+    r(toDayOfWeek(now)) shouldBe now.getDayOfWeek.toString
+    r(toHour(now)) shouldBe now.getHourOfDay.toString
+    r(toMinute(now)) shouldBe now.getMinuteOfHour.toString
+    r(toSecond(now)) shouldBe now.getSecondOfMinute.toString
+    r(toMonday(now)) shouldBe now.withDayOfWeek(1).printAsDate
+    r(toStartOfMonth(now)) shouldBe now.withDayOfMonth(1).printAsDate
+    r(toStartOfQuarter(now)) shouldBe now.toStartOfQuarter.printAsDate
+    r(toStartOfYear(now)) shouldBe now.withDayOfYear(1).printAsDate
+    r(toStartOfMinute(now)) shouldBe now.toStartOfMin(1).printAsDateTime
+    r(toStartOfFiveMinute(now)) shouldBe now.toStartOfMin(5).printAsDateTime
+    r(toStartOfFifteenMinutes(now)) shouldBe now.toStartOfMin(15).printAsDateTime
+    r(toStartOfHour(now)) shouldBe now.toStartOfHr.printAsDateTime
+    r(toStartOfDay(now)) shouldBe now.withTimeAtStartOfDay().printAsDateTime
+    r(toTime(now)).substring(11) shouldBe now.printAsDateTime.substring(11)
+    r(toRelativeYearNum(now)) shouldBe now.getYear.toString
+    r(toRelativeMonthNum(now)) shouldBe ((now.getYear * 12) + now.getMonthOfYear).toString
+    r(toRelativeWeekNum(now)) shouldBe (Weeks.weeksBetween(epoch, now).getWeeks + 1).toString
+    r(toRelativeDayNum(now)) shouldBe Days.daysBetween(epoch, now).getDays.toString
+    r(toRelativeHourNum(now)) shouldBe Hours.hoursBetween(epoch, now).getHours.toString
+    r(toRelativeMinuteNum(now)) shouldBe Minutes.minutesBetween(epoch, now).getMinutes.toString
+    r(toRelativeSecondNum(now)) shouldBe Seconds.secondsBetween(epoch, now).getSeconds.toString
+    r(chNow()) shouldBe now.printAsDateTime
+    r(chYesterday()) shouldBe now.minusDays(1).printAsDate
+    r(chToday()) shouldBe now.withTimeAtStartOfDay().printAsDate
+    r(timeSlot(now)) shouldBe ""
+    r(timeSlots(now,5)) shouldBe ""
+  }
 
   it should "succeed for DictionaryFunctions" in {}
   it should "succeed for EncodingFunctions" in {}
