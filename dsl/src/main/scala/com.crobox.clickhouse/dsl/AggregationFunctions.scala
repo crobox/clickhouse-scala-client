@@ -56,7 +56,7 @@ object AggregateFunction {
         State[T, Res](),
         aggregated.asInstanceOf[AggregateFunction[StateResult[Res]]])
 
-    def merge[T <: TableColumn[StateResult[Res]], Res](aggregated: AggregateFunction[StateResult[Res]]): CombinedAggregatedFunction[T, Res] =
+    def merge[T <: TableColumn[StateResult[Res]], Res](aggregated: AggregateFunction[Res]): CombinedAggregatedFunction[T, Res] =
       CombinedAggregatedFunction(Merge[T, Res](), aggregated)
   }
 
