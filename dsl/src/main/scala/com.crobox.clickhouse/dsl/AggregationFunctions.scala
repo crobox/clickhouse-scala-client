@@ -46,10 +46,10 @@ object AggregateFunction {
      * if you run sumForEach(array_col) you will get an array result with the following entries: [sum(x1,x3,x3), sum(y1,y2,y3), sum(z1, z2, z3), sum(u1)]
      *
      * */
-    def forEach[V, T <: TableColumn[Seq[V]], Res](
+    def forEach[V, T <: TableColumn[Seq[_]], Res](
         column: T
-    )(forEachFunc: TableColumn[V] => AggregateFunction[Res]): CombinedAggregatedFunction[T, Seq[V]] =
-      CombinedAggregatedFunction(ArrayForEach[T,V](), forEachFunc(ref[V](column.name)))
+    )(forEachFunc: TableColumn[V] => AggregateFunction[Res]): CombinedAggregatedFunction[T, Seq[Res]] =
+      CombinedAggregatedFunction(ArrayForEach(), forEachFunc(ref[V](column.name)))
 
     def state[T <: TableColumn[Res],Res](aggregated: AggregateFunction[Res]): CombinedAggregatedFunction[T, StateResult[Res]] =
       CombinedAggregatedFunction(
