@@ -29,10 +29,10 @@ object AggregateFunction {
 
   trait AggregationFunctionsCombinersDsl {
 
-    def aggIf[T <: TableColumn[Res], Res](condition: Comparison)(aggregated: AggregateFunction[Res]) =
+    def aggIf[T <: TableColumn[Res], Res](condition: Comparison)(aggregated: AggregateFunction[Res]): CombinedAggregatedFunction[T, Res] =
       CombinedAggregatedFunction(If(condition), aggregated)
 
-    def array[T <: TableColumn[Seq[Res]], Res](aggregated: AggregateFunction[Res]) =
+    def array[T <: TableColumn[Seq[Res]], Res](aggregated: AggregateFunction[Res]): CombinedAggregatedFunction[T, Res] =
       CombinedAggregatedFunction(CombinatorArray[T, Res](), aggregated)
 
     /**
@@ -47,16 +47,16 @@ object AggregateFunction {
      *
      * */
     def forEach[V, T <: TableColumn[Seq[V]], Res](
-        column: T
+      column: T
     )(forEachFunc: TableColumn[V] => AggregateFunction[Res]): AggregateFunction[Seq[Res]] =
       CombinedAggregatedFunction(ArrayForEach(), forEachFunc(ref[V](column.name)))
 
-    def state[T <: TableColumn[Res],Res](aggregated: AggregateFunction[Res]) =
+    def state[T <: TableColumn[Res],Res](aggregated: AggregateFunction[Res]): CombinedAggregatedFunction[T, StateResult[Res]] =
       CombinedAggregatedFunction(
         State[T, Res](),
         aggregated.asInstanceOf[AggregateFunction[StateResult[Res]]])
 
-    def merge[T <: TableColumn[StateResult[Res]], Res](aggregated: AggregateFunction[Res]) =
+    def merge[T <: TableColumn[StateResult[Res]], Res](aggregated: AggregateFunction[StateResult[Res]]): CombinedAggregatedFunction[T, Res] =
       CombinedAggregatedFunction(Merge[T, Res](), aggregated)
   }
 
