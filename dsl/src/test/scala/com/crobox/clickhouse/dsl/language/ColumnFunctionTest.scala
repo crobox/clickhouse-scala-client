@@ -140,9 +140,8 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
   }
 
   it should "succeed for DateTimeFunctions" in {
-    val now = new DateTime().withZone(DateTimeZone.UTC)
+    def now = new DateTime().withZone(DateTimeZone.UTC)
     val epoch = new DateTime(0).withZone(DateTimeZone.UTC)
-    val y2k = new DateTime(0).withYear(2000).withZone(DateTimeZone.UTC)
 
     r(toYear(now)) shouldBe now.getYear.toString
     r(toYYYYMM(now)) shouldBe now.printAsYYYYMM
@@ -172,8 +171,8 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(chNow()) shouldBe now.printAsDateTime
     r(chYesterday()) shouldBe now.minusDays(1).printAsDate
     r(chToday()) shouldBe now.withTimeAtStartOfDay().printAsDate
-    r(timeSlot(now)) shouldBe ""
-    r(timeSlots(now,5)) shouldBe ""
+    r(timeSlot(now)) shouldBe now.toStartOfMin(30).printAsDateTime
+    r(timeSlots(now,toUInt32(1800))) shouldBe s"['${now.toStartOfMin(30).printAsDateTime}','${now.plusMinutes(30).toStartOfMin(30).printAsDateTime}']"
   }
 
   it should "succeed for DictionaryFunctions" in {}

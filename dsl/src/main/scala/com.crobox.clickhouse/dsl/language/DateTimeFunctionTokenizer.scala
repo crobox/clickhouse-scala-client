@@ -33,8 +33,8 @@ trait DateTimeFunctionTokenizer {
       case RelativeHourNum(d: DateOrDateTime[_]) => fast"toRelativeHourNum(${tokenizeColumn(d.column)})"
       case RelativeMinuteNum(d: DateOrDateTime[_]) => fast"toRelativeMinuteNum(${tokenizeColumn(d.column)})"
       case RelativeSecondNum(d: DateOrDateTime[_]) => fast"toRelativeSecondNum(${tokenizeColumn(d.column)})"
-      case TimeSlot(d: DateOrDateTime[_]) => fast"TimeSlot(${tokenizeColumn(d.column)})"
-      case TimeSlots(d: DateOrDateTime[_], duration: NumericCol[_]) => fast"TimeSlots(${tokenizeColumn(d.column)},${tokenizeColumn(duration.column)}"
+      case TimeSlot(d: DateOrDateTime[_]) => fast"timeSlot(${tokenizeColumn(d.column)})"
+      case TimeSlots(d: DateOrDateTime[_], duration: NumericCol[_]) => fast"timeSlots(${tokenizeColumn(d.column)},${tokenizeColumn(duration.column)})"
     }
 
   protected def tokenizeDateTimeConst(col: DateTimeConst[_]): String =
