@@ -49,6 +49,14 @@ abstract class TypeCastColumn[V](targetColumn: AnyTableColumn) extends Expressio
 case class Reinterpret[V](typeCastColumn: TypeCastColumn[V] with Reinterpretable)
     extends TypeCastColumn[V](typeCastColumn)
 
+
+//FIXME: Here until we add them to the DSL trough the vocabulary update (feature/voc-typed-magnets)
+abstract class ArithmeticFunction[V]() extends ExpressionColumn[V](EmptyColumn())
+case class Multiply[V](left: AnyTableColumn, right: AnyTableColumn) extends ArithmeticFunction[V]
+case class Divide[V](left: AnyTableColumn, right: AnyTableColumn) extends ArithmeticFunction[V]
+case class Plus[V](left: AnyTableColumn, right: AnyTableColumn) extends ArithmeticFunction[V]
+case class Minus[V](left: AnyTableColumn, right: AnyTableColumn) extends ArithmeticFunction[V]
+
 //Tagging of compatible
 sealed trait Reinterpretable
 
@@ -119,7 +127,7 @@ case class Const[V: QueryValue](const: V) extends ExpressionColumn[V](EmptyColum
   val parsed = implicitly[QueryValue[V]].apply(const)
 }
 
-trait ColumnOperations extends AggregationFunctionsDsl with TypeCastColumnOperations {
+trait ColumnOperations extends AggregationFunctionsDsl with TypeCastColumnOperations with ArithmeticOperations{
   implicit val booleanNumeric: Numeric[Boolean] = new Numeric[Boolean] {
     override def plus(x: Boolean, y: Boolean) = x || y
 
@@ -171,6 +179,13 @@ trait ColumnOperations extends AggregationFunctionsDsl with TypeCastColumnOperat
   def lowercase(tableColumn: TableColumn[String]) =
     LowerCaseColumn(tableColumn)
 
+}
+
+trait ArithmeticOperations {
+  def multiply[V](left: AnyTableColumn, right: AnyTableColumn) = Multiply[V](left, right)
+  def divide[V](left: AnyTableColumn, right: AnyTableColumn) = Divide[V](left, right)
+  def plus[V](left: AnyTableColumn, right: AnyTableColumn) = Plus[V](left, right)
+  def minus[V](left: AnyTableColumn, right: AnyTableColumn) = Minus[V](left, right)
 }
 
 trait TypeCastColumnOperations {

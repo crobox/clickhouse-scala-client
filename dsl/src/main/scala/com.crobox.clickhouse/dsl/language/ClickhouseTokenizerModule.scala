@@ -94,6 +94,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
 
   private def tokenizeExpressionColumn(col: ExpressionColumn[_]): String =
     col match {
+      case ar: ArithmeticFunction[_] => tokenizeArithmeticFunction(ar)
       case agg: AggregateFunction[_] => tokenizeAggregateFunction(agg)
       case ArrayJoin(tableColumn)    => fast"arrayJoin(${tokenizeColumn(tableColumn)})"
       case SplitString(tableColumn, separator) =>
@@ -113,6 +114,18 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
           .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
       case c: Const[_] => c.parsed
     }
+
+  //FIXME: Temporary until changes from voc update feature/voc-typed-magnets
+  private def tokenizeArithmeticFunction(col: ArithmeticFunction[_]): String = col match {
+    case Multiply(left: AnyTableColumn, right: AnyTableColumn) =>
+      fast"multiply(${tokenizeColumn(left)},${tokenizeColumn(right)})"
+    case Divide(left: AnyTableColumn, right: AnyTableColumn) =>
+      fast"divide(${tokenizeColumn(left)},${tokenizeColumn(right)})"
+    case Plus(left: AnyTableColumn, right: AnyTableColumn) =>
+      fast"plus(${tokenizeColumn(left)},${tokenizeColumn(right)})"
+    case Minus(left: AnyTableColumn, right: AnyTableColumn) =>
+      fast"minus(${tokenizeColumn(left)},${tokenizeColumn(right)})"
+  }
 
   private def tokenizeTypeCastColumn(col: TypeCastColumn[_]): String = {
     def tknz(orZero: Boolean): String =
