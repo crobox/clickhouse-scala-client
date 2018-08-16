@@ -10,7 +10,7 @@ import spray.json.{JsonReader, JsonWriter}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-trait DslLanguage  extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats
+sealed trait DslLanguage  extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats
 object DslLanguage extends DslLanguage
 
 package object dsl extends DslLanguage {
