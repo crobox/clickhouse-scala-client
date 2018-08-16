@@ -35,8 +35,7 @@ trait AggregationFunctions
   case class Max[V](tableColumn: TableColumn[V]) extends AggregateFunction[V](tableColumn)
 
   case class TimeSeries(tableColumn: TableColumn[Long],
-    interval: MultiInterval,
-    dateColumn: Option[TableColumn[DateTime]])
+    interval: MultiInterval)
     extends AggregateFunction[Long](tableColumn)
   
  
@@ -63,9 +62,8 @@ trait AggregationFunctions
       Max(tableColumn)
   
     def timeSeries(tableColumn: TableColumn[Long],
-      interval: MultiInterval,
-      dateColumn: Option[TableColumn[DateTime]] = None) =
-      TimeSeries(tableColumn, interval, dateColumn)
+      interval: MultiInterval) =
+      TimeSeries(tableColumn, interval)
   
     def groupUniqArray[V](tableColumn: TableColumn[V]) =
       GroupUniqArray(tableColumn)
