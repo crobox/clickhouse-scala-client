@@ -116,7 +116,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     }
 
   //FIXME: Temporary until changes from voc update feature/voc-typed-magnets
-  private def tokenizeArithmeticFunction(col: ArithmeticFunction[_]): String = {
+  private def tokenizeArithmeticFunction(col: ArithmeticFunction[_]): String = col match {
     case Multiply(left: AnyTableColumn, right: AnyTableColumn) =>
       fast"multiply(${tokenizeColumn(left)},${tokenizeColumn(right)})"
     case Divide(left: AnyTableColumn, right: AnyTableColumn) =>

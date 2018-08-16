@@ -127,7 +127,7 @@ case class Const[V: QueryValue](const: V) extends ExpressionColumn[V](EmptyColum
   val parsed = implicitly[QueryValue[V]].apply(const)
 }
 
-trait ColumnOperations extends AggregationFunctionsDsl with TypeCastColumnOperations {
+trait ColumnOperations extends AggregationFunctionsDsl with TypeCastColumnOperations with ArithmeticOperations{
   implicit val booleanNumeric: Numeric[Boolean] = new Numeric[Boolean] {
     override def plus(x: Boolean, y: Boolean) = x || y
 
