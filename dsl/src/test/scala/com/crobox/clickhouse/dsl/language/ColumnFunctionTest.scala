@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl.language
 
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
@@ -24,23 +25,16 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
 
   val ex = ClickhouseQueryExecutor.default(clickhouseClient)
 
-  "ColumnFunction tokenization and execution" should "succeed for ArithmeticFunctions" in {
-    def leftRightFunctions[L,R,O](implicit ev: AritRetType[L,R,O]): Seq[(String,(NumericCol[L], NumericCol[R]) => ArithmeticFunctionOp[O])] = Seq(
-      ("5", plus[L, R, O]),
-      ("1", minus[L, R, O]),
-      ("6", multiply[L, R, O]),
-      ("1.5", divide[L, R, O]),
-      ("1", intDiv[L, R, O]),
-      ("1", intDivOrZero[L, R, O]),
-      ("1", modulo[L, R, O]),
-      ("1", gcd[L, R, O]),
-      ("6", lcm[L, R, O])
-    )
-
-    leftRightFunctions[Int,Int,Int].foreach(fun =>{
-      r(fun._2.apply(3,2)) shouldBe fun._1
-    })
-
+  "ColumnFunction tokenisation and execution" should "succeed for ArithmeticFunctions" in {
+    r(plus(3,3)) shouldBe "6"
+    r(minus(3,2)) shouldBe "1"
+    r(multiply(3,5)) shouldBe "15"
+    r(divide(3,2)) shouldBe "1.5"
+    r(intDiv(3,5)) shouldBe "2"
+    r(intDivOrZero(3,5)) shouldBe "2"
+    r(modulo(13,4)) shouldBe "1"
+    r(gcd(3,2)) shouldBe "1"
+    r(lcm(3,2)) shouldBe "6"
     r(negate(3)) shouldBe "-3"
     r(abs(-3)) shouldBe "3"
   }
@@ -184,10 +178,53 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(timeSlots(now,toUInt32(1800))) shouldBe s"['${now.toStartOfMin(30).printAsDateTime}','${now.plusMinutes(30).toStartOfMin(30).printAsDateTime}']"
   }
 
-  it should "succeed for DictionaryFunctions" in {}
-  it should "succeed for EncodingFunctions" in {}
-  it should "succeed for HashFunctions" in {}
-  it should "succeed for HigherOrderFunctions" in {}
+  it should "succeed for DictionaryFunctions" in {
+    //TODO Cant test without setting up a dictionary
+  }
+  it should "succeed for EncodingFunctions" in {
+    r(hex(12)) shouldBe "0C"
+    r(unhex("0C")) shouldBe "12"
+
+    //TODO: Eek, something with bytes
+//    val someUUID = UUID.randomUUID()
+//    r(uUIDNumToString(uUIDStringToNum(someUUID))) shouldBe someUUID
+//    r(uUIDNumToString("3"))
+//    r(bitmaskToList("255.255.255.0"))
+//    r(bitmaskToArray("3"))
+  }
+  it should "succeed for HashFunctions" in {
+    val someStringData = "fooBarBaz"
+                                        //TODO these also return the byte format
+    r(halfMD5(someStringData)) shouldBe ""
+    r(mD5(someStringData)) shouldBe ""
+    r(sipHash64(someStringData)) shouldBe ""
+    r(sipHash128(someStringData)) shouldBe ""
+    r(cityHash64(someStringData)) shouldBe ""
+    r(intHash32(1234)) shouldBe ""
+    r(intHash64(1234)) shouldBe ""
+    r(sHA1(someStringData)) shouldBe ""
+    r(sHA224(someStringData)) shouldBe ""
+    r(sHA256(someStringData)) shouldBe ""
+
+    r(uRLHash("http://www.google.nl/search",1))
+  }
+  it should "succeed for HigherOrderFunctions" in {
+    val arr1 = Seq(1L,2L,3L)
+    val arr2 = Iterable(4L,5L,6L)
+
+    r(arrayMap[Long,Long](_ * 2L,arr1)) shouldBe "[2,4,6]"
+    r(arrayFilter[Long,Long](_ * 2L,arr1)) shouldBe "[2,4,6]"
+    //r(arrayFilter((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+    //r(arrayCount((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+    //r(arrayExists((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+    //r(arrayAll((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+    //r(arraySum((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+    //r(arrayFirst((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+    //r(arrayFirstIndex((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+    //r(arrayCumSum((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+    //r(arraySort((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+    //r(arrayReverseSort((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+  }
   it should "succeed for IPFunctions" in {}
   it should "succeed for JsonFunctions" in {}
   it should "succeed for LogicalFunctions" in {}

@@ -93,7 +93,9 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalF
 
   sealed trait AddSubtractable[C] extends Magnet[C] with AddSubtractOps[C]
 
-  sealed trait NumericCol[C] extends Magnet[C] with AddSubtractable[C] with ComparableWith[NumericCol[_]] with LogicalOps with ArithmeticOps[C]
+  sealed trait NumericCol[C] extends Magnet[C] with AddSubtractable[C] with HexCompatible[C]
+    with ComparableWith[NumericCol[_]] with LogicalOps with ArithmeticOps[C]
+
 //  sealed trait NumericColTC[N] extends ComparableWith[NumericColTC[_]] with LogicalOpsTC
 //
 //  trait LogicalOpsTC { this: NumericColTC[_] =>

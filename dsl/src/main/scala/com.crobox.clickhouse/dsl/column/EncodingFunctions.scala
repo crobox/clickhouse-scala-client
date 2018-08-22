@@ -8,8 +8,8 @@ trait EncodingFunctions { self: Magnets =>
 
   case class Hex(col: HexCompatible[_])            extends EncodingFunction[String](col.column)
   case class Unhex(col: StringColMagnet[_])           extends EncodingFunction[String](col.column)
-  case class UUIDStringToNum(col: StringColMagnet[_]) extends EncodingFunction[Long](col.column)
-  case class UUIDNumToString(col: StringColMagnet[_]) extends EncodingFunction[Long](col.column)
+  case class UUIDStringToNum(col: StringColMagnet[_]) extends EncodingFunction[Byte](col.column)
+  case class UUIDNumToString(col: StringColMagnet[_]) extends EncodingFunction[Byte](col.column)
   case class BitmaskToList(col: NumericCol[_])     extends EncodingFunction[String](col.column)
   case class BitmaskToArray(col: NumericCol[_])    extends EncodingFunction[Iterable[Long]](col.column)
 

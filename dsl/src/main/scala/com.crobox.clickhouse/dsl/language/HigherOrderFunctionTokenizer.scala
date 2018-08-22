@@ -6,15 +6,15 @@ import com.dongxiguo.fastring.Fastring.Implicits._
 trait HigherOrderFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  private def tokenizeHOFunc(func: (TableColumn[_] => ExpressionColumn[_])): String = {
-    val in = RefColumn("x")
+  private def tokenizeHOFunc[I,O](func: (TableColumn[I] => ExpressionColumn[O])): String = {
+    val in: TableColumn[I] = RefColumn[I]("x")
     "x -> " + tokenizeColumn(func(in))
   }
 
   private def tokenizeHOParams(col: HigherOrderFunction[_, _, _]): String = {
 
-    val arrn = tokenizeSeqCol(col.arrn.map(_.column))
-    fast"${tokenizeColumn(col.arr1.column)},$arrn"
+   // val arrn = tokenizeSeqCol(col.arrn.map(_.column))
+    fast"${tokenizeHOFunc(col.func)},${tokenizeColumn(col.arr1.column)}${tokenizeColumns(col.arrn.map(_.column))}"
   }
 
   def tokenizeHigherOrderFunction(col: HigherOrderFunction[_, _, _]): String = col match {
