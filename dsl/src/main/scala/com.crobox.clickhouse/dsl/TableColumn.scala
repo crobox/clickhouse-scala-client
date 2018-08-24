@@ -18,6 +18,9 @@ class TableColumn[V](val name: String) extends Column {
   def as(alias: String): AliasedColumn[V] =
     AliasedColumn(this, alias)
 
+  def aliased(alias: String): AliasedColumn[V] =
+    AliasedColumn(this, alias)
+
   def as[C <: TableColumn[V]](alias: C): AliasedColumn[V] = AliasedColumn(this, alias.name)
 }
 

@@ -3,12 +3,15 @@ package com.crobox.clickhouse.stream
 import akka.Done
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import com.crobox.clickhouse.ClickhouseClient
-import com.crobox.clickhouse.stream.ClickhouseBulkActor.{ClickhouseIndexingException, Insert}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
+
+case class ClickhouseIndexingException(msg: String, cause: Throwable, payload: Seq[String], table: String)
+    extends RuntimeException(msg, cause)
+case class Insert(table: String, jsonRow: String)
 
 object ClickhouseSink extends LazyLogging {
 

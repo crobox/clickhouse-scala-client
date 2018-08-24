@@ -3,14 +3,14 @@ package com.crobox.clickhouse.internal
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.headers.HttpEncodingRange
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity, Uri}
-import com.typesafe.config.Config
+import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings
+import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings.ReadQueries
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.immutable
 
 private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
 
-  protected def config: Config
   private val Headers = {
     import HttpEncodingRange.apply
     import akka.http.scaladsl.model.headers.HttpEncodings.{deflate, gzip}
@@ -20,28 +20,24 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
 
   protected def toRequest(uri: Uri,
                           query: String,
-                          readOnly: Boolean = true,
+                          settings: QuerySettings = QuerySettings(ReadQueries),
                           entity: Option[RequestEntity] = None): HttpRequest =
     entity match {
       case Some(e) =>
         logger.debug(s"Executing clickhouse query [$query] on host [${uri
           .toString()}] with entity payload of length ${e.contentLengthOption}")
-        HttpRequest(method = HttpMethods.POST,
-                    uri = uri.withQuery(Query("query" -> query, enableHttpCompressionParam)),
-                    entity = e,
-                    headers = Headers)
+        HttpRequest(
+          method = HttpMethods.POST,
+          uri = uri.withQuery(Query(Query("query" -> query) ++ settings.asQueryParams: _*)),
+          entity = e,
+          headers = Headers
+        )
       case None =>
         logger.debug(s"Executing clickhouse query [$query] on host [${uri.toString()}]")
         HttpRequest(method = HttpMethods.POST,
-                    uri = uri.withQuery(Query(readOnlyParam(readOnly), enableHttpCompressionParam)),
+                    uri = uri.withQuery(settings.asQueryParams),
                     entity = query,
                     headers = Headers)
     }
-
-  private def enableHttpCompressionParam: (String, String) =
-    "enable_http_compression" -> (if (config.getBoolean("crobox.clickhouse.client.http-compression")) "1" else "0")
-
-  private def readOnlyParam(readOnly: Boolean): (String, String) =
-    "readonly" -> (if (readOnly) "1" else "0")
 
 }

@@ -3,6 +3,7 @@ package com.crobox.clickhouse
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.model.Uri
 import akka.pattern.ask
+import akka.stream.ActorMaterializer
 import akka.testkit.{TestKit, TestProbe}
 import akka.util.Timeout.durationToTimeout
 import com.crobox.clickhouse.balancing.HostBalancer
@@ -23,9 +24,9 @@ class ClickhouseClientAsyncSpec
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfterEach {
-  implicit val timeout = durationToTimeout(5 second)
-
-  var probe: TestProbe = _
+  implicit val timeout      = durationToTimeout(5 second)
+  implicit val materializer = ActorMaterializer()
+  var probe: TestProbe      = _
 
   var uris: Map[Uri, Uri => Props] = Map.empty
 

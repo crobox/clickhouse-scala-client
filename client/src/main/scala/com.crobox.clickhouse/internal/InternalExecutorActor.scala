@@ -3,6 +3,9 @@ package com.crobox.clickhouse.internal
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, Uri}
 import akka.pattern.pipe
+import com.crobox.clickhouse.balancing.HostBalancer
+import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings
+import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings.ReadQueries
 import com.crobox.clickhouse.internal.InternalExecutorActor.{Execute, HealthCheck}
 import com.typesafe.config.Config
 
@@ -14,15 +17,17 @@ class InternalExecutorActor(override protected val config: Config)
     with ClickhouseResponseParser
     with ClickhouseQueryBuilder {
 
-  override implicit val system: ActorSystem = context.system
+  override implicit val system: ActorSystem         = context.system
+  override protected val hostBalancer: HostBalancer = null
 
   override def receive = {
     case Execute(uri: Uri, query) =>
-      val eventualResponse = executeRequest(Future.successful(uri), query)
+      val eventualResponse =
+        executeRequestInternal(Future.successful(uri), query, QuerySettings(ReadQueries).withFallback(config), None, None)
       splitResponse(eventualResponse) pipeTo sender
     case HealthCheck(uri: Uri) =>
       val request = HttpRequest(method = HttpMethods.GET, uri = uri)
-      splitResponse(handleResponse(singleRequest(request), "health check", uri)) pipeTo sender
+      splitResponse(processClickhouseResponse(singleRequest(request), "health check", uri, None)) pipeTo sender
   }
 
   private def splitResponse(eventualResponse: Future[String]) =
