@@ -38,7 +38,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case InternalQuery(select, from, asFinal, where, groupBy, having, join, orderBy, limit, union) =>
         fast"""
            |${tokenizeSelect(select)}
-           | FROM ${tokenizeFrom(from)}
+           | ${tokenizeFrom(from)}
            | ${tokenizeFinal(asFinal)}
            | ${tokenizeJoin(join)}
            | ${tokenizeFiltering(where, "WHERE")}
@@ -68,11 +68,11 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
 
     from match {
       case Some(fromClause: InnerFromQuery) =>
-        fast"(${toRawSql(fromClause.innerQuery.internalQuery)})"
+        fast"FROM (${toRawSql(fromClause.innerQuery.internalQuery)})"
       case Some(TableFromQuery(table: Table, None)) =>
-        fast"$database.${table.name}"
+        fast"FROM $database.${table.name}"
       case Some(TableFromQuery(table: Table, Some(altDb))) =>
-        fast"$altDb.${table.name}"
+        fast"FROM $altDb.${table.name}"
       case _ => ""
     }
   }
