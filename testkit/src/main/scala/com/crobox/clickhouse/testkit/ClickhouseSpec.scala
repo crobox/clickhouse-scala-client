@@ -1,18 +1,13 @@
 package com.crobox.clickhouse.testkit
 
 import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.stream.{ActorMaterializer, Materializer}
-import akka.{Done, NotUsed}
 import com.crobox.clickhouse.ClickhouseClient
-import com.crobox.clickhouse.stream.ClickhouseBulkActor.Insert
-import com.crobox.clickhouse.stream.{ClickhouseIndexingSubscriber, SubscriberConfig}
-import com.typesafe.config.{Config, ConfigFactory}
-import com.typesafe.scalalogging.LazyLogging
+import com.typesafe.config.Config
 import org.scalatest._
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Await, Future}
 import scala.util.{Random, Try}
 
 trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterAll {
@@ -94,25 +89,6 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
 
     require(done, s"Failed waiting on: $explain")
   }
-
-  protected def constructFlow[T](iter: Iterable[T], tableName: String, flow: Flow[T, Insert, NotUsed]): Future[Done] = {
-    val sinkPromise = Promise[Done]
-    val sink = Sink.fromSubscriber(
-      new ClickhouseIndexingSubscriber(clickClient,
-                                       SubscriberConfig(
-                                         completionFn = () => {
-                                           blockUntilRowsInTable(iter.size, tableName)
-                                           sinkPromise.success(Done)
-                                         }
-                                       ))
-    )
-    Source
-      .fromIterator(() => iter.toIterator)
-      .via(flow)
-      .runWith(sink)
-    sinkPromise.future
-  }
-
   override protected def beforeAll(): Unit = {
     super.beforeAll() // To be stackable, must call super.beforeAll
     sql(s"CREATE DATABASE IF NOT EXISTS $database")

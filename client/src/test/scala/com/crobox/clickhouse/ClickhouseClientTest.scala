@@ -1,5 +1,7 @@
 package com.crobox.clickhouse
 
+import akka.stream.scaladsl.{Keep, Sink}
+import com.crobox.clickhouse.internal.ClickHouseExecutor.{QueryAccepted, QueryFinished, QueryProgress}
 import com.typesafe.config.ConfigFactory
 
 /**
@@ -39,4 +41,20 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
       case _: IllegalArgumentException => succeed
     }
   }
+
+  it should "publish query progress messages" in {
+    client
+      .queryWithProgress("select 1 + 2")
+      .runWith(Sink.seq[QueryProgress])
+      .map(progress => progress should contain theSameElementsAs Seq(QueryAccepted, QueryFinished))
+  }
+
+  it should "materialize progress source with the query result" in {
+    client
+      .queryWithProgress("select 1 + 2")
+      .toMat(Sink.ignore)(Keep.left)
+      .run()
+      .map(result => result.shouldBe("3\n"))
+  }
+
 }

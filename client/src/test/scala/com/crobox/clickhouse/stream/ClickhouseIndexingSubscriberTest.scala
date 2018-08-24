@@ -1,8 +1,6 @@
 package com.crobox.clickhouse.stream
 
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
-import com.crobox.clickhouse.stream.ClickhouseBulkActor.Insert
 import com.crobox.clickhouse.{ClickhouseClient, ClickhouseClientAsyncSpec}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
@@ -11,8 +9,6 @@ import scala.concurrent.{Await, Future, Promise}
 import scala.util.{Random, Try}
 
 class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with ScalaFutures with Eventually {
-
-  implicit val materializer = ActorMaterializer()
 
   import system.dispatcher
 
@@ -33,7 +29,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     super.beforeAll()
 
     Await.ready(for {
-      _ <- client.execute(createDb)
+      _      <- client.execute(createDb)
       create <- client.execute(createTable)
     } yield create, timeout.duration)
 
@@ -63,33 +59,6 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     }).map { case (k, v) => s""""$k" : $v""" }
       .mkString(", ")
   )
-
-  def testSubscriber =
-    new ClickhouseIndexingSubscriber(
-      client,
-      SubscriberConfig(
-        batchSize = 10,
-        flushInterval = Some(10.millis),
-        flushAfter = Some(10.millis),
-        successCallback = (a, b) => {
-          if (!subscriberCompletes.isCompleted) subscriberCompletes.complete(Try {}); Unit
-        }
-      )
-    )
-
-  it should "inject sql parsed rows" in {
-    val sink    = Sink.fromSubscriber(testSubscriber)
-    val inserts = parsedInserts("one")
-    Source
-      .fromIterator(() => inserts.toIterator)
-      .map(data => Insert("test.insert", "{" + data + "}"))
-      .toMat(sink)(Keep.left)
-      .run()
-
-    //Note that this would time-out if the subscriber fails to write the inserts
-    Await.ready(subscriberCompletes.future, 5.seconds)
-    checkRowCount("one").map(_ shouldBe inserts.size)
-  }
 
   it should "index items" in {
     val inserts = parsedInserts("two")

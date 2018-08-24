@@ -3,10 +3,10 @@ package com.crobox.clickhouse
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
-import akka.stream.StreamTcpException
 import akka.stream.scaladsl.{Framing, Source}
 import akka.util.ByteString
 import com.crobox.clickhouse.balancing.HostBalancer
+import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings
 import com.crobox.clickhouse.internal.{ClickHouseExecutor, ClickhouseQueryBuilder, ClickhouseResponseParser}
 import com.typesafe.config.Config
 
@@ -25,7 +25,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
     with ClickhouseResponseParser
     with ClickhouseQueryBuilder {
 
-  private val hostBalancer = HostBalancer(config)
+  override protected val hostBalancer = HostBalancer(config)
 
   private val MaximumFrameLength: Int = 1024 * 1024 // 1 MB
 
@@ -45,9 +45,16 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
    * @return Future with the result that clickhouse returns
    */
   def query(sql: String): Future[String] =
-    executeWithRetries {
-      executeRequest(_, sql)
-    }
+    executeRequest(sql, QuerySettings().copy(readOnly = Some(1)))
+
+  /**
+   * Execute a read-only query on Clickhouse
+   *
+   * @param sql a valid Clickhouse SQL string
+   * @return stream with the query progress (started/rejected/finished/failed) which materializes with the query result
+   */
+  def queryWithProgress(sql: String): Source[ClickHouseExecutor.QueryProgress, Future[String]] =
+    executeRequestWithProgress(sql, QuerySettings().copy(readOnly = Some(1)))
 
   /**
    * Execute a query that is modifying the state of the database. e.g. INSERT, SET, CREATE TABLE.
@@ -63,16 +70,11 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
         ".execute() is not allowed for SELECT or SHOW statements, use .query() instead"
       )
     }.flatMap(
-      _ =>
-        executeWithRetries {
-          executeRequest(_, sql, readOnly = false)
-      }
+      _ => executeRequest(sql, QuerySettings().copy(readOnly = Some(0)))
     )
 
   def execute(sql: String, entity: String): Future[String] =
-    executeWithRetries {
-      executeRequest(_, sql, readOnly = false, Option(entity))
-    }
+    executeRequest(sql, QuerySettings().copy(readOnly = Some(0)), Option(entity))
 
   /**
    * Creates a stream of the SQL query that will delimit the result from Clickhouse on new-line
@@ -92,7 +94,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
   def sourceByteString(sql: String): Source[ByteString, NotUsed] =
     Source
       .fromFuture(hostBalancer.nextHost.flatMap { host =>
-        singleRequest(toRequest(host, sql))
+        singleRequest(toRequest(host, sql, QuerySettings()))
       })
       .flatMapConcat(response => response.entity.withoutSizeLimit().dataBytes)
 
@@ -105,23 +107,8 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
    */
   def sink(sql: String, source: Source[ByteString, Any]): Future[String] = {
     val entity = HttpEntity.apply(ContentTypes.`text/plain(UTF-8)`, source)
-    executeWithRetries {
-      executeRequest(_, sql, readOnly = false, Option(entity))
-    }
+    executeRequest(sql, QuerySettings().copy(readOnly = Some(0)), Option(entity))
   }
-
-  private def executeWithRetries(request: Future[Uri] => Future[String], retries: Int = 5): Future[String] =
-    request(hostBalancer.nextHost).recoverWith {
-      // The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests
-      case e: StreamTcpException if retries > 0 =>
-        logger.warn(s"Stream exception, retries left: $retries", e)
-        executeWithRetries(request, retries - 1)
-      case e: RuntimeException
-          if e.getMessage.contains("The http server closed the connection unexpectedly") && retries > 0 =>
-        logger.warn(s"Unexpected connection closure, retries left: $retries", e)
-        //Retry the request with 1 less retry
-        executeWithRetries(request, retries - 1)
-    }
 
   override protected implicit val executionContext: ExecutionContext =
     system.dispatcher

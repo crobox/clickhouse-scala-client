@@ -29,7 +29,6 @@ class AggregationFunctionsIT
       def result = columnResult.toInt
     }
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
-
     val resultSimple = chExecuter
       .execute[Result](select(uniq(shieldId) as "result") from OneTestTable)
       .futureValue
