@@ -8,7 +8,7 @@ import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.execution.{DefaultClickhouseQueryExecutor, QueryResult}
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Span}
+import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -18,6 +18,8 @@ import scala.util.Random
 class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec with ScalaFutures {
 
   import scala.concurrent.ExecutionContext.Implicits.global
+  implicit override val patienceConfig =
+    PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
 
   implicit val clickhouseClient = clickClient
   private val oneId             = UUID.randomUUID()
