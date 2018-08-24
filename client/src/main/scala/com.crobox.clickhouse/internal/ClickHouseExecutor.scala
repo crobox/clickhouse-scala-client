@@ -8,6 +8,7 @@ import akka.http.scaladsl.model._
 import akka.stream._
 import akka.stream.scaladsl.{Keep, Sink, Source, SourceQueueWithComplete}
 import com.crobox.clickhouse.balancing.HostBalancer
+import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings.ReadOnlySetting
 import com.crobox.clickhouse.internal.ClickHouseExecutor.{QueryProgress, QueryRetry, QuerySettings}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
@@ -111,7 +112,7 @@ object ClickHouseExecutor {
   case class QueryFailed(cause: Throwable)                  extends QueryProgress
   case class QueryRetry(cause: Throwable, retryNumber: Int) extends QueryProgress
 
-  case class QuerySettings(readOnly: Option[Int] = None,
+  case class QuerySettings(readOnly: ReadOnlySetting,
                            authentication: Option[(String, String)] = None,
                            progressHeaders: Option[Boolean] = None,
                            queryId: Option[String] = None,
@@ -120,26 +121,46 @@ object ClickHouseExecutor {
 
     def asQueryParams: Query =
       Query(
-        readOnly.map(value => "readonly" -> value.toString).toSeq ++ queryId.map("query_id" -> _) ++ authentication.map(
-          auth => "user"                                                  -> auth._1
-        ) ++ authentication.map(auth => "password"                        -> auth._2) ++ profile.map("profile" -> _) ++ progressHeaders.map(
-          progress => "send_progress_in_http_headers"                     -> (if (progress) "1" else "0")
-        ) ++ httpCompression.map(compression => "enable_http_compression" -> (if (compression) "1" else "0")): _*
+        Seq("readonly"         -> readOnly.value.toString) ++
+        queryId.map("query_id" -> _) ++
+        authentication.map(
+          auth => "user" -> auth._1
+        ) ++
+        authentication.map(auth => "password" -> auth._2) ++
+        profile.map("profile" -> _) ++
+        progressHeaders.map(
+          progress => "send_progress_in_http_headers" -> (if (progress) "1" else "0")
+        ) ++
+        httpCompression.map(compression => "enable_http_compression" -> (if (compression) "1" else "0")): _*
       )
 
     def withFallback(config: Config): QuerySettings =
       this.copy(
-        readOnly.orElse(Try { config.getInt(path("read-only")) }.toOption),
-        authentication.orElse(Try {
+        authentication = authentication.orElse(Try {
           val authConfig = config.getConfig(path("authentication"))
           (authConfig.getString("user"), authConfig.getString("password"))
         }.toOption),
-        progressHeaders.orElse(Try { config.getBoolean(path("progress-headers")) }.toOption),
+        progressHeaders = progressHeaders.orElse(Try { config.getBoolean(path("progress-headers")) }.toOption),
         profile = profile.orElse(Try { config.getString(path("profile")) }.toOption),
         httpCompression = httpCompression.orElse(Try { config.getBoolean(path("http-compression")) }.toOption)
       )
 
     private def path(setting: String) = s"crobox.clickhouse.client.settings.$setting"
 
+  }
+
+  object QuerySettings {
+    sealed trait ReadOnlySetting {
+      val value: Int
+    }
+    case object AllQueries extends ReadOnlySetting {
+      override val value: Int = 0
+    }
+    case object ReadQueries extends ReadOnlySetting {
+      override val value: Int = 1
+    }
+    case object ReadAndChangeQueries extends ReadOnlySetting {
+      override val value: Int = 2
+    }
   }
 }

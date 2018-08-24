@@ -36,9 +36,10 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     //    require(query != null) because parallel query is null
     query match {
       case InternalQuery(select, from, asFinal, where, groupBy, having, join, orderBy, limit, union) =>
+        val tokenizedFrom = tokenizeFrom(from)
         fast"""
            |${tokenizeSelect(select)}
-           | ${tokenizeFrom(from)}
+           | ${if (tokenizedFrom.isEmpty) "" else s"FROM $tokenizedFrom"}
            | ${tokenizeFinal(asFinal)}
            | ${tokenizeJoin(join)}
            | ${tokenizeFiltering(where, "WHERE")}
@@ -63,16 +64,16 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case _       => ""
     }
 
-  private def tokenizeFrom(from: Option[FromQuery])(implicit database: Database) = {
+  private def tokenizeFrom(from: Option[FromQuery])(implicit database: Database): String = {
     require(from != null)
 
     from match {
       case Some(fromClause: InnerFromQuery) =>
-        fast"FROM (${toRawSql(fromClause.innerQuery.internalQuery)})"
+        fast"(${toRawSql(fromClause.innerQuery.internalQuery)})"
       case Some(TableFromQuery(table: Table, None)) =>
-        fast"FROM $database.${table.name}"
+        fast"$database.${table.name}"
       case Some(TableFromQuery(table: Table, Some(altDb))) =>
-        fast"FROM $altDb.${table.name}"
+        fast"$altDb.${table.name}"
       case _ => ""
     }
   }

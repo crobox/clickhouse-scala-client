@@ -5,6 +5,7 @@ import akka.stream.scaladsl.{Sink, SourceQueue}
 import akka.stream.{Materializer, StreamTcpException}
 import com.crobox.clickhouse.ClickhouseClientAsyncSpec
 import com.crobox.clickhouse.balancing.HostBalancer
+import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings.ReadQueries
 import com.crobox.clickhouse.internal.ClickHouseExecutor.{QueryProgress, QueryRetry, QuerySettings}
 import com.typesafe.config.Config
 
@@ -37,7 +38,7 @@ class ClickhouseExecutorTest extends ClickhouseClientAsyncSpec {
     val exception = new StreamTcpException("")
     response = Future.failed(exception)
     executor
-      .executeRequestWithProgress("", QuerySettings())
+      .executeRequestWithProgress("", QuerySettings(ReadQueries))
       .runWith(Sink.seq[QueryProgress])
       .map(progress => {
         progress should contain theSameElementsAs Seq(QueryRetry(exception, 1),

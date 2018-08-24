@@ -4,6 +4,7 @@ import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.headers.HttpEncodingRange
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity, Uri}
 import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings
+import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings.ReadQueries
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.collection.immutable
@@ -19,7 +20,7 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
 
   protected def toRequest(uri: Uri,
                           query: String,
-                          settings: QuerySettings,
+                          settings: QuerySettings = QuerySettings(ReadQueries),
                           entity: Option[RequestEntity] = None): HttpRequest =
     entity match {
       case Some(e) =>

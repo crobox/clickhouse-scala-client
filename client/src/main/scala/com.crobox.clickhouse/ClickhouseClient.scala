@@ -7,6 +7,7 @@ import akka.stream.scaladsl.{Framing, Source}
 import akka.util.ByteString
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings
+import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings.{AllQueries, ReadQueries}
 import com.crobox.clickhouse.internal.{ClickHouseExecutor, ClickhouseQueryBuilder, ClickhouseResponseParser}
 import com.typesafe.config.Config
 
@@ -45,7 +46,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
    * @return Future with the result that clickhouse returns
    */
   def query(sql: String): Future[String] =
-    executeRequest(sql, QuerySettings().copy(readOnly = Some(1)))
+    executeRequest(sql, QuerySettings(ReadQueries))
 
   /**
    * Execute a read-only query on Clickhouse
@@ -54,7 +55,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
    * @return stream with the query progress (started/rejected/finished/failed) which materializes with the query result
    */
   def queryWithProgress(sql: String): Source[ClickHouseExecutor.QueryProgress, Future[String]] =
-    executeRequestWithProgress(sql, QuerySettings().copy(readOnly = Some(1)))
+    executeRequestWithProgress(sql, QuerySettings(ReadQueries))
 
   /**
    * Execute a query that is modifying the state of the database. e.g. INSERT, SET, CREATE TABLE.
@@ -70,11 +71,11 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
         ".execute() is not allowed for SELECT or SHOW statements, use .query() instead"
       )
     }.flatMap(
-      _ => executeRequest(sql, QuerySettings().copy(readOnly = Some(0)))
+      _ => executeRequest(sql, QuerySettings(AllQueries))
     )
 
   def execute(sql: String, entity: String): Future[String] =
-    executeRequest(sql, QuerySettings().copy(readOnly = Some(0)), Option(entity))
+    executeRequest(sql, QuerySettings(AllQueries), Option(entity))
 
   /**
    * Creates a stream of the SQL query that will delimit the result from Clickhouse on new-line
@@ -94,7 +95,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
   def sourceByteString(sql: String): Source[ByteString, NotUsed] =
     Source
       .fromFuture(hostBalancer.nextHost.flatMap { host =>
-        singleRequest(toRequest(host, sql, QuerySettings()))
+        singleRequest(toRequest(host, sql, QuerySettings(ReadQueries)))
       })
       .flatMapConcat(response => response.entity.withoutSizeLimit().dataBytes)
 
@@ -107,7 +108,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
    */
   def sink(sql: String, source: Source[ByteString, Any]): Future[String] = {
     val entity = HttpEntity.apply(ContentTypes.`text/plain(UTF-8)`, source)
-    executeRequest(sql, QuerySettings().copy(readOnly = Some(0)), Option(entity))
+    executeRequest(sql, QuerySettings(AllQueries), Option(entity))
   }
 
   override protected implicit val executionContext: ExecutionContext =

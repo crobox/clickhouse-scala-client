@@ -5,6 +5,7 @@ import akka.http.scaladsl.model.{HttpMethods, HttpRequest, Uri}
 import akka.pattern.pipe
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings
+import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings.ReadQueries
 import com.crobox.clickhouse.internal.InternalExecutorActor.{Execute, HealthCheck}
 import com.typesafe.config.Config
 
@@ -22,7 +23,7 @@ class InternalExecutorActor(override protected val config: Config)
   override def receive = {
     case Execute(uri: Uri, query) =>
       val eventualResponse =
-        executeRequestInternal(Future.successful(uri), query, QuerySettings().withFallback(config), None, None)
+        executeRequestInternal(Future.successful(uri), query, QuerySettings(ReadQueries).withFallback(config), None, None)
       splitResponse(eventualResponse) pipeTo sender
     case HealthCheck(uri: Uri) =>
       val request = HttpRequest(method = HttpMethods.GET, uri = uri)
