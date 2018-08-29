@@ -213,17 +213,17 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     val arr2 = Iterable(4L,5L,6L)
 
     r(arrayMap[Long,Long](_ * 2L,arr1)) shouldBe "[2,4,6]"
-    r(arrayFilter[Long,Long](_ * 2L,arr1)) shouldBe "[2,4,6]"
-    //r(arrayFilter((x: Int) => {x * 2},arr1,arr2) shouldBe ""
-    //r(arrayCount((x: Int) => {x * 2},arr1,arr2) shouldBe ""
-    //r(arrayExists((x: Int) => {x * 2},arr1,arr2) shouldBe ""
-    //r(arrayAll((x: Int) => {x * 2},arr1,arr2) shouldBe ""
-    //r(arraySum((x: Int) => {x * 2},arr1,arr2) shouldBe ""
-    //r(arrayFirst((x: Int) => {x * 2},arr1,arr2) shouldBe ""
-    //r(arrayFirstIndex((x: Int) => {x * 2},arr1,arr2) shouldBe ""
-    //r(arrayCumSum((x: Int) => {x * 2},arr1,arr2) shouldBe ""
-    //r(arraySort((x: Int) => {x * 2},arr1,arr2) shouldBe ""
-    //r(arrayReverseSort((x: Int) => {x * 2},arr1,arr2) shouldBe ""
+    r(arrayFilter[Long](_.isEq(2L),arr1)) shouldBe "[2,4,6]"
+    r(arrayFilter[Long](_.isEq(2L),arr1,arr2) shouldBe ""
+    r(arrayCount[Long,Long](_.isEq(2L),arr1,arr2) shouldBe ""
+    r(arrayExists[Long,Long](_.isEq(2L),arr1,arr2) shouldBe ""
+    r(arrayAll[Long,Long](_.isEq(2L),arr1,arr2) shouldBe ""
+    r(arraySum[Long,Long](_.isEq(2L),arr1,arr2) shouldBe ""
+    r(arrayFirst[Long,Long](_.isEq(2L),arr1,arr2) shouldBe ""
+    r(arrayFirstIndex[Long,Long](_.isEq(2L),arr1,arr2) shouldBe ""
+    r(arrayCumSum[Long,Long](_.isEq(2L),arr1,arr2) shouldBe ""
+    r(arraySort[Long,Long](_.isEq(2L),arr1,arr2) shouldBe ""
+    r(arrayReverseSort[Long,Long](_.isEq(2L),arr1,arr2) shouldBe ""
   }
   it should "succeed for IPFunctions" in {}
   it should "succeed for JsonFunctions" in {}

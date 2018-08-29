@@ -124,7 +124,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
 
   it should "generate higher order function" in {
     val col = new TableColumn[Iterable[Int]]("table_column") {}
-    this.tokenizeColumn(arrayExists[Int,Boolean](x => x.isEq(3),col)) shouldBe "arrayExists(x -> x = 3, table_column)"
+    this.tokenizeColumn(arrayExists[Int,Boolean](_.isEq(3), col)) shouldBe "arrayExists(x -> x = 3, table_column)"
   }
 
   it should "generate cases" in {

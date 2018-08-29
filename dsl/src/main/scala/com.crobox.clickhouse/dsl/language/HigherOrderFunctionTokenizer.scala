@@ -1,25 +1,26 @@
 package com.crobox.clickhouse.dsl.language
 
+import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait HigherOrderFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  private def tokenizeHOFunc[I,O](func: (TableColumn[I] => ExpressionColumn[O])): String = {
+  private def tokenizeHOFunc[I,O](func: TableColumn[I] => ExpressionColumn[O] ): String = {
     val in: TableColumn[I] = RefColumn[I]("x")
     "x -> " + tokenizeColumn(func(in))
   }
 
-  private def tokenizeHOParams(col: HigherOrderFunction[_, _, _]): String = {
+  private def tokenizeHOParams[I,O,R](col: HigherOrderFunction[I, O, R]): String = {
+    val funcPart = col.func.map(col=> tokenizeHOFunc[I,O](col) + ",").getOrElse("")
 
-   // val arrn = tokenizeSeqCol(col.arrn.map(_.column))
-    fast"${tokenizeHOFunc(col.func)},${tokenizeColumn(col.arr1.column)}${tokenizeColumns(col.arrn.map(_.column))}"
+    funcPart + tokenizeColumn(col.arr1.column) + tokenizeColumns(col.arrn.map(_.column))
   }
 
   def tokenizeHigherOrderFunction(col: HigherOrderFunction[_, _, _]): String = col match {
     case col: ArrayMap[_, _]         => fast"arrayMap(${tokenizeHOParams(col)})"
-    case col: ArrayFilter[_, _]      => fast"arrayFilter(${tokenizeHOParams(col)})"
+    case col: ArrayFilter[_]         => fast"arrayFilter(${tokenizeHOParams(col)})"
     case col: ArrayCount[_, _]       => fast"arrayCount(${tokenizeHOParams(col)})"
     case col: ArrayExists[_, _]      => fast"arrayExists(${tokenizeHOParams(col)})"
     case col: ArrayAll[_, _]         => fast"arrayAll(${tokenizeHOParams(col)})"
