@@ -109,8 +109,42 @@ object Engine {
               indexGranularity: Int): ReplacingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity)
   }
+//SummingMergeTree(EventDate, (OrderID, EventDate, BannerID, ...), 8192)
 
-  case class AggregatingMergeTree(partition: Seq[String],
+
+  case class SummingMergeTree(partition: Seq[String],
+    primaryKey: Seq[Column],
+    summingColumns: Seq[Column] = Seq.empty,
+    samplingExpression: Option[String] = None,
+    indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
+    extends MergeTreeEngine("SummingMergeTree") {
+
+    override def toString: String = {
+      val summingColArg =
+        if (summingColumns.isEmpty) ""
+        else "((" + summingColumns.map(_.name).mkString(", ") + "))"
+
+      s"""$name$summingColArg
+         |${statements.mkString("\n")}""".stripMargin
+    }
+  }
+
+  object SummingMergeTree {
+    def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column]): SummingMergeTree =
+      apply(monthPartitionCompat(dateColumn), primaryKey)
+
+    def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column], summingColumns: Seq[Column]): SummingMergeTree =
+      apply(monthPartitionCompat(dateColumn), primaryKey, summingColumns)
+
+    def apply(dateColumn: NativeColumn[LocalDate],
+      primaryKey: Seq[Column],
+      summingColumns: Seq[Column],
+      samplingExpression: Option[String],
+      indexGranularity: Int): SummingMergeTree =
+      apply(monthPartitionCompat(dateColumn), primaryKey, summingColumns, samplingExpression, indexGranularity)
+  }
+
+    case class AggregatingMergeTree(partition: Seq[String],
                                   primaryKey: Seq[Column],
                                   samplingExpression: Option[String] = None,
                                   indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
@@ -140,7 +174,11 @@ object Engine {
 
   case class Replicated(zookeeperPath: String, replicaName: String, engine: MergeTreeEngine) extends Engine {
     override def toString: String = {
-      val replicationArgs = Seq(zookeeperPath, replicaName).map(StringQueryValue(_)).mkString(", ")
+      val summingColArg = Seq(engine).collect { case s:SummingMergeTree => "(" + s.summingColumns.map(_.name).mkString(", ") + ")"}
+
+      val replicationArgs = (
+        Seq(zookeeperPath, replicaName).map(StringQueryValue(_)
+      ) ++ summingColArg).mkString(", ")
 
       s"""Replicated${engine.name}($replicationArgs)
          |${engine.statements.mkString("\n")}""".stripMargin

@@ -4,6 +4,7 @@ import com.crobox.clickhouse.dsl.AggregateFunction.StateResult
 import com.crobox.clickhouse.dsl.{NativeColumn, RefColumn, TableColumn, UInt32}
 import com.crobox.clickhouse.dsl.TestSchema.TestTable
 import com.crobox.clickhouse.dsl.schemabuilder.DefaultValue.Default
+import com.crobox.clickhouse.dsl.schemabuilder.Engine.SummingMergeTree
 import org.joda.time.LocalDate
 import org.scalatest.{FlatSpecLike, Matchers}
 
@@ -249,4 +250,26 @@ class CreateTableTest extends FlatSpecLike with Matchers {
         |SETTINGS index_granularity=8192""".stripMargin)
   }
 
+  it should "create a table with an SummingMergeTree engine" in {
+    val date        = NativeColumn[LocalDate]("date", ColumnType.Date)
+    val client_count    = NativeColumn("client_count", ColumnType.UInt8)
+    val summingColumns = Seq(client_count)
+
+    val create = CreateTable(
+      TestTable(
+        "test_table_agg",
+        Seq(date, client_count)
+      ),
+      SummingMergeTree(date, Seq(date),summingColumns)
+    )
+
+    create.toString should be (
+      """CREATE TABLE default.test_table_agg (
+        |  date Date,
+        |  client_count UInt8
+        |) ENGINE = SummingMergeTree((client_count))
+        |PARTITION BY (toYYYYMM(date))
+        |ORDER BY (date)
+        |SETTINGS index_granularity=8192""".stripMargin)
+  }
 }
