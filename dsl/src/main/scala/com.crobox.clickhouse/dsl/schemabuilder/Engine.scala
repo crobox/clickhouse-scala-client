@@ -122,9 +122,9 @@ object Engine {
     override def toString: String = {
       val summingColArg =
         if (summingColumns.isEmpty) ""
-        else "(" + summingColumns.mkString(", ") + ")"
+        else "((" + summingColumns.map(_.name).mkString(", ") + "))"
 
-      s"""$name
+      s"""$name$summingColArg
          |${statements.mkString("\n")}""".stripMargin
     }
   }
@@ -133,12 +133,12 @@ object Engine {
     def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column]): SummingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey)
 
-    def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column], summingColumns: Seq[Column] = Seq.empty): SummingMergeTree =
+    def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column], summingColumns: Seq[Column]): SummingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, summingColumns)
 
     def apply(dateColumn: NativeColumn[LocalDate],
       primaryKey: Seq[Column],
-      summingColumns: Seq[Column] = Seq.empty,
+      summingColumns: Seq[Column],
       samplingExpression: Option[String],
       indexGranularity: Int): SummingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, summingColumns, samplingExpression, indexGranularity)
@@ -174,7 +174,7 @@ object Engine {
 
   case class Replicated(zookeeperPath: String, replicaName: String, engine: MergeTreeEngine) extends Engine {
     override def toString: String = {
-      val summingColArg = Seq(engine).collect { case s:SummingMergeTree => "(" + s.summingColumns.mkString(", ") + ")"}
+      val summingColArg = Seq(engine).collect { case s:SummingMergeTree => "(" + s.summingColumns.map(_.name).mkString(", ") + ")"}
 
       val replicationArgs = (
         Seq(zookeeperPath, replicaName).map(StringQueryValue(_)

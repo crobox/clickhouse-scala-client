@@ -252,7 +252,7 @@ class CreateTableTest extends FlatSpecLike with Matchers {
 
   it should "create a table with an SummingMergeTree engine" in {
     val date        = NativeColumn[LocalDate]("date", ColumnType.Date)
-    val client_count    = NativeColumn("client_id", ColumnType.UInt8)
+    val client_count    = NativeColumn("client_count", ColumnType.UInt8)
     val summingColumns = Seq(client_count)
 
     val create = CreateTable(
@@ -266,10 +266,10 @@ class CreateTableTest extends FlatSpecLike with Matchers {
     create.toString should be (
       """CREATE TABLE default.test_table_agg (
         |  date Date,
-        |  client_count UInt8,
+        |  client_count UInt8
         |) ENGINE = SummingMergeTree((client_count))
         |PARTITION BY (toYYYYMM(date))
-        |ORDER BY (date, client_id)
+        |ORDER BY (date)
         |SETTINGS index_granularity=8192""".stripMargin)
   }
 }
