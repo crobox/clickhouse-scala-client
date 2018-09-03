@@ -25,8 +25,8 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(minus(3,2)) shouldBe "1"
     r(multiply(3,5)) shouldBe "15"
     r(divide(3,2)) shouldBe "1.5"
-    r(intDiv(3,5)) shouldBe "2"
-    r(intDivOrZero(3,5)) shouldBe "2"
+    r(intDiv(5,3)) shouldBe "1"
+    r(intDivOrZero(5,3)) shouldBe "1"
     r(modulo(13,4)) shouldBe "1"
     r(gcd(3,2)) shouldBe "1"
     r(lcm(3,2)) shouldBe "6"
@@ -191,7 +191,7 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     val someStringData = "fooBarBaz"
 
     //TODO these also return the byte format
-    r(halfMD5(someStringData)) shouldBe ""
+    r(halfMD5(someStringData)) shouldBe "14009637059544572277"
     r(mD5(someStringData)) shouldBe ""
     r(sipHash64(someStringData)) shouldBe ""
     r(sipHash128(someStringData)) shouldBe ""
