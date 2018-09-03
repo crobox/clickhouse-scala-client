@@ -1,8 +1,5 @@
 package com.crobox.clickhouse.dsl.language
 
-import java.time.format.DateTimeFormatter
-import java.util.UUID
-
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
@@ -10,15 +7,13 @@ import com.crobox.clickhouse.dsl.column._
 import com.crobox.clickhouse.dsl.execution.ClickhouseQueryExecutor
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
-import org.joda.time.format.DateTimeFormat
 import org.joda.time._
+import org.joda.time.format.DateTimeFormat
 import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.Future
 
 class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec with ScalaFutures with ClickhouseTokenizerModule {
-
-  import scala.concurrent.ExecutionContext.Implicits.global
 
   implicit val clickhouseClient = clickClient
   implicit val db: Database = clickhouseClient.database
@@ -194,7 +189,8 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
   }
   it should "succeed for HashFunctions" in {
     val someStringData = "fooBarBaz"
-                                        //TODO these also return the byte format
+
+    //TODO these also return the byte format
     r(halfMD5(someStringData)) shouldBe ""
     r(mD5(someStringData)) shouldBe ""
     r(sipHash64(someStringData)) shouldBe ""
@@ -210,23 +206,21 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
   }
   it should "succeed for HigherOrderFunctions" in {
     val arr1 = Seq(1L,2L,3L)
-    val arr2 = Iterable(4L,5L,6L)
 
     r(arrayMap[Long,Long](_ * 2L,arr1)) shouldBe "[2,4,6]"
-    r(arrayFilter[Long](_.isEq(2L),arr1)) shouldBe "[1,3]"
-    r(arrayFilter[Long](_.isEq(2L),arr1,arr2)) shouldBe "[1,3,4,5,6]"
-    r(arrayCount[Long](_.isEq(2L),arr1,arr2)) shouldBe "1"
-    r(arrayExists[Long](_.isEq(2L),arr1,arr2)) shouldBe "1"
-    r(arrayAll[Long](_ <= 7,arr1,arr2)) shouldBe "1"
-    r(arrayAll[Long](_.isEq(2L),arr1,arr2)) shouldBe "0"
-    r(arraySum[Long,Long](_ * 2L,arr1,arr2)) shouldBe "42"
-    r(arraySum[Long,Long](arr1,arr2)) shouldBe "21"
-    r(arrayFirst[Long](modulo(_,2L).isEq(0),arr1,arr2)) shouldBe ""
-    r(arrayFirstIndex[Long](modulo(_,2L).isEq(0),arr1,arr2)) shouldBe ""
-    r(arrayCumSum[Long,Long](_ % 2L,arr1,arr2)) shouldBe "3"
-    r(arraySort[Long,Double](_ % 3.0,arr1,arr2)) shouldBe "[3,6,1,4,2,5]"
-    r(arrayReverseSort[Long,Int](_ % 4,arr1,arr2)) shouldBe "[3,6,2,5,1,4]"
+    r(arrayFilter[Long](_ <> 2L,arr1)) shouldBe "[1,3]"
+    r(arrayExists[Long](_.isEq(2L),arr1)) shouldBe "1"
+    r(arrayAll[Long](_ <= 3,arr1)) shouldBe "1"
+    r(arrayAll[Long](_.isEq(2L),arr1)) shouldBe "0"
+    r(arrayFirst[Long](modulo(_,2L).isEq(0),arr1)) shouldBe "2"
+    r(arrayFirstIndex[Long](modulo(_,2L).isEq(0),arr1)) shouldBe "2"
+    r(arraySum[Long,Long](Some(_ * 2L),arr1)) shouldBe "12"
+    r(arrayCount[Long](Some(_.isEq(2L)),arr1)) shouldBe "1"
+    r(arrayCumSum[Long,Long](Some(_ * 2L),arr1)) shouldBe "[2,6,12]"
+    r(arraySort[Long,Double](Some(_ % 3.0),arr1)) shouldBe "[3,1,2]"
+    r(arrayReverseSort[Long,Int](Some(_ % 3),arr1)) shouldBe "[2,1,3]"
   }
+
   it should "succeed for IPFunctions" in {}
   it should "succeed for JsonFunctions" in {}
   it should "succeed for LogicalFunctions" in {}
