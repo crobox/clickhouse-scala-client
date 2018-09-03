@@ -23,7 +23,12 @@ class InternalExecutorActor(override protected val config: Config)
   override def receive = {
     case Execute(uri: Uri, query) =>
       val eventualResponse =
-        executeRequestInternal(Future.successful(uri), query, QuerySettings(ReadQueries).withFallback(config), None, None)
+        executeRequestInternal(Future.successful(uri),
+                               query,
+                               "internal",
+                               QuerySettings(ReadQueries).withFallback(config),
+                               None,
+                               None)
       splitResponse(eventualResponse) pipeTo sender
     case HealthCheck(uri: Uri) =>
       val request = HttpRequest(method = HttpMethods.GET, uri = uri)

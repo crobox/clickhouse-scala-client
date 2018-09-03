@@ -8,3 +8,4 @@ import akka.http.scaladsl.model.StatusCode
  */
 case class ClickhouseException(message: String, query: String, cause: Throwable = null, statusCode: StatusCode)
     extends RuntimeException(message + s", query $query", cause)
+case class ClickhouseChunkedException(message: String) extends RuntimeException(message)

@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.internal
 
 import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.model.headers.HttpEncodingRange
+import akka.http.scaladsl.model.headers.{HttpEncodingRange, RawHeader}
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity, Uri}
 import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings
 import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings.ReadQueries
@@ -20,24 +20,30 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
 
   protected def toRequest(uri: Uri,
                           query: String,
+                          queryIdentifier: Option[String],
                           settings: QuerySettings = QuerySettings(ReadQueries),
-                          entity: Option[RequestEntity] = None): HttpRequest =
+                          entity: Option[RequestEntity] = None,
+                          progress: Boolean = false): HttpRequest =
     entity match {
       case Some(e) =>
         logger.debug(s"Executing clickhouse query [$query] on host [${uri
           .toString()}] with entity payload of length ${e.contentLengthOption}")
         HttpRequest(
           method = HttpMethods.POST,
-          uri = uri.withQuery(Query(Query("query" -> query) ++ settings.asQueryParams: _*)),
+          uri = uri.withQuery(
+            Query(Query("query" -> query) ++ settings.copy(progressHeaders = Some(progress)).asQueryParams: _*)
+          ),
           entity = e,
-          headers = Headers
+          headers = Headers ++ queryIdentifier.map(RawHeader(ClickHouseExecutor.InternalQueryIdentifier, _))
         )
       case None =>
         logger.debug(s"Executing clickhouse query [$query] on host [${uri.toString()}]")
-        HttpRequest(method = HttpMethods.POST,
-                    uri = uri.withQuery(settings.asQueryParams),
-                    entity = query,
-                    headers = Headers)
+        HttpRequest(
+          method = HttpMethods.POST,
+          uri = uri.withQuery(settings.copy(progressHeaders = Some(progress)).asQueryParams),
+          entity = query,
+          headers = Headers ++ queryIdentifier.map(RawHeader(ClickHouseExecutor.InternalQueryIdentifier, _))
+        )
     }
 
 }
