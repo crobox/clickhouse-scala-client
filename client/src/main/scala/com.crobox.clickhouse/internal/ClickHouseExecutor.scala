@@ -37,7 +37,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
             Try {
               val parsedJson = JSON.parseFull(progressJson).map(_.asInstanceOf[Map[String, String]])
               if (parsedJson.isEmpty || parsedJson.get.size != 3) {
-                throw new IllegalAccessException(s"Cannot extract progress from $parsedJson")
+                throw new IllegalArgumentException(s"Cannot extract progress from $parsedJson")
               } else {
                 val jsonMap = parsedJson.get
                 ClickhouseQueryProgress(
@@ -322,11 +322,11 @@ object ClickHouseExecutor {
             } else {
               if (queryIsInProgress) {
                 queryIsInProgress = false
-                if (byteString.equals(ByteString(Crlf))) {//already marked the end of headers, this must be removed
+                if (byteString.equals(ByteString(Crlf))) { //already marked the end of headers, this must be removed
                   pull(in2)
                 } else {
                   if (byteString.startsWith(Crlf)) {
-                    push(out2, byteString.drop(2))//already marked the end of headers, this must be removed
+                    push(out2, byteString.drop(2)) //already marked the end of headers, this must be removed
                   } else {
                     push(out2, byteString)
                   }
