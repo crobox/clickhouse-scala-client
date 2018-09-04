@@ -62,7 +62,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       }
       .withAttributes(ActorAttributes.supervisionStrategy({
         case ex @ _ =>
-          logger.warn("Failed in the progress streaming", ex)
+          logger.warn("Detected failure in the query progress stream, resuming operation.", ex)
           Supervision.Resume
       }))
       .toMat(BroadcastHub.sink)(Keep.both)
@@ -96,7 +96,6 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
                      entity: Option[RequestEntity] = None,
                      progressQueue: Option[SourceQueueWithComplete[QueryProgress]] = None): Future[String] = {
     val queryIdentifier = Random.alphanumeric.take(20).mkString("")
-    logger.info(s"Executing request with identifier $queryIdentifier")
     executeWithRetries(queryRetries, progressQueue) { () =>
       executeRequestInternal(hostBalancer.nextHost, query, queryIdentifier, settings, entity, progressQueue)
     }.andThen {
