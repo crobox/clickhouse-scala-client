@@ -40,7 +40,7 @@ trait MathematicalFunctionTokenizer {
       case Atan(_)   => "atan"
     }
 
-    fast"$command(${tokenizeColumn(col.column)})"
+    fast"$command(${tokenizeColumn(col.numericCol.column)})"
   }
 
 }

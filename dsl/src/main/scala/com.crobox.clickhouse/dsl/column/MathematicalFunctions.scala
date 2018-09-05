@@ -33,8 +33,8 @@ trait MathematicalFunctions { self: Magnets =>
   case class Atan(col: NumericCol[_])             extends MathTransformation(col)
   case class Pow(x: NumericCol[_], y: NumericCol[_]) extends MathTransformation(x)
 
-  def e(col: NumericCol[_])                = E()
-  def pi(col: NumericCol[_])               = Pi()
+  def e()                                  = E()
+  def pi()                                 = Pi()
   def exp(col: NumericCol[_])              = Exp(col)
   def log(col: NumericCol[_])              = Log(col)
   def exp2(col: NumericCol[_])             = Exp2(col)

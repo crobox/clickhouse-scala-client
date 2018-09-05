@@ -221,10 +221,56 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(arrayReverseSort[Long,Int](Some(_ % 3),arr1)) shouldBe "[2,1,3]"
   }
 
-  it should "succeed for IPFunctions" in {}
-  it should "succeed for JsonFunctions" in {}
-  it should "succeed for LogicalFunctions" in {}
-  it should "succeed for MathFunctions" in {}
+  it should "succeed for IPFunctions" in {
+    val num = toUInt32(1)
+    r(iPv4NumToString(num)) shouldBe "0.0.0.1"
+    r(iPv4StringToNum("0.0.0.1")) shouldBe "1"
+    r(iPv4NumToStringClassC(num)) shouldBe "0.0.0.xxx"
+    r(iPv6NumToString(toFixedString("0",16))) shouldBe "3000::"
+    r(iPv6StringToNum("3000::")) shouldBe "0"
+  }
+  
+  it should "succeed for JsonFunctions" in {
+    val someJson = """{"foo":"bar", "baz":123, "boz":3.1415, "bool":true}"""
+
+    r(visitParamHas(someJson,"foo")) shouldBe "1"
+    r(visitParamExtractUInt(someJson,"baz")) shouldBe "123"
+    r(visitParamExtractInt(someJson,"baz")) shouldBe "123"
+    r(visitParamExtractFloat(someJson,"boz")) shouldBe "3.1415"
+    r(visitParamExtractBool(someJson,"bool")) shouldBe "1"
+    r(visitParamExtractRaw(someJson,"foo")) shouldBe "\"bar\""
+    r(visitParamExtractString(someJson,"foo")) shouldBe "bar"
+  }
+  it should "succeed for LogicalFunctions" in {
+    r(true and true) shouldBe "1"
+    r(true and false) shouldBe "0"
+    r(true or false) shouldBe "1"
+    r(false or false) shouldBe "0"
+    r(true xor true) shouldBe "0"
+  }
+  it should "succeed for MathFunctions" in {
+    r(e()) should startWith("2.718281828")
+    r(pi()) should startWith("3.14159")
+    r(exp(123)) should startWith("2.619")
+    r(log(123)) should startWith("4.812184")
+    r(exp2(123)) should startWith("1.063382396627")
+    r(log2(123)) should startWith("6.9425145")
+    r(exp10(123)) should startWith("1e123")
+    r(log10(123)) should startWith("2.0899")
+    r(sqrt(123)) should startWith("11.090")
+    r(cbrt(123)) should startWith("4.9731")
+    r(erf(123)) shouldBe("1")
+    r(erfc(123)) shouldBe("0")
+    r(lgamma(123)) should startWith("467.41")
+    r(tgamma(123)) should startWith("9.8750")
+    r(sin(123)) should startWith("-0.45990")
+    r(cos(123)) should startWith("-0.88796")
+    r(tan(123)) should startWith("0.51792747")
+    r(asin(1)) should startWith("1.5707")
+    r(acos(1)) shouldBe("0")
+    r(atan(1)) should startWith("0.78539")
+    r(pow(123,2)) shouldBe("15129")
+  }
   it should "succeed for MiscFunctions" in {}
   it should "succeed for RandomFunctions" in {}
   it should "succeed for RoundingFunctions" in {}
