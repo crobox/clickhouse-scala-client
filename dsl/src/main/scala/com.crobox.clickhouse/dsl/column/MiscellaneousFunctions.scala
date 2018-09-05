@@ -28,10 +28,10 @@ trait MiscellaneousFunctions { self: Magnets =>
                               userName: Option[StringColMagnet[_]] = None,
                               passWord: Option[StringColMagnet[_]] = None)
       extends MiscellaneousConst[Boolean]()
-  case class Bar(col: ConstOrColMagnet[_]) extends MiscellaneousOp[String](col)
+  case class Bar(col: NumericCol[_], from: NumericCol[_], to: NumericCol[_], default: Option[NumericCol[_]]) extends MiscellaneousOp[String](col.column)
   case class Transform[L,R](col: ConstOrColMagnet[L],
-                       arrayFrom: ArrayColMagnet[L],
-                       arrayTo: ArrayColMagnet[R],
+                       arrayFrom: ArrayColMagnet[Iterable[L]],
+                       arrayTo: ArrayColMagnet[Iterable[R]],
                        default: ConstOrColMagnet[R])
       extends MiscellaneousOp[Long](col)
   case class FormatReadableSize(col: NumericCol[_])                extends MiscellaneousOp[String](col.column)
@@ -53,7 +53,7 @@ trait MiscellaneousFunctions { self: Magnets =>
   def ignore(coln: ConstOrColMagnet[_]*)     = Ignore(coln: _*)
   def sleep(col: NumericCol[_])              = Sleep(col: NumericCol[_])
   def currentDatabase()                   = CurrentDatabase()
-  def isFinite(col: NumericCol[_])           = IsFinite(col)
+  def isFinite[O](col: NumericCol[O])           = IsFinite(col)
   def isInfinite(col: NumericCol[_])         = IsInfinite(col)
   def isNaN(col: NumericCol[_])              = IsNaN(col: NumericCol[_])
 
@@ -64,9 +64,10 @@ trait MiscellaneousFunctions { self: Magnets =>
                        userName: Option[StringColMagnet[_]] = None,
                        passWord: Option[StringColMagnet[_]] = None) =
     HasColumnInTable(database, table, column, hostName, userName, passWord)
-  def bar(col: ConstOrColMagnet[_]) = Bar(col: ConstOrColMagnet[_])
 
-  def transform[L,R](col: ConstOrColMagnet[L], arrayFrom: ArrayColMagnet[L], arrayTo: ArrayColMagnet[R], default: ConstOrColMagnet[R]) =
+  def bar(col: NumericCol[_],from: NumericCol[_],to: NumericCol[_],default: Option[NumericCol[_]]) = Bar(col, from, to, default)
+
+  def transform[L,R](col: ConstOrColMagnet[L], arrayFrom: ArrayColMagnet[Iterable[L]], arrayTo: ArrayColMagnet[Iterable[R]], default: ConstOrColMagnet[R]) =
     Transform[L,R](col, arrayFrom, arrayTo, default)
   def formatReadableSize(col: NumericCol[_])                = FormatReadableSize(col)
   def least(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_])    = Least(a: ConstOrColMagnet[_], b)

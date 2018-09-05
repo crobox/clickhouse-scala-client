@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.dsl.ExpressionColumn
 
 trait URLFunctions { self: Magnets =>
-  sealed abstract class URLFunction[V](column: StringColMagnet[_]) extends ExpressionColumn[V](column.column)
+  sealed abstract class URLFunction[V](val urlColumn: StringColMagnet[_]) extends ExpressionColumn[V](urlColumn.column)
   abstract class URLStrFunction(col: StringColMagnet[_]) extends URLFunction[String](col)
   abstract class URLArrFunction(col: StringColMagnet[_]) extends URLFunction[Seq[String]](col)
 
@@ -28,7 +28,7 @@ trait URLFunctions { self: Magnets =>
   case class CutQueryString(col: StringColMagnet[_]) extends URLStrFunction(col)
   case class CutFragment(col: StringColMagnet[_]) extends URLStrFunction(col)
   case class CutQueryStringAndFragment(col: StringColMagnet[_]) extends URLStrFunction(col)
-  case class CutURLParameter(col: StringColMagnet[_]) extends URLStrFunction(col)
+  case class CutURLParameter(col: StringColMagnet[_], parameter: StringColMagnet[_]) extends URLStrFunction(col)
 
   def protocol(col: StringColMagnet[_]) = Protocol(col)
   def domain(col: StringColMagnet[_]) = Domain(col)
@@ -52,7 +52,7 @@ trait URLFunctions { self: Magnets =>
   def cutQueryString(col: StringColMagnet[_]) = CutQueryString(col)
   def cutFragment(col: StringColMagnet[_]) = CutFragment(col)
   def cutQueryStringAndFragment(col: StringColMagnet[_]) = CutQueryStringAndFragment(col)
-  def cutURLParameter(col: StringColMagnet[_]) = CutURLParameter(col)
+  def cutURLParameter(col: StringColMagnet[_], parameter: StringColMagnet[_]) = CutURLParameter(col, parameter)
 
 
 

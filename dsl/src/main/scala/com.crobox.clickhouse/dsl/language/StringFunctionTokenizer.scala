@@ -19,11 +19,11 @@ trait StringFunctionTokenizer {
       case Reverse(c)     => fast"reverse(${tokenizeColumn(c.column)})"
       case ReverseUTF8(c) => fast"reverseUTF8(${tokenizeColumn(c.column)})"
       case Concat(c, c2, cn@_*) =>
-        fast"concat(${tokenizeColumn(c.column)}, ${tokenizeColumn(c.column)}${tokenizeSeqCol(cn.map(_.column))})"
+        fast"concat(${tokenizeColumn(c.column)}, ${tokenizeColumn(c2.column)}${tokenizeSeqCol(cn.map(_.column))})"
       case Substring(c, offset, length) =>
         fast"substring(${tokenizeColumn(c.column)},${tokenizeColumn(offset.column)},${tokenizeColumn(length.column)})"
       case SubstringUTF8(c, offset, length)  => fast"substringUTF8(${tokenizeColumn(c.column)},${tokenizeColumn(offset.column)},${tokenizeColumn(length.column)})"
-      case AppendTrailingCharIfAbsent(c, char)         => fast"appendTrailingCharIfAbsent(${tokenizeColumn(c.column)},$char)"
+      case AppendTrailingCharIfAbsent(c, char)         => fast"appendTrailingCharIfAbsent(${tokenizeColumn(c.column)},${tokenizeColumn(char.column)})"
       case ConvertCharset(c, from, to) => fast"convertCharset(${tokenizeColumn(c.column)},${tokenizeColumn(from.column)},${tokenizeColumn(to.column)})"
     }
 }

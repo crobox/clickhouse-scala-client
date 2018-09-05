@@ -29,13 +29,14 @@ trait URLFunctionTokenizer {
       case CutQueryString(_)                 => "cutQueryString"
       case CutFragment(_)                    => "cutFragment"
       case CutQueryStringAndFragment(_)      => "cutQueryStringAndFragment"
-      case CutURLParameter(_)                => "cutURLParameter"
+      case CutURLParameter(_,_)              => "cutURLParameter"
     }
     val tail = col match {
       case ExtractURLParameter(_, c2) => "," + tokenizeColumn(c2.column)
+      case CutURLParameter(_, c2) => "," + tokenizeColumn(c2.column)
       case _                          => ""
     }
 
-    fast"$command(${tokenizeColumn(col)}$tail)"
+    fast"$command(${tokenizeColumn(col.urlColumn.column)}$tail)"
   }
 }

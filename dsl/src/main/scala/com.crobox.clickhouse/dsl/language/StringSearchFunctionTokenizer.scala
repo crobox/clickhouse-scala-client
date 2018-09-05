@@ -12,7 +12,7 @@ trait StringSearchFunctionTokenizer {
       case Position(_, _, false)     => "positionCaseInsensitive"
       case PositionUTF8(_, _, true)  => "positionUTF8"
       case PositionUTF8(_, _, false) => "positionCaseInsensitiveUTF8"
-      case StrMatch(_, _)            => "strMatch"
+      case StrMatch(_, _)            => "match"
       case Extract(_, _)             => "extract"
       case ExtractAll(_, _)          => "extractAll"
       case Like(_, _)                => "like"

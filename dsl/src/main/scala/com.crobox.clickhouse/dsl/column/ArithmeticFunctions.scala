@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
+import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
 
 trait ArithmeticFunctions { self: Magnets =>
@@ -9,11 +9,15 @@ trait ArithmeticFunctions { self: Magnets =>
 
   abstract class ArithmeticFunctionCol[V](val numericCol: NumericCol[_])
     extends ExpressionColumn[V](numericCol.column)
-  with ArithmeticFunction
+  with ArithmeticFunction with NumericCol[V] {
+    override val column = this
+  }
 
   abstract class ArithmeticFunctionOp[V](val left: AddSubtractable[_], val right: AddSubtractable[_])
       extends ExpressionColumn[V](EmptyColumn())
-        with ArithmeticFunction
+        with ArithmeticFunction with NumericCol[V] {
+    override val column = this
+  }
 
   trait AddSubtractOps[L] { self: AddSubtractable[_] =>
     def +[R,O](other: AddSubtractable[R])(implicit ev: AritRetType[L,R,O]) = Plus[O](this, other)
@@ -22,7 +26,7 @@ trait ArithmeticFunctions { self: Magnets =>
 
   trait ArithmeticOps[L] { self: NumericCol[_] =>
     def *[R,O](other: NumericCol[R])(implicit ev: AritRetType[L,R,O]) = Multiply[O](this, other)
-    def /[R,O](other: NumericCol[R])(implicit ev: AritRetType[L,R,O]) = Divide[O](this, other)
+    def /[R,O](other: NumericCol[R])(implicit ev: AritRetType[L,R,O])  = Divide[O](this, other)
     def %[R,O](other: NumericCol[R])(implicit ev: AritRetType[L,R,O]) = Modulo[O](this, other)
   }
 
@@ -41,7 +45,8 @@ trait ArithmeticFunctions { self: Magnets =>
 
   //trait ArithmeticFunctionsDsl {
 
-  sealed trait AritRetType[L,R,O]
+  //TODO: Provide implicit evidence that for O there is a NumericCol typeclass ??
+  sealed abstract class AritRetType[L, R, O]
   implicit object IntIntBinding extends AritRetType[Int,Int,Int]
   implicit object IntLongBinding extends AritRetType[Int,Long,Long]
   implicit object IntDoubleBinding extends AritRetType[Int,Double,Double]

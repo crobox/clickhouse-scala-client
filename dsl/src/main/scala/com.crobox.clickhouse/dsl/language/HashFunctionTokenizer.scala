@@ -9,7 +9,7 @@ trait HashFunctionTokenizer {
 
   def tokenizeHashFunction(col: HashFunction): String = col match {
     case HalfMD5(col: StringColMagnet[_])    => fast"halfMD5(${tokenizeColumn(col.column)})"
-    case MD5(col: StringColMagnet[_])        => fast"mD5(${tokenizeColumn(col.column)})"
+    case MD5(col: StringColMagnet[_])        => fast"MD5(${tokenizeColumn(col.column)})"
     case SipHash64(col: StringColMagnet[_])  => fast"sipHash64(${tokenizeColumn(col.column)})"
     case SipHash128(col: StringColMagnet[_]) => fast"sipHash128(${tokenizeColumn(col.column)})"
     case CityHash64(col1: ConstOrColMagnet[_], coln: Seq[ConstOrColMagnet[_]]) =>

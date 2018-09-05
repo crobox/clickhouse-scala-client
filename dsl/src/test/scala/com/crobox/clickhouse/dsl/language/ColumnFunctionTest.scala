@@ -227,7 +227,7 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(iPv4StringToNum("0.0.0.1")) shouldBe "1"
     r(iPv4NumToStringClassC(num)) shouldBe "0.0.0.xxx"
     r(iPv6NumToString(toFixedString("0",16))) shouldBe "3000::"
-    r(iPv6StringToNum("3000::")) shouldBe "0"
+    r(iPv6StringToNum("3000::")) shouldBe "0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0"
   }
   
   it should "succeed for JsonFunctions" in {
@@ -251,7 +251,7 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
   it should "succeed for MathFunctions" in {
     r(e()) should startWith("2.718281828")
     r(pi()) should startWith("3.14159")
-    r(exp(123)) should startWith("2.619")
+    r(exp(divide[Int,Int,Int](123,1))) should startWith("2.619")
     r(log(123)) should startWith("4.812184")
     r(exp2(123)) should startWith("1.063382396627")
     r(log2(123)) should startWith("6.9425145")
@@ -271,14 +271,179 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(atan(1)) should startWith("0.78539")
     r(pow(123,2)) shouldBe("15129")
   }
-  it should "succeed for MiscFunctions" in {}
-  it should "succeed for RandomFunctions" in {}
-  it should "succeed for RoundingFunctions" in {}
-  it should "succeed for SplitMergeFunctions" in {}
-  it should "succeed for StringFunctions" in {}
-  it should "succeed for StringSearchFunctions" in {}
-  it should "succeed for TypeCastFunctions" in {}
-  it should "succeed for URLFunctions" in {}
+
+  it should "chain expressions" in {
+    r(abs(const(1) / 2 + 3 - 4)) shouldBe "0.5"
+  }
+
+  it should "succeed for MiscFunctions" in {
+    val inf = const(1) / 0
+
+    r(hostName()).length should be > 4
+    r(visibleWidth("1")) shouldBe "1"
+    r(toTypeName(toUInt64(1))) shouldBe "UInt64"
+    r(blockSize()) shouldBe "1"
+    r(materialize(1)) shouldBe "1"
+    //How to test ignore? its overridden by FlatSpecLike
+    //r(ignore()) shouldBe "0"
+    r(sleep(0.1)) shouldBe "0"
+    r(currentDatabase()) shouldBe "default"
+    r(isFinite(inf)) shouldBe "0"
+    r(isInfinite(inf)) shouldBe "1"
+    r(isNaN(0)) shouldBe "0"
+    r(hasColumnInTable("system","one","dummy")) shouldBe "1"
+    r(bar(1,0,100,None)) shouldBe "▋"
+    r(transform[Int,String](1,Seq(3,2,1),Seq("do","re","mi"),"fa")) shouldBe "mi"
+    r(formatReadableSize(1)) shouldBe "1.00 B"
+    r(least(3,2)) shouldBe "2"
+    r(greatest(3,2)) shouldBe "3"
+    r(uptime()).length should be > 0
+    r(version()).length should be > 4
+    r(rowNumberInAllBlocks()) shouldBe "0"
+    r(runningDifference(1)) shouldBe "0"
+    r(mACNumToString(toUInt64(123))) shouldBe "00:00:00:00:00:7B"
+    r(mACStringToNum("00:00:00:00:00:7B")) shouldBe "123"
+    r(mACStringToOUI("00:00:00:00:00:7B")) shouldBe "0"
+  }
+
+  it should "succeed for RandomFunctions" in {
+    r(rand()).length should be > 0
+    r(rand64()).length should be > 0
+  }
+
+  it should "succeed for RoundingFunctions" in {
+    val someNum = const(123.456)
+    r(floor(someNum,2)) shouldBe "123.45"
+    r(ceil(someNum,2)) shouldBe "123.46"
+    r(round(someNum,2)) shouldBe "123.46"
+    r(roundToExp2(someNum)) shouldBe "64"
+    r(roundDuration(someNum)) shouldBe "120"
+    r(roundAge(someNum)) shouldBe "55"
+  }
+
+  it should "succeed for SplitMergeFunctions" in {
+    val theSeqOfStr = Seq("hey","ow","wo","di","ya!")
+
+    val someStr = theSeqOfStr.mkString(",")
+    val someSep = ","
+    val someStrAsArray = "['hey','ow','wo','di','ya!']"
+
+    r(splitByChar(someSep,someStr)) shouldBe someStrAsArray
+    r(splitByString(someSep,someStr)) shouldBe someStrAsArray
+    r(arrayStringConcat(theSeqOfStr,someSep)) shouldBe someStr
+    r(alphaTokens(someStr)) shouldBe someStrAsArray.filterNot(_.equals('!'))
+  }
+
+  it should "succeed for StringFunctions" in {
+    val someStr = const("hello world")
+
+   // r(empty(someStr)) shouldBe "0"
+    r(notEmpty(someStr)) shouldBe "1"
+   // r(length(someStr)) shouldBe "11"
+    r(lengthUTF8(someStr)) shouldBe "11"
+    r(lower(someStr)) shouldBe "hello world"
+    r(upper(someStr)) shouldBe "HELLO WORLD"
+    r(lowerUTF8(someStr)) shouldBe "hello world"
+    r(upperUTF8(someStr)) shouldBe "HELLO WORLD"
+    r(reverse(someStr)) shouldBe "dlrow olleh"
+    r(reverseUTF8(someStr)) shouldBe "dlrow olleh"
+    r(concat(someStr,"!")) shouldBe "hello world!"
+    r(substring(someStr,2,3)) shouldBe "ell"
+    r(substringUTF8(someStr,2,4)) shouldBe "ello"
+    r(appendTrailingCharIfAbsent(someStr,"!")) shouldBe "hello world!"
+//    r(convertCharset(someStr,"UTF8","UTF16")) shouldBe "hello world"
+  }
+
+  it should "succeed for StringSearchFunctions" in {
+    val someStr = const("hello world")
+    val someNeedle = "lo"
+    val replace = "io"
+    r(position(someStr,someNeedle)) shouldBe "4"
+    r(positionCaseInsensitive(someStr,someNeedle)) shouldBe "4"
+    r(positionUTF8(someStr,someNeedle)) shouldBe "4"
+    r(positionUTF8CaseInsensitive(someStr,someNeedle)) shouldBe "4"
+    r(strMatch(someStr,someNeedle)) shouldBe "1"
+    r(extract(someStr,someNeedle)) shouldBe "lo"
+    r(extractAll(someStr,someNeedle)) shouldBe "['lo']"
+    r(like(someStr,someNeedle)) shouldBe "0"
+    r(notLike(someStr,someNeedle)) shouldBe "1"
+    r(replaceOne(someStr,someNeedle,replace)) shouldBe "helio world"
+    r(replaceAll(someStr,someNeedle,replace)) shouldBe "helio world"
+    r(replaceRegexpOne(someStr,someNeedle,replace)) shouldBe "helio world"
+    r(replaceRegexpAll(someStr,someNeedle,replace)) shouldBe "helio world"
+  }
+
+  it should "succeed for TypeCastFunctions" in {
+    val someStringNum = const("123")
+    val someDateStr = const("2018-01-01")
+    val someDateTimeStr = const("2018-01-01 12:00:00")
+
+    r(toTypeName(toUInt8(someStringNum))) shouldBe "UInt8"
+    r(toTypeName(toUInt16(someStringNum))) shouldBe "UInt16"
+    r(toTypeName(toUInt32(someStringNum))) shouldBe "UInt32"
+    r(toTypeName(toUInt64(someStringNum))) shouldBe "UInt64"
+    r(toTypeName(toInt8(someStringNum))) shouldBe "Int8"
+    r(toTypeName(toInt16(someStringNum))) shouldBe "Int16"
+    r(toTypeName(toInt32(someStringNum))) shouldBe "Int32"
+    r(toTypeName(toInt64(someStringNum))) shouldBe "Int64"
+    r(toTypeName(toFloat32(someStringNum))) shouldBe "Float32"
+    r(toTypeName(toFloat64(someStringNum))) shouldBe "Float64"
+    r(toTypeName(toUInt8OrZero(someStringNum))) shouldBe "UInt8"
+    r(toTypeName(toUInt16OrZero(someStringNum))) shouldBe "UInt16"
+    r(toTypeName(toUInt32OrZero(someStringNum))) shouldBe "UInt32"
+    r(toTypeName(toUInt64OrZero(someStringNum))) shouldBe "UInt64"
+    r(toTypeName(toInt8OrZero(someStringNum))) shouldBe "Int8"
+    r(toTypeName(toInt16OrZero(someStringNum))) shouldBe "Int16"
+    r(toTypeName(toInt32OrZero(someStringNum))) shouldBe "Int32"
+    r(toTypeName(toInt64OrZero(someStringNum))) shouldBe "Int64"
+    r(toTypeName(toFloat32OrZero(someStringNum))) shouldBe "Float32"
+    r(toTypeName(toFloat64OrZero(someStringNum))) shouldBe "Float64"
+    r(toTypeName(toDate(someDateStr))) shouldBe "Date"
+    r(toTypeName(toDateTime(someDateTimeStr))) shouldBe "DateTime"
+    r(toTypeName(toStringRep(someStringNum))) shouldBe "String"
+    r(toTypeName(toFixedString(someStringNum,10))) shouldBe "FixedString(10)"
+    r(toTypeName(toStringCutToZero(someStringNum))) shouldBe "String"
+
+    //TODO: Check the other functions!
+  }
+
+  it should "succeed for URLFunctions" in {
+    val someUrl = "https://www.lib.crobox.com/clickhouse/dsl/home.html?search=true#123"
+    val someEncodedUrl = "http://127.0.0.1:8123/?query=SELECT%201%3B"
+    r(protocol(someUrl)) shouldBe "https"
+    r(domain(someUrl)) shouldBe "www.lib.crobox.com"
+    r(domainWithoutWWW(someUrl)) shouldBe "lib.crobox.com"
+    r(topLevelDomain(someUrl)) shouldBe "com"
+    r(firstSignificantSubdomain(someUrl)) shouldBe "crobox"
+    r(cutToFirstSignificantSubdomain(someUrl)) shouldBe "crobox.com"
+    r(path(someUrl)) shouldBe "/clickhouse/dsl/home.html"
+    r(pathFull(someUrl)) shouldBe "/clickhouse/dsl/home.html?search=true#123"
+    r(queryString(someUrl)) shouldBe "search=true"
+    r(fragment(someUrl)) shouldBe "123"
+    r(queryStringAndFragment(someUrl)) shouldBe "search=true#123"
+    r(extractURLParameter(someUrl,"search")) shouldBe "true"
+    r(extractURLParameters(someUrl)) shouldBe "['search=true']"
+    r(extractURLParameterNames(someUrl)) shouldBe "['search']"
+    r(uRLHierarchy(someUrl)) shouldBe "[" +
+      "'https://www.lib.crobox.com/'," +
+      "'https://www.lib.crobox.com/clickhouse/'," +
+      "'https://www.lib.crobox.com/clickhouse/dsl/'," +
+      "'https://www.lib.crobox.com/clickhouse/dsl/home.html?'," +
+      "'https://www.lib.crobox.com/clickhouse/dsl/home.html?search=true#'," +
+      "'https://www.lib.crobox.com/clickhouse/dsl/home.html?search=true#123']"
+    r(uRLPathHierarchy(someUrl)) shouldBe  "[" +
+      "'/clickhouse/'," +
+      "'/clickhouse/dsl/'," +
+      "'/clickhouse/dsl/home.html?'," +
+      "'/clickhouse/dsl/home.html?search=true#'," +
+      "'/clickhouse/dsl/home.html?search=true#123']"
+    r(decodeURLComponent(someEncodedUrl)) shouldBe "http://127.0.0.1:8123/?query=SELECT 1;"
+    r(cutWWW(someUrl)) shouldBe "https://lib.crobox.com/clickhouse/dsl/home.html?search=true#123"
+    r(cutQueryString(someUrl)) shouldBe "https://www.lib.crobox.com/clickhouse/dsl/home.html#123"
+    r(cutFragment(someUrl)) shouldBe "https://www.lib.crobox.com/clickhouse/dsl/home.html?search=true"
+    r(cutQueryStringAndFragment(someUrl)) shouldBe "https://www.lib.crobox.com/clickhouse/dsl/home.html"
+    r(cutURLParameter(someUrl,"search")) shouldBe "https://www.lib.crobox.com/clickhouse/dsl/home.html?#123"
+  }
 
   private def r(query: AnyTableColumn): String = {
     runSql(select(query)).futureValue.trim

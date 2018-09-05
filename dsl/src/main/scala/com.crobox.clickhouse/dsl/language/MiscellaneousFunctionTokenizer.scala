@@ -19,7 +19,10 @@ trait MiscellaneousFunctionTokenizer {
     case IsFinite(col: NumericCol[_])           => fast"isFinite(${tokenizeColumn(col.column)})"
     case IsInfinite(col: NumericCol[_])         => fast"isInfinite(${tokenizeColumn(col.column)})"
     case IsNaN(col: NumericCol[_])              => fast"isNaN(${tokenizeColumn(col.column)})"
-    case Bar(col: ConstOrColMagnet[_])          => fast"bar(${tokenizeColumn(col.column)})"
+    case Bar(col: NumericCol[_],from: NumericCol[_],to: NumericCol[_], default: Option[NumericCol[_]]) => {
+      val defaultPart = default.map(col => "," + tokenizeColumn(col.column)).getOrElse("")
+      fast"bar(${tokenizeColumn(col.column)},${tokenizeColumn(from.column)},${tokenizeColumn(to.column)}${defaultPart})"
+    }
     case Transform(col: ConstOrColMagnet[_],
                    arrayFrom: ArrayColMagnet[_],
                    arrayTo: ArrayColMagnet[_],
@@ -31,9 +34,9 @@ trait MiscellaneousFunctionTokenizer {
     case Greatest(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_]) =>
       fast"greatest(${tokenizeColumn(a.column)},${tokenizeColumn(b.column)})"
     case RunningDifference(col: ConstOrColMagnet[_]) => fast"runningDifference(${tokenizeColumn(col.column)})"
-    case MACNumToString(col: NumericCol[_])          => fast"mACNumToString(${tokenizeColumn(col.column)})"
-    case MACStringToNum(col: StringColMagnet[_])     => fast"mACStringToNum(${tokenizeColumn(col.column)})"
-    case MACStringToOUI(col: StringColMagnet[_])     => fast"mACStringToOUI(${tokenizeColumn(col.column)})"
+    case MACNumToString(col: NumericCol[_])          => fast"MACNumToString(${tokenizeColumn(col.column)})"
+    case MACStringToNum(col: StringColMagnet[_])     => fast"MACStringToNum(${tokenizeColumn(col.column)})"
+    case MACStringToOUI(col: StringColMagnet[_])     => fast"MACStringToOUI(${tokenizeColumn(col.column)})"
   }
 
   def tokenizeMiscConst(const: MiscellaneousConst[_]): String = const match {
