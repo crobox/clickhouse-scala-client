@@ -45,7 +45,6 @@ trait ArithmeticFunctions { self: Magnets =>
 
   //trait ArithmeticFunctionsDsl {
 
-  //TODO: Provide implicit evidence that for O there is a NumericCol typeclass ??
   sealed abstract class AritRetType[L, R, O]
   implicit object IntIntBinding extends AritRetType[Int,Int,Int]
   implicit object IntLongBinding extends AritRetType[Int,Long,Long]

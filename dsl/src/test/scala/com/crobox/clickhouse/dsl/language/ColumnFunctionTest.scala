@@ -1,11 +1,16 @@
 package com.crobox.clickhouse.dsl.language
 
+import java.util.UUID
+
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
+//This import is used to leverage path dependant types, as we are in conflict with scalatest on some function names
+import com.crobox.clickhouse.{dsl => CHDsl}
 import com.crobox.clickhouse.dsl.column._
 import com.crobox.clickhouse.dsl.execution.ClickhouseQueryExecutor
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
+import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import org.joda.time._
 import org.joda.time.format.DateTimeFormat
@@ -180,27 +185,27 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(hex(12)) shouldBe "0C"
     r(unhex("0C")) shouldBe "12"
 
-    //TODO: Eek, something with bytes
-//    val someUUID = UUID.randomUUID()
-//    r(uUIDNumToString(uUIDStringToNum(someUUID))) shouldBe someUUID
-//    r(uUIDNumToString("3"))
-//    r(bitmaskToList("255.255.255.0"))
-//    r(bitmaskToArray("3"))
+    
+    val someUUID = UUID.randomUUID()
+    r(uUIDNumToString(someUUID)).nonEmpty shouldBe true
+    r(uUIDStringToNum(someUUID)).nonEmpty shouldBe true
+    r(bitmaskToList(2)).nonEmpty shouldBe true
+    r(bitmaskToArray(2)).nonEmpty shouldBe true
   }
   it should "succeed for HashFunctions" in {
     val someStringData = "fooBarBaz"
 
-    //TODO these also return the byte format
+    //TODO these also return the byte format, can we more properly test them?
     r(halfMD5(someStringData)) shouldBe "14009637059544572277"
-    r(mD5(someStringData)) shouldBe ""
-    r(sipHash64(someStringData)) shouldBe ""
-    r(sipHash128(someStringData)) shouldBe ""
-    r(cityHash64(someStringData)) shouldBe ""
-    r(intHash32(1234)) shouldBe ""
-    r(intHash64(1234)) shouldBe ""
-    r(sHA1(someStringData)) shouldBe ""
-    r(sHA224(someStringData)) shouldBe ""
-    r(sHA256(someStringData)) shouldBe ""
+    r(mD5(someStringData)).nonEmpty shouldBe true
+    r(sipHash64(someStringData)).nonEmpty shouldBe true
+    r(sipHash128(someStringData)).nonEmpty shouldBe true
+    r(cityHash64(someStringData)).nonEmpty shouldBe true
+    r(intHash32(1234)).nonEmpty shouldBe true
+    r(intHash64(1234)).nonEmpty shouldBe true
+    r(sHA1(someStringData)).nonEmpty shouldBe true
+    r(sHA224(someStringData)).nonEmpty shouldBe true
+    r(sHA256(someStringData)).nonEmpty shouldBe true
 
     r(uRLHash("http://www.google.nl/search",1))
   }
@@ -241,13 +246,17 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(visitParamExtractRaw(someJson,"foo")) shouldBe "\"bar\""
     r(visitParamExtractString(someJson,"foo")) shouldBe "bar"
   }
+
   it should "succeed for LogicalFunctions" in {
     r(true and true) shouldBe "1"
     r(true and false) shouldBe "0"
     r(true or false) shouldBe "1"
     r(false or false) shouldBe "0"
     r(true xor true) shouldBe "0"
+    r( true xor true) shouldBe "0"
+    r(CHDsl.not(true)) shouldBe "0"
   }
+
   it should "succeed for MathFunctions" in {
     r(e()) should startWith("2.718281828")
     r(pi()) should startWith("3.14159")
@@ -284,8 +293,7 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(toTypeName(toUInt64(1))) shouldBe "UInt64"
     r(blockSize()) shouldBe "1"
     r(materialize(1)) shouldBe "1"
-    //How to test ignore? its overridden by FlatSpecLike
-    //r(ignore()) shouldBe "0"
+    r(CHDsl.ignore()) shouldBe "0"
     r(sleep(0.1)) shouldBe "0"
     r(currentDatabase()) shouldBe "default"
     r(isFinite(inf)) shouldBe "0"
@@ -337,9 +345,9 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
   it should "succeed for StringFunctions" in {
     val someStr = const("hello world")
 
-   // r(empty(someStr)) shouldBe "0"
+    r(CHDsl.empty(someStr)) shouldBe "0"
     r(notEmpty(someStr)) shouldBe "1"
-   // r(length(someStr)) shouldBe "11"
+    r(CHDsl.length(someStr)) shouldBe "11"
     r(lengthUTF8(someStr)) shouldBe "11"
     r(lower(someStr)) shouldBe "hello world"
     r(upper(someStr)) shouldBe "HELLO WORLD"
@@ -351,7 +359,7 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(substring(someStr,2,3)) shouldBe "ell"
     r(substringUTF8(someStr,2,4)) shouldBe "ello"
     r(appendTrailingCharIfAbsent(someStr,"!")) shouldBe "hello world!"
-//    r(convertCharset(someStr,"UTF8","UTF16")) shouldBe "hello world"
+//    r(convertCharset(someStr,"UTF16","UTF8")) shouldBe "hello world"
   }
 
   it should "succeed for StringSearchFunctions" in {
@@ -403,8 +411,8 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(toTypeName(toStringRep(someStringNum))) shouldBe "String"
     r(toTypeName(toFixedString(someStringNum,10))) shouldBe "FixedString(10)"
     r(toTypeName(toStringCutToZero(someStringNum))) shouldBe "String"
-
-    //TODO: Check the other functions!
+    r(reinterpret(toStringRep(65))) shouldBe "A"
+    r(toTypeName(cast(someStringNum,ColumnType.Int32))) shouldBe "Int32"
   }
 
   it should "succeed for URLFunctions" in {

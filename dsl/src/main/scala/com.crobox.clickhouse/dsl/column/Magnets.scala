@@ -18,7 +18,7 @@ trait Magnets { self: ArithmeticFunctions with ComparisonFunctions with LogicalF
     val column: TableColumn[C]
   }
 
-  sealed trait ConstOrColMagnet[C] extends Magnet[C]
+  trait ConstOrColMagnet[C] extends Magnet[C]
 
   implicit def constOrColMagnetFromCol[C](s: TableColumn[C]) =
     new ConstOrColMagnet[C] {

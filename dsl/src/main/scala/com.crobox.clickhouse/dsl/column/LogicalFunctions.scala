@@ -17,10 +17,12 @@ trait LogicalFunctions { this: Magnets =>
   case class And(_left: NumericCol[_], _right: NumericCol[_]) extends LogicalFunction(_left, _right)
   case class Or(_left: NumericCol[_], _right: NumericCol[_])  extends LogicalFunction(_left, _right)
   case class Xor(_left: NumericCol[_], _right: NumericCol[_]) extends LogicalFunction(_left, _right)
+  case class Not(col: NumericCol[_]) extends ExpressionColumn[Boolean](col.column)
 
   def and(_left: NumericCol[_], _right: NumericCol[_]) = And(_left, _right)
   def or(_left: NumericCol[_], _right: NumericCol[_])  = Or(_left, _right)
   def xor(_left: NumericCol[_], _right: NumericCol[_]) = Xor(_left, _right)
+  def not(col: NumericCol[_]) = Not(col)
 
   /*
   and()

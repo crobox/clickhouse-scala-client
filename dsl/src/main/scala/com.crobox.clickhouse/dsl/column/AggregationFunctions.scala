@@ -13,7 +13,7 @@ trait AggregationFunctions
   with Leveled
   with AggregationFunctionsCombiners { self: Magnets with ClickhouseColumnFunctions =>
 
-  //TODO: Magnetize
+  //TODO: Magnetize?
   // Aggregate functions are a whole different beast, they are intercompatible and type passing in a different way then
   // what most other functions work like
 

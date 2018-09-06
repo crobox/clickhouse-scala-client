@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.ExpressionColumn
+import com.crobox.clickhouse.dsl.{ExpressionColumn, TableColumn}
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
 
@@ -61,7 +61,9 @@ trait TypeCastFunctions { self: Magnets =>
   case class StringCutToZero(tableColumn: ConstOrColMagnet[_])     extends TypeCastColumn[String](tableColumn)
 
   case class Cast[T](tableColumn: ConstOrColMagnet[_], simpleColumnType: SimpleColumnType)
-      extends TypeCastColumn[T](tableColumn)
+      extends TypeCastColumn[T](tableColumn) with ConstOrColMagnet[T] {
+    override  val column: TableColumn[T] = this
+  }
 
   sealed trait CastOutBind[I, O]
   implicit object UInt8CastOutBind       extends CastOutBind[ColumnType.UInt8.type, Int]

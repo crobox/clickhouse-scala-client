@@ -7,6 +7,12 @@ trait LogicalFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 //TODO find the right place to add braces, so retain the right order of execution
 
+  def tokenizeLogicalFunction(col: ExpressionColumn[Boolean]): String = col match {
+    case Not(col: NumericCol[_]) =>
+      fast"not(${tokenizeColumn(col.column)})"
+    case col: LogicalFunction =>
+      tokenizeLogicalFunction(col)
+  }
   def tokenizeLogicalFunction(col: LogicalFunction): String = col match {
     case And(_left: NumericCol[_], _right: NumericCol[_]) =>
       fast"and(${tokenizeColumn(_left.column)},${tokenizeColumn(_right.column)})"
