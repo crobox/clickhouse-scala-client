@@ -1,12 +1,12 @@
 package com.crobox.clickhouse.internal
 
 import akka.http.scaladsl.coding.Gzip
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{HttpEncoding, HttpEncodings}
-import akka.http.scaladsl.model.{HttpResponse, ResponseEntity, StatusCodes, Uri}
 import akka.stream.Materializer
 import akka.stream.scaladsl.SourceQueue
 import akka.util.ByteString
-import com.crobox.clickhouse.ClickhouseException
+import com.crobox.clickhouse.{ClickhouseChunkedException, ClickhouseException}
 import com.crobox.clickhouse.internal.ClickHouseExecutor._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -14,11 +14,11 @@ import scala.util.{Failure, Success}
 
 private[clickhouse] trait ClickhouseResponseParser {
   protected implicit val executionContext: ExecutionContext
-//TODO process the X-Clickhouse-Progress headers and send progress events
+
   protected def processClickhouseResponse(responseFuture: Future[HttpResponse],
-                               query: String,
-                               host: Uri,
-                               progressQueue: Option[SourceQueue[QueryProgress]])(
+                                          query: String,
+                                          host: Uri,
+                                          progressQueue: Option[SourceQueue[QueryProgress]])(
       implicit materializer: Materializer
   ): Future[String] =
     responseFuture.flatMap { response =>
@@ -26,19 +26,29 @@ private[clickhouse] trait ClickhouseResponseParser {
       response match {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
           progressQueue.foreach(_.offer(QueryAccepted))
-          entityToString(entity, encoding).andThen {
-            case Success(_) =>
-              progressQueue.foreach(queue => {
-                queue.offer(QueryFinished)
-              })
-            case Failure(exception) =>
-              progressQueue.foreach(queue => {
-                queue.offer(QueryFailed(exception))
-              })
-          }
+          entityToString(entity, encoding, progressQueue)
+            .map(content => {
+              if (content.contains("DB::Exception")) { //FIXME this is quite a fragile way to detect failures, hopefully nobody will have a valid exception string in the result. Check https://github.com/yandex/ClickHouse/issues/2999
+                throw ClickhouseException("Found exception in the query return body",
+                                          query,
+                                          ClickhouseChunkedException(content),
+                                          StatusCodes.OK)
+              }
+              content
+            })
+            .andThen {
+              case Success(_) =>
+                progressQueue.foreach(queue => {
+                  queue.offer(QueryFinished)
+                })
+              case Failure(exception) =>
+                progressQueue.foreach(queue => {
+                  queue.offer(QueryFailed(exception))
+                })
+            }
         case HttpResponse(code, _, entity, _) =>
           progressQueue.foreach(_.offer(QueryRejected))
-          entityToString(entity, encoding)
+          entityToString(entity, encoding, progressQueue)
             .flatMap(
               response =>
                 Future.failed(
@@ -48,8 +58,11 @@ private[clickhouse] trait ClickhouseResponseParser {
       }
     }
 
-  protected def entityToString(entity: ResponseEntity,
-                               encoding: HttpEncoding)(implicit materializer: Materializer): Future[String] =
+  protected def entityToString(
+      entity: ResponseEntity,
+      encoding: HttpEncoding,
+      progressQueue: Option[SourceQueue[QueryProgress]]
+  )(implicit materializer: Materializer): Future[String] =
     entity.dataBytes
       .runFold(ByteString(""))(_ ++ _)
       .flatMap { byteString =>

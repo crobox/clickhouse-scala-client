@@ -6,7 +6,6 @@ import com.crobox.clickhouse.internal.ClickHouseExecutor.{QueryAccepted, QueryFi
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import com.crobox.clickhouse.{DslLanguage, TestSchemaClickhouseQuerySpec}
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
 
 class ClickhouseQueryExecutorIT
@@ -15,12 +14,8 @@ class ClickhouseQueryExecutorIT
     with ScalaFutures
     with DslLanguage {
   import scala.concurrent.ExecutionContext.Implicits.global
-  implicit override val patienceConfig =
-    PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
-
   implicit val materializer = ActorMaterializer()
   case class Result(one: Int)
-
   object Result {
     implicit val format = jsonFormat1(Result.apply)
   }

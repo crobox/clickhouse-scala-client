@@ -95,7 +95,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
   def sourceByteString(sql: String): Source[ByteString, NotUsed] =
     Source
       .fromFuture(hostBalancer.nextHost.flatMap { host =>
-        singleRequest(toRequest(host, sql, QuerySettings(ReadQueries)))
+        singleRequest(toRequest(host, sql, None, QuerySettings(ReadQueries)))
       })
       .flatMapConcat(response => response.entity.withoutSizeLimit().dataBytes)
 
