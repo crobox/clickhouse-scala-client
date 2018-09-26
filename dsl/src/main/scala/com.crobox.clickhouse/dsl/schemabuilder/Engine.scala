@@ -181,7 +181,7 @@ object Engine {
 
       val replicationArgs = (
         Seq(zookeeperPath, replicaName).map(StringQueryValue(_)
-        ) ++ summingColArg).mkString(", ")
+      ) ++ summingColArg).mkString(", ")
 
       s"""Replicated${engine.name}($replicationArgs)
          |${engine.statements.mkString("\n")}""".stripMargin
