@@ -174,15 +174,17 @@ object Engine {
 
   case class Replicated(zookeeperPath: String, replicaName: String, engine: MergeTreeEngine) extends Engine {
     override def toString: String = {
-      val summingColArg = Seq(engine).collect { case s:SummingMergeTree => "(" + s.summingColumns.map(_.name).mkString(", ") + ")"}
+      val summingColArg = Seq(engine).collect {
+        case s:SummingMergeTree if s.summingColumns.nonEmpty =>
+          "(" + s.summingColumns.map(_.name).mkString(", ") + ")"
+      }
 
       val replicationArgs = (
         Seq(zookeeperPath, replicaName).map(StringQueryValue(_)
-      ) ++ summingColArg).mkString(", ")
+        ) ++ summingColArg).mkString(", ")
 
       s"""Replicated${engine.name}($replicationArgs)
          |${engine.statements.mkString("\n")}""".stripMargin
     }
   }
-
 }
