@@ -17,7 +17,7 @@ import scala.concurrent.Future
  * The progress headers are being intercepted by the transport and sent to an internal source as progress events with the internal query id which will be used to route them to the query progress source
  * We just proxy the request/response and do not manipulate them in any way
  * */
-class ProgressHeadersAsBodyClientTransport(source: SourceQueue[String]) extends ClientTransport {
+class StreamingProgressClickhouseTransport(source: SourceQueue[String]) extends ClientTransport {
   override def connectTo(
       host: String,
       port: Int,

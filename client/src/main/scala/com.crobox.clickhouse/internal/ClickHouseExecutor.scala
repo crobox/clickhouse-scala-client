@@ -74,7 +74,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   lazy val superPoolSettings: ConnectionPoolSettings = ConnectionPoolSettings(system)
     .withConnectionSettings(
       ClientConnectionSettings(system)
-        .withTransport(new ProgressHeadersAsBodyClientTransport(progressQueue))
+        .withTransport(new StreamingProgressClickhouseTransport(progressQueue))
     )
   private lazy val pool = Http().superPool[Promise[HttpResponse]](settings = superPoolSettings)
   protected lazy val bufferSize: Int =
