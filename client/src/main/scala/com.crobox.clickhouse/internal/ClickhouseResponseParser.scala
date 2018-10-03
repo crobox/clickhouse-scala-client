@@ -25,7 +25,6 @@ private[clickhouse] trait ClickhouseResponseParser {
       val encoding = response.encoding
       response match {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
-          progressQueue.foreach(_.offer(QueryAccepted))
           entityToString(entity, encoding, progressQueue)
             .map(content => {
               if (content.contains("DB::Exception")) { //FIXME this is quite a fragile way to detect failures, hopefully nobody will have a valid exception string in the result. Check https://github.com/yandex/ClickHouse/issues/2999
