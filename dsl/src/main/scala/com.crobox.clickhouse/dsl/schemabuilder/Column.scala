@@ -18,7 +18,7 @@ object ColumnType {
 
   case object UInt8 extends SimpleColumnType("UInt8")
 
-  val Boolean = UInt8
+  val Boolean: ColumnType = UInt8
 
   case object UInt16 extends SimpleColumnType("UInt16")
 
@@ -30,29 +30,32 @@ object ColumnType {
 
   case object Int16 extends SimpleColumnType("Int16")
 
-  val Short = Int16
+  val Short: ColumnType = Int16
 
   case object Int32 extends SimpleColumnType("Int32")
 
-  val Int = Int32
+  val Int: ColumnType = Int32
   
   case object Int64 extends SimpleColumnType("Int64")
 
-  val Long = Int64
+  val Long: ColumnType = Int64
   
   case object Float32 extends SimpleColumnType("Float32")
 
-  val Float = Float32
+  val Float: ColumnType = Float32
 
   case object Float64 extends SimpleColumnType("Float64")
 
-  val Double = Float64
+  val Double: ColumnType = Float64
 
   case object String extends SimpleColumnType("String")
 
   case class FixedString(length: Int) extends SimpleColumnType(s"FixedString($length)")
 
-  val Uuid = String
+  @deprecated("Use the native UUID type instead of String", "1-10-2018")
+  val Uuid: ColumnType = String
+
+  case object UUID extends SimpleColumnType("UUID")
 
   case object Date extends SimpleColumnType("Date")
 
