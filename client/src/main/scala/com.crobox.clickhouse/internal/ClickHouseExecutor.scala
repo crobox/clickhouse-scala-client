@@ -29,8 +29,10 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   lazy val (progressQueue, progressSource) = {
     val builtSource = Source
       .queue[String](1000, OverflowStrategy.dropHead)
-      .map(queryAndProgress => {
+      .map[Option[ClickhouseQueryProgress]](queryAndProgress => {
         queryAndProgress.split("\n", 2).toList match {
+          case queryId :: ProgressHeadersAsEventsStage.AcceptedMark :: Nil =>
+            Some(ClickhouseQueryProgress(queryId, QueryAccepted))
           case queryId :: progressJson :: Nil =>
             Try {
               val parsedJson = JSON.parseFull(progressJson).map(_.asInstanceOf[Map[String, String]])
@@ -72,7 +74,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   lazy val superPoolSettings: ConnectionPoolSettings = ConnectionPoolSettings(system)
     .withConnectionSettings(
       ClientConnectionSettings(system)
-        .withTransport(new ProgressHeadersAsBodyClientTransport(progressQueue))
+        .withTransport(new StreamingProgressClickhouseTransport(progressQueue))
     )
   private lazy val pool = Http().superPool[Promise[HttpResponse]](settings = superPoolSettings)
   protected lazy val bufferSize: Int =
@@ -182,7 +184,7 @@ object ClickHouseExecutor {
   case class QueryFailed(cause: Throwable)                  extends QueryProgress
   case class QueryRetry(cause: Throwable, retryNumber: Int) extends QueryProgress
 
-  case class ClickhouseQueryProgress(identifier: String, progress: Progress)
+  case class ClickhouseQueryProgress(identifier: String, progress: QueryProgress)
   case class Progress(rowsRead: Long, bytesRead: Long, totalRows: Long) extends QueryProgress
 
   case class QuerySettings(readOnly: ReadOnlySetting,
@@ -220,7 +222,6 @@ object ClickHouseExecutor {
     private def path(setting: String) = s"crobox.clickhouse.client.settings.$setting"
 
   }
-
 
   object QuerySettings {
     sealed trait ReadOnlySetting {
