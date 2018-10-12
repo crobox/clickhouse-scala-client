@@ -27,7 +27,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   override def toSql(query: InternalQuery,
                      formatting: Option[String] = Some("JSON"))(implicit database: Database): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = (toRawSql(query) + formatSql).replaceAll("\n", "").replaceAll("\r", "").trim().replaceAll(" +", " ")
+    val sql       = (toRawSql(query) + formatSql)
     logger.debug(fast"Generated sql [$sql]")
     sql
   }
@@ -47,7 +47,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
            | ${tokenizeLimit(limit)}
-           |${tokenizeUnionAll(union)}""".toString.trim.stripMargin
+           |${tokenizeUnionAll(union)}""".toString.trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "").trim().replaceAll(" +", " ")
     }
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit database: Database) =
@@ -58,7 +58,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       ""
     }
 
-  private def tokenizeSelect(select: Option[SelectQuery]) =
+  private def tokenizeSelect(select: Option[SelectQuery])(implicit database: Database) =
     select match {
       case Some(s) => fast"SELECT ${s.modifier} ${tokenizeColumns(s.columns)}"
       case _       => ""
@@ -80,7 +80,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
 
   private def tokenizeFinal(asFinal: Boolean): String = if (asFinal) "FINAL" else ""
 
-  protected def tokenizeColumn(column: AnyTableColumn): String = {
+  protected def tokenizeColumn(column: AnyTableColumn)(implicit database: Database): String = {
     require(column != null)
     column match {
       case AliasedColumn(original, alias) =>
@@ -93,7 +93,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     }
   }
 
-  private def tokenizeExpressionColumn(col: ExpressionColumn[_]): String =
+  private def tokenizeExpressionColumn(col: ExpressionColumn[_])(implicit database: Database): String =
     col match {
       case ar: ArithmeticFunction[_] => tokenizeArithmeticFunction(ar)
       case agg: AggregateFunction[_] => tokenizeAggregateFunction(agg)
@@ -114,10 +114,11 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
           .map(ccase => fast"WHEN ${tokenizeCondition(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
           .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
       case c: Const[_] => c.parsed
+      case QueryColumn(query) => s"(${toRawSql(query.internalQuery)})"
     }
 
   //FIXME: Temporary until changes from voc update feature/voc-typed-magnets
-  private def tokenizeArithmeticFunction(col: ArithmeticFunction[_]): String = col match {
+  private def tokenizeArithmeticFunction(col: ArithmeticFunction[_])(implicit database: Database): String = col match {
     case Multiply(left: AnyTableColumn, right: AnyTableColumn) =>
       fast"multiply(${tokenizeColumn(left)},${tokenizeColumn(right)})"
     case Divide(left: AnyTableColumn, right: AnyTableColumn) =>
@@ -128,7 +129,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       fast"minus(${tokenizeColumn(left)},${tokenizeColumn(right)})"
   }
 
-  private def tokenizeTypeCastColumn(col: TypeCastColumn[_]): String = {
+  private def tokenizeTypeCastColumn(col: TypeCastColumn[_])(implicit database: Database): String = {
     def tknz(orZero: Boolean): String =
       if (orZero) "OrZero" else ""
 
@@ -156,7 +157,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     }
   }
 
-  private def tokenizeAggregateFunction(agg: AggregateFunction[_]): String =
+  private def tokenizeAggregateFunction(agg: AggregateFunction[_])(implicit database: Database): String =
     agg match {
       case nested: CombinedAggregatedFunction[_, _] =>
         val tokenizedCombinators = collectCombinators(nested).map(tokenizeCombinator)
@@ -183,7 +184,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case value                                     => value
     }
 
-  private def tokenizeInnerAggregatedFunction(agg: AggregateFunction[_]): (String, String) =
+  private def tokenizeInnerAggregatedFunction(agg: AggregateFunction[_])(implicit database: Database): (String, String) =
     agg match {
       case Avg(column)   => ("avg", tokenizeColumn(column))
       case Count(column) => ("count", tokenizeColumn(column.getOrElse(EmptyColumn())))
@@ -211,7 +212,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
         throw new IllegalArgumentException(s"Cannot use $f aggregated function with combinator")
     }
 
-  def tokenizeLevelModifier(level: LevelModifier): (String, Option[String]) =
+  def tokenizeLevelModifier(level: LevelModifier)(implicit database: Database): (String, Option[String]) =
     level match {
       case Leveled.Simple                      => ("", None)
       case Leveled.Deterministic(determinator) => ("Deterministic", Some(tokenizeColumn(determinator)))
@@ -245,7 +246,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case AnyResult.Last   => "Last"
     }
 
-  private def tokenizeCombinator(combinator: AggregateFunction.Combinator[_, _]): (String, Option[String]) =
+  private def tokenizeCombinator(combinator: AggregateFunction.Combinator[_, _])(implicit database: Database): (String, Option[String]) =
     combinator match {
       case If(condition)     => ("If", Some(tokenizeCondition(condition)))
       case CombinatorArray() => ("Array", None)
@@ -254,7 +255,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case Merge()           => ("Merge", None)
     }
 
-  private[language] def tokenizeTimeSeries(timeSeries: TimeSeries): String = {
+  private[language] def tokenizeTimeSeries(timeSeries: TimeSeries)(implicit database: Database): String = {
     val column = tokenizeColumn(timeSeries.tableColumn)
     tokenizeDuration(timeSeries, column)
   }
@@ -330,10 +331,10 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
         fast"${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin))} USING ${tokenizeColumns(usingCols)}"
     }
 
-  private def tokenizeColumns(columns: Set[AnyTableColumn]): String =
+  private def tokenizeColumns(columns: Set[AnyTableColumn])(implicit database: Database): String =
     columns.map(tokenizeColumn).mkString(", ")
 
-  private def tokenizeColumns(columns: Seq[AnyTableColumn]): String =
+  private def tokenizeColumns(columns: Seq[AnyTableColumn])(implicit database: Database): String =
     columns
       .filterNot {
         case _: EmptyColumn => true
@@ -352,13 +353,13 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case AllInnerJoin => "ALL INNER JOIN"
     }
 
-  private def tokenizeFiltering(maybeCondition: Option[dsl.Comparison], keyword: String): String =
+  private def tokenizeFiltering(maybeCondition: Option[dsl.Comparison], keyword: String)(implicit database: Database): String =
     maybeCondition match {
       case None            => ""
       case Some(condition) => fast"$keyword ${tokenizeCondition(condition)}"
     }
 
-  protected def tokenizeCondition(condition: Comparison): String =
+  protected def tokenizeCondition(condition: Comparison)(implicit database: Database): String =
     condition match {
       case _: NoOpComparison                             => ""
       case ColRefColumnComparison(left, operator, right) => fast"${aliasOrName(left)} $operator ${aliasOrName(right)}"
@@ -376,13 +377,13 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
         fast"${tokenizeCondition(left)} $operator ${tokenizeCondition(right)}"
     }
 
-  private def tokenizeGroupBy(groupBy: Seq[AnyTableColumn]): String =
+  private def tokenizeGroupBy(groupBy: Seq[AnyTableColumn])(implicit database: Database): String =
     groupBy.toList match {
       case Nil | null => ""
       case _          => fast"GROUP BY ${tokenizeColumnsAliased(groupBy)}"
     }
 
-  private def tokenizeOrderBy(orderBy: Seq[(AnyTableColumn, OrderingDirection)]): String =
+  private def tokenizeOrderBy(orderBy: Seq[(AnyTableColumn, OrderingDirection)])(implicit database: Database): String =
     orderBy.toList match {
       case Nil | null => ""
       case _          => fast"ORDER BY ${tokenizeTuplesAliased(orderBy)}"
@@ -394,10 +395,10 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       case Some(Limit(size, offset)) => fast" LIMIT $offset, $size"
     }
 
-  private def tokenizeColumnsAliased(columns: Seq[AnyTableColumn]): String =
+  private def tokenizeColumnsAliased(columns: Seq[AnyTableColumn])(implicit database: Database): String =
     columns.map(aliasOrName).mkString(", ")
 
-  private def tokenizeTuplesAliased(columns: Seq[(AnyTableColumn, OrderingDirection)]): String =
+  private def tokenizeTuplesAliased(columns: Seq[(AnyTableColumn, OrderingDirection)])(implicit database: Database): String =
     columns
       .map {
         case (column, dir) =>
@@ -405,9 +406,10 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
       }
       .mkString(", ")
 
-  private def aliasOrName(column: AnyTableColumn) =
+  private def aliasOrName(column: AnyTableColumn)(implicit database: Database) =
     column match {
       case AliasedColumn(_, alias)       => alias
+      case QueryColumn(query) => s"(${toRawSql(query.internalQuery)})"
       case regularColumn: AnyTableColumn => regularColumn.name
     }
 

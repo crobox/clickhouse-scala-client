@@ -151,12 +151,12 @@ class ClickhouseTimeSeriesIT
 
   "Grouping on quarters" should "properly group intervals" in {
     forAll(Table("Quarters", 1, 2, 3, 4)) { duration =>
-      val multiInterval = MultiInterval(startInterval, lastDayIntervalDate, MultiDuration(duration,TimeUnit.Quarter))
+      val multiInterval = MultiInterval(startInterval, lastDayIntervalDate, MultiDuration(duration, TimeUnit.Quarter))
 
       forAll(Table("Timezone", multiInterval, shiftedTz(multiInterval))) { multiInterval =>
         val results: Future[QueryResult[Result]] = getEntries(multiInterval, dayId)
-        val expectedIntervalStarts = multiInterval.subIntervals().map(_.getStart.withZone(DateTimeZone.UTC))
-        val rows = results.futureValue.rows
+        val expectedIntervalStarts               = multiInterval.subIntervals().map(_.getStart.withZone(DateTimeZone.UTC))
+        val rows                                 = results.futureValue.rows
         rows
           .drop(1)
           .dropRight(1)

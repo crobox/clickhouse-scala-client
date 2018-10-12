@@ -2,6 +2,7 @@ package com.crobox.clickhouse.dsl.language
 
 import java.util.UUID
 
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 import com.crobox.clickhouse.dsl.{
   AggregateFunction,
@@ -79,8 +80,9 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val uuid   = UUID.randomUUID()
     val query = testSubject.toSql(
       InternalQuery(Some(select),
-                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,Some(shieldId < uuid and shieldId < itemId))
+                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                    false,
+                    Some(shieldId < uuid and shieldId < itemId))
     )
     query should be(
       s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
@@ -93,8 +95,9 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val uuid   = UUID.randomUUID()
     val query = testSubject.toSql(
       InternalQuery(Some(select),
-                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,Some(shieldId < uuid and NoOpComparison()))
+                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                    false,
+                    Some(shieldId < uuid and NoOpComparison()))
     )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -104,8 +107,9 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val uuid   = UUID.randomUUID()
     val query = testSubject.toSql(
       InternalQuery(Some(select),
-                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,Some(NoOpComparison() and shieldId < uuid))
+                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                    false,
+                    Some(NoOpComparison() and shieldId < uuid))
     )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -193,9 +197,17 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
 
   "build time series" should "use zone name for monthly" in {
     this.tokenizeTimeSeries(
-      TimeSeries(timestampColumn, MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
-                            DateTime.now(DateTimeZone.forOffsetHours(2)),
-                            MultiDuration(TimeUnit.Month)))
+      TimeSeries(
+        timestampColumn,
+        MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
+                      DateTime.now(DateTimeZone.forOffsetHours(2)),
+                      MultiDuration(TimeUnit.Month))
+      )
     ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Africa/Maputo'), 'Africa/Maputo')"
+  }
+
+  "build nested query" should "select column as condition" in {
+    val col = new TableColumn[Seq[Int]]("other_table_col") {}
+    this.tokenizeCondition(col.exists(_.isEq(query[Int](select(max(col2)).from(OneTestTable))))) shouldBe "arrayExists(x -> x = (SELECT max(column_2) FROM default.captainAmerica), other_table_col)"
   }
 }
