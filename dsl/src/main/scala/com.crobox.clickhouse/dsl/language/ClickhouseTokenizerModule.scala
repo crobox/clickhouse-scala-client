@@ -27,7 +27,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   override def toSql(query: InternalQuery,
                      formatting: Option[String] = Some("JSON"))(implicit database: Database): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = (toRawSql(query) + formatSql)
+    val sql       = (toRawSql(query) + formatSql).trim().replaceAll(" +", " ")
     logger.debug(fast"Generated sql [$sql]")
     sql
   }
@@ -47,7 +47,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
            | ${tokenizeLimit(limit)}
-           |${tokenizeUnionAll(union)}""".toString.trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "").trim().replaceAll(" +", " ")
+           |${tokenizeUnionAll(union)}""".toString.trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
     }
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit database: Database) =
@@ -409,7 +409,7 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
   private def aliasOrName(column: AnyTableColumn)(implicit database: Database) =
     column match {
       case AliasedColumn(_, alias)       => alias
-      case QueryColumn(query) => s"(${toRawSql(query.internalQuery)})"
+      case QueryColumn(query) => s"(${toRawSql(query.internalQuery).trim.replaceAll(" +", " ")})"
       case regularColumn: AnyTableColumn => regularColumn.name
     }
 

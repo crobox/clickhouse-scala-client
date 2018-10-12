@@ -2,27 +2,7 @@ package com.crobox.clickhouse.dsl.language
 
 import java.util.UUID
 
-import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
-import com.crobox.clickhouse.dsl.{
-  AggregateFunction,
-  Case,
-  ColumnOperations,
-  CombinedAggregatedFunction,
-  Conditional,
-  InnerFromQuery,
-  InternalQuery,
-  JoinQuery,
-  Limit,
-  NoOpComparison,
-  OperationalQuery,
-  SelectQuery,
-  TableColumn,
-  TableFromQuery,
-  TestSchema,
-  TimeSeries,
-  Uniq
-}
+import com.crobox.clickhouse.dsl.{AggregateFunction, Case, ColumnOperations, CombinedAggregatedFunction, Conditional, InnerFromQuery, InternalQuery, JoinQuery, Limit, NoOpComparison, OperationalQuery, SelectQuery, TableColumn, TableFromQuery, TestSchema, TimeSeries, Uniq, _}
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
