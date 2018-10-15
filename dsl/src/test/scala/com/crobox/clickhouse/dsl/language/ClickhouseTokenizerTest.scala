@@ -183,7 +183,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
                       DateTime.now(DateTimeZone.forOffsetHours(2)),
                       MultiDuration(TimeUnit.Month))
       )
-    ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Africa/Maputo'), 'Africa/Maputo')"
+    ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
   }
 
   "build nested query" should "select column as condition" in {

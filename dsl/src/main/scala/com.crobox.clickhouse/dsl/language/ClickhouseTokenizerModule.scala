@@ -314,7 +314,8 @@ trait ClickhouseTokenizerModule extends TokenizerModule {
     val targetZone = zones
       .find(_.getID == zone.getID)
       .orElse(
-        zones.find(targetZone => targetZone.getOffset(start.getMillis) == start.getZone.getOffset(start.getMillis))
+        zones.find(targetZone => targetZone.getID.startsWith("Etc/") &&
+          targetZone.getOffset(start.getMillis) == start.getZone.getOffset(start.getMillis))
       )
       .getOrElse(throw new IllegalArgumentException(s"Could not determine the zone from source $zone"))
       .getID
