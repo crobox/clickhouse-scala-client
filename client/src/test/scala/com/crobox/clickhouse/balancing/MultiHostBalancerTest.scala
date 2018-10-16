@@ -1,20 +1,17 @@
 package com.crobox.clickhouse.balancing
 
-import com.crobox.clickhouse.ClickhouseClientAsyncSpec
-import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
-import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.IsAlive
+import akka.testkit.TestProbe
+import com.crobox.clickhouse.ClickhouseClientSpec
+import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
+import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 
-class MultiHostBalancerTest extends ClickhouseClientAsyncSpec {
+class MultiHostBalancerTest extends ClickhouseClientSpec {
 
-  it should "round robin the configured hosts" in {
-    val manager =
-      system.actorOf(ConnectionManagerActor.props(uri => uris(uri)(uri), config))
-    val balancer             = MultiHostBalancer(uris.keySet, manager)
-    val RequestedConnections = 100
-    probe.expectMsgAllOf(IsAlive(), IsAlive())
-    requestParallelHosts(balancer, RequestedConnections).map(results => {
-      eachHostReceivedExpectedConnections(results, uris.keySet, RequestedConnections / uris.keySet.size)
-    })
+  val uris = Set(ClickhouseHostBuilder.toHost("element", None))
+  it should "pass the hosts to the manager" in {
+    val manager = TestProbe()
+    MultiHostBalancer(uris, manager.ref)
+    manager.expectMsg(Connections(uris))
   }
 
 }

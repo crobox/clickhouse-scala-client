@@ -1,27 +1,26 @@
 package com.crobox.clickhouse.balancing.discovery
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable, PoisonPill, Props, Stash, Status}
+import akka.actor.{Actor, ActorLogging, Cancellable, PoisonPill, Props, Stash, Status}
 import akka.http.scaladsl.model.Uri
+import akka.stream.Materializer
+import akka.stream.scaladsl.{Keep, Sink, Source}
 import com.crobox.clickhouse.balancing.HostBalancer
-import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
-import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.{HostStatus, IsAlive}
+import com.crobox.clickhouse.balancing.discovery.health.ClickhouseHostHealth.{Alive, ClickhouseHostStatus, Dead}
 import com.crobox.clickhouse.balancing.iterator.CircularIteratorSet
 import com.typesafe.config.Config
 
 import scala.collection.mutable
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
-class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
-    extends Actor
+class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, Cancellable], config: Config)(
+    implicit materializer: Materializer
+) extends Actor
     with ActorLogging
     with Stash {
 
   import ConnectionManagerActor._
 
-  private val healthCheckInterval: FiniteDuration =
-    config
-      .getDuration(s"${HostBalancer.ConnectionConfigPrefix}.health-check.interval")
-      .getSeconds seconds
   private val configHost: Uri = HostBalancer.extractHost(config.getConfig(HostBalancer.ConnectionConfigPrefix))
   private val fallbackToConfigurationHost =
     config.getBoolean(s"${HostBalancer.ConnectionConfigPrefix}.fallback-to-config-host-during-initialization")
@@ -29,7 +28,7 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
   //  state
   val connectionIterator: CircularIteratorSet[Uri] =
     new CircularIteratorSet[Uri]()
-  val hostsStatus                      = mutable.Map.empty[Uri, HostStatus]
+  val hostsStatus                      = mutable.Map.empty[Uri, ClickhouseHostStatus]
   val hostHealthScheduler              = mutable.Map.empty[Uri, Cancellable]
   var currentConfiguredHosts: Set[Uri] = Set.empty
   var initialized                      = false
@@ -41,13 +40,11 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
       hosts
         .foreach(host => {
           if (!currentConfiguredHosts.contains(host)) {
-            val hostHealthChecker: ActorRef =
-              context.actorOf(healthProvider(host), healthCheckActorName(host))
             log.info(s"Setting up host health checks for host $host")
-            val scheduler = context.system.scheduler
-              .schedule(Duration.Zero, healthCheckInterval, hostHealthChecker, IsAlive())(context.dispatcher,
-                                                                                          context.self)
-            hostHealthScheduler.put(host, scheduler)
+            hostHealthScheduler.put(host,
+                                    healthSource(host)
+                                      .toMat(Sink.actorRef(self, LogDeadConnections))(Keep.left)
+                                      .run())
           }
         })
       currentConfiguredHosts = hosts
@@ -72,13 +69,14 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
         }
       }
 
-    case status @ HostStatus(host, _) =>
+    case status: ClickhouseHostStatus =>
+      val host = status.host
       if (currentConfiguredHosts.contains(host)) {
         logHostStatus(status)
         hostsStatus.put(host, status)
-        status.status match {
-          case Alive   => connectionIterator.add(host)
-          case Dead(_) => connectionIterator.remove(host)
+        status match {
+          case _: Alive => connectionIterator.add(host)
+          case _: Dead  => connectionIterator.remove(host)
         }
       } else {
         log.info(
@@ -98,7 +96,7 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
 
     case LogDeadConnections =>
       val deadHosts = hostsStatus.values.collect {
-        case HostStatus(host, Dead(_)) => host
+        case Dead(host, _) => host
       }
       if (deadHosts.nonEmpty)
         log.error(s"Hosts ${deadHosts.mkString(" - ")} are still unreachable")
@@ -111,16 +109,16 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
     hostHealthScheduler.remove(host)
   }
 
-  private def logHostStatus(status: HostStatus) {
+  private def logHostStatus(status: ClickhouseHostStatus) {
     val host = status.host
     if (!hostsStatus.contains(host)) {
       log.info(s"Adding host status $status")
     } else {
-      if (hostsStatus(host).status.code != status.status.code) {
-        status.status match {
-          case Alive =>
+      if (hostsStatus(host).code != status.code) {
+        status match {
+          case _: Alive =>
             log.info(s"Host ${status.host} is back online. Updating and reintroducing the host as viable connection.")
-          case Dead(ex) =>
+          case Dead(_, ex) =>
             log.info(s"Host ${status.host} is offline. Removing from viable connections because of exception.", ex)
         }
       }
@@ -130,7 +128,8 @@ class ConnectionManagerActor(healthProvider: (Uri) => Props, config: Config)
 
 object ConnectionManagerActor {
 
-  def props(healthProvider: Uri => Props, config: Config): Props =
+  def props(healthProvider: Uri => Source[ClickhouseHostStatus, Cancellable],
+            config: Config)(implicit materializer: Materializer): Props =
     Props(new ConnectionManagerActor(healthProvider, config))
 
   def healthCheckActorName(host: Uri) =
@@ -139,7 +138,6 @@ object ConnectionManagerActor {
   case class GetConnection()
 
   case class Connections(hosts: Set[Uri])
-
   case class NoHostAvailableException(msg: String) extends IllegalStateException(msg)
   private case object LogDeadConnections
 }

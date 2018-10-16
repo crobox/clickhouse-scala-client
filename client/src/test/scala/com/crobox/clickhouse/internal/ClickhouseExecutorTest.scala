@@ -29,7 +29,8 @@ class ClickhouseExecutorTest extends ClickhouseClientAsyncSpec {
           ]
         ]
     )(
-        implicit materializer: Materializer
+        implicit materializer: Materializer,
+        executionContext: ExecutionContext
     ): Future[String] =
       response
   }

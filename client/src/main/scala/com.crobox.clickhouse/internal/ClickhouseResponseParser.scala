@@ -6,20 +6,20 @@ import akka.http.scaladsl.model.headers.{HttpEncoding, HttpEncodings}
 import akka.stream.Materializer
 import akka.stream.scaladsl.SourceQueue
 import akka.util.ByteString
-import com.crobox.clickhouse.{ClickhouseChunkedException, ClickhouseException}
 import com.crobox.clickhouse.internal.ClickHouseExecutor._
+import com.crobox.clickhouse.{ClickhouseChunkedException, ClickhouseException}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 private[clickhouse] trait ClickhouseResponseParser {
-  protected implicit val executionContext: ExecutionContext
 
   protected def processClickhouseResponse(responseFuture: Future[HttpResponse],
                                           query: String,
                                           host: Uri,
                                           progressQueue: Option[SourceQueue[QueryProgress]])(
-      implicit materializer: Materializer
+      implicit materializer: Materializer,
+      executionContext: ExecutionContext
   ): Future[String] =
     responseFuture.flatMap { response =>
       val encoding = response.encoding
@@ -61,7 +61,7 @@ private[clickhouse] trait ClickhouseResponseParser {
       entity: ResponseEntity,
       encoding: HttpEncoding,
       progressQueue: Option[SourceQueue[QueryProgress]]
-  )(implicit materializer: Materializer): Future[String] =
+  )(implicit materializer: Materializer, executionContext: ExecutionContext): Future[String] =
     entity.dataBytes
       .runFold(ByteString(""))(_ ++ _)
       .flatMap { byteString =>
@@ -71,4 +71,7 @@ private[clickhouse] trait ClickhouseResponseParser {
         }
       }
       .map(_.utf8String)
+
+  protected def splitResponse(response: String) =
+    response.split("\n").toSeq
 }
