@@ -1,107 +1,110 @@
 package com.crobox.clickhouse.balancing
 
-import java.util.UUID
-
-import akka.actor.{ActorNotFound, ActorRef}
+import akka.Done
+import akka.actor.{ActorRef, Cancellable, PoisonPill}
+import akka.http.scaladsl.model.Uri
+import akka.stream.OverflowStrategy
+import akka.stream.scaladsl.{Source, SourceQueueWithComplete}
 import akka.testkit.TestProbe
 import com.crobox.clickhouse.ClickhouseClientAsyncSpec
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.{Connections, GetConnection}
-import com.crobox.clickhouse.balancing.discovery.health.HostHealthChecker.Status.{Alive, Dead}
+import com.crobox.clickhouse.balancing.discovery.health.ClickhouseHostHealth
+import com.crobox.clickhouse.balancing.discovery.health.ClickhouseHostHealth.{Alive, ClickhouseHostStatus}
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.typesafe.config.ConfigValueFactory
-import org.scalatest.Assertion
+import org.scalatest.concurrent.Eventually
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
-class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
+class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventually {
+  private val host1 = ClickhouseHostBuilder
+    .toHost("localhost", Some(8245))
+  private val host2 = ClickhouseHostBuilder
+    .toHost("127.0.0.1", None)
+  private val host3 = ClickhouseHostBuilder
+    .toHost("thirdsHost", None)
 
-  it should "remove dead connection" in {
-    val urisWithDead = uris.+(
-      (ClickhouseHostBuilder
-         .toHost("deadConnection", None),
-       HostAliveMock.props(Seq(Dead(new IllegalArgumentException))) _)
-    )
-    val manager =
-      system.actorOf(ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
-    manager ! Connections(urisWithDead.keySet)
-    probe.receiveN(3, 2 seconds)
-    returnsConnectionsInRoundRobinFashion(manager, uris.keySet)
+  var uris: Map[Uri, (SourceQueueWithComplete[ClickhouseHostStatus], Source[ClickhouseHostStatus, Cancellable])] = _
+  var manager: ActorRef                                                                                          = _
+
+  override protected def beforeEach(): Unit = {
+    super.beforeEach()
+    uris = hosts()
+    manager = system.actorOf(ConnectionManagerActor.props(uri => uris(uri)._2, config))
   }
 
-  it should "add back connection when it comes to life" in {
-    val urisWithDead = uris.+(
-      (ClickhouseHostBuilder
-         .toHost("deadConnection", None),
-       HostAliveMock.props(Seq(Dead(new IllegalArgumentException), Alive, Alive, Alive, Alive)) _)
-    )
-    val manager =
-      system.actorOf(ConnectionManagerActor.props(uri => urisWithDead(uri)(uri), config))
-    manager ! Connections(urisWithDead.keySet)
-    Future {
-      probe.receiveN(3, 2 seconds)
-    }.flatMap(_ => returnsConnectionsInRoundRobinFashion(manager, uris.keySet))
+  override protected def afterEach(): Unit = {
+    super.afterEach()
+    uris.values.foreach(_._1.complete())
+    manager ! PoisonPill
+  }
+
+  "Connection manager" should "remove connection with failed health check" in {
+    Future
+      .sequence(
+        Seq(
+          uris(host1)._1.offer(Alive(host1)),
+          uris(host2)._1.offer(Alive(host2)),
+          uris(host3)._1.offer(ClickhouseHostHealth.Dead(host3, new IllegalArgumentException))
+        )
+      )
       .flatMap(_ => {
-        probe.receiveN(3, 2 seconds)
-        returnsConnectionsInRoundRobinFashion(manager, urisWithDead.keySet)
+        manager ! Connections(uris.keySet)
+        ensureCompleted(uris).flatMap(_ => {
+          returnsConnectionsInRoundRobinFashion(manager, uris.keySet.-(host3))
+        })
       })
-
   }
 
-  it should "kill health actor when connection is removed from configuration" in {
-    val managerName = UUID.randomUUID().toString
-    val manager =
-      system.actorOf(ConnectionManagerActor.props(uri => uris(uri)(uri), config), managerName)
-    val hostUris = uris.keySet
-    import system.dispatcher
-    manager ! Connections(hostUris)
-    probe.receiveN(hostUris.size, 2 seconds)
-    val droppedHost         = hostUris.head
-    val hostUrisWithDropped = hostUris.drop(1)
-    manager ! Connections(hostUrisWithDropped)
-    probe.receiveN(2, 2 seconds)
-    system
-      .actorSelection(s"/user/$managerName/${ConnectionManagerActor.healthCheckActorName(droppedHost)}")
-      .resolveOne(1 second)
-      .recoverWith {
-        case _: ActorNotFound => succeed
-      }
-      .map {
-        case _: ActorRef          => fail("Actor for health check exists")
-        case assertion: Assertion => assertion
-      }
+  it should "add back connection when health check passes" in {
+    uris(host1)._1.offer(Alive(host1))
+    uris(host2)._1.offer(Alive(host2))
+    uris(host3)._1.offer(ClickhouseHostHealth.Dead(host3, new IllegalArgumentException))
+    manager ! Connections(uris.keySet)
+    ensureCompleted(uris - host3)
+      .flatMap(_ => returnsConnectionsInRoundRobinFashion(manager, uris.keySet.-(host3)))
+      .flatMap(_ => {
+        uris(host3)._1.offer(ClickhouseHostHealth.Alive(host3))
+        ensureCompleted(uris.filterKeys(_ == host3))
+          .flatMap(_ => returnsConnectionsInRoundRobinFashion(manager, uris.keySet))
+      })
+  }
 
+  it should "cancel health source when connection is removed from configuration" in {
+    manager ! Connections(uris.keySet)
+    val droppedHost         = uris.head
+    val hostUrisWithDropped = uris.drop(1)
+    manager ! Connections(hostUrisWithDropped.keySet)
+    droppedHost._2._1.offer(Alive(droppedHost._1))
+    droppedHost._2._1.watchCompletion().map(_ => succeed)
   }
 
   it should "stash messages when no connections were received yet" in {
-    val client      = TestProbe()
-    val managerName = UUID.randomUUID().toString
-    val manager =
-      system.actorOf(ConnectionManagerActor.props(uri => uris(uri)(uri), config), managerName)
+    val client = TestProbe()
     manager.tell(GetConnection(), client.ref)
     val uri = uris.keySet.head
+    uris(uri)._1.offer(Alive(uri))
     manager ! Connections(Set(uri))
     Future {
       client.expectMsg(1 second, uri)
       succeed
     }
   }
-
   it should "return config connection when no connections were received yet" in {
-    val client      = TestProbe()
-    val managerName = UUID.randomUUID().toString
-    val host        = "default-mega-host"
+    val client = TestProbe()
+    val host   = "default-mega-host"
     val manager =
       system.actorOf(
         ConnectionManagerActor.props(
-          uri => uris(uri)(uri),
+          uri => uris(uri)._2,
           config
             .withValue("crobox.clickhouse.client.connection.fallback-to-config-host-during-initialization",
                        ConfigValueFactory.fromAnyRef(true))
             .withValue("crobox.clickhouse.client.connection.host", ConfigValueFactory.fromAnyRef(host))
-        ),
-        managerName
+        )
       )
     manager.tell(GetConnection(), client.ref)
     Future {
@@ -109,5 +112,39 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec {
       succeed
     }
   }
+
+  private def hosts() =
+    Map(
+      host1 -> statusesAsSource(),
+      host2 -> statusesAsSource(),
+      host3 -> statusesAsSource()
+    )
+
+  private def statusesAsSource()
+    : (SourceQueueWithComplete[ClickhouseHostStatus], Source[ClickhouseHostStatus, Cancellable]) = {
+    val (queue, source) = Source
+      .queue[ClickhouseHostStatus](10, OverflowStrategy.fail)
+      .preMaterialize()
+    (queue, source.mapMaterializedValue(_ => {
+      new Cancellable {
+        override def cancel(): Boolean = {
+          queue.complete()
+          true
+        }
+        override def isCancelled: Boolean = queue.watchCompletion().isCompleted
+      }
+    }))
+  }
+
+  private def ensureCompleted(
+      uris: Map[Uri, (SourceQueueWithComplete[ClickhouseHostStatus], Source[ClickhouseHostStatus, Cancellable])]
+  ): Future[Iterable[Done]] =
+    Future.sequence(uris.values.map(queue => {
+      queue._1.complete()
+      queue._1.watchCompletion()
+    }) ++ Seq(Future {
+      Thread.sleep(1000)//FIXME find a cleaner way to ensure the manager processes all the elements from the stream
+      Done
+    }))
 
 }

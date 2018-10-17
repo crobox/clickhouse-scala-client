@@ -20,7 +20,7 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
 
   protected def toRequest(uri: Uri,
                           query: String,
-                          queryIdentifier: Option[String],
+                          queryIdentifier: Option[String] = None,
                           settings: QuerySettings = QuerySettings(ReadQueries),
                           entity: Option[RequestEntity] = None,
                           progress: Boolean = false): HttpRequest =

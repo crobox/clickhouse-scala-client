@@ -14,7 +14,7 @@ import com.crobox.clickhouse.internal.ClickHouseExecutor._
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.parsing.json.JSON
 import scala.util.{Failure, Random, Success, Try}
 
@@ -23,6 +23,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
 
   protected implicit val system: ActorSystem
   protected implicit lazy val materializer: Materializer = ActorMaterializer()
+  protected implicit val executionContext: ExecutionContext
   protected val hostBalancer: HostBalancer
   protected def config: Config
 
@@ -76,6 +77,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       ClientConnectionSettings(system)
         .withTransport(new StreamingProgressClickhouseTransport(progressQueue))
     )
+
   private lazy val pool = Http().superPool[Promise[HttpResponse]](settings = superPoolSettings)
   protected lazy val bufferSize: Int =
     config.getInt("crobox.clickhouse.client.buffer-size")
@@ -132,12 +134,23 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     }
   }
 
-  protected def executeRequestInternal(host: Future[Uri],
-                                       query: String,
-                                       queryIdentifier: String,
-                                       settings: QuerySettings,
-                                       entity: Option[RequestEntity] = None,
-                                       progressQueue: Option[SourceQueueWithComplete[QueryProgress]]): Future[String] =
+  protected def executeRequestInternal(
+      host: Future[Uri],
+      query: String,
+      queryIdentifier: String,
+      settings: QuerySettings,
+      entity: Option[RequestEntity] = None,
+      progressQueue: Option[SourceQueueWithComplete[QueryProgress]]
+  ): Future[String] = {
+    progressQueue.foreach(definedProgressQueue => {
+      progressSource.runForeach(
+        progress => {
+          if (progress.identifier == queryIdentifier) {
+            definedProgressQueue.offer(progress.progress)
+          }
+        }
+      )
+    })
     host.flatMap(actualHost => {
       val request = toRequest(actualHost,
                               query,
@@ -145,18 +158,9 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
                               settings.withFallback(config),
                               entity,
                               progressQueue.isDefined)
-      progressQueue.foreach(definedProgressQueue => {
-        progressSource.runForeach(
-          progress =>
-            if (progress.identifier == queryIdentifier) {
-              definedProgressQueue.offer(progress.progress)
-          }
-        )
-      })
-
       processClickhouseResponse(singleRequest(request), query, actualHost, progressQueue)
     })
-
+  }
   private def executeWithRetries(retries: Int, progressQueue: Option[SourceQueueWithComplete[QueryProgress]])(
       request: () => Future[String]
   ): Future[String] =

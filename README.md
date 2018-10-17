@@ -18,22 +18,45 @@ for sbt you can use
 
 ```
 // https://mvnrepository.com/artifact/com.crobox/clickhouse-scala-client_2.12 
-libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.7.1"
+libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.7.4"
 ```
 
 ## Clickhouse query DSL 
 For more information see: https://github.com/crobox/clickhouse-scala-client/wiki
 
+## Usage example
+
+### Client
+
+```scala
+
+val config: Config
+val queryDatabase: String = "default"
+implicit val system:ActorSystem
+
+val client = new ClickhouseClient(config, queryDatabase)
+client.query("SELECT 1 + 1").map(result => {
+    println(s"Got query result $result")
+})
+```
+
+### Indexer
+
+```scala
+val config: Config
+val client: ClickhouseClient
+
+val sink = ClickhouseSink.insertSink(config, client)
+sink.runWith(Source.single(Insert("clicks", "{some_column: 3 }"))
+```
+
 ## Configuration
 
-  All the configuration keys are under the prefix `crobox.clickhouse.client`
+ - Client: All the configuration keys are under the prefix `crobox.clickhouse.client`
+ - Indexer: All the configuration keys are under the prefix `crobox.clickhouse.indexer`. You can also provide specific overrides based on the indexer name by using the same configs under the prefix `crobox.clickhouse.indexer.{indexer-name}`
 ### Client configuration
 
-| Key | Default|Description |
-| --- | ---|------------|
-|http-compression| false | If the client should use http compression in the communication with clickhouse. More info: http://clickhouse-docs.readthedocs.io/en/latest/interfaces/http_interface.html |
-|buffer-size|1024|The size of the internal queue being used for the queries. If the queue is full then any new queries will be dropped|
-|host-retrieval-timeout|1 second|Maximum time to wait for receiving a host from the provider|
+You can find all the configuration options in the `reference.conf` file, with explanatory comments about their usage.
 
 ### Connection configuration
 The clickhouse connection is configured from the configuration file as well.
@@ -53,7 +76,7 @@ Configuration options:
 | port| N/A | The port of the clickhouse server, if required |
 
 ###### Example:
-** The default configuration uses single host type but without a defined port. **
+** The default configuration. **
 
 ```
 crobox.clickhouse.client {

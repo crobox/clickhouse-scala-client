@@ -1,17 +1,17 @@
 package com.crobox.clickhouse.internal
 
 import akka.actor.{Actor, ActorSystem, Props}
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, Uri}
+import akka.http.scaladsl.model.Uri
 import akka.pattern.pipe
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings
 import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings.ReadQueries
-import com.crobox.clickhouse.internal.InternalExecutorActor.{Execute, HealthCheck}
+import com.crobox.clickhouse.internal.InternalExecutorActor.Execute
 import com.typesafe.config.Config
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class InternalExecutorActor(override protected val config: Config)
+class InternalExecutorActor(override protected val config: Config)(implicit val executionContext: ExecutionContext)
     extends Actor
     with ClickHouseExecutor
     with ClickhouseResponseParser
@@ -29,24 +29,16 @@ class InternalExecutorActor(override protected val config: Config)
                                QuerySettings(ReadQueries).withFallback(config),
                                None,
                                None)
-      splitResponse(eventualResponse) pipeTo sender
-    case HealthCheck(uri: Uri) =>
-      val request = HttpRequest(method = HttpMethods.GET, uri = uri)
-      splitResponse(processClickhouseResponse(singleRequest(request), "health check", uri, None)) pipeTo sender
+      eventualResponse.map(splitResponse) pipeTo sender
   }
 
-  private def splitResponse(eventualResponse: Future[String]) =
-    eventualResponse.map(response => response.split("\n").toSeq)
-
   override protected lazy val bufferSize = 100
-  override protected implicit val executionContext: ExecutionContext =
-    context.dispatcher
+
 }
 
 object InternalExecutorActor {
 
-  def props(config: Config) = Props(new InternalExecutorActor(config))
+  def props(config: Config)(implicit ec: ExecutionContext) = Props(new InternalExecutorActor(config))
 
   case class Execute(host: Uri, query: String)
-  case class HealthCheck(host: Uri)
 }
