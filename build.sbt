@@ -1,5 +1,6 @@
 import Build._
 import com.typesafe.sbt.pgp.PgpKeys
+import xerial.sbt.Sonatype._
 
 //scalafmt settings
 scalafmtVersion in ThisBuild := "1.0.0"
@@ -7,6 +8,8 @@ scalafmtOnCompile in ThisBuild := false     // all projects
 scalafmtTestOnCompile in ThisBuild := false // all projects
 
 releaseCrossBuild := true
+
+sonatypeProfileName := "com.crobox"
 
 lazy val root = (project in file("."))
   .settings(

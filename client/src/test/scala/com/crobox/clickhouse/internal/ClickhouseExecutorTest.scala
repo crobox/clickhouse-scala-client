@@ -16,9 +16,9 @@ class ClickhouseExecutorTest extends ClickhouseClientAsyncSpec {
   private var response: Future[String] = Future.successful("")
   private val executor = new ClickHouseExecutor with ClickhouseResponseParser with ClickhouseQueryBuilder {
     override protected implicit val system: ActorSystem                = self.system
+    override protected implicit val executionContext: ExecutionContext = system.dispatcher
     override protected val hostBalancer: HostBalancer                  = HostBalancer(config)
     override protected def config: Config                              = self.config
-    override protected implicit val executionContext: ExecutionContext = system.dispatcher
     override protected def processClickhouseResponse(
         responseFuture: Future[HttpResponse],
         query: String,

@@ -7,12 +7,12 @@ credentials += Credentials("Sonatype Nexus Repository Manager",
                            "oss.sonatype.org",
                            "<your username>",
                            "<your password>")
-
 ```
+
 To release and publish a version to oss.sonatype for both scala 2.11 and scala 2.12 run:
 
 ```
-sbt release cross
+sbt release 
 ```
 
 To only publish a certain version after f.e. the tags has been build but your PGP was not correctly unlocked you can run
@@ -21,4 +21,8 @@ To only publish a certain version after f.e. the tags has been build but your PG
 sbt ++2.11.12 publishSigned
 ```
 
+To close and release the staging repository on Sonatype you can either go to the web interface or use  
 
+```
+sbt sonatypeRelease
+```
