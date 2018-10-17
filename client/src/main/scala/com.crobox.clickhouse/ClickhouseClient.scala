@@ -26,6 +26,8 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
     with ClickhouseResponseParser
     with ClickhouseQueryBuilder {
 
+  override protected implicit val executionContext: ExecutionContext = system.dispatcher
+
   override protected val hostBalancer = HostBalancer(config)
 
   private val MaximumFrameLength: Int = 1024 * 1024 // 1 MB
@@ -111,6 +113,4 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
     executeRequest(sql, QuerySettings(AllQueries), Option(entity))
   }
 
-  override protected implicit val executionContext: ExecutionContext =
-    system.dispatcher
 }

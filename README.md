@@ -18,7 +18,7 @@ for sbt you can use
 
 ```
 // https://mvnrepository.com/artifact/com.crobox/clickhouse-scala-client_2.12 
-libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.7.4"
+libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.7.5"
 ```
 
 ## Clickhouse query DSL 
