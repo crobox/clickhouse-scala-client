@@ -1,17 +1,17 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
-  protected def tokenizeArrayFunction(col: ArrayFunction) = col match {
+  protected def tokenizeArrayFunction(col: ArrayFunction)(implicit database: Database) = col match {
     case col: ArrayFunctionOp[_]    => tokenizeArrayFunctionOp(col)
     case col: ArrayFunctionConst[_] => tokenizeArrayFunctionConst(col)
   }
 
-  protected def tokenizeArrayFunctionOp(col: ArrayFunctionOp[_]): String = col match {
+  protected def tokenizeArrayFunctionOp(col: ArrayFunctionOp[_])(implicit database: Database): String = col match {
     case EmptyArrayToSingle(col: ArrayColMagnet[_]) => fast"emptyArrayToSingle(${tokenizeColumn(col.column)})"
     case Array(col1: ConstOrColMagnet[_], coln@_*) =>
       fast"array(${tokenizeColumn(col1.column)}${tokenizeSeqCol(coln.map(_.column))})"
@@ -40,7 +40,7 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
     case ArrayJoin(col: ArrayColMagnet[_]) => fast"arrayJoin(${tokenizeColumn(col.column)})"
   }
 
-  protected def tokenizeArrayFunctionConst(col: ArrayFunctionConst[_]): String = col match {
+  protected def tokenizeArrayFunctionConst(col: ArrayFunctionConst[_])(implicit database: Database): String = col match {
     case _: EmptyArrayUInt8    => "emptyArrayUInt8()"
     case _: EmptyArrayUInt16   => "emptyArrayUInt16()"
     case _: EmptyArrayUInt32   => "emptyArrayUInt32()"

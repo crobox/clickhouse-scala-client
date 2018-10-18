@@ -51,4 +51,7 @@ package object column {
 
   def lowercase(tableColumn: TableColumn[String]) =
     LowerCaseColumn(tableColumn)
+
+  def query[V](query: Query): QueryColumn[V] = QueryColumn[V](query)
+
 }

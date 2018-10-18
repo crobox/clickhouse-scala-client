@@ -1,12 +1,13 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait StringFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  protected def tokenizeStringCol(col: StringFunctionCol[_]): String =
+  protected def tokenizeStringCol(col: StringFunctionCol[_])(implicit database: Database): String =
     col match {
       case Empty(c)       => fast"empty(${tokenizeColumn(c.column)})"
       case NotEmpty(c)    => fast"notEmpty(${tokenizeColumn(c.column)})"

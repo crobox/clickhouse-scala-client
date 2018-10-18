@@ -36,7 +36,6 @@ object TableColumn {
   val emptyColumn = EmptyColumn()
 }
 
-
 case class RefColumn[V](ref: String) extends TableColumn[V](ref)
 
 case class AliasedColumn[V](original: TableColumn[V], alias: String) extends TableColumn[V](alias)
@@ -46,6 +45,8 @@ case class TupleColumn[V](elements: AnyTableColumn*) extends TableColumn[V]("")
 abstract class ExpressionColumn[V](targetColumn: AnyTableColumn) extends TableColumn[V](targetColumn.name)
 
 case class LowerCaseColumn(tableColumn: AnyTableColumn) extends ExpressionColumn[String](tableColumn)
+
+case class QueryColumn[V](query: Query)                 extends ExpressionColumn[V](EmptyColumn())
 
 case class All() extends ExpressionColumn[Long](EmptyColumn())
 

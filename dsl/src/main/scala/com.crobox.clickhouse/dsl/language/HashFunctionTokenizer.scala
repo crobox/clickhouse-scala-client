@@ -2,12 +2,13 @@ package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait HashFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeHashFunction(col: HashFunction): String = col match {
+  def tokenizeHashFunction(col: HashFunction)(implicit database: Database): String = col match {
     case HalfMD5(col: StringColMagnet[_])    => fast"halfMD5(${tokenizeColumn(col.column)})"
     case MD5(col: StringColMagnet[_])        => fast"MD5(${tokenizeColumn(col.column)})"
     case SipHash64(col: StringColMagnet[_])  => fast"sipHash64(${tokenizeColumn(col.column)})"

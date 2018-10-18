@@ -1,17 +1,16 @@
 package com.crobox.clickhouse.dsl.column
 
 
-import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.time.MultiInterval
-import org.joda.time.DateTime
 
 trait AggregationFunctions
   extends SumFunctions 
   with AnyResultFunctions 
   with UniqFunctions 
   with Leveled
-  with AggregationFunctionsCombiners { self: Magnets with ClickhouseColumnFunctions =>
+  with AggregationFunctionsCombiners { self: ClickhouseColumnFunctions =>
 
   //TODO: Magnetize?
   // Aggregate functions are a whole different beast, they are intercompatible and type passing in a different way then
@@ -70,7 +69,7 @@ trait AggregationFunctions
  // }
 }
 
-trait AggregationFunctionsCombiners { self: Magnets =>
+trait AggregationFunctionsCombiners { self: ClickhouseColumnFunctions =>
   
   case class CombinedAggregatedFunction[T <: TableColumn[_], Res](combinator: Combinator[T, Res],
     target: AggregateFunction[_])
@@ -123,7 +122,7 @@ trait AggregationFunctionsCombiners { self: Magnets =>
 
 }
 
-trait UniqFunctions { self: Magnets =>
+trait UniqFunctions { self: ClickhouseColumnFunctions =>
   sealed trait UniqModifier
 
   case class Uniq(tableColumn: AnyTableColumn, modifier: UniqModifier = UniqModifier.Simple)
@@ -146,7 +145,7 @@ trait UniqFunctions { self: Magnets =>
 }
 
 
-trait AnyResultFunctions { self: Magnets =>
+trait AnyResultFunctions { self: ClickhouseColumnFunctions =>
   case class AnyResult[T](tableColumn: TableColumn[T], modifier: AnyModifier = AnyModifier.Simple)
     extends AggregateFunction[T](tableColumn)
 
@@ -170,7 +169,7 @@ trait AnyResultFunctions { self: Magnets =>
   //}
 }
 
-trait SumFunctions { self: Magnets =>
+trait SumFunctions { self: ClickhouseColumnFunctions =>
   case class Sum[T: Numeric](tableColumn: TableColumn[T], modifier: SumModifier = SumModifier.Simple)
     extends AggregateFunction[Double](tableColumn)
 
@@ -199,7 +198,7 @@ trait SumFunctions { self: Magnets =>
 }
 
 
-trait Leveled { self: Magnets =>
+trait Leveled { self: ClickhouseColumnFunctions =>
   sealed abstract class LeveledAggregatedFunction[T](target: AnyTableColumn) extends AggregateFunction[T](target)
   
   sealed trait LevelModifier

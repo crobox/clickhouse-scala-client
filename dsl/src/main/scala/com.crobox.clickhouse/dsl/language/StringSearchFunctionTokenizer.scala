@@ -1,12 +1,13 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait StringSearchFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeStringSearchFunction(col: StringSearchFunc[_]): String = {
+  def tokenizeStringSearchFunction(col: StringSearchFunc[_])(implicit database: Database): String = {
     val command = col match {
       case Position(_, _, true)      => "position"
       case Position(_, _, false)     => "positionCaseInsensitive"

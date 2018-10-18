@@ -40,7 +40,7 @@ trait ClickhouseTokenizerModule
 
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
-  protected def tokenizeSeqCol[C <: TableColumn[_]](colSeq: Seq[C]): String = {
+  protected def tokenizeSeqCol[C <: TableColumn[_]](colSeq: Seq[C])(implicit database: Database): String = {
     val prefix = if (colSeq.isEmpty) "" else ", "
     colSeq.map(tokenizeColumn).mkString(", ")
   }
