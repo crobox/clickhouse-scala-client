@@ -43,7 +43,7 @@ trait ClickhouseTokenizerModule
 
   protected def tokenizeSeqCol[C <: TableColumn[_]](colSeq: Seq[C])(implicit database: Database): String = {
     val prefix = if (colSeq.isEmpty) "" else ", "
-    colSeq.map(tokenizeColumn).mkString(", ")
+    prefix + colSeq.map(tokenizeColumn).mkString(", ")
   }
 
   override def toSql(query: InternalQuery,
@@ -88,16 +88,17 @@ trait ClickhouseTokenizerModule
       case _       => ""
     }
 
-  private def tokenizeFrom(from: Option[FromQuery])(implicit database: Database) = {
+  private def tokenizeFrom(from: Option[FromQuery], withPrefix: Boolean = true)(implicit database: Database) = {
     require(from != null)
 
+    val prefix = if (withPrefix) "FROM " else ""
     from match {
       case Some(fromClause: InnerFromQuery) =>
-        fast"FROM (${toRawSql(fromClause.innerQuery.internalQuery)})"
+        fast"$prefix (${toRawSql(fromClause.innerQuery.internalQuery)})"
       case Some(TableFromQuery(table: Table, None)) =>
-        fast"FROM $database.${table.name}"
+        fast"$prefix $database.${table.name}"
       case Some(TableFromQuery(table: Table, Some(altDb))) =>
-        fast"FROM $altDb.${table.name}"
+        fast"$prefix  $altDb.${table.name}"
       case _ => ""
     }
   }
@@ -133,6 +134,7 @@ trait ClickhouseTokenizerModule
       case col: IPFunction[_]                => tokenizeIPFunction(col)
       case col: JsonFunction[_]              => tokenizeJsonFunction(col)
       case col: LogicalFunction              => tokenizeLogicalFunction(col)
+      case col: Not                          => tokenizeLogicalFunction(col)
       case col: MathFuncColumn               => tokenizeMathematicalFunction(col)
       case col: MiscellaneousFunction        => tokenizeMiscellaneousFunction(col)
       case col: RandomFunction               => tokenizeRandomFunction(col)
@@ -227,9 +229,9 @@ trait ClickhouseTokenizerModule
       case None =>
         ""
       case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], usingCols)) =>
-        fast"${tokenizeJoinType(joinType)} (SELECT * FROM ${tokenizeFrom(Some(tableJoin))}) USING ${tokenizeColumns(usingCols)}"
+        fast"${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))}) USING ${tokenizeColumns(usingCols)}"
       case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, usingCols)) =>
-        fast"${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin))} USING ${tokenizeColumns(usingCols)}"
+        fast"${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin),false)} USING ${tokenizeColumns(usingCols)}"
     }
 
   private[language] def tokenizeColumns(columns: Set[AnyTableColumn])(implicit database: Database): String =

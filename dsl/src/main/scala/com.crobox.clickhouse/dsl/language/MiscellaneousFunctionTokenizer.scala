@@ -43,7 +43,9 @@ trait MiscellaneousFunctionTokenizer {
   def tokenizeMiscConst(const: MiscellaneousConst[_])(implicit db: Database): String = const match {
     case HostName()                          => "hostName()"
     case BlockSize()                         => "blockSize()"
-    case Ignore(coln: Seq[ConstOrColMagnet[_]]) => fast"ignore(${tokenizeSeqCol(coln.map(_.column))})"
+    case Ignore(coln @ _*) =>
+      fast"ignore(${tokenizeSeqCol(coln.map(_.column))})"
+
     case CurrentDatabase()                   => "currentDatabase()"
     case HasColumnInTable(database, table, column, hostName, userName, passWord) =>
       fast"hasColumnInTable(${tokenizeColumn(database.column)},${tokenizeColumn(table.column)},${tokenizeColumn(

@@ -40,7 +40,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   "building where clause" should "add simple condition between columns" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
-      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, Some(shieldId < itemId))
+      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, None, Some(shieldId < itemId))
     )
     query should be("SELECT shield_id FROM default.captainAmerica WHERE shield_id < item_id FORMAT JSON")
   }
@@ -50,7 +50,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val uuid   = UUID.randomUUID()
     val query =
       testSubject.toSql(
-        InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, Some(shieldId < uuid))
+        InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, None, Some(shieldId < uuid))
       )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -61,10 +61,10 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                       Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,Some(shieldId < uuid and shieldId < itemId))
+                      false,None, Some(shieldId < uuid and shieldId < itemId))
     )
     query should be(
-      s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
+      s"SELECT shield_id FROM default.captainAmerica WHERE and(shield_id < '$uuid', shield_id < item_id) FORMAT JSON"
     )
   }
 
@@ -154,6 +154,6 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       TimeSeries(timestampColumn, MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
                             DateTime.now(DateTimeZone.forOffsetHours(2)),
                             MultiDuration(TimeUnit.Month)))
-    ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Africa/Maputo'), 'Africa/Maputo')"
+    ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
   }
 }

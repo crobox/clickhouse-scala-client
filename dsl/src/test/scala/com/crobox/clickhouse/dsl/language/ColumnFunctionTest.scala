@@ -166,7 +166,7 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
     r(toTime(now)).substring(11) shouldBe now.printAsDateTime.substring(11)
     r(toRelativeYearNum(now)) shouldBe now.getYear.toString
     r(toRelativeMonthNum(now)) shouldBe ((now.getYear * 12) + now.getMonthOfYear).toString
-    r(toRelativeWeekNum(now)) shouldBe (Weeks.weeksBetween(epoch, now).getWeeks + 1).toString
+    r(toRelativeWeekNum(now)) shouldBe (Weeks.weeksBetween(epoch, now).getWeeks).toString
     r(toRelativeDayNum(now)) shouldBe Days.daysBetween(epoch, now).getDays.toString
     r(toRelativeHourNum(now)) shouldBe Hours.hoursBetween(epoch, now).getHours.toString
     r(toRelativeMinuteNum(now)) shouldBe Minutes.minutesBetween(epoch, now).getMinutes.toString
@@ -183,11 +183,11 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
   }
   it should "succeed for EncodingFunctions" in {
     r(hex(12)) shouldBe "0C"
-    r(unhex("0C")) shouldBe "12"
+    r(unhex("0C")) shouldBe "\\f"
 
     
     val someUUID = UUID.randomUUID()
-    r(uUIDNumToString(someUUID)).nonEmpty shouldBe true
+    r(uUIDNumToString(toFixedString("4151302937104031",16))).nonEmpty shouldBe true
     r(uUIDStringToNum(someUUID)).nonEmpty shouldBe true
     r(bitmaskToList(2)).nonEmpty shouldBe true
     r(bitmaskToArray(2)).nonEmpty shouldBe true
@@ -209,6 +209,7 @@ class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
 
     r(uRLHash("http://www.google.nl/search",1))
   }
+
   it should "succeed for HigherOrderFunctions" in {
     val arr1 = Seq(1L,2L,3L)
 
