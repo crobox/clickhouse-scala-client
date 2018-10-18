@@ -38,12 +38,7 @@ trait AggregationFunctions
     extends AggregateFunction[Long](tableColumn)
   
  
-//  trait AggregationFunctionsDsl
-//    extends AggregationFunctionsCombinersDsl
-//      with UniqDsl
-//      with AnyResultDsl
-//      with SumDsl
-//      with LevelModifierDsl {
+
     
     def count() =
       Count()
@@ -59,14 +54,25 @@ trait AggregationFunctions
   
     def max[V](tableColumn: TableColumn[V]) =
       Max(tableColumn)
-  
-    def timeSeries(tableColumn: TableColumn[Long],
-      interval: MultiInterval) =
-      TimeSeries(tableColumn, interval)
-  
+
+  /**
+    * This function will push back the timestamp represented by tableColumn to the start of this interval,
+    * this happens deterministically.
+    *
+    * Meaning that as long as the duration is the same, your groups will be in the same from/to timestamps
+    *
+    * This is useful for aggregating results by periods of time (group by month, 2 months, days, etc.)
+    *
+    * @param tableColumn
+    * @param interval
+    * @return
+    */
+  def timeSeries(tableColumn: TableColumn[Long], interval: MultiInterval) =
+    TimeSeries(tableColumn, interval)
+
     def groupUniqArray[V](tableColumn: TableColumn[V]) =
       GroupUniqArray(tableColumn)
- // }
+
 }
 
 trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
@@ -86,13 +92,12 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
     case class State[T <: Column, Res]()                      extends Combinator[T, StateResult[Res]]
     case class Merge[T <: TableColumn[_], Res]()              extends Combinator[T, Res]
   }
-  
- // trait AggregationFunctionsCombinersDsl {
 
-    def aggIf[T <: TableColumn[Res], Res](condition: TableColumn[Boolean])(aggregated: AggregateFunction[Res]) =
+
+    def aggIf[T <: TableColumn[Res], Res](condition: TableColumn[Boolean])(aggregated: AggregateFunction[Res]): CombinedAggregatedFunction[T, Res] =
       CombinedAggregatedFunction(Combinator.If(condition), aggregated)
 
-    def array[T <: TableColumn[Seq[Res]], Res](aggregated: AggregateFunction[Res]) =
+    def array[T <: TableColumn[Seq[Res]], Res](aggregated: AggregateFunction[Res]): CombinedAggregatedFunction[T, Res] =
       CombinedAggregatedFunction(Combinator.CombinatorArray[T, Res](), aggregated)
 
     /**
@@ -111,14 +116,15 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
     )(forEachFunc: TableColumn[V] => AggregateFunction[Res]): AggregateFunction[Seq[Res]] =
       CombinedAggregatedFunction(Combinator.ArrayForEach(), forEachFunc(ref[V](column.name)))
 
-    def state[T <: TableColumn[Res], Res](aggregated: AggregateFunction[Res]) =
+    def state[T <: TableColumn[Res], Res](aggregated: AggregateFunction[Res]
+    ): CombinedAggregatedFunction[T, StateResult[Res]] =
       CombinedAggregatedFunction(
         Combinator.State[T, Res](),
         aggregated.asInstanceOf[AggregateFunction[StateResult[Res]]])
 
-    def merge[T <: TableColumn[StateResult[Res]], Res](aggregated: AggregateFunction[Res]) =
+
+    def merge[T <: TableColumn[StateResult[Res]], Res](aggregated: AggregateFunction[Res]): CombinedAggregatedFunction[T, Res] =
       CombinedAggregatedFunction(Combinator.Merge[T, Res](), aggregated)
- // }
 
 }
 
@@ -135,13 +141,12 @@ trait UniqFunctions { self: Magnets with AggregationFunctions =>
     case object Exact    extends UniqModifier
   }
 
-  //trait UniqDsl {
     def uniq(tableColumn: AnyTableColumn) =
       Uniq(tableColumn)
     def uniqCombined(tableColumn: AnyTableColumn): Uniq = Uniq(tableColumn, UniqModifier.Combined)
     def uniqExact(tableColumn: AnyTableColumn): Uniq    = Uniq(tableColumn, UniqModifier.Exact)
     def uniqHLL12(tableColumn: AnyTableColumn): Uniq    = Uniq(tableColumn, UniqModifier.HLL12)
-  //}
+
 }
 
 
@@ -155,8 +160,7 @@ trait AnyResultFunctions { self: Magnets with AggregationFunctions =>
     case object Heavy  extends AnyModifier
     case object Last   extends AnyModifier
   }
-  
-  //trait AnyResultDsl {
+
 
     def any[T](tableColumn: TableColumn[T]): AnyResult[T] =
       AnyResult(tableColumn)
@@ -166,7 +170,7 @@ trait AnyResultFunctions { self: Magnets with AggregationFunctions =>
 
     def anyLast[T](tableColumn: TableColumn[T]): AnyResult[T] =
       AnyResult(tableColumn, AnyModifier.Last)
-  //}
+
 }
 
 trait SumFunctions { self: Magnets with AggregationFunctions =>
@@ -183,8 +187,7 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
     case object WithOverflow extends SumModifier
     case object Map          extends SumModifier
   }
-    
-  //trait SumDsl {
+
     def sum[T: Numeric](tableColumn: TableColumn[T]) =
       Sum(tableColumn)
 
@@ -193,7 +196,6 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
 
     def sumMap[T: Numeric, V: Numeric](key: TableColumn[Seq[T]], value: TableColumn[Seq[V]]) =
       SumMap(key, value)
- // }
 
 }
 
@@ -230,8 +232,7 @@ trait Leveled { self: Magnets with AggregationFunctions =>
     extends LeveledAggregatedFunction[T](tableColumn) {
     require(level > 0 && level < 1)
   }
-  
-  //trait LevelModifierDsl {
+
 
     def median[V](target: TableColumn[V], level: Float = 0.5F) = Median(target, level = level)
 
@@ -286,7 +287,6 @@ trait Leveled { self: Magnets with AggregationFunctions =>
     def quantilesDeterministic[V, T: Numeric](target: TableColumn[V], determinator: TableColumn[T], levels: Float*) =
       Quantiles(target, levels, LevelModifier.Deterministic(determinator))
 
- // }
 
 }
 
