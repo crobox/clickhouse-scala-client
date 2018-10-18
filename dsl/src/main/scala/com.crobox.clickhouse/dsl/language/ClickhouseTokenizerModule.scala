@@ -206,10 +206,10 @@ trait ClickhouseTokenizerModule
         fast"${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin))} USING ${tokenizeColumns(usingCols)}"
     }
 
-  private def tokenizeColumns(columns: Set[AnyTableColumn])(implicit database: Database): String =
+  private[language] def tokenizeColumns(columns: Set[AnyTableColumn])(implicit database: Database): String =
     columns.map(tokenizeColumn).mkString(", ")
 
-  private def tokenizeColumns(columns: Seq[AnyTableColumn])(implicit database: Database): String =
+  private[language] def tokenizeColumns(columns: Seq[AnyTableColumn])(implicit database: Database): String =
     columns
       .filterNot {
         case _: EmptyColumn => true

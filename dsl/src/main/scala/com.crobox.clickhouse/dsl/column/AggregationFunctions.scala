@@ -10,7 +10,7 @@ trait AggregationFunctions
   with AnyResultFunctions 
   with UniqFunctions 
   with Leveled
-  with AggregationFunctionsCombiners { self: ClickhouseColumnFunctions =>
+  with AggregationFunctionsCombiners { self: Magnets =>
 
   //TODO: Magnetize?
   // Aggregate functions are a whole different beast, they are intercompatible and type passing in a different way then
@@ -69,7 +69,7 @@ trait AggregationFunctions
  // }
 }
 
-trait AggregationFunctionsCombiners { self: ClickhouseColumnFunctions =>
+trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
   
   case class CombinedAggregatedFunction[T <: TableColumn[_], Res](combinator: Combinator[T, Res],
     target: AggregateFunction[_])
@@ -122,7 +122,7 @@ trait AggregationFunctionsCombiners { self: ClickhouseColumnFunctions =>
 
 }
 
-trait UniqFunctions { self: ClickhouseColumnFunctions =>
+trait UniqFunctions { self: Magnets with AggregationFunctions =>
   sealed trait UniqModifier
 
   case class Uniq(tableColumn: AnyTableColumn, modifier: UniqModifier = UniqModifier.Simple)
@@ -145,7 +145,7 @@ trait UniqFunctions { self: ClickhouseColumnFunctions =>
 }
 
 
-trait AnyResultFunctions { self: ClickhouseColumnFunctions =>
+trait AnyResultFunctions { self: Magnets with AggregationFunctions =>
   case class AnyResult[T](tableColumn: TableColumn[T], modifier: AnyModifier = AnyModifier.Simple)
     extends AggregateFunction[T](tableColumn)
 
@@ -169,7 +169,7 @@ trait AnyResultFunctions { self: ClickhouseColumnFunctions =>
   //}
 }
 
-trait SumFunctions { self: ClickhouseColumnFunctions =>
+trait SumFunctions { self: Magnets with AggregationFunctions =>
   case class Sum[T: Numeric](tableColumn: TableColumn[T], modifier: SumModifier = SumModifier.Simple)
     extends AggregateFunction[Double](tableColumn)
 
@@ -198,7 +198,7 @@ trait SumFunctions { self: ClickhouseColumnFunctions =>
 }
 
 
-trait Leveled { self: ClickhouseColumnFunctions =>
+trait Leveled { self: Magnets with AggregationFunctions =>
   sealed abstract class LeveledAggregatedFunction[T](target: AnyTableColumn) extends AggregateFunction[T](target)
   
   sealed trait LevelModifier
