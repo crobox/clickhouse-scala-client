@@ -69,7 +69,7 @@ lazy val client: Project = (project in file("client"))
       "com.typesafe.akka"          %% "akka-stream" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-http" % AkkaHttpVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
-      "joda-time"                  % "joda-time" % "2.9.9"
+      "joda-time"                  % "joda-time" % "2.10"
     ) ++ testDependencies.map(_    % Test)
   )
 
