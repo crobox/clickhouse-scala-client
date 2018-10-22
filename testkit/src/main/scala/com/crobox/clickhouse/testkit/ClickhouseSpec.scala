@@ -39,11 +39,16 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
       .trim()
   }
 
-  def dropAllTables(): Unit = {
-
-    // Drop all tables
-    val tables = sql(s"SHOW TABLES FROM $database").split("\n")
-    tables.foreach(t => blockUntilTableDropped(clickClient.table(t)))
+  def dropAllTables(): Int = {
+    val rawTables = sql(s"SHOW TABLES FROM $database")
+    if(rawTables.isEmpty) {
+      0
+    } else {
+      val tables = rawTables.split("\n")
+      // Drop all tables
+      tables.foreach(t => blockUntilTableDropped(clickClient.table(t)))
+      tables.size
+    }
   }
 
   def blockUntilTableDropped(table: String): Unit = {
@@ -53,12 +58,12 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
 
   def blockUntilTableIsMissing(table: String): Unit =
     blockUntil(s"Expected that table $table is missing") { () =>
-      sql(s"SELECT 1 FROM $table").contains("DB::Exception")
+      sql(s"EXISTS TABLE $table") == "0"
     }
 
   def blockUntilTableExists(table: String): Unit =
     blockUntil(s"Expected that table $table exists") { () =>
-      sql(s"SELECT 1 FROM $table") == ""
+      sql(s"EXISTS TABLE $table") == "1"
     }
 
   def blockUntilRowsInTable(rowCount: Int, tableName: String): Unit =
