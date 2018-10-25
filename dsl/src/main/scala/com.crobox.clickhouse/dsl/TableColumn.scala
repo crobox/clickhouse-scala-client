@@ -44,10 +44,6 @@ case class TupleColumn[V](elements: AnyTableColumn*) extends TableColumn[V]("")
 
 abstract class ExpressionColumn[V](targetColumn: AnyTableColumn) extends TableColumn[V](targetColumn.name)
 
-case class LowerCaseColumn(tableColumn: AnyTableColumn) extends ExpressionColumn[String](tableColumn)
-
-case class QueryColumn[V](query: Query)                 extends ExpressionColumn[V](EmptyColumn())
-
 case class All() extends ExpressionColumn[Long](EmptyColumn())
 
 case class Case[V](column: TableColumn[V], condition: TableColumn[Boolean])

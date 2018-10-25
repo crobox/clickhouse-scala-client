@@ -13,8 +13,6 @@ trait DictionaryFunctions { self: Magnets =>
   sealed abstract class DictionaryFuncColumn[V] extends
     ExpressionColumn[V](EmptyColumn())
 
-  //TODO :magnetize default params
-
   case class DictGetUInt8(_dictName: StringColMagnet[_], _attrName: StringColMagnet[_], _id: ConstOrColMagnet[_], _default: Option[Magnet[Long]] = None)
     extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
   case class DictGetUInt16(_dictName: StringColMagnet[_], _attrName: StringColMagnet[_], _id: ConstOrColMagnet[_], _default: Option[Magnet[Long]] = None)
@@ -48,8 +46,6 @@ trait DictionaryFunctions { self: Magnets =>
   case class DictGetHierarchy(dictName: StringColMagnet[_], id: ConstOrColMagnet[_]) extends DictionaryFuncColumn[String]
   case class DictHas(dictName: StringColMagnet[_], id: ConstOrColMagnet[_]) extends DictionaryFuncColumn[Boolean]
 
-
-  //todo implement '...orDefault'
   def dictGetUInt8 (dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetUInt8(dictName, attrName, id)
   def dictGetUInt16(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetUInt16(dictName, attrName, id)
   def dictGetUInt32(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetUInt32(dictName, attrName, id)
@@ -67,24 +63,19 @@ trait DictionaryFunctions { self: Magnets =>
   def dictIsIn     (dictName: StringColMagnet[_], childId: ConstOrColMagnet[_], id: ConstOrColMagnet[_]) = DictIsIn(dictName, childId, id)
   def dictGetHierarchy(dictName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictGetHierarchy(dictName, id)
   def dictHas      (dictName: StringColMagnet[_], id: ConstOrColMagnet[_]) = DictHas(dictName, id)
-/*
-dictGetUInt8
-dictGetUInt16
-dictGetUInt32
-dictGetUInt64
-dictGetInt8
-dictGetInt16
-dictGetInt32
-dictGetInt64
-dictGetFloat32
-dictGetFloat64
-dictGetDate
-dictGetDateTime
-dictGetUUID
-dictGetString
-dictGetTOrDefault
-dictIsIn
-dictGetHierarchy
-dictHas
- */
+
+  def dictGetUInt8OrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[Long]) =    DictGetUInt8(dictName, attrName, id, Some(default))
+  def dictGetUInt16OrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[Long]) =   DictGetUInt16(dictName, attrName, id, Some(default))
+  def dictGetUInt32OrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[Long]) =   DictGetUInt32(dictName, attrName, id, Some(default))
+  def dictGetUInt64OrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[Long]) =   DictGetUInt64(dictName, attrName, id, Some(default))
+  def dictGetInt8OrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[Long]) =     DictGetInt8(dictName, attrName, id, Some(default))
+  def dictGetInt16OrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[Long]) =    DictGetInt16(dictName, attrName, id, Some(default))
+  def dictGetInt32OrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[Long]) =    DictGetInt32(dictName, attrName, id, Some(default))
+  def dictGetInt64OrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[Long]) =    DictGetInt64(dictName, attrName, id, Some(default))
+  def dictGetFloat32OrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[Float]) =  DictGetFloat32(dictName, attrName, id, Some(default))
+  def dictGetFloat64OrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[Float]) =  DictGetFloat64(dictName, attrName, id, Some(default))
+  def dictGetDateOrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[LocalDate]) =     DictGetDate(dictName, attrName, id, Some(default))
+  def dictGetDateTimeOrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[DateTime]) = DictGetDateTime(dictName, attrName, id, Some(default))
+  def dictGetUUIDOrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[UUID]) =      DictGetUUID(dictName, attrName, id, Some(default))
+  def dictGetStringOrDefault(dictName: StringColMagnet[_], attrName: StringColMagnet[_], id: ConstOrColMagnet[_], default: Magnet[String]) =   DictGetString(dictName, attrName, id, Some(default))
 }

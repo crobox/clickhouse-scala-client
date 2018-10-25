@@ -18,13 +18,4 @@ trait BitFunctions { self: Magnets =>
   def bitNot(a: NumericCol[_])                       = BitNot(a: NumericCol[_])
   def bitShiftLeft(a: NumericCol[_], b: NumericCol[_])  = BitShiftLeft(a: NumericCol[_], b: NumericCol[_])
   def bitShiftRight(a: NumericCol[_], b: NumericCol[_]) = BitShiftRight(a: NumericCol[_], b: NumericCol[_])
-
-  /*
-  bitAnd(a, b)
-  bitOr(a, b)
-  bitXor(a, b)
-  bitNot(a)
-  bitShiftLeft(a, b)
-  bitShiftRight(a, b)
- */
 }

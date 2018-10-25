@@ -33,6 +33,23 @@ trait StringSearchFunctions { self: Magnets =>
   def replaceRegexpAll(col: StringColMagnet[_], pattern: StringColMagnet[_], replacement: StringColMagnet[_]) = ReplaceRegexpAll(col, pattern, replacement)
   
   
+  trait StringSearchOps{ self: StringColMagnet[_] =>
+    def position(needle: StringColMagnet[_]) = Position(self, needle)
+    def positionCaseInsensitive(needle: StringColMagnet[_]) = Position(self, needle, false)
+    def positionUTF8(needle: StringColMagnet[_]) = PositionUTF8(self, needle)
+    def positionUTF8CaseInsensitive(needle: StringColMagnet[_]) = PositionUTF8(self, needle, false)
+    def strMatch(pattern: StringColMagnet[_]) = StrMatch(self, pattern)
+    def extract(pattern: StringColMagnet[_]) = Extract(self, pattern)
+    def extractAll(pattern: StringColMagnet[_]) = ExtractAll(self, pattern)
+    def like(pattern: StringColMagnet[_]) = Like(self, pattern)
+    def notLike(pattern: StringColMagnet[_]) = NotLike(self, pattern)
+    def replaceOne(pattern: StringColMagnet[_], replacement: StringColMagnet[_]) = ReplaceOne(self, pattern, replacement)
+    def replaceAll(pattern: StringColMagnet[_], replacement: StringColMagnet[_]) = ReplaceAll(self, pattern, replacement)
+    def replaceRegexpOne(pattern: StringColMagnet[_], replacement: StringColMagnet[_]) = ReplaceRegexpOne(self, pattern, replacement)
+    def replaceRegexpAll(pattern: StringColMagnet[_], replacement: StringColMagnet[_]) = ReplaceRegexpAll(self, pattern, replacement)
+  }
+  
+  
 /*
 position(col, needle)
 positionUTF8(col, needle)

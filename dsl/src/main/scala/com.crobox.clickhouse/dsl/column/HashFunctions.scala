@@ -29,18 +29,4 @@ trait HashFunctions { self: Magnets =>
   def sHA224(col: ConstOrColMagnet[_])                               = SHA224(col)
   def sHA256(col: ConstOrColMagnet[_])                               = SHA256(col)
   def uRLHash(col: ConstOrColMagnet[_], depth: NumericCol[_])           = URLHash(col, depth)
-
-  /*
-halfMD5
-MD5
-sipHash64
-sipHash128
-cityHash64
-intHash32
-intHash64
-SHA1
-SHA224
-SHA256
-URLHash(url[, N])
- */
 }

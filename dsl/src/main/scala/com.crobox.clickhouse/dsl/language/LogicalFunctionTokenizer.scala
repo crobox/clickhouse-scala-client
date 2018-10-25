@@ -16,11 +16,11 @@ trait LogicalFunctionTokenizer {
   }
   def tokenizeLogicalFunction(col: LogicalFunction)(implicit database: Database): String = col match {
     case And(_left: NumericCol[_], _right: NumericCol[_]) =>
-      fast"and(${tokenizeColumn(_left.column)}, ${tokenizeColumn(_right.column)})"
+      fast"${tokenizeColumn(_left.column)} AND ${tokenizeColumn(_right.column)}"
     case Or(_left: NumericCol[_], _right: NumericCol[_]) =>
-      fast"or(${tokenizeColumn(_left.column)}, ${tokenizeColumn(_right.column)})"
+      fast"(${tokenizeColumn(_left.column)} OR ${tokenizeColumn(_right.column)})"
     case Xor(_left: NumericCol[_], _right: NumericCol[_]) =>
-      fast"xor(${tokenizeColumn(_left.column)}, ${tokenizeColumn(_right.column)})"
+      fast"(${tokenizeColumn(_left.column)} XOR ${tokenizeColumn(_right.column)})"
   }
 
 }

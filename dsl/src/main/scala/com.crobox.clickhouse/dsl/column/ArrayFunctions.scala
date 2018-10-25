@@ -76,39 +76,4 @@ trait ArrayFunctions { this: Magnets =>
   def arraySlice[V](col: ArrayColMagnet[_ <: Iterable[V]], offset: NumericCol[_], length: NumericCol[_] = 0) = ArraySlice[V](col, offset, length)
   def arrayUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]], coln: ArrayColMagnet[_ <: Iterable[V]]*) = ArrayUniq[V](col1, coln:_*)
   def arrayJoin[V](col: ArrayColMagnet[_ <: Iterable[V]]) = ArrayJoin[V](col)
-
-  /*
-emptyArrayUInt8,
-emptyArrayUInt16,
-emptyArrayUInt32,
-emptyArrayUInt64
-emptyArrayInt8,
-emptyArrayInt16,
-emptyArrayInt32,
-emptyArrayInt64
-emptyArrayFloat32,
-emptyArrayFloat64
-emptyArrayDate,
-emptyArrayDateTime
-emptyArrayString
-emptyArrayToSingle
-range(N)
-*array(x1, ...),
-*operator [x1, ...]
-arrayConcat
-arrayElement(arr, n),
-operator arr[n]
-has(arr, elem)
-indexOf(arr, x)
-countEqual(arr, x)
-arrayEnumerate(arr)
-arrayEnumerateUniq(arr, ...)
-arrayPopBack
-arrayPopFront
-arrayPushBack
-arrayPushFront
-arraySlice
-arrayUniq(arr, ...)
-arrayJoin(arr)
- */
 }

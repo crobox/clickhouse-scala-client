@@ -6,11 +6,11 @@ import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.time.MultiInterval
 
 trait AggregationFunctions
-  extends SumFunctions 
-  with AnyResultFunctions 
-  with UniqFunctions 
-  with Leveled
-  with AggregationFunctionsCombiners { self: Magnets =>
+   { self: Magnets with SumFunctions
+     with AnyResultFunctions
+     with UniqFunctions
+     with Leveled
+     with AggregationFunctionsCombiners =>
 
   //TODO: Magnetize?
   // Aggregate functions are a whole different beast, they are intercompatible and type passing in a different way then
@@ -36,17 +36,14 @@ trait AggregationFunctions
   case class TimeSeries(tableColumn: TableColumn[Long],
     interval: MultiInterval)
     extends AggregateFunction[Long](tableColumn)
-  
- 
 
-    
     def count() =
       Count()
   
     def count(column: TableColumn[_]) =
       Count(Option(column))
   
-    def average[T: Numeric](tableColumn: TableColumn[T]) =
+    def average[T](tableColumn: TableColumn[T]) =
       Avg(tableColumn)
   
     def min[V](tableColumn: TableColumn[V]) =
@@ -93,7 +90,6 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
     case class Merge[T <: TableColumn[_], Res]()              extends Combinator[T, Res]
   }
 
-
     def aggIf[T <: TableColumn[Res], Res](condition: TableColumn[Boolean])(aggregated: AggregateFunction[Res]): CombinedAggregatedFunction[T, Res] =
       CombinedAggregatedFunction(Combinator.If(condition), aggregated)
 
@@ -110,7 +106,7 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
       *
       * if you run sumForEach(array_col) you will get an array result with the following entries: [sum(x1,x3,x3), sum(y1,y2,y3), sum(z1, z2, z3), sum(u1)]
       *
-      **/
+      */
     def forEach[V, T <: TableColumn[Seq[V]], Res](
       column: T
     )(forEachFunc: TableColumn[V] => AggregateFunction[Res]): AggregateFunction[Seq[Res]] =
@@ -161,7 +157,6 @@ trait AnyResultFunctions { self: Magnets with AggregationFunctions =>
     case object Last   extends AnyModifier
   }
 
-
     def any[T](tableColumn: TableColumn[T]): AnyResult[T] =
       AnyResult(tableColumn)
 
@@ -174,10 +169,10 @@ trait AnyResultFunctions { self: Magnets with AggregationFunctions =>
 }
 
 trait SumFunctions { self: Magnets with AggregationFunctions =>
-  case class Sum[T: Numeric](tableColumn: TableColumn[T], modifier: SumModifier = SumModifier.Simple)
+  case class Sum[T](tableColumn: TableColumn[T], modifier: SumModifier = SumModifier.Simple)
     extends AggregateFunction[Double](tableColumn)
 
-  case class SumMap[T: Numeric, V: Numeric](key: TableColumn[Seq[T]], value: TableColumn[Seq[V]])
+  case class SumMap[T, V](key: TableColumn[Seq[T]], value: TableColumn[Seq[V]])
     extends AggregateFunction[(Seq[T], Seq[V])](key)
   
   sealed trait SumModifier
@@ -188,13 +183,13 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
     case object Map          extends SumModifier
   }
 
-    def sum[T: Numeric](tableColumn: TableColumn[T]) =
+    def sum[T](tableColumn: TableColumn[T]) =
       Sum(tableColumn)
 
-    def sumOverflown[T: Numeric](tableColumn: TableColumn[T]) =
+    def sumOverflown[T](tableColumn: TableColumn[T]) =
       Sum(tableColumn, SumModifier.WithOverflow)
 
-    def sumMap[T: Numeric, V: Numeric](key: TableColumn[Seq[T]], value: TableColumn[Seq[V]]) =
+    def sumMap[T, V](key: TableColumn[Seq[T]], value: TableColumn[Seq[V]]) =
       SumMap(key, value)
 
 }
@@ -209,7 +204,7 @@ trait Leveled { self: Magnets with AggregationFunctions =>
     case object Simple                                                         extends LevelModifier
     case object Exact                                                          extends LevelModifier
     case object TDigest                                                        extends LevelModifier
-    case class Deterministic[T: Numeric](determinator: TableColumn[T])         extends LevelModifier
+    case class Deterministic[T](determinator: TableColumn[T])         extends LevelModifier
     /*Works for numbers. Intended for calculating quantiles of page loading time in milliseconds.*/
     case object Timing extends LevelModifier
     /*The result is calculated as if the x value were passed weight number of times to the quantileTiming function.*/
@@ -276,15 +271,15 @@ trait Leveled { self: Magnets with AggregationFunctions =>
     def quantilesTimingWeighted[V](target: TableColumn[V], weight: TableColumn[Int], levels: Float*) =
       Quantiles(target, levels, LevelModifier.TimingWeighted(weight))
 
-    def medianDeterministic[V, T: Numeric](target: TableColumn[V], determinator: TableColumn[T], level: Float = 0.5F) =
+    def medianDeterministic[V, T](target: TableColumn[V], determinator: TableColumn[T], level: Float = 0.5F) =
       Median(target, level, LevelModifier.Deterministic(determinator))
 
-    def quantileDeterministic[V, T: Numeric](target: TableColumn[V],
+    def quantileDeterministic[V, T](target: TableColumn[V],
                                              determinator: TableColumn[T],
                                              level: Float = 0.5F) =
       Quantile(target, level, LevelModifier.Deterministic(determinator))
 
-    def quantilesDeterministic[V, T: Numeric](target: TableColumn[V], determinator: TableColumn[T], levels: Float*) =
+    def quantilesDeterministic[V, T](target: TableColumn[V], determinator: TableColumn[T], levels: Float*) =
       Quantiles(target, levels, LevelModifier.Deterministic(determinator))
 
 

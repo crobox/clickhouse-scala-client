@@ -3,6 +3,11 @@ package com.crobox.clickhouse.dsl.column
 trait ClickhouseColumnFunctions
   extends Magnets
   with AggregationFunctions
+  with SumFunctions
+  with AnyResultFunctions
+  with UniqFunctions
+  with Leveled
+  with AggregationFunctionsCombiners
   with ArithmeticFunctions
   with ArrayFunctions
   with BitFunctions
@@ -12,6 +17,7 @@ trait ClickhouseColumnFunctions
   with EncodingFunctions
   with HashFunctions
   with HigherOrderFunctions
+  with InFunctions
   with IPFunctions
   with JsonFunctions
   with LogicalFunctions
@@ -20,6 +26,8 @@ trait ClickhouseColumnFunctions
   with RandomFunctions
   with RoundingFunctions
   with SplitMergeFunctions
+  with ScalaBooleanFunctions
+  with ScalaStringFunctions
   with StringFunctions
   with StringSearchFunctions
   with TypeCastFunctions

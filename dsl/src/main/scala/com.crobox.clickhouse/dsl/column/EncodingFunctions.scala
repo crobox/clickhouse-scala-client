@@ -19,12 +19,4 @@ trait EncodingFunctions { self: Magnets =>
   def uUIDNumToString(col: StringColMagnet[_])    = UUIDNumToString(col)
   def bitmaskToList(col: NumericCol[_])        = BitmaskToList(col)
   def bitmaskToArray(col: NumericCol[_])       = BitmaskToArray(col)
-  /*
-hex
-unhex(str)
-UUIDStringToNum(str)
-UUIDNumToString(str)
-bitmaskToList(num)
-bitmaskToArray(num)
- */
 }

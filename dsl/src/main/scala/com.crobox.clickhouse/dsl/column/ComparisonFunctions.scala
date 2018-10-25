@@ -21,6 +21,4 @@ trait ComparisonFunctions { self: Magnets =>
   def greater(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]) = ComparisonColumn(col1 , ">", col2)
   def lessOrEquals(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]) = ComparisonColumn(col1 , "<=", col2)
   def greaterOrEquals(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]) = ComparisonColumn(col1 , ">=", col2)
-
-  //TODO add 'IS (NOT) LIKE' here?
 }

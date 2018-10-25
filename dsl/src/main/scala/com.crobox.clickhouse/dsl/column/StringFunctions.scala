@@ -28,7 +28,37 @@ trait StringFunctions { self: Magnets =>
       extends StringFunctionCol[String](col.column)
 
   // TODO: Enum the charsets?
-  //TODO: Introduce string ops, with the || operator
+
+  trait StringOps{ self: StringColMagnet[_] with EmptyNonEmptyCol[_] =>
+
+    def empty()      = Empty(self)
+    def notEmpty()   = NotEmpty(self)
+    def length()     = Length(self)
+    def lengthUTF8() = LengthUTF8(self)
+    def lower()       = Lower(self)
+    def upper()       = Upper(self)
+    def lowerUTF8()   = LowerUTF8(self)
+    def upperUTF8()   = UpperUTF8(self)
+    def reverse()     = Reverse(self)
+    def reverseUTF8() = ReverseUTF8(self)
+
+    def ||(col2: StringColMagnet[_]) = Concat(self,col2)
+
+    def concat(col2: StringColMagnet[_], coln: StringColMagnet[_]*) =
+      Concat(self, col2: StringColMagnet[_], coln: _*)
+
+    def substring(offset: NumericCol[_], length: NumericCol[_]) =
+      Substring(self, offset: NumericCol[_], length: NumericCol[_])
+
+    def substringUTF8(col: StringColMagnet[_], offset: NumericCol[_], length: NumericCol[_]) =
+      SubstringUTF8(self, offset: NumericCol[_], length: NumericCol[_])
+
+    def appendTrailingCharIfAbsent(col: StringColMagnet[_], c: StringColMagnet[_]) =
+      AppendTrailingCharIfAbsent(self, c: StringColMagnet[_])
+
+    def convertCharset(from: StringColMagnet[_], to: StringColMagnet[_]) =
+      ConvertCharset(self, from: StringColMagnet[_], to: StringColMagnet[_])
+  }
 
   def empty(col: EmptyNonEmptyCol[_])      = Empty(col: EmptyNonEmptyCol[_])
   def notEmpty(col: EmptyNonEmptyCol[_])   = NotEmpty(col: EmptyNonEmptyCol[_])

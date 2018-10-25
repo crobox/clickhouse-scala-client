@@ -16,10 +16,4 @@ trait SplitMergeFunctions { self: Magnets =>
   def splitByString(sep: StringColMagnet[_], col: StringColMagnet[_]) = SplitByString(sep, col)
   def arrayStringConcat(col: ArrayColMagnet[_], sep: StringColMagnet[_] = "") = ArrayStringConcat(col,sep)
   def alphaTokens(col: StringColMagnet[_]) = AlphaTokens(col)
-  /*
-splitByChar(separator, s)
-splitByString(separator, s)
-arrayStringConcat(arr[, separator])
-alphaTokens(s)
- */
 }

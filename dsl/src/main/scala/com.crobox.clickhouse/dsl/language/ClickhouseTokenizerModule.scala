@@ -27,6 +27,7 @@ trait ClickhouseTokenizerModule
     with HashFunctionTokenizer
     with HigherOrderFunctionTokenizer
     with IPFunctionTokenizer
+    with InFunctionTokenizer
     with JsonFunctionTokenizer
     with LogicalFunctionTokenizer
     with MathematicalFunctionTokenizer
@@ -54,7 +55,7 @@ trait ClickhouseTokenizerModule
     sql
   }
 
-  private def toRawSql(query: InternalQuery)(implicit database: Database): String =
+  private[language] def toRawSql(query: InternalQuery)(implicit database: Database): String =
     //    require(query != null) because parallel query is null
     query match {
       case InternalQuery(select, from, asFinal, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
@@ -132,6 +133,7 @@ trait ClickhouseTokenizerModule
       case col: HashFunction                 => tokenizeHashFunction(col)
       case col: HigherOrderFunction[_, _, _] => tokenizeHigherOrderFunction(col)
       case col: IPFunction[_]                => tokenizeIPFunction(col)
+      case col: InFunction                   => tokenizeInFunction(col)
       case col: JsonFunction[_]              => tokenizeJsonFunction(col)
       case col: LogicalFunction              => tokenizeLogicalFunction(col)
       case col: Not                          => tokenizeLogicalFunction(col)
@@ -144,15 +146,12 @@ trait ClickhouseTokenizerModule
       case col: StringSearchFunc[_]          => tokenizeStringSearchFunction(col)
       case col: TypeCastColumn[_]            => tokenizeTypeCastColumn(col)
       case col: URLFunction[_]               => tokenizeURLFunction(col)
-      case ArrayJoin(tableColumn)            => fast"arrayJoin(${tokenizeColumn(tableColumn.column)})"
       case All()                             => "*"
-      case LowerCaseColumn(tableColumn)      => fast"lowerUTF8(${tokenizeColumn(tableColumn)})"
       case Conditional(cases, default) =>
         fast"CASE ${cases
           .map(ccase => fast"WHEN ${tokenizeColumn(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
           .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
       case c: Const[_] => c.parsed
-      case QueryColumn(query) => s"(${toRawSql(query.internalQuery)})"
       case a@_ => throw new NotImplementedError(a.getClass.getCanonicalName + " with superclass " + a.getClass.getSuperclass.getCanonicalName + " could not be matched.")
     }
 
@@ -294,7 +293,6 @@ trait ClickhouseTokenizerModule
   private def aliasOrName(column: AnyTableColumn)(implicit database: Database) =
     column match {
       case AliasedColumn(_, alias)       => alias
-      case QueryColumn(query) => s"(${toRawSql(query.internalQuery).trim.replaceAll(" +", " ")})"
       case regularColumn: AnyTableColumn => regularColumn.name
     }
 
