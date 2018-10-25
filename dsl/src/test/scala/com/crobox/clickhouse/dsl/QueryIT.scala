@@ -10,7 +10,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
-
+import com.crobox.clickhouse.dsl._
 import scala.concurrent.Future
 import scala.util.Random
 
