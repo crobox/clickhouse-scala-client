@@ -59,7 +59,13 @@ lazy val root = (project in file("."))
     ),
     name := "clickhouse"
   )
-  .aggregate(client, dsl, testkit)
+  .aggregate(getProjects:_*)
+
+private lazy val getProjects: Seq[ProjectReference] = scalaBinaryVersion.value match {
+  case "2.12" => Seq(client,dsl,testkit)
+  case _ => Seq(client,testkit)
+}
+
 lazy val client: Project = (project in file("client"))
   .settings(
     name := "client",
