@@ -6,7 +6,6 @@ import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 
 trait LogicalFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
-//TODO find the right place to add braces, so retain the right order of execution
 
   def tokenizeLogicalFunction(col: ExpressionColumn[Boolean])(implicit database: Database): String = col match {
     case Not(col: NumericCol[_]) =>
@@ -20,7 +19,7 @@ trait LogicalFunctionTokenizer {
     case Or(_left: NumericCol[_], _right: NumericCol[_]) =>
       fast"(${tokenizeColumn(_left.column)} OR ${tokenizeColumn(_right.column)})"
     case Xor(_left: NumericCol[_], _right: NumericCol[_]) =>
-      fast"(${tokenizeColumn(_left.column)} XOR ${tokenizeColumn(_right.column)})"
+      fast"xor(${tokenizeColumn(_left.column)}, ${tokenizeColumn(_right.column)})"
   }
 
 }

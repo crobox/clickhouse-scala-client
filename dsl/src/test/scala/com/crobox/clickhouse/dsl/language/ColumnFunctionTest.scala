@@ -11,7 +11,7 @@ import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.Future
 
-abstract class ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec with ScalaFutures with ClickhouseTokenizerModule{
+trait ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec with ScalaFutures with ClickhouseTokenizerModule{
   implicit val clickhouseClient = clickClient
   implicit val db: Database = clickhouseClient.database
 

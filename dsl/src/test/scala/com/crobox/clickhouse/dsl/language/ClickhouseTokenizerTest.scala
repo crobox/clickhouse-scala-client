@@ -64,7 +64,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
                       false,None, Some(shieldId < uuid and shieldId < itemId))
     )
     query should be(
-      s"SELECT shield_id FROM default.captainAmerica WHERE and(shield_id < '$uuid', shield_id < item_id) FORMAT JSON"
+      s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
     )
   }
 
