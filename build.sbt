@@ -93,6 +93,12 @@ lazy val dsl = (project in file("dsl"))
         case _ => true
       }
     },
+    skip in publish := {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, scalaMajor)) if scalaMajor >= 12 => false
+        case _ => true
+      }
+    },
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
       "io.spray" %% "spray-json" % "1.3.3",
