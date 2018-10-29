@@ -134,7 +134,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   it should "use constant" in {
     this.tokenizeColumn(
 
-        column.const(3)
+        const(3)
         .as(col2)
     ) shouldBe s"3 AS ${col2.name}"
   }
