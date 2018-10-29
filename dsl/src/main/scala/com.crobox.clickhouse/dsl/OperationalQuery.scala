@@ -26,7 +26,7 @@ trait OperationalQuery extends Query {
   }
 
   def prewhere(condition: TableColumn[Boolean]): OperationalQuery = {
-    val comparison = internalQuery.prewhere.map(_.and(condition)).getOrElse(condition)
+    val comparison: TableColumn[Boolean] = internalQuery.prewhere.map(_.and(condition)).getOrElse(condition)
     OperationalQuery(internalQuery.copy(prewhere = Some(comparison)))
   }
 

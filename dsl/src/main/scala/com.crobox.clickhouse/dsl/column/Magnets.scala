@@ -161,6 +161,47 @@ trait Magnets { self:
       override val column = toDateTime(s)
     }
 
+  //This is not an ordinary magnet, its intermediary
+  sealed trait LogicalOpsMagnet extends LogicalOps {
+    val asOption: Option[TableColumn[Boolean]]
+
+    def isConstTrue: Boolean = asOption match {
+      case Some(Const(el: Boolean)) => el
+      case _ => false
+    }
+
+    def isConstFalse: Boolean = asOption match {
+      case Some(Const(false)) => true
+      case _ => false
+    }
+  }
+
+  implicit def logicalOpsMagnetFromOptionCol(s: Option[TableColumn[Boolean]]) =
+    new LogicalOpsMagnet {
+      override val asOption = s
+    }
+
+  implicit def logicalOpsMagnetFromOptionConst(s: Option[Boolean]) =
+    new LogicalOpsMagnet {
+      val qv = implicitly[QueryValue[Boolean]]
+      override val asOption = s.map(Const.apply(_)(qv))
+    }
+
+  implicit def logicalOpsMagnetFromNone(s: Option[Nothing]) =
+    new LogicalOpsMagnet {
+      override val asOption = None
+    }
+
+  implicit def logicalOpsMagnetFromBoolean[T <: Boolean : QueryValue](s: T) =
+    new LogicalOpsMagnet {
+      override  val asOption = Some(Const(s))
+    }
+
+  implicit def logicalOpsMagnetFromBooleanCol[T <: TableColumn[Boolean]](s: T) =
+    new LogicalOpsMagnet {
+      override  val asOption = Some(s)
+    }
+
   /**
     * Type that is expected by functions that shall then add or subtract from this value.
     *
@@ -169,7 +210,7 @@ trait Magnets { self:
   sealed trait AddSubtractable[C] extends Magnet[C] with AddSubtractOps[C]
 
   trait NumericCol[C] extends Magnet[C] with AddSubtractable[C] with HexCompatible[C]
-    with ComparableWith[NumericCol[_]] with LogicalOps with ArithmeticOps[C]
+    with ComparableWith[NumericCol[_]] with ArithmeticOps[C]
 
   implicit def numericFromLong[T <: Long : QueryValue](s: T) =
     new NumericCol[T] {

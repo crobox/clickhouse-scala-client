@@ -22,10 +22,15 @@ class NumericColFunctionTest extends ColumnFunctionTest {
     r(true and true) shouldBe "1"
     r(true and false) shouldBe "0"
     r(true or false) shouldBe "1"
+    r(true or false) shouldBe "1"
     r(false or false) shouldBe "0"
     r(true xor true) shouldBe "0"
     r( true xor true) shouldBe "0"
+    r( true xor None) shouldBe "1"
+    r( true or None) shouldBe "1"
+    r( true and None) shouldBe "1"
     r(CHDsl.not(true)) shouldBe "0"
+    r(CHDsl.not(true and None) and true or false xor None) shouldBe "0"
   }
 
   it should "succeed for MathFunctions" in {
