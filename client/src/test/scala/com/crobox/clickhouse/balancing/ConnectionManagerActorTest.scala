@@ -48,7 +48,8 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventual
         Seq(
           uris(host1)._1.offer(Alive(host1)),
           uris(host2)._1.offer(Alive(host2)),
-          uris(host3)._1.offer(ClickhouseHostHealth.Dead(host3, new IllegalArgumentException))
+          uris(host3)._1.offer(Alive(host3)),
+          uris(host3)._1.offer(ClickhouseHostHealth.Dead(host3, new IllegalArgumentException("Got it wrong")))
         )
       )
       .flatMap(_ => {

@@ -119,7 +119,7 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
           case _: Alive =>
             log.info(s"Host ${status.host} is back online. Updating and reintroducing the host as viable connection.")
           case Dead(_, ex) =>
-            log.info(s"Host ${status.host} is offline. Removing from viable connections because of exception.", ex)
+            log.error(ex, s"Host ${status.host} is offline. Removing from viable connections because of exception.")
         }
       }
     }
