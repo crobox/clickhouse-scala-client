@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import com.crobox.clickhouse.dsl.AggregateFunction.StateResult
-import com.crobox.clickhouse.dsl.{NativeColumn, RefColumn, TableColumn, UInt32}
+
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.TestSchema.TestTable
 import com.crobox.clickhouse.dsl.schemabuilder.DefaultValue.Default
 import com.crobox.clickhouse.dsl.schemabuilder.Engine.SummingMergeTree

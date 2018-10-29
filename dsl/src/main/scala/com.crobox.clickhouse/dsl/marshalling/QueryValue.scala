@@ -4,6 +4,7 @@ import java.util.UUID
 
 import com.crobox.clickhouse.dsl.ClickhouseStatement
 import com.crobox.clickhouse.partitioning.PartitionDateFormatter
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, LocalDate}
 
 import scala.annotation.implicitNotFound
@@ -82,10 +83,10 @@ trait QueryValueFormats {
   }
 
   implicit object DateTimeQueryValue extends QueryValue[DateTime] {
+    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+    override def apply(v: DateTime): String = quote(formatter.print(v))
 
-    override def apply(v: DateTime): String = quote(PartitionDateFormatter.dateFormat(v))
-
-    override def unapply(v: String): DateTime = DateTime.parse(unquote(v))
+    override def unapply(v: String): DateTime = formatter.parseDateTime(unquote(v))
   }
 
   implicit object LocalDateQueryValue extends QueryValue[LocalDate] {
@@ -95,16 +96,16 @@ trait QueryValueFormats {
     override def unapply(v: String): LocalDate = LocalDate.parse(unquote(v))
   }
 
-  implicit def queryValueToSeq[V](ev: QueryValue[V]): QueryValue[Iterable[V]] =
+  implicit def queryValueToSeq[V](ev: QueryValue[V]): QueryValue[scala.Iterable[V]] =
     new IterableQueryValue(ev)
 
-  class IterableQueryValue[V](ev: QueryValue[V]) extends QueryValue[Iterable[V]] {
+  class IterableQueryValue[V](ev: QueryValue[V]) extends QueryValue[scala.Iterable[V]] {
 
-    override def apply(value: Iterable[V]): String =
-      s"""(${value.map(ev.apply).mkString(",")})"""
+    override def apply(value: scala.Iterable[V]): String =
+      s"""[${value.map(ev.apply).mkString(",")}]"""
 
-    override def unapply(queryRep: String): Iterable[V] =
-      unquote(queryRep).split(",").map(ev.unapply).asInstanceOf[Iterable[V]]
+    override def unapply(queryRep: String): scala.Iterable[V] =
+      unquote(queryRep).split(",").map(ev.unapply).asInstanceOf[scala.Iterable[V]]
   }
 
   private def unquote(v: String) =

@@ -2,9 +2,12 @@ package com.crobox.clickhouse.dsl
 
 import java.util.UUID
 
+import com.crobox.clickhouse.dsl.column._
+
 import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
+import org.joda.time.{DateTime, LocalDate}
 
 import scala.util.{Failure, Success}
 
@@ -32,14 +35,6 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query                            = select(col1, shieldId) from innerQuery join (AnyInnerJoin, joinInnerQuery) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT column_1, shield_id FROM (SELECT shield_id AS item_id FROM $tokenizerDatabase.captainAmerica WHERE shield_id = '$expectedUUID' ) ANY INNER JOIN (SELECT item_id FROM $tokenizerDatabase.twoTestTable WHERE column_3 = 'wompalama' ) USING item_id FORMAT JSON"
-    )
-  }
-
-  it should "propagate the queryvalue parser from super, when negating isIn()" in {
-    val ids = Seq.fill(3)(UUID.randomUUID())
-    val query = select(shieldId) from OneTestTable where shieldId.not().isIn(ids.toSet)
-    clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT shield_id FROM default.captainAmerica WHERE shield_id NOT IN (${ids.map(s => s"'$s'").mkString(",")}) FORMAT JSON"
     )
   }
 
@@ -76,6 +71,28 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
       case Failure(_:IllegalArgumentException) =>
     }
   }
+
+  it should "parse datefunction" in {
+    val query = select(toYear(NativeColumn[DateTime]("dateTime"))) from OneTestTable
+    val s = clickhouseTokenizer.toSql(query.internalQuery)
+
+    s.nonEmpty shouldBe true
+  }
+
+  it should "parse column function in filter" in {
+
+    val query = select(minus(NativeColumn[LocalDate]("date"), NativeColumn[Double]("double"))) from OneTestTable where(sum(col2) > 0)
+    val s = clickhouseTokenizer.toSql(query.internalQuery)
+
+    s shouldBe "SELECT minus(date, double) FROM default.captainAmerica WHERE sum(column_2) > 0 FORMAT JSON"
+  }
+
+  it should "parse const as column for magnets" in {
+    val query = select(col2 - 1, intDiv(2,3)) from OneTestTable
+    val s = clickhouseTokenizer.toSql(query.internalQuery)
+    s shouldBe "SELECT minus(column_2, 1), intDiv(2, 3) FROM default.captainAmerica FORMAT JSON"
+  }
+
 
   it should "succeed on safe override of non-conflicting multi part queries" in {
     val query = select(shieldId)

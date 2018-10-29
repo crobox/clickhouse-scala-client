@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.dsl
 
+import column._
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
@@ -24,7 +25,12 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(select = newSelect))
   }
 
-  def where(condition: Comparison): OperationalQuery = {
+  def prewhere(condition: TableColumn[Boolean]): OperationalQuery = {
+    val comparison = internalQuery.prewhere.map(_.and(condition)).getOrElse(condition)
+    OperationalQuery(internalQuery.copy(prewhere = Some(comparison)))
+  }
+
+  def where(condition: TableColumn[Boolean]): OperationalQuery = {
     val comparison = internalQuery.where.map(_.and(condition)).getOrElse(condition)
     OperationalQuery(internalQuery.copy(where = Some(comparison)))
   }
@@ -50,7 +56,7 @@ trait OperationalQuery extends Query {
     )
   }
 
-  def having(condition: Comparison): OperationalQuery = {
+  def having(condition: TableColumn[Boolean]): OperationalQuery = {
     val comparison = internalQuery.having.map(_.and(condition)).getOrElse(condition)
     OperationalQuery(internalQuery.copy(having = Option(comparison)))
   }

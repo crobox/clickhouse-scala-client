@@ -1,31 +1,17 @@
 package com.crobox.clickhouse
 
-import com.crobox.clickhouse.dsl.AggregateFunction.AggregationFunctionsCombinersDsl
-import com.crobox.clickhouse.dsl.AnyResult.AnyResultDsl
-import com.crobox.clickhouse.dsl.Leveled.LevelModifierDsl
-import com.crobox.clickhouse.dsl.{ColumnOperations, QueryFactory, StringFunctions}
-import com.crobox.clickhouse.dsl.Sum.SumDsl
+import com.crobox.clickhouse.dsl.QueryFactory
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.Uniq.UniqDsl
+import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
 import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryResult}
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.dongxiguo.fastring.Fastring.Implicits._
 import spray.json.{JsonReader, JsonWriter}
 
-import scala.collection.immutable.Iterable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-trait DslLanguage
-    extends ColumnOperations
-    with AggregationFunctionsCombinersDsl
-    with UniqDsl
-    with AnyResultDsl
-    with SumDsl
-    with LevelModifierDsl
-    with QueryFactory
-    with QueryValueFormats
-    with StringFunctions
+sealed trait DslLanguage  extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats
 object DslLanguage extends DslLanguage
 
 package object dsl extends DslLanguage {
@@ -71,244 +57,45 @@ package object dsl extends DslLanguage {
       } yield OperationalQuery(bo.internalQuery)
   }
 
-  implicit class StringColumnWithCondition(column: TableColumn[String]) {
+  implicit val booleanNumeric: Numeric[Boolean] = new Numeric[Boolean] {
+    override def plus(x: Boolean, y: Boolean) = x || y
 
-    //TODO switch the starts/ends/contains for iterables to use a one if for lists
-    def startsWith(others: Iterable[String])(implicit ev: QueryValue[String],
-                                             validator: ComparisonValidator[Iterable[_ >: String]] =
-                                               ColumnsWithCondition.notEmptyValidator): Comparison =
-      isLike(others.map(other => fast"$other%".toString))
+    override def minus(x: Boolean, y: Boolean) = x ^ y
 
-    def endsWith(others: Iterable[String])(implicit ev: QueryValue[String],
-                                           validator: ComparisonValidator[Iterable[_ >: String]] =
-                                             ColumnsWithCondition.notEmptyValidator): Comparison =
-      isLike(others.map(other => fast"%$other".toString))
+    override def times(x: Boolean, y: Boolean) = x && y
 
-    def contains(others: Iterable[String])(implicit ev: QueryValue[String],
-                                           validator: ComparisonValidator[Iterable[_ >: String]] =
-                                             ColumnsWithCondition.notEmptyValidator): Comparison =
-      isLike(others.map(other => fast"%$other%".toString))
+    override def negate(x: Boolean) = !x
 
-    def startsWith(other: String)(implicit ev: QueryValue[String]): Comparison =
-      isLike(fast"$other%")
+    override def fromInt(x: Int) = if (x <= 0) false else true
 
-    def endsWith(other: String)(implicit ev: QueryValue[String]): Comparison =
-      isLike(fast"%$other")
+    override def toInt(x: Boolean) = if (x) 1 else 0
 
-    def contains(other: String)(implicit ev: QueryValue[String]): Comparison =
-      isLike(fast"%$other%")
+    override def toLong(x: Boolean) = if (x) 1 else 0
 
-    def isLike(other: Iterable[String])(implicit ev: QueryValue[String],
-                                        validator: ComparisonValidator[Iterable[_ >: String]] =
-                                          ColumnsWithCondition.notEmptyValidator): Comparison =
-      if (validator.isValid(other)) {
-        other
-          .map { o =>
-            column.isLike(o)
-          }
-          .reduce { (a, b) =>
-            a or b
-          }
-      } else NoOpComparison()
+    override def toFloat(x: Boolean) = if (x) 1 else 0
 
-    def isLike(other: String)(implicit ev: QueryValue[String]): Comparison =
-      ValueColumnComparison[String, String](column, "LIKE", other)(ev)
+    override def toDouble(x: Boolean) = if (x) 1 else 0
 
-    def empty(): Comparison =
-      FunctionColumnComparison("empty", column)
-
-    def notEmpty(): Comparison =
-      FunctionColumnComparison("notEmpty", column)
-
+    override def compare(x: Boolean, y: Boolean) = ???
   }
 
-  implicit class BooleanConditions(column: TableColumn[Boolean]) {
+  def conditional(column: AnyTableColumn, condition: Boolean) =
+    if (condition) column else EmptyColumn()
 
-    def isFalse(implicit qv: QueryValue[Boolean]): Comparison =
-      column.isEq(false)
+  def ref[V](refName: String) =
+    new RefColumn[V](refName)
 
-    def isTrue(implicit qv: QueryValue[Boolean]): Comparison =
-      column.isEq(true)
-  }
+  def const[V: QueryValue](const: V) =
+    Const(const)
 
-  implicit class ColumnsWithCondition[V](column: TableColumn[V]) {
+  def rawColumn(tableColumn: AnyTableColumn) =
+    RawColumn(tableColumn)
 
-    def <(other: TableColumn[V]): Comparison =
-      ColRefColumnComparison[V](column, "<", other)
+  def all() =
+    All()
 
-    def <(other: V)(implicit ev: QueryValue[V]): Comparison =
-      ValueColumnComparison[V, V](column, "<", other)
+  def switch[V](defaultValue: TableColumn[V], cases: Case[V]*) =
+    Conditional(cases, defaultValue)
 
-    def >(other: TableColumn[V]): Comparison =
-      ColRefColumnComparison[V](column, ">", other)
-
-    def >(other: V)(implicit ev: QueryValue[V]): Comparison =
-      ValueColumnComparison[V, V](column, ">", other)
-
-    def <=(other: TableColumn[V]): Comparison =
-      ColRefColumnComparison(column, "<=", other)
-
-    def <=(other: V)(implicit ev: QueryValue[V]): Comparison =
-      ValueColumnComparison[V, V](column, "<=", other)
-
-    def >=(other: TableColumn[V]): Comparison =
-      ColRefColumnComparison(column, ">=", other)
-
-    def >=(other: V)(implicit ev: QueryValue[V]): Comparison =
-      ValueColumnComparison[V, V](column, ">=", other)
-
-    def isEq(other: TableColumn[V]): Comparison =
-      ColRefColumnComparison(column, "=", other)
-
-    def isEq(other: V)(implicit ev: QueryValue[V],
-                       validator: ComparisonValidator[V] = ColumnsWithCondition.defaultValidator): Comparison =
-      if (validator.isValid(other))
-        ValueColumnComparison[V, V](column, "=", other)
-      else
-        NoOpComparison()
-
-    def isIn(other: Iterable[V])(implicit ev: QueryValue[V],
-                                 validator: ComparisonValidator[Iterable[_ >: V]] =
-                                   ColumnsWithCondition.notEmptyValidator): Comparison =
-      if (validator.isValid(other))
-        ValueColumnComparison[V, Iterable[V]](column, "IN", other)(QueryValueFormats.queryValueToSeq[V](ev))
-      else
-        NoOpComparison()
-
-  }
-
-  implicit class ArrayColumnConditions[V](column: TableColumn[Seq[V]]) {
-
-    def notEmpty(): Comparison =
-      FunctionColumnComparison("notEmpty", column)
-
-    def empty(): Comparison =
-      FunctionColumnComparison("empty", column)
-
-    def exists(condition: (TableColumn[V] => Comparison)) = {
-      val conditionColumn = ColumnOperations.ref[V]("x")
-      HigherOrderFunction("arrayExists", conditionColumn, condition(conditionColumn), column)
-    }
-
-  }
-
-  implicit class NegatedStringConditions(negated: NegateColumn[String])
-      extends StringColumnWithCondition(negated.column) {
-
-    override def isLike(other: String)(implicit ev: QueryValue[String]): Comparison =
-      ValueColumnComparison[String, String](negated.column, "NOT LIKE", other)(ev)
-
-    override def isLike(other: Iterable[String])(implicit ev: QueryValue[String],
-                                                 validator: ComparisonValidator[Iterable[_ >: String]]): Comparison =
-      if (validator.isValid(other)) {
-        other
-          .map { o =>
-            negated.isLike(o)
-          }
-          .reduce { (a, b) =>
-            a and b
-          }
-      } else NoOpComparison()
-
-  }
-
-  implicit class NegatedConditions[V](negated: NegateColumn[V]) extends ColumnsWithCondition(negated.column) {
-
-    override def isEq(other: V)(implicit ev: QueryValue[V], validator: ComparisonValidator[V]): Comparison =
-      if (validator.isValid(other))
-        ValueColumnComparison[V, V](negated.column, "!=", other)
-      else
-        NoOpComparison()
-
-    override def isIn(other: Iterable[V])(implicit ev: QueryValue[V],
-                                          validator: ComparisonValidator[Iterable[_ >: V]]): Comparison =
-      super.isIn(other) match {
-        case comparison: ValueColumnComparison[_, V] =>
-          comparison.copy(operator = "NOT IN")(comparison.queryValueEvidence)
-        case other: Comparison => other
-      }
-  }
-
-  case class NegateColumn[V](column: TableColumn[V])
-
-  implicit class NegateComparison[V](column: TableColumn[V]) {
-
-    def not(): NegateColumn[V] =
-      NegateColumn(column)
-  }
-
-  trait ComparisonValidator[V] {
-
-    def isValid(value: V): Boolean
-  }
-
-  object ColumnsWithCondition {
-
-    case object NoValidator extends ComparisonValidator[Any] {
-
-      override def isValid(value: Any): Boolean = true
-    }
-
-    class NotEmptyValidator[T] extends ComparisonValidator[T] {
-
-      override def isValid(value: T): Boolean = value match {
-        case x: Iterable[_] => x.nonEmpty
-        case x: String      => x.nonEmpty
-        case null           => false
-        case _              => true
-      }
-    }
-
-    implicit def defaultValidator[T] = new NotEmptyValidator[T]
-
-    implicit val notEmptyValidator = new NotEmptyValidator[Iterable[_]]
-  }
-
-  implicit class ChainableColumns(columnComparison: Comparison) {
-
-    def and(other: Comparison): Comparison =
-      (columnComparison, other) match {
-        case (_: NoOpComparison, _: NoOpComparison) => NoOpComparison()
-        case _                                      => ChainableColumnCondition(columnComparison, "AND", other)
-      }
-
-    def or(other: Comparison): Comparison =
-      (columnComparison, other) match {
-        case (_: NoOpComparison, _: NoOpComparison) => NoOpComparison()
-        case _                                      => ChainableColumnCondition(columnComparison, "OR", other)
-      }
-  }
-
-  implicit def optionToCondition(option: Option[Comparison]): Comparison =
-    option.getOrElse(NoOpComparison())
-
-  implicit def toComparison(comparisons: Seq[Comparison]): Comparison =
-    comparisons.reduceOption(_ and _)
-
-  abstract class Comparison extends TableColumn[Boolean]("")
-
-  case class ChainableColumnCondition(left: Comparison, operator: String, right: Comparison) extends Comparison
-
-  abstract class ColumnComparison[V, W](left: TableColumn[V], operator: String) extends Comparison {
-    val right: W
-  }
-
-  case class ValueColumnComparison[V, W](left: TableColumn[V], operator: String, override val right: W)(
-      implicit ev: QueryValue[W]
-  ) extends ColumnComparison[V, W](left: TableColumn[V], operator: String) {
-    val queryValueEvidence: QueryValue[W] = ev
-  }
-
-  case class ColRefColumnComparison[V](left: TableColumn[V], operator: String, override val right: TableColumn[V])
-      extends ColumnComparison[V, TableColumn[V]](left: TableColumn[V], operator: String)
-
-  case class FunctionColumnComparison[V](functionName: String, column: TableColumn[V]) extends Comparison
-
-  case class HigherOrderFunction[V](functionName: String,
-                                    conditionColumn: AnyTableColumn,
-                                    comparison: Comparison,
-                                    column: TableColumn[Seq[V]])
-      extends Comparison
-
-  case class NoOpComparison() extends Comparison
+  def columnCase[V](condition: TableColumn[Boolean], value: TableColumn[V]) = Case[V](value, condition)
 }

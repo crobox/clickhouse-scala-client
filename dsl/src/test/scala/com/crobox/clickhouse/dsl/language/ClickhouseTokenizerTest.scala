@@ -2,12 +2,12 @@ package com.crobox.clickhouse.dsl.language
 
 import java.util.UUID
 
-import com.crobox.clickhouse.dsl.{AggregateFunction, Case, ColumnOperations, CombinedAggregatedFunction, Conditional, InnerFromQuery, InternalQuery, JoinQuery, Limit, NoOpComparison, OperationalQuery, SelectQuery, TableColumn, TableFromQuery, TestSchema, TimeSeries, Uniq, _}
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
 
-class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with ClickhouseTokenizerModule {
+class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with ClickhouseTokenizerModule  {
   val testSubject = this
 
   "building select statement" should "build select statement" in {
@@ -40,7 +40,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   "building where clause" should "add simple condition between columns" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
-      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, Some(shieldId < itemId))
+      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, None, Some(shieldId < itemId))
     )
     query should be("SELECT shield_id FROM default.captainAmerica WHERE shield_id < item_id FORMAT JSON")
   }
@@ -50,7 +50,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val uuid   = UUID.randomUUID()
     val query =
       testSubject.toSql(
-        InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, Some(shieldId < uuid))
+        InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, None, Some(shieldId < uuid))
       )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -60,38 +60,12 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val uuid   = UUID.randomUUID()
     val query = testSubject.toSql(
       InternalQuery(Some(select),
-                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    false,
-                    Some(shieldId < uuid and shieldId < itemId))
+                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                      false,None, Some(shieldId < uuid and shieldId < itemId))
     )
     query should be(
       s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
     )
-
-  }
-
-  it should "ignore noOp right condition" in {
-    val select = SelectQuery(Seq(shieldId))
-    val uuid   = UUID.randomUUID()
-    val query = testSubject.toSql(
-      InternalQuery(Some(select),
-                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    false,
-                    Some(shieldId < uuid and NoOpComparison()))
-    )
-    query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
-  }
-
-  it should "ignore noOp left condition" in {
-    val select = SelectQuery(Seq(shieldId))
-    val uuid   = UUID.randomUUID()
-    val query = testSubject.toSql(
-      InternalQuery(Some(select),
-                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    false,
-                    Some(NoOpComparison() and shieldId < uuid))
-    )
-    query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
 
   "building group by" should "add columns as group by clauses" in {
@@ -149,8 +123,8 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   }
 
   it should "generate higher order function" in {
-    val col = new TableColumn[Seq[Int]]("table_column") {}
-    this.tokenizeCondition(col.exists(_.isEq(3))) shouldBe "arrayExists(x -> x = 3, table_column)"
+    val col = new TableColumn[Iterable[Int]]("table_column") {}
+    this.tokenizeColumn(arrayExists[Int]((x: TableColumn[Int]) => x.isEq(3), col)) shouldBe "arrayExists(x -> x = 3, table_column)"
   }
 
   it should "generate cases" in {
@@ -159,35 +133,27 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
 
   it should "use constant" in {
     this.tokenizeColumn(
-      ColumnOperations
-        .const(3)
+
+        const(3)
         .as(col2)
     ) shouldBe s"3 AS ${col2.name}"
   }
 
   "Aggregated functions" should "build with combinators" in {
-    this.tokenizeColumn(CombinedAggregatedFunction(AggregateFunction.If(col1.isEq("test")), Uniq(col1))) shouldBe s"uniqIf(${col1.name},${col1.name} = 'test')"
-    this.tokenizeColumn(CombinedAggregatedFunction(AggregateFunction.If(col1.isEq("test")), Uniq(col1, Uniq.HLL12))) shouldBe s"uniqHLL12If(${col1.name},${col1.name} = 'test')"
-    this.tokenizeColumn(CombinedAggregatedFunction(AggregateFunction.If(col1.isEq("test")), Uniq(col1, Uniq.Combined))) shouldBe s"uniqCombinedIf(${col1.name},${col1.name} = 'test')"
+    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1))) shouldBe s"uniqIf(${col1.name},${col1.name} = 'test')"
+    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1, UniqModifier.HLL12))) shouldBe s"uniqHLL12If(${col1.name},${col1.name} = 'test')"
+    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1, UniqModifier.Combined))) shouldBe s"uniqCombinedIf(${col1.name},${col1.name} = 'test')"
     this.tokenizeColumn(
-      CombinedAggregatedFunction(AggregateFunction.If(col1.isEq("test")),
-                                 CombinedAggregatedFunction(AggregateFunction.If(col2.isEq(3)), Uniq(col1, Uniq.Exact)))
+      CombinedAggregatedFunction(Combinator.If(col1.isEq("test")),
+                                 CombinedAggregatedFunction(Combinator.If(col2.isEq(3)), Uniq(col1, UniqModifier.Exact)))
     ) shouldBe s"uniqExactIfIf(${col1.name},${col2.name} = 3,${col1.name} = 'test')"
   }
 
   "build time series" should "use zone name for monthly" in {
     this.tokenizeTimeSeries(
-      TimeSeries(
-        timestampColumn,
-        MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
-                      DateTime.now(DateTimeZone.forOffsetHours(2)),
-                      MultiDuration(TimeUnit.Month))
-      )
+      TimeSeries(timestampColumn, MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
+                            DateTime.now(DateTimeZone.forOffsetHours(2)),
+                            MultiDuration(TimeUnit.Month)))
     ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
-  }
-
-  "build nested query" should "select column as condition" in {
-    val col = new TableColumn[Seq[Int]]("other_table_col") {}
-    this.tokenizeCondition(col.exists(_.isEq(query[Int](select(max(col2)).from(OneTestTable))))) shouldBe "arrayExists(x -> x = (SELECT max(column_2) FROM default.captainAmerica), other_table_col)"
   }
 }

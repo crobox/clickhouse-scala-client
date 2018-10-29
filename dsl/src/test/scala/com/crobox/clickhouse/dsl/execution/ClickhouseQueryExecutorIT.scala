@@ -1,19 +1,27 @@
 package com.crobox.clickhouse.dsl.execution
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Keep, Sink}
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.parallel._
+import com.crobox.clickhouse.dsl.column._
+
 import com.crobox.clickhouse.internal.ClickHouseExecutor.{QueryAccepted, QueryFinished}
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
-import com.crobox.clickhouse.{DslLanguage, TestSchemaClickhouseQuerySpec}
+import com.crobox.clickhouse.{TestSchemaClickhouseQuerySpec}
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
 
 class ClickhouseQueryExecutorIT
     extends ClickhouseClientSpec
     with TestSchemaClickhouseQuerySpec
-    with ScalaFutures
-    with DslLanguage {
+    with ScalaFutures {
+
   import scala.concurrent.ExecutionContext.Implicits.global
+
+  implicit override val patienceConfig =
+    PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
+
   implicit val materializer = ActorMaterializer()
   case class Result(one: Int)
   object Result {

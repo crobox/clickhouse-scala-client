@@ -59,7 +59,9 @@ lazy val root = (project in file("."))
     ),
     name := "clickhouse"
   )
-  .aggregate(client, dsl, testkit)
+  .aggregate(client,dsl,testkit)
+
+
 lazy val client: Project = (project in file("client"))
   .settings(
     name := "client",
@@ -85,6 +87,12 @@ lazy val testkit = (project in file("testkit"))
 lazy val dsl = (project in file("dsl"))
   .settings(
     name := "dsl",
+    skip in compile := {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, scalaMajor)) if scalaMajor >= 12 => false
+        case _ => true
+      }
+    },
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
       "io.spray" %% "spray-json" % "1.3.3",

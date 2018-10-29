@@ -1,19 +1,19 @@
-package com.crobox.clickhouse.dsl
+package com.crobox.clickhouse.dsl.language
+
 import java.util.UUID
 
+import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
-import com.crobox.clickhouse.{DslLanguage, TestSchemaClickhouseQuerySpec}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
-import spray.json.DefaultJsonProtocol.jsonFormat
+import spray.json.DefaultJsonProtocol.{jsonFormat, _}
 import spray.json.RootJsonFormat
-import spray.json.DefaultJsonProtocol._
 
 class StringFunctionsIT
     extends ClickhouseClientSpec
     with TestSchemaClickhouseQuerySpec
-    with ScalaFutures
-    with DslLanguage {
+    with ScalaFutures {
 
   private val columnString = "oneem,twoem,threeem"
   override val table2Entries: Seq[Table2Entry] =
@@ -26,14 +26,14 @@ class StringFunctionsIT
 
   it should "split by character" in {
     val resultRows =
-      chExecuter.execute[Result](select(arrayJoin(splitBy(col1, ",")) as "result") from TwoTestTable).futureValue.rows
+      chExecuter.execute[Result](select(arrayJoin(splitByChar(",", col1)) as "result") from TwoTestTable).futureValue.rows
     resultRows.length shouldBe 3
     resultRows.map(_.result) should contain theSameElementsAs Seq("oneem", "twoem", "threeem")
   }
 
   it should "split by string" in {
     val resultRows =
-      chExecuter.execute[Result](select(arrayJoin(splitBy(col1, "em,")) as "result") from TwoTestTable).futureValue.rows
+      chExecuter.execute[Result](select(arrayJoin(splitByString("em,", col1)) as "result") from TwoTestTable).futureValue.rows
     resultRows.length shouldBe 3
     resultRows.map(_.result) should contain theSameElementsAs Seq("one", "two", "threeem")
   }
@@ -41,7 +41,7 @@ class StringFunctionsIT
   it should "concatenate string back" in {
     val resultRows =
       chExecuter
-        .execute[Result](select(mkString(splitBy(col1, ","), ",") as "result") from TwoTestTable)
+        .execute[Result](select(arrayStringConcat(splitByChar(",", col1), ",") as "result") from TwoTestTable)
         .futureValue
         .rows
     resultRows.length shouldBe 1

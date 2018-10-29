@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl
 
 import java.util.UUID
 
-import com.crobox.clickhouse.dsl
+import com.crobox.clickhouse.{dsl => CHDsl}
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.parallel._
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
@@ -12,8 +12,9 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema {
 
   "query merge operators" should "collect columns from a right hand query" in {
     val expectedUUID            = UUID.randomUUID()
+    
     val left: OperationalQuery  = select(itemId) from TwoTestTable where (col3 isEq "wompalama")
-    val right: OperationalQuery = select(dsl.all()) from OneTestTable where shieldId.isEq(expectedUUID)
+    val right: OperationalQuery = select(CHDsl.all()) from OneTestTable where shieldId.isEq(expectedUUID)
     val query                   = right merge left on timestampColumn
     clickhouseTokenizer.toSql(query.internalQuery).replaceAll("[\\s\\n]","") should be(
       s"""SELECT shield_id,numbers, * FROM (
@@ -28,9 +29,9 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema {
 
   it should "recursively collect columns from right hand queries" in {
     val expectedUUID            = UUID.randomUUID()
-    val left: OperationalQuery = select(dsl.all()) from OneTestTable where shieldId.isEq(expectedUUID)
-    val right: OperationalQuery  = select(dsl.all()) from TwoTestTable where (col3 isEq "wompalama")
-    val right2: OperationalQuery = select(dsl.all()) from ThreeTestTable where shieldId.isEq(expectedUUID)
+    val left: OperationalQuery = select(CHDsl.all()) from OneTestTable where shieldId.isEq(expectedUUID)
+    val right: OperationalQuery  = select(CHDsl.all()) from TwoTestTable where (col3 isEq "wompalama")
+    val right2: OperationalQuery = select(CHDsl.all()) from ThreeTestTable where shieldId.isEq(expectedUUID)
 
     val query                   = right2 merge right on timestampColumn merge left on timestampColumn
 

@@ -2,6 +2,7 @@ package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery.AllLeftJoin
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
+import com.crobox.clickhouse.dsl.column._
 
 package object parallel {
 

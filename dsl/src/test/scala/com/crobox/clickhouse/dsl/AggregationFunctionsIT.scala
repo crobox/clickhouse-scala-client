@@ -8,12 +8,12 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
+import com.crobox.clickhouse.dsl.column._
 
 class AggregationFunctionsIT
     extends ClickhouseClientSpec
     with TestSchemaClickhouseQuerySpec
-    with ScalaFutures
-    with DslLanguage {
+    with ScalaFutures {
 
   private val entries = 200145
   override val table1Entries: Seq[Table1Entry] =
