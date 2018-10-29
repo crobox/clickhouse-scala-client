@@ -12,6 +12,19 @@ trait LogicalFunctions { this: Magnets =>
     def and(other: NumericCol[_]) = And(this, other)
     def or(other: NumericCol[_])  = Or(this, other)
     def xor(other: NumericCol[_]) = Xor(this, other)
+
+    def and[T](other: Option[T])(implicit v: T => NumericCol[_]) = other match {
+      case None => this
+      case Some(col: T) => And(this, col)
+    }
+    def or[T](other: Option[T])(implicit v: T => NumericCol[_])  = other match {
+      case None => this
+      case Some(col: T) => Or(this, col)
+    }
+    def xor[T](other: Option[T])(implicit v: T => NumericCol[_]) = other match {
+      case None => this
+      case Some(col: T) => Xor(this, col)
+    }
   }
 
   case class And(_left: NumericCol[_], _right: NumericCol[_]) extends LogicalFunction(_left, _right)
