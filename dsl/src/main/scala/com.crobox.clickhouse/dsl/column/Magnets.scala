@@ -60,6 +60,8 @@ trait Magnets { self:
   sealed trait InFuncRHMagnet extends Magnet[Nothing] {
     val query: Option[OperationalQuery] = None
     val tableRef: Option[Table] = None
+
+    val isEmptyCollection: Boolean = false
   }
 
   implicit def InFuncRHMagnetFromIterable[T : QueryValue](s: Iterable[T]) =
@@ -68,11 +70,13 @@ trait Magnets { self:
       val sConsts: Seq[ConstOrColMagnet[T]] = s.map(col => constOrColMagnetFromConst(col)(qvT)).toSeq
 
       override val column = tuple(sConsts:_*)
+      override val isEmptyCollection: Boolean = sConsts.isEmpty
     }
 
   implicit def InFuncRHMagnetFromTuple(s: Tuple) =
     new InFuncRHMagnet {
       override val column = s
+      override val isEmptyCollection: Boolean = s.coln.isEmpty
     }
 
   implicit def InFuncRHMagnetFromQuery(s: OperationalQuery) =
@@ -161,8 +165,7 @@ trait Magnets { self:
       override val column = toDateTime(s)
     }
 
-  //This is not an ordinary magnet, its intermediary
-  sealed trait LogicalOpsMagnet extends LogicalOps {
+  sealed trait LogicalOpsMagnet extends LogicalOps  {
     val asOption: Option[TableColumn[Boolean]]
 
     def isConstTrue: Boolean = asOption match {
