@@ -1,5 +1,5 @@
 package com.crobox.clickhouse.dsl.column
-import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn, OperationalQuery}
+import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn}
 
 trait InFunctions { self: Magnets =>
 
@@ -25,10 +25,17 @@ trait InFunctions { self: Magnets =>
     def globalNotIn(other: InFuncRHMagnet) = GlobalNotIn(self,other)
   }
 
-  def in(l: ConstOrColMagnet[_],r: InFuncRHMagnet) = In(l,r)
-  def notIn(l: ConstOrColMagnet[_],r: InFuncRHMagnet) = NotIn(l,r)
-  def globalIn(l: ConstOrColMagnet[_],r: InFuncRHMagnet) = GlobalIn(l,r)
-  def globalNotIn(l: ConstOrColMagnet[_],r: InFuncRHMagnet) = GlobalNotIn(l,r)
+  def in(l: ConstOrColMagnet[_],r: InFuncRHMagnet) =
+    if (r.isEmptyCollection) Const(false) else In(l,r)
+
+  def notIn(l: ConstOrColMagnet[_],r: InFuncRHMagnet) =
+    if (r.isEmptyCollection) Const(false) else NotIn(l,r)
+
+  def globalIn(l: ConstOrColMagnet[_],r: InFuncRHMagnet) =
+    if (r.isEmptyCollection) Const(false) else GlobalIn(l,r)
+
+  def globalNotIn(l: ConstOrColMagnet[_],r: InFuncRHMagnet) =
+    if (r.isEmptyCollection) Const(false) else GlobalNotIn(l,r)
 
   def tuple(coln: ConstOrColMagnet[_]*) : Tuple = Tuple(coln)
   def tupleElement[T](tuple: Tuple, index: NumericCol[_]): TupleElement[T] = TupleElement[T](tuple,index)
