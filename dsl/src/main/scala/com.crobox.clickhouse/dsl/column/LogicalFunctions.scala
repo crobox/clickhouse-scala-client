@@ -42,9 +42,9 @@ trait LogicalFunctions { this: Magnets =>
       Const(true)
     else if (_left.isConstFalse && _right.isConstFalse)
       Const(false)
-    else if (_left.asOption.isEmpty && _right.asOption.isDefined)
+    else if ((_left.asOption.isEmpty || _left.asOption.isConstFalse) && _right.asOption.isDefined)
       _right.asOption.get
-    else if (_right.asOption.isEmpty && _left.asOption.isDefined)
+    else if ((_right.asOption.isEmpty || _right.asOption.isConstFalse) && _left.asOption.isDefined)
       _left.asOption.get
     else
       Or(_left, _right)

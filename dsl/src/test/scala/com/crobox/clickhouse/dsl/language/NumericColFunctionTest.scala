@@ -19,18 +19,35 @@ class NumericColFunctionTest extends ColumnFunctionTest {
   }
 
   it should "succeed for LogicalFunctions" in {
-    r(true and true) shouldBe "1"
+    val constTrue = Const(true)
+
+    r(true and Some(true)) shouldBe "1"
     r(true and false) shouldBe "0"
-    r(true or false) shouldBe "1"
+    r(constTrue or false) shouldBe "1"
     r(true or false) shouldBe "1"
     r(false or false) shouldBe "0"
-    r(true xor true) shouldBe "0"
-    r( true xor true) shouldBe "0"
+    r(true xor constTrue) shouldBe "0"
+    r( true xor Some(false)) shouldBe "0"
     r( true xor None) shouldBe "1"
     r( true or None) shouldBe "1"
     r( true and None) shouldBe "1"
     r(CHDsl.not(true)) shouldBe "0"
-    r(CHDsl.not(true and None) and true or false xor None) shouldBe "0"
+  }
+
+  it should "properly reduce any constant result of LogicalFunctions" in {
+    toSql(
+      select(
+        CHDsl.not(true and None) and true or false xor None
+      ).internalQuery,
+      None
+    ) shouldBe "SELECT 0"
+
+    toSql(
+      select(
+        Some(false) or CHDsl.not(ref[Boolean]("mazaa") and None) and true or false xor None
+      ).internalQuery,
+      None
+    ) shouldBe "SELECT not(mazaa)"
   }
 
   it should "succeed for MathFunctions" in {
