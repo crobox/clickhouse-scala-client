@@ -25,7 +25,7 @@ trait InFunctionTokenizer {
   }
 
   private def tokenizeInFunRHCol(value: InFuncRHMagnet)(implicit db: Database) = value match {
-    case col: InFuncRHMagnet if col.query.isDefined => toRawSql(col.query.get.internalQuery)
+    case col: InFuncRHMagnet if col.query.isDefined => fast"(${toRawSql(col.query.get.internalQuery)})"
     case col: InFuncRHMagnet if col.tableRef.isDefined => col.tableRef.get.name
     case col: InFuncRHMagnet => tokenizeColumn(col.column)
   }
