@@ -27,7 +27,7 @@ class NumericColFunctionTest extends ColumnFunctionTest {
     r(true or false) shouldBe "1"
     r(false or false) shouldBe "0"
     r(true xor constTrue) shouldBe "0"
-    r( true xor Some(false)) shouldBe "0"
+    r( true xor Some(false)) shouldBe "1"
     r( true xor None) shouldBe "1"
     r( true or None) shouldBe "1"
     r( true and None) shouldBe "1"
