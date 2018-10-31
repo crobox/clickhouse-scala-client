@@ -1,10 +1,9 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-
-import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.TestSchema.TestTable
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.schemabuilder.DefaultValue.Default
-import com.crobox.clickhouse.dsl.schemabuilder.Engine.SummingMergeTree
+import com.crobox.clickhouse.dsl.schemabuilder.Engine.{DistributedEngine, SummingMergeTree}
 import org.joda.time.LocalDate
 import org.scalatest.{FlatSpecLike, Matchers}
 
@@ -44,11 +43,11 @@ class CreateTableTest extends FlatSpecLike with Matchers {
 
   it should "make add ON CLUSTER" in {
     CreateTable(TestTable("a",
-      List(
-        NativeColumn("b", ColumnType.String)
-      )),
-      Engine.TinyLog,
-      clusterName = Some("mycluster")).toString should be("""CREATE TABLE default.a ON CLUSTER mycluster (
+                          List(
+                            NativeColumn("b", ColumnType.String)
+                          )),
+                Engine.TinyLog,
+                clusterName = Some("mycluster")).toString should be("""CREATE TABLE default.a ON CLUSTER mycluster (
                                 |  b String
                                 |) ENGINE = TinyLog""".stripMargin)
 
@@ -57,7 +56,7 @@ class CreateTableTest extends FlatSpecLike with Matchers {
   it should "make a valid CREATE TABLE query" in {
     val result = CreateTable(
       TestTable("tiny_log_table",
-        Seq(
+                Seq(
                   NativeColumn("test_column", ColumnType.String),
                   NativeColumn("test_column2", ColumnType.Int8, Default("expr"))
                 )),
@@ -120,7 +119,9 @@ class CreateTableTest extends FlatSpecLike with Matchers {
           testColumn2
         )
       ),
-      Engine.MergeTree(Seq(clientId.name, s"toYYYYMM(${date.name})"), Seq(date, clientId, hitId), Some("int64Hash(client_id)"))
+      Engine.MergeTree(Seq(clientId.name, s"toYYYYMM(${date.name})"),
+                       Seq(date, clientId, hitId),
+                       Some("int64Hash(client_id)"))
     ).toString
 
     result should be("""CREATE TABLE default.merge_tree_table (
@@ -186,7 +187,9 @@ class CreateTableTest extends FlatSpecLike with Matchers {
           testColumn2
         )
       ),
-      Engine.ReplacingMergeTree(Seq(s"toYYYYMM(${date.name})"), Seq(date, clientId, hitId), Some("int64Hash(client_id)"))
+      Engine.ReplacingMergeTree(Seq(s"toYYYYMM(${date.name})"),
+                                Seq(date, clientId, hitId),
+                                Some("int64Hash(client_id)"))
     )
   }
 
@@ -206,13 +209,15 @@ class CreateTableTest extends FlatSpecLike with Matchers {
   }
 
   it should "make a valid CREATE TABLE query for ReplicatedReplacingMergeTree" in {
-    val result = replacingMergeTree.copy(engine =
-      Engine.Replicated("/zookeeper/{item}", "{replica}",
-        replacingMergeTree.engine
-          .asInstanceOf[Engine.ReplacingMergeTree]
-          .copy(samplingExpression = None)
+    val result = replacingMergeTree
+      .copy(
+        engine = Engine.Replicated("/zookeeper/{item}",
+                                   "{replica}",
+                                   replacingMergeTree.engine
+                                     .asInstanceOf[Engine.ReplacingMergeTree]
+                                     .copy(samplingExpression = None))
       )
-    ).toString
+      .toString
     result should be("""CREATE TABLE default.merge_tree_table (
                        |  date Date,
                        |  client_id FixedString(16),
@@ -226,10 +231,10 @@ class CreateTableTest extends FlatSpecLike with Matchers {
   }
 
   it should "create a table with an AggregatingMergeTree engine" in {
-    val date        = NativeColumn[LocalDate]("date", ColumnType.Date)
-    val clientId    = NativeColumn("client_id", ColumnType.FixedString(16))
-    val uniqHits    = NativeColumn[StateResult[Long]]("hits", ColumnType.AggregateFunctionColumn("uniq", ColumnType.String))
-
+    val date     = NativeColumn[LocalDate]("date", ColumnType.Date)
+    val clientId = NativeColumn("client_id", ColumnType.FixedString(16))
+    val uniqHits =
+      NativeColumn[StateResult[Long]]("hits", ColumnType.AggregateFunctionColumn("uniq", ColumnType.String))
 
     val create = CreateTable(
       TestTable(
@@ -239,8 +244,7 @@ class CreateTableTest extends FlatSpecLike with Matchers {
       Engine.AggregatingMergeTree(Seq(s"toYYYYMM(${date.name})"), Seq(date, clientId))
     )
 
-    create.toString should be (
-      """CREATE TABLE default.test_table_agg (
+    create.toString should be("""CREATE TABLE default.test_table_agg (
         |  date Date,
         |  client_id FixedString(16),
         |  hits AggregateFunction(uniq, String)
@@ -251,8 +255,8 @@ class CreateTableTest extends FlatSpecLike with Matchers {
   }
 
   it should "create a table with an SummingMergeTree engine" in {
-    val date        = NativeColumn[LocalDate]("date", ColumnType.Date)
-    val client_count    = NativeColumn("client_count", ColumnType.UInt8)
+    val date           = NativeColumn[LocalDate]("date", ColumnType.Date)
+    val client_count   = NativeColumn("client_count", ColumnType.UInt8)
     val summingColumns = Seq(client_count)
 
     val create = CreateTable(
@@ -260,16 +264,29 @@ class CreateTableTest extends FlatSpecLike with Matchers {
         "test_table_agg",
         Seq(date, client_count)
       ),
-      SummingMergeTree(date, Seq(date),summingColumns)
+      SummingMergeTree(date, Seq(date), summingColumns)
     )
 
-    create.toString should be (
-      """CREATE TABLE default.test_table_agg (
+    create.toString should be("""CREATE TABLE default.test_table_agg (
         |  date Date,
         |  client_count UInt8
         |) ENGINE = SummingMergeTree((client_count))
         |PARTITION BY (toYYYYMM(date))
         |ORDER BY (date)
         |SETTINGS index_granularity=8192""".stripMargin)
+  }
+
+  "Distributed" should "create table with distributed engine" in {
+    val date = NativeColumn[LocalDate]("date", ColumnType.Date)
+    val create = CreateTable(
+      TestTable("distributed_table", Seq(date)),
+      DistributedEngine("target_table", "target_table_cluster", "target_database", Some("sipHash(gig)")),
+      clusterName = Some("cluster")
+    )
+    create.toString should be(
+      """CREATE TABLE default.distributed_table ON CLUSTER cluster (
+        |  date Date
+        |) ENGINE = Distributed(target_table_cluster, target_database, target_table ,sipHash(gig))""".stripMargin
+    )
   }
 }
