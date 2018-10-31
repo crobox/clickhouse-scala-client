@@ -6,7 +6,7 @@ import akka.stream.Materializer
 import com.crobox.clickhouse.balancing.Connection.{BalancingHosts, ClusterAware, ConnectionType, SingleHost}
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
 import com.crobox.clickhouse.balancing.discovery.health.ClickhouseHostHealth
-import com.crobox.clickhouse.internal.{ClickhouseHostBuilder, InternalExecutorActor}
+import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
@@ -28,7 +28,6 @@ object HostBalancer extends ClickhouseHostBuilder {
   )(implicit system: ActorSystem, materializer: Materializer, ec: ExecutionContext): HostBalancer = {
     val connectionConfig =
       config.getConfig(ConnectionConfigPrefix)
-    val internalExecutor         = system.actorOf(InternalExecutorActor.props(config))
     val connectionType           = ConnectionType(connectionConfig.getString("type"))
     val connectionHostFromConfig = extractHost(connectionConfig)
     connectionType match {

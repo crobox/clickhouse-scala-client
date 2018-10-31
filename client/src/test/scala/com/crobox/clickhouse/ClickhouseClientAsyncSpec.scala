@@ -8,7 +8,7 @@ import akka.testkit.TestKit
 import akka.util.Timeout.durationToTimeout
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.GetConnection
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest._
 
 import scala.concurrent.Future
@@ -20,7 +20,7 @@ class ClickhouseClientAsyncSpec
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfterEach {
-
+  val config: Config        = ConfigFactory.load()
   implicit val timeout      = durationToTimeout(5 second)
   implicit val materializer = ActorMaterializer()
 
@@ -28,7 +28,6 @@ class ClickhouseClientAsyncSpec
     super.afterAll()
     system.terminate()
   }
-  val config = ConfigFactory.load()
 
   def requestParallelHosts(balancer: HostBalancer, connections: Int = 10): Future[Seq[Uri]] =
     Future.sequence(
@@ -54,7 +53,9 @@ class ClickhouseClientAsyncSpec
     getConnections(manager, RequestConnectionsPerHost * expectedConnections.size)
       .map(connections => {
         expectedConnections.foreach(
-          uri => connections.count(_ == uri) shouldBe (RequestConnectionsPerHost +- RequestConnectionsPerHost / 10)//10% delta for warm-up phase
+          uri =>
+            connections
+              .count(_ == uri) shouldBe (RequestConnectionsPerHost +- RequestConnectionsPerHost / 10) //10% delta for warm-up phase
         )
         succeed
       })

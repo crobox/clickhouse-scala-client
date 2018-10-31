@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.headers.{HttpEncoding, HttpEncodings}
 import akka.stream.Materializer
 import akka.stream.scaladsl.SourceQueue
 import akka.util.ByteString
-import com.crobox.clickhouse.internal.ClickHouseExecutor._
+import com.crobox.clickhouse.internal.progress.QueryProgress.{QueryProgress, _}
 import com.crobox.clickhouse.{ClickhouseChunkedException, ClickhouseException}
 
 import scala.concurrent.{ExecutionContext, Future}

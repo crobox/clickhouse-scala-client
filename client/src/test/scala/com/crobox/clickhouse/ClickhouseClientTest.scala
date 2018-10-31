@@ -1,7 +1,7 @@
 package com.crobox.clickhouse
 
 import akka.stream.scaladsl.{Keep, Sink}
-import com.crobox.clickhouse.internal.ClickHouseExecutor.{QueryAccepted, QueryFinished, QueryProgress}
+import com.crobox.clickhouse.internal.progress.QueryProgress.{QueryAccepted, QueryFinished, QueryProgress}
 import com.typesafe.config.ConfigFactory
 
 /**
