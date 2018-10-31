@@ -72,6 +72,6 @@ private[clickhouse] trait ClickhouseResponseParser {
       }
       .map(_.utf8String)
 
-  protected def splitResponse(response: String) =
+  protected def splitResponse(response: String): Seq[String] =
     response.split("\n").toSeq
 }

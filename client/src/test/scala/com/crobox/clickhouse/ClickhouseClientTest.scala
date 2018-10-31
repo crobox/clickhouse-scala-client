@@ -13,7 +13,7 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
 
   val client: ClickhouseClient = new ClickhouseClient(config)
 
-  it should "select" in {
+  "Clickhouse client" should "select" in {
     client
       .query("select 1 + 2")
       .map { f =>
