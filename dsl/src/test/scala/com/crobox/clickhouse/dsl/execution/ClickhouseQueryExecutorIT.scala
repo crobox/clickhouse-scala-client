@@ -1,13 +1,11 @@
 package com.crobox.clickhouse.dsl.execution
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Keep, Sink}
+import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.parallel._
-import com.crobox.clickhouse.dsl.column._
-
-import com.crobox.clickhouse.internal.ClickHouseExecutor.{QueryAccepted, QueryFinished}
+import com.crobox.clickhouse.internal.progress.QueryProgress.{QueryAccepted, QueryFinished}
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
-import com.crobox.clickhouse.{TestSchemaClickhouseQuerySpec}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
