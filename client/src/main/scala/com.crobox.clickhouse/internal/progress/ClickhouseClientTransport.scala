@@ -1,13 +1,12 @@
-package com.crobox.clickhouse.internal
+package com.crobox.clickhouse.internal.progress
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.{ClientTransport, Http}
 import akka.http.scaladsl.settings.ClientConnectionSettings
-import akka.stream.{Attributes, BidiShape, Inlet, Outlet}
+import akka.http.scaladsl.{ClientTransport, Http}
 import akka.stream.scaladsl.{BidiFlow, Flow, SourceQueue}
 import akka.stream.stage._
+import akka.stream.{Attributes, BidiShape, Inlet, Outlet}
 import akka.util.ByteString
-import com.crobox.clickhouse.internal.ClickHouseExecutor.InternalQueryIdentifier
 
 import scala.concurrent.Future
 
@@ -117,6 +116,7 @@ class ProgressHeadersAsEventsStage(source: SourceQueue[String])
 
 object ProgressHeadersAsEventsStage {
 
+  val InternalQueryIdentifier = "X-Internal-Identifier"
   val ClickhouseProgressHeader = "X-ClickHouse-Progress"
   val AcceptedMark             = "CLICKHOUSE_ACCEPTED"
   val Crlf                     = "\r\n"

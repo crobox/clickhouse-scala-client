@@ -5,7 +5,8 @@ import com.crobox.clickhouse.ClickhouseClient
 import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizerModule}
 import com.crobox.clickhouse.dsl.parallel.CumulativeQueries
 import com.crobox.clickhouse.dsl.{InternalQuery, OperationalQuery, Query, Table}
-import com.crobox.clickhouse.internal.ClickHouseExecutor
+import com.crobox.clickhouse.internal.QuerySettings
+import com.crobox.clickhouse.internal.progress.QueryProgress.QueryProgress
 import spray.json.{JsonReader, _}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -13,7 +14,8 @@ import scala.concurrent.{ExecutionContext, Future}
 trait ClickhouseQueryExecutor extends QueryExecutor { self: TokenizerModule =>
   implicit val client: ClickhouseClient
 
-  def execute[V: JsonReader](query: Query)(implicit executionContext: ExecutionContext): Future[QueryResult[V]] =
+  def execute[V: JsonReader](query: Query)(implicit executionContext: ExecutionContext,
+                                           settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] =
     query match {
       case _: OperationalQuery if query.internalQuery != null =>
         executeQuery(query.internalQuery)
@@ -29,7 +31,8 @@ trait ClickhouseQueryExecutor extends QueryExecutor { self: TokenizerModule =>
 
   def executeWithProgress[V: JsonReader](
       query: Query
-  )(implicit executionContext: ExecutionContext): Source[ClickHouseExecutor.QueryProgress, Future[QueryResult[V]]] =
+  )(implicit executionContext: ExecutionContext,
+    settings: QuerySettings = QuerySettings()): Source[QueryProgress, Future[QueryResult[V]]] =
     query match {
       case _: OperationalQuery if query.internalQuery != null =>
         executeQueryWithProgress(query.internalQuery)
@@ -44,8 +47,10 @@ trait ClickhouseQueryExecutor extends QueryExecutor { self: TokenizerModule =>
         )
     }
 
-  override def insert[V: JsonWriter](table: Table,
-                                     values: Seq[V])(implicit executionContext: ExecutionContext): Future[String] =
+  override def insert[V: JsonWriter](
+      table: Table,
+      values: Seq[V]
+  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[String] =
     Future {
       values.map(_.toJson.compactPrint).mkString("\n") + "\n"
     }.flatMap(

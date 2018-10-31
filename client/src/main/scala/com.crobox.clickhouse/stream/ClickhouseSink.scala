@@ -3,6 +3,7 @@ package com.crobox.clickhouse.stream
 import akka.Done
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import com.crobox.clickhouse.ClickhouseClient
+import com.crobox.clickhouse.internal.QuerySettings
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
@@ -16,7 +17,8 @@ case class Insert(table: String, jsonRow: String)
 object ClickhouseSink extends LazyLogging {
 
   def insertSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(
-      implicit ec: ExecutionContext
+      implicit ec: ExecutionContext,
+      settings: QuerySettings = QuerySettings()
   ): Sink[Insert, Future[Done]] = {
     val indexerGeneralConfig = config.getConfig("crobox.clickhouse.indexer")
     val mergedIndexerConfig = indexerName

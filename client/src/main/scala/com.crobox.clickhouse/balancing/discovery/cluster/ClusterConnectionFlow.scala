@@ -7,9 +7,8 @@ import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
-import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings
-import com.crobox.clickhouse.internal.ClickHouseExecutor.QuerySettings.ReadQueries
-import com.crobox.clickhouse.internal.{ClickhouseHostBuilder, ClickhouseQueryBuilder, ClickhouseResponseParser}
+import com.crobox.clickhouse.internal.QuerySettings.ReadQueries
+import com.crobox.clickhouse.internal.{ClickhouseHostBuilder, ClickhouseQueryBuilder, ClickhouseResponseParser, QuerySettings}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.duration._
@@ -41,7 +40,7 @@ private[clickhouse] object ClusterConnectionFlow
       .mapAsync(1)(host => {
         val query = s"SELECT host_address FROM system.clusters WHERE cluster='$cluster'"
         val request =
-          toRequest(host, query, None, QuerySettings(readOnly = ReadQueries).withFallback(system.settings.config), None)
+          toRequest(host, query, None, QuerySettings(readOnly = ReadQueries), None)(system.settings.config)
         processClickhouseResponse(http.singleRequest(request, settings = settings), query, host, None)
           .map(splitResponse)
           .map(_.toSet.filter(_.nonEmpty))
@@ -57,5 +56,4 @@ private[clickhouse] object ClusterConnectionFlow
           })
       })
   }
-
 }
