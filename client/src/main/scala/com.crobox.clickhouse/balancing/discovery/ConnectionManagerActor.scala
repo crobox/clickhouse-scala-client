@@ -139,5 +139,5 @@ object ConnectionManagerActor {
 
   case class Connections(hosts: Set[Uri])
   case class NoHostAvailableException(msg: String) extends IllegalStateException(msg)
-  private case object LogDeadConnections
+  private[balancing] case object LogDeadConnections
 }

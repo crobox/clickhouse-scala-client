@@ -51,7 +51,7 @@ class HostBalancerTest extends ClickhouseClientSpec {
         |    }
         |}
       """.stripMargin).withFallback(config)) match {
-      case ClusterAwareHostBalancer(host, cluster, _, _, builtTimeout) =>
+      case ClusterAwareHostBalancer(host, cluster, _, builtTimeout) =>
         host shouldEqual ClickhouseHostBuilder.toHost("localhost", Some(8123))
         cluster shouldBe "cluster"
         builtTimeout shouldBe (1 second)
