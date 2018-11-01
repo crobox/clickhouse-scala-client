@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import com.crobox.clickhouse.dsl.{Column, NativeColumn}
 import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats.StringQueryValue
+import com.crobox.clickhouse.dsl.{Column, NativeColumn}
 import org.joda.time.LocalDate
 
 /**
@@ -24,6 +24,15 @@ object Engine {
   case object Memory extends Engine {
 
     override def toString: String = "Memory"
+  }
+
+  /**
+   * https://clickhouse.yandex/docs/en/operations/table_engines/distributed/
+   * */
+  case class DistributedEngine(cluster: String, database: String, targetTable: String, shardingKey: Option[String])
+      extends Engine {
+    override def toString: String =
+      s"Distributed($cluster, $database, $targetTable${shardingKey.map(key => s" ,$key").getOrElse("")})"
   }
 
   object MergeTreeEngine {
@@ -111,13 +120,12 @@ object Engine {
   }
 //SummingMergeTree(EventDate, (OrderID, EventDate, BannerID, ...), 8192)
 
-
   case class SummingMergeTree(partition: Seq[String],
-    primaryKey: Seq[Column],
-    summingColumns: Seq[Column] = Seq.empty,
-    samplingExpression: Option[String] = None,
-    indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
-    extends MergeTreeEngine("SummingMergeTree") {
+                              primaryKey: Seq[Column],
+                              summingColumns: Seq[Column] = Seq.empty,
+                              samplingExpression: Option[String] = None,
+                              indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
+      extends MergeTreeEngine("SummingMergeTree") {
 
     override def toString: String = {
       val summingColArg =
@@ -130,21 +138,24 @@ object Engine {
   }
 
   object SummingMergeTree {
+
     def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column]): SummingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey)
 
-    def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column], summingColumns: Seq[Column]): SummingMergeTree =
+    def apply(dateColumn: NativeColumn[LocalDate],
+              primaryKey: Seq[Column],
+              summingColumns: Seq[Column]): SummingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, summingColumns)
 
     def apply(dateColumn: NativeColumn[LocalDate],
-      primaryKey: Seq[Column],
-      summingColumns: Seq[Column],
-      samplingExpression: Option[String],
-      indexGranularity: Int): SummingMergeTree =
+              primaryKey: Seq[Column],
+              summingColumns: Seq[Column],
+              samplingExpression: Option[String],
+              indexGranularity: Int): SummingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, summingColumns, samplingExpression, indexGranularity)
   }
 
-    case class AggregatingMergeTree(partition: Seq[String],
+  case class AggregatingMergeTree(partition: Seq[String],
                                   primaryKey: Seq[Column],
                                   samplingExpression: Option[String] = None,
                                   indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
@@ -175,13 +186,11 @@ object Engine {
   case class Replicated(zookeeperPath: String, replicaName: String, engine: MergeTreeEngine) extends Engine {
     override def toString: String = {
       val summingColArg = Seq(engine).collect {
-        case s:SummingMergeTree if s.summingColumns.nonEmpty =>
+        case s: SummingMergeTree if s.summingColumns.nonEmpty =>
           "(" + s.summingColumns.map(_.name).mkString(", ") + ")"
       }
 
-      val replicationArgs = (
-        Seq(zookeeperPath, replicaName).map(StringQueryValue(_)
-      ) ++ summingColArg).mkString(", ")
+      val replicationArgs = (Seq(zookeeperPath, replicaName).map(StringQueryValue(_)) ++ summingColArg).mkString(", ")
 
       s"""Replicated${engine.name}($replicationArgs)
          |${engine.statements.mkString("\n")}""".stripMargin
