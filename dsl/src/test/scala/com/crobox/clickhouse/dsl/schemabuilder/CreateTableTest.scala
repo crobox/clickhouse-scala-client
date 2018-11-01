@@ -280,7 +280,7 @@ class CreateTableTest extends FlatSpecLike with Matchers {
     val date = NativeColumn[LocalDate]("date", ColumnType.Date)
     val create = CreateTable(
       TestTable("distributed_table", Seq(date)),
-      DistributedEngine("target_table", "target_table_cluster", "target_database", Some("sipHash(gig)")),
+      DistributedEngine("target_table_cluster", "target_database", "target_table", Some("sipHash(gig)")),
       clusterName = Some("cluster")
     )
     create.toString should be(

@@ -29,7 +29,7 @@ object Engine {
   /**
    * https://clickhouse.yandex/docs/en/operations/table_engines/distributed/
    * */
-  case class DistributedEngine(targetTable: String, cluster: String, database: String, shardingKey: Option[String])
+  case class DistributedEngine(cluster: String, database: String, targetTable: String, shardingKey: Option[String])
       extends Engine {
     override def toString: String =
       s"Distributed($cluster, $database, $targetTable${shardingKey.map(key => s" ,$key").getOrElse("")})"
