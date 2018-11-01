@@ -39,16 +39,16 @@ trait AggregationFunctions
 
     def count() =
       Count()
-  
+
     def count(column: TableColumn[_]) =
       Count(Option(column))
-  
+
     def average[T](tableColumn: TableColumn[T]) =
       Avg(tableColumn)
-  
+
     def min[V](tableColumn: TableColumn[V]) =
       Min(tableColumn)
-  
+
     def max[V](tableColumn: TableColumn[V]) =
       Max(tableColumn)
 
@@ -73,11 +73,11 @@ trait AggregationFunctions
 }
 
 trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
-  
+
   case class CombinedAggregatedFunction[T <: TableColumn[_], Res](combinator: Combinator[T, Res],
     target: AggregateFunction[_])
     extends AggregateFunction[Res](EmptyColumn())
-  
+
   sealed trait StateResult[V]
 
   sealed trait Combinator[T <: Column, Result]
@@ -129,7 +129,7 @@ trait UniqFunctions { self: Magnets with AggregationFunctions =>
 
   case class Uniq(tableColumn: AnyTableColumn, modifier: UniqModifier = UniqModifier.Simple)
     extends AggregateFunction[Long](tableColumn)
-  
+
   object UniqModifier {
     case object Simple   extends UniqModifier
     case object Combined extends UniqModifier
@@ -174,9 +174,9 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
 
   case class SumMap[T, V](key: TableColumn[Seq[T]], value: TableColumn[Seq[V]])
     extends AggregateFunction[(Seq[T], Seq[V])](key)
-  
+
   sealed trait SumModifier
-  
+
   object SumModifier {
     case object Simple       extends SumModifier
     case object WithOverflow extends SumModifier
@@ -197,9 +197,9 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
 
 trait Leveled { self: Magnets with AggregationFunctions =>
   sealed abstract class LeveledAggregatedFunction[T](target: AnyTableColumn) extends AggregateFunction[T](target)
-  
+
   sealed trait LevelModifier
-  
+
   object LevelModifier {
     case object Simple                                                         extends LevelModifier
     case object Exact                                                          extends LevelModifier
@@ -211,7 +211,7 @@ trait Leveled { self: Magnets with AggregationFunctions =>
     case class TimingWeighted(weight: TableColumn[Int]) extends LevelModifier
     case class ExactWeighted(weight: TableColumn[Int])  extends LevelModifier
   }
-  
+
 
 
   /*Works for numbers, dates, and dates with times. Returns: for numbers – Float64; for dates – a date; for dates with times – a date with time.Works for numbers, dates, and dates with times. Returns: for numbers – Float64; for dates – a date; for dates with times – a date with time.*/
