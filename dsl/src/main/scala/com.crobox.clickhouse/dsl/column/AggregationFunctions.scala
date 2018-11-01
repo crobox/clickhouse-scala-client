@@ -60,9 +60,6 @@ trait AggregationFunctions
     *
     * This is useful for aggregating results by periods of time (group by month, 2 months, days, etc.)
     *
-    * @param tableColumn
-    * @param interval
-    * @return
     */
   def timeSeries(tableColumn: TableColumn[Long], interval: MultiInterval) =
     TimeSeries(tableColumn, interval)

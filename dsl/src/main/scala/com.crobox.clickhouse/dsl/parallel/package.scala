@@ -2,7 +2,6 @@ package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery.AllLeftJoin
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.column._
 
 package object parallel {
 
@@ -22,7 +21,7 @@ package object parallel {
    * The Parallel one just adds the results together...so for 1000 and 1000 you will get a result containing 2000 entries
    */
   case class CumulativeQueries(first: OperationalQuery, second: OperationalQuery) extends OperationalQuery {
-    override val internalQuery = null
+    override val internalQuery: InternalQuery = null
 
     override def groupBy(columns: AnyTableColumn*): OperationalQuery = {
       val firstQueryGrouped  = first.groupBy(columns: _*)
@@ -39,9 +38,6 @@ package object parallel {
 
   /**
    * Smart joins with automated grouping, sorting and then joining on the matching columns
-   *
-   * @param rightTableQry
-   * @param leftTableQry
    */
   case class MergingQueries(rightTableQry: OperationalQuery,
                             leftTableQry: OperationalQuery,

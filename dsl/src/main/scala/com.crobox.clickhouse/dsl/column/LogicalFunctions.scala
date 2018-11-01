@@ -35,7 +35,7 @@ trait LogicalFunctions { this: Magnets =>
     else
       And(_left, _right)
   }
-  def or(_left: LogicalOpsMagnet, _right: LogicalOpsMagnet)  = {
+  def or(_left: LogicalOpsMagnet, _right: LogicalOpsMagnet): TableColumn[Boolean] = {
     if (_left.asOption.isEmpty && _right.asOption.isEmpty )
       Const(true)
     else if (_left.isConstTrue || _right.isConstTrue)
@@ -49,7 +49,7 @@ trait LogicalFunctions { this: Magnets =>
     else
       Or(_left, _right)
   }
-  def xor(_left: LogicalOpsMagnet, _right: LogicalOpsMagnet) = {
+  def xor(_left: LogicalOpsMagnet, _right: LogicalOpsMagnet): TableColumn[Boolean] = {
     if (_left.asOption.isEmpty && _right.asOption.isEmpty )
       Const(true)
     else if (_left.isConstTrue && _right.isConstTrue)
@@ -63,7 +63,7 @@ trait LogicalFunctions { this: Magnets =>
     else
       Xor(_left, _right)
   }
-  def not(col: NumericCol[_]) = col.column match {
+  def not(col: NumericCol[_]): ExpressionColumn[Boolean] = col.column match {
     case Const(true) => Const(false)
     case Const(false) => Const(true)
     case _ => Not(col)

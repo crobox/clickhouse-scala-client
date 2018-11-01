@@ -11,7 +11,7 @@ import spray.json.{JsonReader, JsonWriter}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-sealed trait DslLanguage  extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats
+sealed trait DslLanguage extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats
 object DslLanguage extends DslLanguage
 
 package object dsl extends DslLanguage {
@@ -99,3 +99,4 @@ package object dsl extends DslLanguage {
 
   def columnCase[V](condition: TableColumn[Boolean], value: TableColumn[V]) = Case[V](value, condition)
 }
+
