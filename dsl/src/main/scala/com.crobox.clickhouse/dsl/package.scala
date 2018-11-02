@@ -94,9 +94,12 @@ package object dsl extends DslLanguage {
   def all() =
     All()
 
-  def switch[V](defaultValue: TableColumn[V], cases: Case[V]*) =
-    Conditional(cases, defaultValue)
+  def columnCase[V](condition: TableColumn[Boolean], result: TableColumn[V]): Case[V] = Case[V](condition, result)
 
-  def columnCase[V](condition: TableColumn[Boolean], value: TableColumn[V]) = Case[V](value, condition)
+  def switch[V](defaultValue: TableColumn[V], cases: Case[V]*): TableColumn[V] = cases match {
+    case Nil => defaultValue
+    case _ => Conditional(cases, defaultValue)
+  }
+
 }
 

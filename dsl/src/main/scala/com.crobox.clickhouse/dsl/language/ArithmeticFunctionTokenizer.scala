@@ -10,29 +10,29 @@ trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
     case col: ArithmeticFunctionOp[_] => tokenizeArithmeticFunctionOperator(col)
   }
 
-  protected def tokenizeArithmeticFunctionColumn(col: ArithmeticFunctionCol[_])(implicit database: Database): String = {
-    val op = col match {
-      case s: Negate[_] => "negate"
-      case s: Abs[_]    => "abs"
+  protected def tokenizeArithmeticFunctionColumn(col: ArithmeticFunctionCol[_])(implicit database: Database): String =
+    col match {
+      case s: Negate[_] => "-" + tokenizeColumn(s.numericCol.column)
+      case s: Abs[_]    => fast"abs(${tokenizeColumn(s.numericCol.column)})"
     }
 
-    fast"$op(${tokenizeColumn(col.numericCol.column)})"
-  }
-
-  protected def tokenizeArithmeticFunctionOperator(col: ArithmeticFunctionOp[_])(implicit database: Database): String = {
-    val op = col match {
-      case s: Plus[_]         => "plus"
-      case s: Minus[_]        => "minus"
-      case s: Multiply[_]     => "multiply"
-      case s: Divide[_]       => "divide"
-      case s: IntDiv[_]       => "intDiv"
-      case s: IntDivOrZero[_] => "intDivOrZero"
-      case s: Modulo[_]       => "modulo"
-      case s: Gcd[_]          => "gcd"
-      case s: Lcm[_]          => "lcm"
+  protected def tokenizeArithmeticFunctionOperator(col: ArithmeticFunctionOp[_])(implicit database: Database): String =
+    col match {
+      case s: Plus[_]         => tokenizeWithOperator(s, "+")
+      case s: Minus[_]        => tokenizeWithOperator(s, "-")
+      case s: Multiply[_]     => tokenizeWithOperator(s, "*")
+      case s: Divide[_]       => tokenizeWithOperator(s, "/")
+      case s: Modulo[_]       => tokenizeWithOperator(s, "%")
+      case s: IntDiv[_]       => tokenizeAsFunction(s, "intDiv")
+      case s: IntDivOrZero[_] => tokenizeAsFunction(s, "intDivOrZero")
+      case s: Gcd[_]          => tokenizeAsFunction(s, "gcd")
+      case s: Lcm[_]          => tokenizeAsFunction(s, "lcm")
     }
 
-    fast"$op(${tokenizeColumn(col.left.column)}, ${tokenizeColumn(col.right.column)})"
-  }
+  private def tokenizeWithOperator(col: ArithmeticFunctionOp[_], operator: String)(implicit database: Database) =
+    tokenizeColumn(col.left.column) + " " + operator + " " + tokenizeColumn(col.right.column)
+
+  private def tokenizeAsFunction(col: ArithmeticFunctionOp[_], fn: String)(implicit database: Database) =
+    fast"$fn(${tokenizeColumn(col.left.column)}, ${tokenizeColumn(col.right.column)})"
 
 }

@@ -4,8 +4,7 @@ import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
-import com.crobox.clickhouse.time.TimeUnit.{Year,Quarter,Month,Week,Day,Hour,Minute,Second,Total}
-import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration}
+import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration, TimeUnit}
 import com.dongxiguo.fastring.Fastring.Implicits._
 import com.google.common.base.Strings
 import com.typesafe.scalalogging.Logger
@@ -149,7 +148,7 @@ trait ClickhouseTokenizerModule
       case All()                             => "*"
       case Conditional(cases, default) =>
         fast"CASE ${cases
-          .map(ccase => fast"WHEN ${tokenizeColumn(ccase.condition)} THEN ${tokenizeColumn(ccase.column)}")
+          .map(ccase => fast"WHEN ${tokenizeColumn(ccase.condition)} THEN ${tokenizeColumn(ccase.result)}")
           .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
       case c: Const[_] => c.parsed
       case a@_ => throw new NotImplementedError(a.getClass.getCanonicalName + " with superclass " + a.getClass.getSuperclass.getCanonicalName + " could not be matched.")
@@ -174,35 +173,35 @@ trait ClickhouseTokenizerModule
     }
 
     interval.duration match {
-      case MultiDuration(1, Year) =>
+      case MultiDuration(1, TimeUnit.Year) =>
         fast"toDateTime(toStartOfYear(toDateTime($column / 1000), '$dateZone'), '$dateZone')"
-      case MultiDuration(1, Week) =>
+      case MultiDuration(1, TimeUnit.Week) =>
         fast"toDateTime(toMonday(toDateTime($column / 1000), '$dateZone'), '$dateZone')"
-      case MultiDuration(1, Day) =>
+      case MultiDuration(1, TimeUnit.Day) =>
         fast"toStartOfDay(toDateTime($column / 1000), '$dateZone')"
-      case MultiDuration(1, Hour) =>
+      case MultiDuration(1, TimeUnit.Hour) =>
         fast"toStartOfHour(toDateTime($column / 1000), '$dateZone')"
-      case MultiDuration(1, Minute) =>
+      case MultiDuration(1, TimeUnit.Minute) =>
         fast"toStartOfMinute(toDateTime($column / 1000), '$dateZone')"
-      case MultiDuration(1, Second) =>
+      case MultiDuration(1, TimeUnit.Second) =>
         fast"toDateTime($column / 1000, '$dateZone')"
-      case MultiDuration(nth, Year) =>
+      case MultiDuration(nth, TimeUnit.Year) =>
         fast"toDateTime(addYears(toStartOfYear(toDateTime($column / 1000), '$dateZone'), 0 - (toYear(toDateTime($column / 1000), '$dateZone') % $nth)), '$dateZone')"
-      case MultiDuration(nth, Quarter) =>
+      case MultiDuration(nth, TimeUnit.Quarter) =>
         toNthMonth(nth * 3)
-      case MultiDuration(nth, Month) =>
+      case MultiDuration(nth, TimeUnit.Month) =>
         toNthMonth(nth)
-      case MultiDuration(nth, Week) =>
+      case MultiDuration(nth, TimeUnit.Week) =>
         fast"toDateTime(addWeeks(toMonday(toDateTime($column / 1000), '$dateZone'), 0 - ((toRelativeWeekNum(toDateTime($column / 1000), '$dateZone') - 1) % $nth)), '$dateZone')"
-      case MultiDuration(nth, Day) =>
+      case MultiDuration(nth, TimeUnit.Day) =>
         fast"addDays(toStartOfDay(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeDayNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
-      case MultiDuration(nth, Hour) =>
+      case MultiDuration(nth, TimeUnit.Hour) =>
         fast"addHours(toStartOfHour(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeHourNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
-      case MultiDuration(nth, Minute) =>
+      case MultiDuration(nth, TimeUnit.Minute) =>
         fast"addMinutes(toStartOfMinute(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeMinuteNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
-      case MultiDuration(nth, Second) =>
+      case MultiDuration(nth, TimeUnit.Second) =>
         fast"addSeconds(toDateTime($column / 1000, '$dateZone'), 0 - (toRelativeSecondNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
-      case SimpleDuration(Total) => fast"${interval.getStartMillis}"
+      case SimpleDuration(TimeUnit.Total) => fast"${interval.getStartMillis}"
     }
   }
 

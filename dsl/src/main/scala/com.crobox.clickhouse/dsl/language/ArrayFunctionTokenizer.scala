@@ -13,11 +13,11 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
   protected def tokenizeArrayFunctionOp(col: ArrayFunctionOp[_])(implicit database: Database): String = col match {
     case EmptyArrayToSingle(col: ArrayColMagnet[_]) => fast"emptyArrayToSingle(${tokenizeColumn(col.column)})"
     case Array(col1: ConstOrColMagnet[_], coln@_*) =>
-      fast"array(${tokenizeColumn(col1.column)}${tokenizeSeqCol(coln.map(_.column))})"
+      fast"[${tokenizeColumn(col1.column)}${tokenizeSeqCol(coln.map(_.column))}]" //Array Creation Operator
     case ArrayConcat(col1: ArrayColMagnet[_], col2: ArrayColMagnet[_], coln@_*) =>
       fast"arrayConcat(${tokenizeColumn(col1.column)},${tokenizeColumn(col2.column)}${tokenizeSeqCol(coln.map(_.column))})"
     case ArrayElement(col: ArrayColMagnet[_], n: NumericCol[_]) =>
-      fast"arrayElement(${tokenizeColumn(col.column)},${tokenizeColumn(n.column)})"
+      fast"${tokenizeColumn(col.column)}[${tokenizeColumn(n.column)}]"
     case Has(col: ArrayColMagnet[_], elm:  ConstOrColMagnet[_]) => fast"has(${tokenizeColumn(col.column)}${tokenizeColumn(elm.column)})"
     case IndexOf(col: ArrayColMagnet[_], elm:  ConstOrColMagnet[_]) =>
       fast"indexOf(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"

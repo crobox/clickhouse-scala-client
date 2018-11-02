@@ -9,8 +9,10 @@ trait ComparisonFunctions { self: Magnets =>
   trait ComparableWith[M <: Magnet[_]] { self: Magnet[_] =>
     def <(other: M) = ComparisonColumn(self, "<", other)
     def >(other: M) = ComparisonColumn(self, ">", other)
-    def <>(other: M) = ComparisonColumn(self, "<>", other)
+    def <>(other: M) = ComparisonColumn(self, "!=", other)
     def isEq(other: M) = ComparisonColumn(self, "=", other)
+    def ===(other: M) = ComparisonColumn(self, "=", other)
+    def !==(other: M) = ComparisonColumn(self, "!=", other)
     def <=(other: M) = ComparisonColumn(self, "<=", other)
     def >=(other: M) = ComparisonColumn(self, ">=", other)
   }

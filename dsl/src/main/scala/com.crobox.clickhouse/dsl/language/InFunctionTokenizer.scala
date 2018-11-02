@@ -8,8 +8,8 @@ trait InFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
   def tokenizeInFunction(col: InFunction)(implicit db: Database): String = col match {
-    case t: Tuple => fast"tuple(${t.coln.map(col => tokenizeColumn(col.column)).mkString(",")})"
-    case t: TupleElement[_] => fast"tuple(${tokenizeColumn(t.tuple.column)},${tokenizeColumn(t.index.column)})"
+    case t: Tuple => fast"(${t.coln.map(col => tokenizeColumn(col.column)).mkString(", ")})" // Tuple Creation Operator
+    case t: TupleElement[_] => fast"${tokenizeColumn(t.tuple.column)}.${tokenizeColumn(t.index.column)})" // Access Operators
     case col: InFunctionCol[_] => tokenizeInFunctionCol(col)
   }
 

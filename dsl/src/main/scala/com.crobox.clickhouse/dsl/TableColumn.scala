@@ -46,7 +46,7 @@ abstract class ExpressionColumn[V](targetColumn: AnyTableColumn) extends TableCo
 
 case class All() extends ExpressionColumn[Long](EmptyColumn())
 
-case class Case[V](column: TableColumn[V], condition: TableColumn[Boolean])
+case class Case[V](condition: TableColumn[Boolean], result: TableColumn[V])
 
 case class Conditional[V](cases: Seq[Case[V]], default: AnyTableColumn) extends ExpressionColumn[V](EmptyColumn())
 

@@ -84,13 +84,13 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query = select(minus(NativeColumn[LocalDate]("date"), NativeColumn[Double]("double"))) from OneTestTable where(sum(col2) > 0)
     val s = clickhouseTokenizer.toSql(query.internalQuery)
 
-    s shouldBe "SELECT minus(date, double) FROM default.captainAmerica WHERE sum(column_2) > 0 FORMAT JSON"
+    s shouldBe "SELECT date - double FROM default.captainAmerica WHERE sum(column_2) > 0 FORMAT JSON"
   }
 
   it should "parse const as column for magnets" in {
     val query = select(col2 - 1, intDiv(2,3)) from OneTestTable
     val s = clickhouseTokenizer.toSql(query.internalQuery)
-    s shouldBe "SELECT minus(column_2, 1), intDiv(2, 3) FROM default.captainAmerica FORMAT JSON"
+    s shouldBe "SELECT column_2 - 1, intDiv(2, 3) FROM default.captainAmerica FORMAT JSON"
   }
 
 

@@ -69,20 +69,19 @@ trait Magnets { self:
       val qvT = implicitly[QueryValue[T]]
       val sConsts: Seq[ConstOrColMagnet[T]] = s.map(col => constOrColMagnetFromConst(col)(qvT)).toSeq
 
-      override val column = tuple(sConsts:_*)
-      override val isEmptyCollection: Boolean = sConsts.isEmpty
+      override val column: Tuple = tuple(sConsts:_*)
+      override val isEmptyCollection: Boolean = column.coln.isEmpty
     }
 
   implicit def InFuncRHMagnetFromTuple(s: Tuple) =
     new InFuncRHMagnet {
-      override val column = s
-      override val isEmptyCollection: Boolean = s.coln.isEmpty
+      override val column: Tuple = s
+      override val isEmptyCollection: Boolean = column.coln.isEmpty
     }
 
   implicit def InFuncRHMagnetFromQuery(s: OperationalQuery) =
     new InFuncRHMagnet {
       override val column = EmptyColumn()
-      override val tableRef: Option[Table] = None
       override val query: Option[OperationalQuery] = Some(s)
     }
 

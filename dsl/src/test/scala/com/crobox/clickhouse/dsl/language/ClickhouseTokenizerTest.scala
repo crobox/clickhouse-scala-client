@@ -128,15 +128,13 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   }
 
   it should "generate cases" in {
-    this.tokenizeColumn(Conditional(Seq(Case(itemId, col1.isEq("test"))), shieldId)) shouldBe s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
+    this.tokenizeColumn(switch(const(3))) shouldBe "3"
+    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId))
+    ) shouldBe s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
   }
 
   it should "use constant" in {
-    this.tokenizeColumn(
-
-        const(3)
-        .as(col2)
-    ) shouldBe s"3 AS ${col2.name}"
+    this.tokenizeColumn(const(3).as(col2)) shouldBe s"3 AS ${col2.name}"
   }
 
   "Aggregated functions" should "build with combinators" in {
