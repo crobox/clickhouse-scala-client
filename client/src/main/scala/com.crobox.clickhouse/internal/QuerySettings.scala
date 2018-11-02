@@ -29,7 +29,8 @@ case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
         .map(compression => "enable_http_compression" -> (if (compression) "1" else "0"))).toMap
     )
 
-  def withFallback(config: Config): QuerySettings =
+  def withFallback(config: Config): QuerySettings = {
+    val custom = config.getConfig(path("custom"))
     this.copy(
       authentication = authentication.orElse(Try {
         val authConfig = config.getConfig(path("authentication"))
@@ -37,13 +38,11 @@ case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
       }.toOption),
       profile = profile.orElse(Try { config.getString(path("profile")) }.toOption),
       httpCompression = httpCompression.orElse(Try { config.getBoolean(path("http-compression")) }.toOption),
-      settings = config
-        .getValue(path("custom"))
-        .unwrapped()
-        .asInstanceOf[java.util.Map[String, String]]
-        .asScala
-        .toMap ++ settings
+      settings = custom.entrySet().asScala.map(u => (u.getKey, custom.getString(u.getKey))).toMap
+        ++ settings
     )
+  }
+
 
   private def path(setting: String) = s"crobox.clickhouse.client.settings.$setting"
 
