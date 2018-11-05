@@ -31,8 +31,12 @@ case class ClusterAwareHostBalancer(host: Uri,
     .clusterConnectionsFlow(Future.successful(host), scanningInterval, cluster)
     .withAttributes(
       ActorAttributes.supervisionStrategy({
-        case _: IllegalArgumentException => Supervision.stop
-        case _                           => Supervision.Resume
+        case ex: IllegalArgumentException =>
+          logger.error("Failed resolving hosts for cluster, stopping the flow.", ex)
+          Supervision.stop
+        case ex =>
+          logger.error("Failed resolving hosts for cluster, resuming.", ex)
+          Supervision.Resume
       })
     )
     .runWith(Sink.actorRef(manager, LogDeadConnections))
