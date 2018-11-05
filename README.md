@@ -7,7 +7,7 @@ Clickhouse Scala Client that uses Akka Http to create a reactive streams impleme
 *Current implementation should be considered WIP with no guarantees on API back-compatibility*  
 
 Scala versions: 
-- 2.11
+- 2.11 (excluding dsl)
 - 2.12
 
 Artifacts:
@@ -18,7 +18,7 @@ for sbt you can use
 
 ```
 // https://mvnrepository.com/artifact/com.crobox/clickhouse-scala-client_2.12 
-libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.7.5"
+libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.8.3"
 ```
 
 ## Clickhouse query DSL 
