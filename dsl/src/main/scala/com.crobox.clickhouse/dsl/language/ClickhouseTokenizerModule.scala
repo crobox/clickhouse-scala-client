@@ -135,7 +135,6 @@ trait ClickhouseTokenizerModule
       case col: InFunction                   => tokenizeInFunction(col)
       case col: JsonFunction[_]              => tokenizeJsonFunction(col)
       case col: LogicalFunction              => tokenizeLogicalFunction(col)
-      case col: Not                          => tokenizeLogicalFunction(col)
       case col: MathFuncColumn               => tokenizeMathematicalFunction(col)
       case col: MiscellaneousFunction        => tokenizeMiscellaneousFunction(col)
       case col: RandomFunction               => tokenizeRandomFunction(col)
