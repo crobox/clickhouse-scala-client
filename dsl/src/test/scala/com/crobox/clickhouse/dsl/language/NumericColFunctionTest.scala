@@ -32,6 +32,8 @@ class NumericColFunctionTest extends ColumnFunctionTest {
     r( true or None) shouldBe "1"
     r( true and None) shouldBe "1"
     r(CHDsl.not(true)) shouldBe "0"
+    r(CHDsl.not(false)) shouldBe "1"
+    r(CHDsl.not(None)) shouldBe "1"
   }
 
   it should "have correct types so reduce can be used" in {
