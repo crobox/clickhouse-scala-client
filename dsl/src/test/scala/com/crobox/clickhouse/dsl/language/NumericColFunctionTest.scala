@@ -34,13 +34,26 @@ class NumericColFunctionTest extends ColumnFunctionTest {
     r(CHDsl.not(true)) shouldBe "0"
   }
 
+  it should "have correct types so reduce can be used" in {
+    val exp = Seq(
+      Const(true),
+      2 === 2,
+      3 === 3
+    ).reduce(_ or _)
+
+    toSql(
+      select(exp).internalQuery,
+      None
+    ) shouldBe "SELECT 1"
+  }
+
   it should "properly reduce any constant result of LogicalFunctions" in {
     toSql(
       select(
         CHDsl.not(true and None) and true or false xor None
       ).internalQuery,
       None
-    ) shouldBe "SELECT 0"
+    ) shouldBe "SELECT not(1)"
 
     toSql(
       select(
