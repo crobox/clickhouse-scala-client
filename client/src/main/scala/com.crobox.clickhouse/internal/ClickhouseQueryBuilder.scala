@@ -22,7 +22,8 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
                           query: String,
                           queryIdentifier: Option[String],
                           settings: QuerySettings,
-                          entity: Option[RequestEntity])(config: Config): HttpRequest =
+                          entity: Option[RequestEntity],
+                          idempotent: Boolean = false)(config: Config): HttpRequest =
     entity match {
       case Some(e) =>
         logger.debug(s"Executing clickhouse query [$query] on host [${uri
@@ -35,12 +36,21 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
           entity = e,
           headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
         )
-      case None =>
+      case None if !idempotent =>
         logger.debug(s"Executing clickhouse query [$query] on host [${uri.toString()}]")
         HttpRequest(
           method = HttpMethods.POST,
           uri = uri.withQuery(settings.withFallback(config).asQueryParams),
           entity = query,
+          headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
+        )
+      case None if idempotent =>
+        logger.debug(s"Executing clickhouse idempotent query [$query] on host [${uri.toString()}]")
+        HttpRequest(
+          method = HttpMethods.GET,
+          uri = uri.withQuery(
+            Query(Query("query" -> query) ++ settings.withFallback(config).asQueryParams: _*).filterNot(_._1 == "readonly")//get requests are readonly by default, if we send the readonly flag clickhouse will fail the request
+          ),
           headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
         )
     }

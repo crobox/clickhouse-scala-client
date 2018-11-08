@@ -32,7 +32,7 @@ private[clickhouse] object ClusterConnectionFlow
       .withMaxConnections(1)
       .withMaxOpenRequests(1)
       .withConnectionSettings(
-        connectionPoolSettings.connectionSettings.withIdleTimeout(scanningInterval.plus(1 second))
+        connectionPoolSettings.connectionSettings.withIdleTimeout(scanningInterval.plus(1.second))
       )
     Source
       .tick(0.millis, scanningInterval, {})
@@ -40,7 +40,9 @@ private[clickhouse] object ClusterConnectionFlow
       .mapAsync(1)(host => {
         val query = s"SELECT host_address FROM system.clusters WHERE cluster='$cluster'"
         val request =
-          toRequest(host, query, None, QuerySettings(readOnly = ReadQueries), None)(system.settings.config)
+          toRequest(host, query, None, QuerySettings(readOnly = ReadQueries), None, idempotent = true)(
+            system.settings.config
+          )
         processClickhouseResponse(http.singleRequest(request, settings = settings), query, host, None)
           .map(splitResponse)
           .map(_.toSet.filter(_.nonEmpty))
