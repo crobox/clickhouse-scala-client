@@ -46,6 +46,8 @@ libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.8.5"
     - [Query settings](#query-settings)
 - [DSL](#dsl)
 - [Test Kit](#test-kit)
+
+When in doubt about the documentation please read the tests to find the truth. 
     
 ## Quick Setup
 
