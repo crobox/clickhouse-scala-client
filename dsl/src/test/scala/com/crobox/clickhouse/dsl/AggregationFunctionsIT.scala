@@ -2,13 +2,12 @@ package com.crobox.clickhouse.dsl
 
 import java.util.UUID
 
-import com.crobox.clickhouse.{DslLanguage, TestSchemaClickhouseQuerySpec}
+import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
-import com.crobox.clickhouse.dsl.column._
 
 class AggregationFunctionsIT
     extends ClickhouseClientSpec

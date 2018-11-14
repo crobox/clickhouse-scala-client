@@ -1,6 +1,5 @@
 package com.crobox.clickhouse
 
-import com.crobox.clickhouse.dsl.QueryFactory
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
 import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryResult}
@@ -11,10 +10,7 @@ import spray.json.{JsonReader, JsonWriter}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-sealed trait DslLanguage extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats
-object DslLanguage extends DslLanguage
-
-package object dsl extends DslLanguage {
+package object dsl extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats {
 
   //Naive union type context bound
   trait Contra[-A]
@@ -58,28 +54,28 @@ package object dsl extends DslLanguage {
   }
 
   implicit val booleanNumeric: Numeric[Boolean] = new Numeric[Boolean] {
-    override def plus(x: Boolean, y: Boolean) = x || y
+    override def plus(x: Boolean, y: Boolean): Boolean = x || y
 
-    override def minus(x: Boolean, y: Boolean) = x ^ y
+    override def minus(x: Boolean, y: Boolean): Boolean = x ^ y
 
-    override def times(x: Boolean, y: Boolean) = x && y
+    override def times(x: Boolean, y: Boolean): Boolean = x && y
 
-    override def negate(x: Boolean) = !x
+    override def negate(x: Boolean): Boolean = !x
 
-    override def fromInt(x: Int) = if (x <= 0) false else true
+    override def fromInt(x: Int): Boolean = if (x <= 0) false else true
 
-    override def toInt(x: Boolean) = if (x) 1 else 0
+    override def toInt(x: Boolean): Int = if (x) 1 else 0
 
-    override def toLong(x: Boolean) = if (x) 1 else 0
+    override def toLong(x: Boolean): Long = if (x) 1 else 0
 
-    override def toFloat(x: Boolean) = if (x) 1 else 0
+    override def toFloat(x: Boolean): Float = if (x) 1 else 0
 
-    override def toDouble(x: Boolean) = if (x) 1 else 0
+    override def toDouble(x: Boolean): Double = if (x) 1 else 0
 
-    override def compare(x: Boolean, y: Boolean) = ???
+    override def compare(x: Boolean, y: Boolean): Int = ???
   }
 
-  def conditional(column: AnyTableColumn, condition: Boolean) =
+  def conditional(column: AnyTableColumn, condition: Boolean): AnyTableColumn =
     if (condition) column else EmptyColumn()
 
   def ref[V](refName: String) =

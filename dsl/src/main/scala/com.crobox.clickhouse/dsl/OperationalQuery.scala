@@ -1,16 +1,15 @@
 package com.crobox.clickhouse.dsl
 
-import column._
-import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
 import scala.util.Try
 
 object OperationalQuery {
 
-  def apply(_internalQuery: InternalQuery) = new OperationalQuery {
-    override val internalQuery: InternalQuery = _internalQuery
+  def apply(query: InternalQuery): OperationalQuery = new OperationalQuery {
+    override val internalQuery: InternalQuery = query
   }
+
 }
 
 trait OperationalQuery extends Query {
@@ -111,31 +110,31 @@ trait OperationalQuery extends Query {
   }
 
   def allInnerJoin(query: OperationalQuery): OperationalQuery = {
-    val newJoin = JoinQuery(AllInnerJoin, InnerFromQuery(query))
+    val newJoin = JoinQuery(JoinQuery.AllInnerJoin, InnerFromQuery(query))
     OperationalQuery(internalQuery.copy(join = Some(newJoin)))
   }
 
   def allLeftJoin(query: OperationalQuery): OperationalQuery = {
-    val newJoin = JoinQuery(AllLeftJoin, InnerFromQuery(query))
+    val newJoin = JoinQuery(JoinQuery.AllLeftJoin, InnerFromQuery(query))
     OperationalQuery(internalQuery.copy(join = Some(newJoin)))
   }
 
   def anyLeftJoin(query: OperationalQuery): OperationalQuery = {
-    val newJoin = JoinQuery(AnyLeftJoin, InnerFromQuery(query))
+    val newJoin = JoinQuery(JoinQuery.AnyLeftJoin, InnerFromQuery(query))
     OperationalQuery(internalQuery.copy(join = Some(newJoin)))
   }
 
   def anyInnerJoin(query: OperationalQuery): OperationalQuery = {
-    val newJoin = JoinQuery(AnyInnerJoin, InnerFromQuery(query))
+    val newJoin = JoinQuery(JoinQuery.AnyInnerJoin, InnerFromQuery(query))
     OperationalQuery(internalQuery.copy(join = Some(newJoin)))
   }
 
-  def join[TargetTable <: Table](`type`: JoinType, query: OperationalQuery): OperationalQuery = {
+  def join[TargetTable <: Table](`type`: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery = {
     val newJoin = JoinQuery(`type`, InnerFromQuery(query))
     OperationalQuery(internalQuery.copy(join = Some(newJoin)))
   }
 
-  def join[TargetTable <: Table](`type`: JoinType, table: TargetTable): OperationalQuery = {
+  def join[TargetTable <: Table](`type`: JoinQuery.JoinType, table: TargetTable): OperationalQuery = {
     val newJoin = JoinQuery(`type`, TableFromQuery(table))
     OperationalQuery(internalQuery.copy(join = Some(newJoin)))
   }
