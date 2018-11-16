@@ -48,7 +48,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
    * @return Future with the result that clickhouse returns
    */
   def query(sql: String)(implicit settings: QuerySettings = QuerySettings(ReadQueries)): Future[String] =
-    executeRequest(sql, settings.copy(readOnly = ReadQueries))
+    executeRequest(sql, settings.copy(readOnly = ReadQueries, idempotent = true))
 
   /**
    * Execute a read-only query on Clickhouse
@@ -59,7 +59,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
   def queryWithProgress(sql: String)(
       implicit settings: QuerySettings = QuerySettings(ReadQueries)
   ): Source[QueryProgress, Future[String]] =
-    executeRequestWithProgress(sql, settings.copy(readOnly = ReadQueries))
+    executeRequestWithProgress(sql, settings.copy(readOnly = ReadQueries, idempotent = true))
 
   /**
    * Execute a query that is modifying the state of the database. e.g. INSERT, SET, CREATE TABLE.

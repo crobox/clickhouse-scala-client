@@ -57,7 +57,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
                      entity: Option[RequestEntity] = None,
                      progressQueue: Option[SourceQueueWithComplete[QueryProgress]] = None): Future[String] = {
     val queryIdentifier = Random.alphanumeric.take(20).mkString("")
-    executeWithRetries(queryRetries, progressQueue) { () =>
+    executeWithRetries(queryRetries, progressQueue, settings) { () =>
       executeRequestInternal(hostBalancer.nextHost, query, queryIdentifier, settings, entity, progressQueue)
     }.andThen {
       case _ => progressQueue.foreach(_.complete())
@@ -120,7 +120,9 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     })
   }
 
-  private def executeWithRetries(retries: Int, progressQueue: Option[SourceQueueWithComplete[QueryProgress]])(
+  private def executeWithRetries(retries: Int,
+                                 progressQueue: Option[SourceQueueWithComplete[QueryProgress]],
+                                 settings: QuerySettings)(
       request: () => Future[String]
   ): Future[String] =
     request().recoverWith {
@@ -128,12 +130,15 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       case e: StreamTcpException if retries > 0 =>
         progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
         logger.warn(s"Stream exception, retries left: $retries", e)
-        executeWithRetries(retries - 1, progressQueue)(request)
+        executeWithRetries(retries - 1, progressQueue, settings)(request)
       case e: RuntimeException
           if e.getMessage.contains("The http server closed the connection unexpectedly") && retries > 0 =>
         logger.warn(s"Unexpected connection closure, retries left: $retries", e)
         progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
-        executeWithRetries(retries - 1, progressQueue)(request)
+        executeWithRetries(retries - 1, progressQueue, settings)(request)
+      case e: Exception if settings.idempotent && retries > 0 =>
+        logger.warn(s"Query execution exception while executing idempotent query, retires let: $retries", e)
+        executeWithRetries(retries - 1, progressQueue, settings)(request)
     }
 }
 
