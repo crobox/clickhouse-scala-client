@@ -3,6 +3,7 @@ package com.crobox.clickhouse.internal
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.headers.{HttpEncodingRange, RawHeader}
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity, Uri}
+import com.crobox.clickhouse.internal.QuerySettings.ReadQueries
 import com.crobox.clickhouse.internal.progress.ProgressHeadersAsEventsStage
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
@@ -34,15 +35,11 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
           entity = e,
           headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
         )
-      case None if !settings.idempotent || urlQuery.toString().getBytes.length >= 16 * 1024 => //max url size
-        logger.debug(s"Executing clickhouse query [$query] on host [${uri.toString()}]")
-        HttpRequest(
-          method = HttpMethods.POST,
-          uri = uri.withQuery(settings.withFallback(config).asQueryParams),
-          entity = query,
-          headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
-        )
-      case None if settings.idempotent =>
+      case None
+          if settings.idempotent && settings.readOnly == ReadQueries && urlQuery
+            .toString()
+            .getBytes
+            .length < 16 * 1024 => //max url size
         logger.debug(s"Executing clickhouse idempotent query [$query] on host [${uri.toString()}]")
         HttpRequest(
           method = HttpMethods.GET,
@@ -53,6 +50,14 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
                 _._1 == "readonly"
               ) //get requests are readonly by default, if we send the readonly flag clickhouse will fail the request
           ),
+          headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
+        )
+      case None =>
+        logger.debug(s"Executing clickhouse query [$query] on host [${uri.toString()}]")
+        HttpRequest(
+          method = HttpMethods.POST,
+          uri = uri.withQuery(settings.withFallback(config).asQueryParams),
+          entity = query,
           headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
         )
     }

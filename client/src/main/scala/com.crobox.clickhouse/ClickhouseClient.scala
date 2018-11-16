@@ -78,8 +78,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
       _ => executeRequest(sql, settings)
     )
 
-  def execute(sql: String,
-              entity: String)(implicit settings: QuerySettings): Future[String] =
+  def execute(sql: String, entity: String)(implicit settings: QuerySettings): Future[String] =
     executeRequest(sql, settings, Option(entity))
 
   /**
@@ -94,7 +93,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
 
   /**
    * Creates a stream of the SQL query that will emit every result as a ByteString
-   *
+   * It will not retry the queries.
    * @param sql a valid Clickhouse SQL string
    */
   def sourceByteString(
@@ -108,7 +107,8 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
 
   /**
    * Accepts a source of Strings that it will stream to Clickhouse
-   *
+   * It will not retry the query as this will run the source once for every retry and might have
+   * unexpected consequences.
    * @param sql    a valid Clickhouse SQL INSERT statement
    * @param source the Source with strings
    * @return Future with the result that clickhouse returns
@@ -117,7 +117,7 @@ class ClickhouseClient(override val config: Config, val database: String = "defa
       implicit settings: QuerySettings = QuerySettings(AllQueries)
   ): Future[String] = {
     val entity = HttpEntity.apply(ContentTypes.`text/plain(UTF-8)`, source)
-    executeRequest(sql, settings, Option(entity))
+    executeRequestInternal(hostBalancer.nextHost, sql, queryIdentifier, settings, Option(entity), None)
   }
 
 }
