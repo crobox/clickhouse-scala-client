@@ -18,6 +18,7 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
     import akka.http.scaladsl.model.headers.`Accept-Encoding`
     immutable.Seq(`Accept-Encoding`(gzip, deflate))
   }
+  private val MaxUriSize = 16 * 1024
 
   protected def toRequest(uri: Uri,
                           query: String,
@@ -39,7 +40,7 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
           if settings.idempotent && settings.readOnly == ReadQueries && urlQuery
             .toString()
             .getBytes
-            .length < 16 * 1024 => //max url size
+            .length < MaxUriSize => //max url size
         logger.debug(s"Executing clickhouse idempotent query [$query] on host [${uri.toString()}]")
         HttpRequest(
           method = HttpMethods.GET,
