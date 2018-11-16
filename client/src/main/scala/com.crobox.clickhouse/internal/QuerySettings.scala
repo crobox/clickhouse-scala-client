@@ -11,7 +11,8 @@ case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
                          queryId: Option[String] = None,
                          profile: Option[String] = None,
                          httpCompression: Option[Boolean] = None,
-                         settings: Map[String, String] = Map.empty) {
+                         settings: Map[String, String] = Map.empty,
+                         idempotent: Boolean = false) {
 
   def asQueryParams: Query =
     Query(
@@ -39,10 +40,9 @@ case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
       profile = profile.orElse(Try { config.getString(path("profile")) }.toOption),
       httpCompression = httpCompression.orElse(Try { config.getBoolean(path("http-compression")) }.toOption),
       settings = custom.entrySet().asScala.map(u => (u.getKey, custom.getString(u.getKey))).toMap
-        ++ settings
+      ++ settings
     )
   }
-
 
   private def path(setting: String) = s"crobox.clickhouse.client.settings.$setting"
 

@@ -10,6 +10,9 @@ Features:
 * akka streaming sink for data insertion
 * streaming query progress (experimental)
 * all the http interface settings 
+* load balancing with internal health checks (multi host and cluster aware host balancer)
+* ability to retry queries
+
 
 *Current implementation should be considered WIP with no guarantees on API back-compatibility*  
 
@@ -44,6 +47,7 @@ libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.8.5"
     - [Query execution](#query-execution)
     - [Query progress](#query-progress)
     - [Query settings](#query-settings)
+    - [Query retrying](#query-retrying)
 - [DSL](#dsl)
 - [Test Kit](#test-kit)
 
@@ -269,7 +273,13 @@ client.queryWithProgress("SELECT uniq(timestamps), uniq(mosquito_name) FROM mosq
 ```
 ### Query settings
 
-Every call to the client accepts an implicit `QuerySettings` object which can override settings for that specific query. You can also set the query id so that you can track/kill/replace running queries.
+Every call to the client accepts an implicit `QuerySettings` object which can override settings for that specific query.
+
+ - You can set the query id so that you can track/kill/replace running queries.
+ - You can mark the query as idempotent and it will be retried for all exceptions when running the `ClickhouseSink`(Indexer), or running queries using `client.query/client.execute`.
+ - You can set specific clickhouse query settings to override the default ones
+ - You can use a different clickhouse profile
+ - You can run the query as a different user
 
 ```scala
 val client: ClickhouseClient
@@ -277,6 +287,19 @@ implicit val settings = QuerySettings(queryId = Some("expensive_query"),settings
 client.query("SELECT uniq(expensive) FROM huge_table")//start query
 client.query("SELECT uniq(expensive) FROM huge_table")//replaces existing query
 ```
+
+### Query retrying
+
+Query retrying takes advantage of host balancing and will request another host for each retry.
+
+The queries that use the client api `source`, `sink` are not going to be retried.
+
+All the read only queries are considered idempotent and are retried up to a maximum number of configurable times. (3 times by default, so 4 total execution, 1 the initial execution and 3 retries)
+```
+crobox.clickhouse.retries = 3
+```
+
+By using the `ClickhouseSink` you can also retry inserts by setting the `idempotent` setting to true on the query settings.
 
 # DSL
 
