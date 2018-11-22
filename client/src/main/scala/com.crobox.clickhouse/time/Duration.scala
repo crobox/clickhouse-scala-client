@@ -12,13 +12,13 @@ sealed trait Duration {
  * Examples: 1h, 2hours, 4day, day, month, 1M
   **/
 object Duration {
-  val durationRegex = "(\\d+)?(\\D+)".r
+  private val DurationRegex = "(\\d+)?(\\D+)".r
 
   def parse(expression: String): Duration =
     expression match {
-      case durationRegex(null, unit) =>
+      case DurationRegex(null, unit) =>
         TimeUnit.lookup(unit).forValue(1)
-      case durationRegex(value, unit) =>
+      case DurationRegex(value, unit) =>
         TimeUnit.lookup(unit).forValue(value.toInt)
       case _ =>
         throw new IllegalArgumentException(s"Cannot parse a duration from $expression.")
@@ -26,17 +26,11 @@ object Duration {
 }
 
 case class MultiDuration(value: Int, override val unit: MultiTimeUnit) extends Duration {
-
-  def this(unit: MultiTimeUnit) = {
-    this(1, unit)
-  }
-
-  val asPeriod: Option[Period] = unit.asPeriod.map(_.multipliedBy(value))
+  val asPeriod: Period = unit.asPeriod.multipliedBy(value)
 }
 
 object MultiDuration {
-
-  def apply(unit: MultiTimeUnit): MultiDuration = new MultiDuration(unit)
+  def apply(unit: MultiTimeUnit): MultiDuration = MultiDuration(1, unit)
 }
 
 case class SimpleDuration(override val unit: SimpleTimeUnit) extends Duration

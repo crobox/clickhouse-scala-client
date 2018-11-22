@@ -35,6 +35,7 @@ class DateTimeFunctionTest extends ColumnFunctionTest {
     r(toStartOfDay(now)) shouldBe now.withTimeAtStartOfDay().printAsDateTime
     r(toTime(now)).substring(11) shouldBe now.printAsDateTime.substring(11)
     r(toRelativeYearNum(now)) shouldBe now.getYear.toString
+    r(toRelativeQuarterNum(now)) shouldBe ((now.getYear * 4) + (now.getMonthOfYear - 1) / 3).toString
     r(toRelativeMonthNum(now)) shouldBe ((now.getYear * 12) + now.getMonthOfYear).toString
     r(toRelativeWeekNum(now)) should (equal(Weeks.weeksBetween(epoch, now).getWeeks.toString) or equal((Weeks.weeksBetween(epoch, now).getWeeks + 1).toString))
     r(toRelativeDayNum(now)) shouldBe Days.daysBetween(epoch, now).getDays.toString

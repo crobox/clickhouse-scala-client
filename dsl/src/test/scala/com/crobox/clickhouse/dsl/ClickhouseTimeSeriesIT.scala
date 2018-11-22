@@ -8,11 +8,13 @@ import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
 import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import com.crobox.clickhouse.time.{IntervalStart, MultiDuration, MultiInterval, SimpleDuration, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
+import org.scalactic.TripleEqualsSupport
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.time.{Millis, Seconds, Span}
 
 import scala.concurrent.Future
+import scala.util.Random
 
 class ClickhouseTimeSeriesIT
     extends ClickhouseClientSpec
@@ -46,6 +48,8 @@ class ClickhouseTimeSeriesIT
   val alias                                    = new TableColumn[Long]("time") {}
 
   val lastSecondEntryDate = startInterval.plusSeconds(numberOfGeneratedEntries)
+  val lastMinuteIntervalDate = startInterval.plusMinutes(numberOfGeneratedEntries)
+  val lastDayIntervalDate = startInterval.plusDays(numberOfGeneratedEntriesForDay)
 
   "Grouping on total" should "return full result" in {
     val modifiedStartInterval                = startInterval.minus(12416)
@@ -83,8 +87,6 @@ class ClickhouseTimeSeriesIT
     }
   }
 
-  val lastMinuteIntervalDate = startInterval.plusMinutes(numberOfGeneratedEntries)
-
   "Grouping on hours" should "return appropiate intervals" in {
     forAll(Table("Hour", 1, 2, 3, 4, 6, 8, 12)) { duration =>
       val expectedEntriesPerHour = 60
@@ -97,23 +99,6 @@ class ClickhouseTimeSeriesIT
         validateFullRows(rows, expectedCountInFullInterval)
         rows.map(_.time) should contain theSameElementsInOrderAs expectedIntervalStarts
       }
-    }
-  }
-
-  "grouping on months" should "return correct month" in {
-    val expectedEntriesPerMonth = 1440
-    val multiInterval = MultiInterval(
-      startInterval,
-      lastMinuteIntervalDate,
-      MultiDuration(1, TimeUnit.Month)
-    )
-    forAll(Table("Timezone", multiInterval, shiftedTz(multiInterval))) { multiInterval =>
-      val results: Future[QueryResult[Result]] = getEntries(multiInterval, minutesId)
-      val expectedIntervalStarts               = multiInterval.subIntervals().map(_.getStart).map(_.withZone(DateTimeZone.UTC))
-      val rows                                 = results.futureValue.rows
-      val expectedCountInFullInterval          = expectedEntriesPerMonth
-      validateFullRows(rows, expectedCountInFullInterval)
-      rows.map(_.time) should contain theSameElementsInOrderAs expectedIntervalStarts
     }
   }
 
@@ -132,17 +117,29 @@ class ClickhouseTimeSeriesIT
     }
   }
 
-  val lastDayIntervalDate = startInterval.plusDays(numberOfGeneratedEntriesForDay)
+
   "Grouping on weeks" should "properly group intervals" in {
     forAll(Table("Week", 1, 2, 3, 4)) { duration =>
-      val expectedEntriesPerWeek = 7
       val multiInterval          = MultiInterval(startInterval, lastDayIntervalDate, MultiDuration(duration, TimeUnit.Week))
-
       forAll(Table("Timezone", multiInterval, shiftedTz(multiInterval))) { multiInterval =>
         val results: Future[QueryResult[Result]] = getEntries(multiInterval, dayId)
         val expectedIntervalStarts               = multiInterval.subIntervals().map(_.getStart.withZone(DateTimeZone.UTC))
         val rows                                 = results.futureValue.rows
-        val expectedCountInFullInterval          = expectedEntriesPerWeek * duration
+        val expectedCountInFullInterval          = 7 * duration
+        validateFullRows(rows, expectedCountInFullInterval)
+        rows.map(_.time) should contain theSameElementsInOrderAs expectedIntervalStarts
+      }
+    }
+  }
+
+  "Grouping on months" should "return correct month" in {
+    forAll(Table("Months", 1, 2, 3, 7)) { duration =>
+      val multiInterval = MultiInterval(startInterval, lastDayIntervalDate, MultiDuration(duration, TimeUnit.Month))
+      forAll(Table("Timezone", multiInterval, shiftedTz(multiInterval))) { multiInterval =>
+        val results: Future[QueryResult[Result]] = getEntries(multiInterval, dayId)
+        val expectedIntervalStarts = multiInterval.subIntervals().map(_.getStart.withZone(DateTimeZone.UTC))
+        val rows = results.futureValue.rows
+        val expectedCountInFullInterval = duration * 30 +- duration * 3
         validateFullRows(rows, expectedCountInFullInterval)
         rows.map(_.time) should contain theSameElementsInOrderAs expectedIntervalStarts
       }
@@ -157,33 +154,24 @@ class ClickhouseTimeSeriesIT
         val results: Future[QueryResult[Result]] = getEntries(multiInterval, dayId)
         val expectedIntervalStarts               = multiInterval.subIntervals().map(_.getStart.withZone(DateTimeZone.UTC))
         val rows                                 = results.futureValue.rows
-        rows
-          .drop(1)
-          .dropRight(1)
-          .foreach(row => {
-            val daysInChunk = duration * 90L +- duration * 4
-            row.shields.toLong should be(daysInChunk)
-          })
-
+        val expectedCountInFullInterval          = duration * 90 +- duration * 3
+        validateFullRows(rows, expectedCountInFullInterval)
         rows.map(_.time) should contain theSameElementsInOrderAs expectedIntervalStarts
       }
     }
   }
 
   "Grouping on years" should "properly group intervals" in {
-    val multiInterval = MultiInterval(startInterval, lastDayIntervalDate, MultiDuration(TimeUnit.Year))
-    forAll(Table("Timezone", multiInterval, shiftedTz(multiInterval))) { multiInterval =>
-      val results: Future[QueryResult[Result]] = getEntries(multiInterval, dayId)
-      val expectedIntervalStarts               = multiInterval.subIntervals().map(_.getStart.withZone(DateTimeZone.UTC))
-      val rows                                 = results.futureValue.rows
-      rows
-        .drop(1)
-        .dropRight(1)
-        .foreach(row => {
-          val approximateDaysInAYear = 365L +- 4
-          row.shields.toLong should be(approximateDaysInAYear)
-        })
-      rows.map(_.time) should contain theSameElementsInOrderAs expectedIntervalStarts
+    forAll(Table("Years", 1, 2, 3, 4)) { duration =>
+      val multiInterval = MultiInterval(startInterval, lastDayIntervalDate, MultiDuration(duration, TimeUnit.Year))
+      forAll(Table("Timezone", multiInterval, shiftedTz(multiInterval))) { multiInterval =>
+        val results: Future[QueryResult[Result]] = getEntries(multiInterval, dayId)
+        val expectedIntervalStarts = multiInterval.subIntervals().map(_.getStart.withZone(DateTimeZone.UTC))
+        val rows = results.futureValue.rows
+        val expectedCountInFullInterval = duration * 365 +- duration * 4
+        validateFullRows(rows, expectedCountInFullInterval)
+        rows.map(_.time) should contain theSameElementsInOrderAs expectedIntervalStarts
+      }
     }
   }
 
@@ -196,14 +184,18 @@ class ClickhouseTimeSeriesIT
         .where(shieldId isEq entriesId)
     )
 
-  private def validateFullRows(rows: Seq[Result], expectedCountInFullInterval: Int) =
+  private def validateFullRows(rows: Seq[Result], expectedCountInFullInterval: TripleEqualsSupport.Spread[Int]): Unit =
     //drop first and last as they might not be full intervals
+    rows.drop(1).dropRight(1).foreach(row => row.shields.toInt should be(expectedCountInFullInterval))
+
+  private def validateFullRows(rows: Seq[Result], expectedCountInFullInterval: Int): Unit =
+  //drop first and last as they might not be full intervals
     rows.drop(1).dropRight(1).foreach(row => row.shields.toInt should be(expectedCountInFullInterval))
 
   private def shiftedTz(intv: MultiInterval): MultiInterval =
     MultiInterval(
-      intv.rawStart.withZone(DateTimeZone.forOffsetHours(2)),
-      intv.rawEnd.withZone(DateTimeZone.forOffsetHours(2)),
+      intv.rawStart.withZone(DateTimeZone.forOffsetHours(Random.nextInt(24) - 12)),
+      intv.rawEnd.withZone(DateTimeZone.forOffsetHours(Random.nextInt(24) - 12)),
       intv.duration
     )
 }

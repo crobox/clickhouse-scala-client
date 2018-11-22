@@ -35,6 +35,7 @@ trait DateTimeFunctionTokenizer {
       case StartOfDay(d: DateOrDateTime[_]) => fast"toStartOfDay(${tokenizeColumn(d.column)})"
       case Time(d: DateOrDateTime[_]) => fast"toTime(${tokenizeColumn(d.column)})"
       case RelativeYearNum(d: DateOrDateTime[_]) => fast"toRelativeYearNum(${tokenizeColumn(d.column)})"
+      case RelativeQuarterNum(d: DateOrDateTime[_]) => fast"toRelativeQuarterNum(${tokenizeColumn(d.column)})"
       case RelativeMonthNum(d: DateOrDateTime[_]) => fast"toRelativeMonthNum(${tokenizeColumn(d.column)})"
       case RelativeWeekNum(d: DateOrDateTime[_]) => fast"toRelativeWeekNum(${tokenizeColumn(d.column)})"
       case RelativeDayNum(d: DateOrDateTime[_]) => fast"toRelativeDayNum(${tokenizeColumn(d.column)})"
