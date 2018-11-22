@@ -158,49 +158,40 @@ trait ClickhouseTokenizerModule
     tokenizeDuration(timeSeries, column)
   }
 
-  private def tokenizeDuration(timeSeries: TimeSeries, column: String) = {
+  private def tokenizeDuration(timeSeries: TimeSeries, column: String):String = {
     val interval = timeSeries.interval
     val dateZone = determineZoneId(interval.rawStart)
 
-    def toNthMonth(nth: Int) = {
-      val startOfMonth = fast"toStartOfMonth(toDateTime($column / 1000), '$dateZone')"
-      if (nth == 1) {
-        fast"toDateTime($startOfMonth, '$dateZone')"
-      } else {
-        fast"toDateTime(addMonths($startOfMonth, 0 - (toRelativeMonthNum(toDateTime($column / 1000), '$dateZone') % $nth)), '$dateZone')"
-      }
-    }
+    def convert(fn: String): String = fast"$fn(toDateTime($column / 1000), '$dateZone')"
+
+    def toDateTime(inner: String): String = fast"toDateTime($inner, '$dateZone')"
 
     interval.duration match {
-      case MultiDuration(1, TimeUnit.Year) =>
-        fast"toDateTime(toStartOfYear(toDateTime($column / 1000), '$dateZone'), '$dateZone')"
-      case MultiDuration(1, TimeUnit.Week) =>
-        fast"toDateTime(toMonday(toDateTime($column / 1000), '$dateZone'), '$dateZone')"
-      case MultiDuration(1, TimeUnit.Day) =>
-        fast"toStartOfDay(toDateTime($column / 1000), '$dateZone')"
-      case MultiDuration(1, TimeUnit.Hour) =>
-        fast"toStartOfHour(toDateTime($column / 1000), '$dateZone')"
-      case MultiDuration(1, TimeUnit.Minute) =>
-        fast"toStartOfMinute(toDateTime($column / 1000), '$dateZone')"
-      case MultiDuration(1, TimeUnit.Second) =>
-        fast"toDateTime($column / 1000, '$dateZone')"
-      case MultiDuration(nth, TimeUnit.Year) =>
-        fast"toDateTime(addYears(toStartOfYear(toDateTime($column / 1000), '$dateZone'), 0 - (toYear(toDateTime($column / 1000), '$dateZone') % $nth)), '$dateZone')"
-      case MultiDuration(nth, TimeUnit.Quarter) =>
-        toNthMonth(nth * 3)
-      case MultiDuration(nth, TimeUnit.Month) =>
-        toNthMonth(nth)
-      case MultiDuration(nth, TimeUnit.Week) =>
-        fast"toDateTime(addWeeks(toMonday(toDateTime($column / 1000), '$dateZone'), 0 - ((toRelativeWeekNum(toDateTime($column / 1000), '$dateZone') - 1) % $nth)), '$dateZone')"
-      case MultiDuration(nth, TimeUnit.Day) =>
-        fast"addDays(toStartOfDay(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeDayNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
-      case MultiDuration(nth, TimeUnit.Hour) =>
-        fast"addHours(toStartOfHour(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeHourNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
-      case MultiDuration(nth, TimeUnit.Minute) =>
-        fast"addMinutes(toStartOfMinute(toDateTime($column / 1000), '$dateZone'), 0 - (toRelativeMinuteNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
-      case MultiDuration(nth, TimeUnit.Second) =>
-        fast"addSeconds(toDateTime($column / 1000, '$dateZone'), 0 - (toRelativeSecondNum(toDateTime($column / 1000), '$dateZone') % $nth), '$dateZone')"
       case SimpleDuration(TimeUnit.Total) => fast"${interval.getStartMillis}"
+      case MultiDuration(1, TimeUnit.Year) => toDateTime(convert("toStartOfYear"))
+      case MultiDuration(1, TimeUnit.Quarter) => toDateTime(convert("toStartOfQuarter"))
+      case MultiDuration(1, TimeUnit.Month) => toDateTime(convert("toStartOfMonth"))
+      case MultiDuration(1, TimeUnit.Week) => toDateTime(convert("toMonday"))
+      case MultiDuration(1, TimeUnit.Day) => convert("toStartOfDay")
+      case MultiDuration(1, TimeUnit.Hour) => convert("toStartOfHour")
+      case MultiDuration(1, TimeUnit.Minute) => convert("toStartOfMinute")
+      case MultiDuration(1, TimeUnit.Second) => toDateTime(fast"$column / 1000")
+      case MultiDuration(nth, TimeUnit.Year) =>
+        toDateTime(fast"subtractYears(${convert("toStartOfYear")}, ${convert("toRelativeYearNum")} % $nth)")
+      case MultiDuration(nth, TimeUnit.Quarter) =>
+        toDateTime(fast"subtractMonths(${convert("toStartOfQuarter")}, (${convert("toRelativeQuarterNum")} % $nth) * 3)")
+      case MultiDuration(nth, TimeUnit.Month) =>
+        toDateTime(fast"subtractMonths(${convert("toStartOfMonth")}, ${convert("toRelativeMonthNum")} % $nth)")
+      case MultiDuration(nth, TimeUnit.Week) =>
+        toDateTime(fast"subtractWeeks(${convert("toMonday")}, (${convert("toRelativeWeekNum")} - 1) % $nth)")
+      case MultiDuration(nth, TimeUnit.Day) =>
+        fast"subtractDays(${convert("toStartOfDay")}, ${convert("toRelativeDayNum")} % $nth, '$dateZone')"
+      case MultiDuration(nth, TimeUnit.Hour) =>
+        fast"subtractHours(${convert("toStartOfHour")}, ${convert("toRelativeHourNum")} % $nth, '$dateZone')"
+      case MultiDuration(nth, TimeUnit.Minute) =>
+        fast"subtractMinutes(${convert("toStartOfMinute")}, ${convert("toRelativeMinuteNum")} % $nth, '$dateZone')"
+      case MultiDuration(nth, TimeUnit.Second) =>
+        fast"subtractSeconds(${toDateTime(fast"$column / 1000")}, ${convert("toRelativeSecondNum")} % $nth, '$dateZone')"
     }
   }
 

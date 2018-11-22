@@ -80,12 +80,28 @@ object MultiInterval {
 
         ref.withMillis((detWeeks * Week.standardMillis) + (Day.standardMillis * 4) - tzOffset)
       case MultiDuration(value, Month) =>
-        toStartOfMonth(start, value)
+        val ref = start.withTimeAtStartOfDay.withDayOfMonth(1)
+
+        val months = (ref.getYear * 12) + ref.getMonthOfYear
+        val detRelMonths = (months - 1) - (months % value)
+
+        val detMonthOfYearZeroBased = detRelMonths % 12
+        val detYear = (detRelMonths - detMonthOfYearZeroBased) / 12
+
+        ref.withYear(detYear).withMonthOfYear(detMonthOfYearZeroBased + 1)
       case MultiDuration(value, Quarter) =>
-        toStartOfMonth(start, value * 3)
+        val ref = start.withTimeAtStartOfDay.withDayOfMonth(1)
+
+        val quarter = (ref.getYear * 4) + (ref.getMonthOfYear - 1) / 3
+        val detRelQuarters = quarter - (quarter % value)
+
+        val detQuarterOfYearZeroBased = detRelQuarters % 4
+        val detYear = (detRelQuarters - detQuarterOfYearZeroBased) / 4
+
+        ref.withYear(detYear).withMonthOfYear(detQuarterOfYearZeroBased * 3 + 1)
+
       case MultiDuration(value, Year) =>
-        val ref = start.withTimeAtStartOfDay
-          .withDayOfYear(1)
+        val ref = start.withTimeAtStartOfDay.withDayOfYear(1)
 
         val detYear = ref.getYear - (ref.getYear % value)
 
@@ -95,23 +111,6 @@ object MultiInterval {
       case d => throw new IllegalArgumentException(s"Invalid duration: $d")
     }
 
-  private def toStartOfMonth(start: IntervalStart, value: Int) = {
-    val ref = start.withTimeAtStartOfDay.withDayOfMonth(1)
-
-    val months = (ref.getYear * 12) + ref.getMonthOfYear
-    val detRelMonths = (months - 1) - (months % (value))
-
-    val detMonthOfYearZeroBased = detRelMonths % 12
-    val detYear = (detRelMonths - detMonthOfYearZeroBased) / 12
-
-    ref.withYear(detYear).withMonthOfYear(detMonthOfYearZeroBased + 1)
-  }
-
-  private def calculateQuarterStart(month: Int) =
-    if (month <= 3) 1
-    else if (month <= 6) 4
-    else if (month <= 9) 7
-    else 10
 
   private def endFromDate(date: DateTime, duration: Duration) =
     duration match {
