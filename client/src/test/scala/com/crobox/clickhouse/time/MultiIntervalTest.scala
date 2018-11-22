@@ -62,15 +62,14 @@ class MultiIntervalTest extends FlatSpecLike with Matchers with TableDrivenPrope
         (MultiDuration(2, TimeUnit.Month),
           (time: DateTime) => time.plusMonths(1),
           IndexedSeq(toDateTime(2014, 4, 1, 0, 0, 0, 0) to toDateTime(2014, 5, 31, 23, 59, 59, 999),
-            toDateTime(2014, 6, 1, 0, 0, 0, 0) to toDateTime(2014, 7, 31, 23, 59, 59, 999))),
+            toDateTime(2014, 6, 1, 0, 0, 0, 0) to toDateTime(2014, 7, 31, 23, 59, 59, 999)))
       )
-    ) { (duration, intervalEnd, intervals) =>
-    {
-      val interval = MultiInterval(dateTime, intervalEnd(dateTime), duration)
-      interval.startOfInterval() should be(intervals.head.getStart)
-      interval.subIntervals() should contain theSameElementsInOrderAs intervals
-      interval.endOfInterval() should be(intervals.last.getEnd)
-    }
+    ) { (duration, intervalEnd, intervals) => {
+        val interval = MultiInterval(dateTime, intervalEnd(dateTime), duration)
+        interval.startOfInterval() should be(intervals.head.getStart)
+        interval.subIntervals() should contain theSameElementsInOrderAs intervals
+        interval.endOfInterval() should be(intervals.last.getEnd)
+      }
     }
   }
 
