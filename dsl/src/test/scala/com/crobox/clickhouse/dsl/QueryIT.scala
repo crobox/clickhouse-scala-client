@@ -5,7 +5,7 @@ import java.util.UUID
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
 import com.crobox.clickhouse.dsl.execution.{DefaultClickhouseQueryExecutor, QueryResult}
-import com.crobox.clickhouse.testkit.ClickhouseClientSpec
+import com.crobox.clickhouse.ClickhouseClientSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
@@ -16,8 +16,7 @@ import scala.util.Random
 
 class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec with ScalaFutures {
 
-  import scala.concurrent.ExecutionContext.Implicits.global
-  implicit override val patienceConfig =
+  override implicit def patienceConfig =
     PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
 
   implicit val clickhouseClient = clickClient
@@ -39,7 +38,6 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
   }
 
   it should "perform typecasts" in {
-    implicit val patienceConfig: PatienceConfig = PatienceConfig(Span(1500, Millis),Span(150, Millis))
 
     type TakeIntGiveIntTypes = Column => (TypeCastColumn[_$1] with Reinterpretable) forSome {type _$1 >: Long with String with Float with Serializable}
 

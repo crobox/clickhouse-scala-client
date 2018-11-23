@@ -5,7 +5,7 @@ import java.util.UUID
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
-import com.crobox.clickhouse.testkit.ClickhouseClientSpec
+import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.time.{IntervalStart, MultiDuration, MultiInterval, SimpleDuration, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
 import org.scalactic.TripleEqualsSupport
@@ -24,13 +24,13 @@ class ClickhouseTimeSeriesIT
     with QueryFactory {
 
   case class Result(time: IntervalStart, shields: String)
-  implicit override val patienceConfig =
+  override implicit def patienceConfig =
     PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
 
   object Result {
     implicit val format = jsonFormat2(Result.apply)
   }
-  import scala.concurrent.ExecutionContext.Implicits.global
+
   implicit val clickhouseClient                   = clickClient
   val startInterval                               = DateTime.now().withTimeAtStartOfDay().withZone(DateTimeZone.UTC)
   val secondsId                                   = UUID.randomUUID()

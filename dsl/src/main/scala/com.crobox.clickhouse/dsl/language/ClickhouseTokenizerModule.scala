@@ -6,7 +6,6 @@ import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration, TimeUnit}
 import com.dongxiguo.fastring.Fastring.Implicits._
-import com.google.common.base.Strings
 import com.typesafe.scalalogging.Logger
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
@@ -110,7 +109,7 @@ trait ClickhouseTokenizerModule
     column match {
       case AliasedColumn(original, alias) =>
         val originalColumnToken = tokenizeColumn(original)
-        if (Strings.isNullOrEmpty(originalColumnToken)) alias else fast"$originalColumnToken AS $alias"
+        if (originalColumnToken.isEmpty) alias else fast"$originalColumnToken AS $alias"
       case tuple: TupleColumn[_]         => fast"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
       case col: ExpressionColumn[_]      => tokenizeExpressionColumn(col)
       case regularColumn: AnyTableColumn => regularColumn.name

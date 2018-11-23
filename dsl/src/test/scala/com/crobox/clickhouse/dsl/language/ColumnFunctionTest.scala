@@ -1,14 +1,12 @@
 package com.crobox.clickhouse.dsl.language
-import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
+import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.execution.ClickhouseQueryExecutor
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.crobox.clickhouse.dsl.{OperationalQuery, select}
-import com.crobox.clickhouse.testkit.ClickhouseClientSpec
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.scalatest.concurrent.ScalaFutures
-import scala.concurrent.duration._
 
 import scala.concurrent.Future
 
@@ -17,8 +15,6 @@ trait ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
   implicit val db: Database = clickhouseClient.database
 
   val ex = ClickhouseQueryExecutor.default(clickhouseClient)
-
-  implicit val patience: PatienceConfig = PatienceConfig(1.seconds,150.millis)
 
   protected def r(query: AnyTableColumn): String = {
     runSql(select(query)).futureValue.trim

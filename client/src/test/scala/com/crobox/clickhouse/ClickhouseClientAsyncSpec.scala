@@ -20,6 +20,7 @@ class ClickhouseClientAsyncSpec
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfterEach {
+
   val config: Config        = ConfigFactory.load()
   implicit val timeout      = durationToTimeout(5 second)
   implicit val materializer = ActorMaterializer()
@@ -61,10 +62,4 @@ class ClickhouseClientAsyncSpec
       })
   }
 
-  def elementsDuplicated(values: Seq[Uri], elements: Int) =
-    Iterator
-      .continually(values)
-      .flatten
-      .take(elements)
-      .toIndexedSeq
 }

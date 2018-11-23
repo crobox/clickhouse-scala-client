@@ -5,7 +5,7 @@ import java.util.UUID
 import com.crobox.clickhouse.{dsl => CHDsl}
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.parallel._
-import com.crobox.clickhouse.testkit.ClickhouseClientSpec
+import com.crobox.clickhouse.ClickhouseClientSpec
 
 class QueryMergeTest extends ClickhouseClientSpec with TestSchema {
   val clickhouseTokenizer = new ClickhouseTokenizerModule {}

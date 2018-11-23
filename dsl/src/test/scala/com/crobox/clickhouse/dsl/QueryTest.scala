@@ -6,7 +6,7 @@ import com.crobox.clickhouse.dsl.column._
 
 import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.testkit.ClickhouseClientSpec
+import com.crobox.clickhouse.ClickhouseClientSpec
 import org.joda.time.{DateTime, LocalDate}
 
 import scala.util.{Failure, Success}

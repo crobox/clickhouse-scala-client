@@ -3,8 +3,6 @@ package com.crobox.clickhouse.dsl.language
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
-import com.google.common.base.Strings
-
 
 trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
@@ -15,7 +13,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
         val combinators          = tokenizedCombinators.map(_._1).mkString("")
         val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkString(",")
         val (function, values)   = tokenizeInnerAggregatedFunction(extractTarget(nested))
-        val separator            = if (Strings.isNullOrEmpty(values) || Strings.isNullOrEmpty(combinatorsValues)) "" else ","
+        val separator            = if (values.isEmpty || combinatorsValues.isEmpty) "" else ","
         fast"$function$combinators($values$separator$combinatorsValues)"
       case timeSeries: TimeSeries => tokenizeTimeSeries(timeSeries)
       case aggregated: AggregateFunction[_] =>

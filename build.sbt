@@ -101,9 +101,9 @@ lazy val dsl = (project in file("dsl"))
     },
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
-      "io.spray" %% "spray-json" % "1.3.3",
+      "io.spray" %% "spray-json" % "1.3.5",
       "com.google.guava" % "guava" % "19.0",
       "com.dongxiguo" %% "fastring" % "0.3.1"
     )
   )
-  .dependsOn(client, testkit)
+  .dependsOn(client, client % "test->test", testkit % Test)

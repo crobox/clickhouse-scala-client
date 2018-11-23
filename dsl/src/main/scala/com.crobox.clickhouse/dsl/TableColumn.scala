@@ -12,6 +12,7 @@ trait Column {
 }
 
 class TableColumn[V](val name: String) extends Column {
+  require(name != null)
 
   def as(alias: String): AliasedColumn[V] =
     AliasedColumn(this, alias)

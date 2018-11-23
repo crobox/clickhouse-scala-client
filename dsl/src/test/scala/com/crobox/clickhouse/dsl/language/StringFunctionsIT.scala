@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.testkit.ClickhouseClientSpec
+import com.crobox.clickhouse.ClickhouseClientSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol.{jsonFormat, _}
@@ -18,9 +18,10 @@ class StringFunctionsIT
   private val columnString = "oneem,twoem,threeem"
   override val table2Entries: Seq[Table2Entry] =
     Seq(Table2Entry(UUID.randomUUID(), columnString, randomInt, randomString, None))
-  import scala.concurrent.ExecutionContext.Implicits.global
-  implicit override val patienceConfig =
+
+  override implicit def patienceConfig =
     PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
+
   case class Result(result: String)
   implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
 

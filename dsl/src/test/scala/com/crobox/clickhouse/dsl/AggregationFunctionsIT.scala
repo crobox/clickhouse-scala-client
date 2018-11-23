@@ -3,24 +3,22 @@ package com.crobox.clickhouse.dsl
 import java.util.UUID
 
 import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
-import com.crobox.clickhouse.testkit.ClickhouseClientSpec
-import org.scalatest.concurrent.ScalaFutures
+import com.crobox.clickhouse.ClickhouseClientSpec
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 class AggregationFunctionsIT
     extends ClickhouseClientSpec
-    with TestSchemaClickhouseQuerySpec
-    with ScalaFutures {
+    with TestSchemaClickhouseQuerySpec {
 
   private val entries = 200145
   override val table1Entries: Seq[Table1Entry] =
     Seq.fill(entries)(Table1Entry(UUID.randomUUID(), numbers = Seq(1, 2, 3)))
   override val table2Entries: Seq[Table2Entry] =
     Seq.fill(entries)(Table2Entry(UUID.randomUUID(), randomString, randomInt, randomString, None))
-  import scala.concurrent.ExecutionContext.Implicits.global
-  implicit override val patienceConfig =
+
+  override implicit def patienceConfig =
     PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
 
   "Combinators" should "apply for aggregations" in {
