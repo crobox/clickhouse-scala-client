@@ -1,6 +1,7 @@
 # Clickhouse Scala Client
 
 [![Build Status](https://travis-ci.org/crobox/clickhouse-scala-client.svg?branch=master)](https://travis-ci.org/crobox/clickhouse-scala-client)
+[![Gitter](https://img.shields.io/gitter/room/clickhouse-scala-client/lobby.svg)](https://gitter.im/clickhouse-scala-client/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Clickhouse Scala Client that uses Akka Http to create a reactive streams implementation to access the [Clickhouse](https://clickhouse.yandex) database in a reactive way.
 
