@@ -19,13 +19,7 @@ case class MultiInterval(rawStart: DateTime, rawEnd: DateTime, duration: Duratio
 
   private lazy val innerIntervals = intervalsBetween(rawStart, rawEnd, duration)
 
-  def startOfInterval(): DateTime =
-    getStart
-
-  def endOfInterval(): DateTime =
-    getEnd
-
-  def subIntervals(): Seq[Interval] =
+  def subIntervals: Seq[Interval] =
     innerIntervals
 }
 
@@ -117,9 +111,7 @@ object MultiInterval {
       case SimpleDuration(Total) =>
         date
       case _ =>
-        val nextIntervalStart =
-          nextStartFromDate(startFromDate(date, duration), duration)
-        nextIntervalStart.minusMillis(1)
+        nextStartFromDate(startFromDate(date, duration), duration)
     }
 
   private def nextStartFromDate(startDate: DateTime, duration: Duration) =
@@ -145,14 +137,15 @@ object MultiInterval {
 
   private def intervalsBetween(start: DateTime, end: DateTime, duration: Duration) = {
     val result = duration.unit match {
-      case Total => IndexedSeq(new Interval(start, end))
+      case Total =>
+        IndexedSeq(new Interval(start, end))
       case _ =>
         Iterator
           .iterate(new Interval(startFromDate(start, duration), endFromDate(start, duration)))(interval => {
             val intervalStart = nextStartFromDate(interval.getStart, duration)
             new Interval(intervalStart, endFromDate(intervalStart, duration))
           })
-          .takeWhile(_.getStart.isBefore(end.plusMillis(1)))
+          .takeWhile(_.getStart.isBefore(end))
           .toIndexedSeq
     }
     if (result.isEmpty) {
