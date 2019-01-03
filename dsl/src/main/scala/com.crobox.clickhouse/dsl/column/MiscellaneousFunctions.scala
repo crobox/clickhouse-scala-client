@@ -8,7 +8,7 @@ trait MiscellaneousFunctions { self: Magnets =>
   abstract class MiscellaneousOp[V](col: ConstOrColMagnet[_])
       extends ExpressionColumn[V](col.column)
       with MiscellaneousFunction
-  abstract class MiscellaneousConst[V]() extends ExpressionColumn[V](EmptyColumn()) with MiscellaneousFunction
+  abstract class MiscellaneousConst[V]() extends ExpressionColumn[V](EmptyColumn) with MiscellaneousFunction
 
   case class HostName()                          extends MiscellaneousConst[Long]()
   case class VisibleWidth(col: ConstOrColMagnet[_]) extends MiscellaneousOp[Long](col)

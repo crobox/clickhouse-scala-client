@@ -76,10 +76,10 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
   }
 
   def conditional(column: AnyTableColumn, condition: Boolean): AnyTableColumn =
-    if (condition) column else EmptyColumn()
+    if (condition) column else EmptyColumn
 
   def ref[V](refName: String) =
-    new RefColumn[V](refName)
+    RefColumn[V](refName)
 
   def const[V: QueryValue](const: V) =
     Const(const)

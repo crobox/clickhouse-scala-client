@@ -71,7 +71,8 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   "building group by" should "add columns as group by clauses" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
-      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), groupBy = Seq(shieldId))
+      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+        groupBy = Some(GroupByQuery(Seq(shieldId))))
     )
     query should be("SELECT shield_id FROM default.captainAmerica GROUP BY shield_id FORMAT JSON")
   }
@@ -80,9 +81,29 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val alias  = shieldId as "preferable"
     val select = SelectQuery(Seq(alias))
     val query = testSubject.toSql(
-      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), groupBy = Seq(alias))
+      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+        groupBy = Some(GroupByQuery(Seq(alias))))
     )
     query should be("SELECT shield_id AS preferable FROM default.captainAmerica GROUP BY preferable FORMAT JSON")
+  }
+
+  it should "group by with rollup if using group by mode" in {
+    val select = SelectQuery(Seq(shieldId))
+    val query = testSubject.toSql(
+      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+        groupBy = Some(GroupByQuery(Seq(shieldId), mode = Some(GroupByQuery.WithRollup), withTotals = true)))
+    )
+    query should be("SELECT shield_id FROM default.captainAmerica GROUP BY shield_id WITH ROLLUP WITH TOTALS FORMAT JSON")
+  }
+
+  it should "group by with cube if using group by mode" in {
+    val select = SelectQuery(Seq(shieldId))
+    val query = testSubject.toSql(
+      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+        groupBy = Some(GroupByQuery(mode = Some(GroupByQuery.WithCube))))
+    )
+    query should be("SELECT shield_id FROM default.captainAmerica WITH CUBE FORMAT JSON")
+
   }
 
   "building joins" should "build table join using select all style" in {

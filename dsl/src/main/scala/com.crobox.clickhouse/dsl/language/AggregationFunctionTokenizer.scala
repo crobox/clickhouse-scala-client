@@ -36,7 +36,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
   private def tokenizeInnerAggregatedFunction(agg: AggregateFunction[_])(implicit database: Database): (String, String) =
     agg match {
       case Avg(column)   => ("avg", tokenizeColumn(column))
-      case Count(column) => ("count", tokenizeColumn(column.getOrElse(EmptyColumn())))
+      case Count(column) => ("count", tokenizeColumn(column.getOrElse(EmptyColumn)))
       case Median(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (fast"median$modifierName", fast"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")

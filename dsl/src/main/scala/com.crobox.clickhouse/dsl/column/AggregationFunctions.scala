@@ -20,7 +20,7 @@ trait AggregationFunctions
 
   abstract class AggregateFunction[V](targetColumn: AnyTableColumn) extends ExpressionColumn[V](targetColumn)
 
-  case class Count(column: Option[AnyTableColumn] = None) extends AggregateFunction[Long](column.getOrElse(EmptyColumn()))
+  case class Count(column: Option[AnyTableColumn] = None) extends AggregateFunction[Long](column.getOrElse(EmptyColumn))
 
   case class Avg[V](tableColumn: TableColumn[V]) extends AggregateFunction[Double](tableColumn)
 
@@ -72,7 +72,7 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
 
   case class CombinedAggregatedFunction[T <: TableColumn[_], Res](combinator: Combinator[T, Res],
     target: AggregateFunction[_])
-    extends AggregateFunction[Res](EmptyColumn())
+    extends AggregateFunction[Res](EmptyColumn)
 
   sealed trait StateResult[V]
 

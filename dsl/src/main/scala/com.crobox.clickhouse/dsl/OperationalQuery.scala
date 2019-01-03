@@ -25,7 +25,7 @@ trait OperationalQuery extends Query {
   }
 
   def prewhere(condition: TableColumn[Boolean]): OperationalQuery = {
-    val comparison: TableColumn[Boolean] = internalQuery.prewhere.map(_.and(condition)).getOrElse(condition)
+    val comparison = internalQuery.prewhere.map(_.and(condition)).getOrElse(condition)
     OperationalQuery(internalQuery.copy(prewhere = Some(comparison)))
   }
 
@@ -44,14 +44,37 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(from = Some(from)))
   }
 
-  def asFinal(asFinal: Boolean = true): OperationalQuery = {
-    OperationalQuery(internalQuery.copy(asFinal = asFinal))
+  def asFinal: OperationalQuery = {
+    OperationalQuery(internalQuery.copy(asFinal = true))
   }
 
   def groupBy(columns: AnyTableColumn*): OperationalQuery = {
+    val internalGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery())
+    val newGroupBy = Some(internalGroupBy.copy(usingColumns = internalGroupBy.usingColumns ++ columns))
     val newSelect = mergeOperationalColumns(columns)
     OperationalQuery(
-      internalQuery.copy(select = newSelect, groupBy = internalQuery.groupBy ++ columns)
+      internalQuery.copy(select = newSelect, groupBy = newGroupBy)
+    )
+  }
+
+  def withRollup: OperationalQuery = {
+    val newGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery()).copy(mode = Some(GroupByQuery.WithRollup))
+    OperationalQuery(
+      internalQuery.copy(groupBy = Some(newGroupBy))
+    )
+  }
+
+  def withCube: OperationalQuery = {
+    val newGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery()).copy(mode = Some(GroupByQuery.WithCube))
+    OperationalQuery(
+      internalQuery.copy(groupBy = Some(newGroupBy))
+    )
+  }
+
+  def withTotals: OperationalQuery = {
+    val newGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery()).copy(withTotals = true)
+    OperationalQuery(
+      internalQuery.copy(groupBy = Some(newGroupBy))
     )
   }
 

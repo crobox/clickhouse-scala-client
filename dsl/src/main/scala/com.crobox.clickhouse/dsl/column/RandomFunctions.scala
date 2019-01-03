@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
 
 trait RandomFunctions { self: Magnets =>
 
-  abstract class RandomFunction() extends ExpressionColumn[Long](EmptyColumn())
+  abstract class RandomFunction() extends ExpressionColumn[Long](EmptyColumn)
 
   case class Rand() extends RandomFunction
   case class Rand64() extends RandomFunction

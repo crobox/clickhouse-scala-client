@@ -62,7 +62,7 @@ trait TypeCastFunctions { self: Magnets =>
 
   case class Cast[T](tableColumn: ConstOrColMagnet[_], simpleColumnType: SimpleColumnType)
       extends TypeCastColumn[T](tableColumn) with ConstOrColMagnet[T] {
-    override  val column: TableColumn[T] = this
+    override val column: TableColumn[T] = this
   }
 
   sealed trait CastOutBind[I, O]

@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn}
 trait InFunctions { self: Magnets =>
 
   sealed trait InFunction
-  abstract class InFunctionCol[O](val l: ConstOrColMagnet[_], val r: InFuncRHMagnet) extends ExpressionColumn[Boolean](EmptyColumn()) with InFunction
+  abstract class InFunctionCol[O](val l: ConstOrColMagnet[_], val r: InFuncRHMagnet) extends ExpressionColumn[Boolean](EmptyColumn) with InFunction
 
   case class In(_l: ConstOrColMagnet[_], _r: InFuncRHMagnet) extends InFunctionCol(_l, _r)
   case class NotIn(_l: ConstOrColMagnet[_], _r: InFuncRHMagnet) extends InFunctionCol(_l, _r)
@@ -15,8 +15,8 @@ trait InFunctions { self: Magnets =>
   // is there anything that could properly represent the inner types of these column functions?
   //This is especially problematic when using TupleElement
 
-  case class Tuple(coln: Seq[ConstOrColMagnet[_]]) extends ExpressionColumn[Nothing](EmptyColumn()) with InFunction
-  case class TupleElement[T](tuple: Tuple, index: NumericCol[_]) extends ExpressionColumn[T](EmptyColumn()) with InFunction
+  case class Tuple(coln: Seq[ConstOrColMagnet[_]]) extends ExpressionColumn[Nothing](EmptyColumn) with InFunction
+  case class TupleElement[T](tuple: Tuple, index: NumericCol[_]) extends ExpressionColumn[T](EmptyColumn) with InFunction
 
   trait InOps { self: ConstOrColMagnet[_] =>
     def in(other: InFuncRHMagnet) = In(self,other)
