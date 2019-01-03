@@ -7,7 +7,7 @@ trait MathematicalFunctions { self: Magnets =>
 
   sealed abstract class MathFuncColumn(col: AnyTableColumn) extends ExpressionColumn[Float](col)
 
-  abstract class MathConst                                         extends MathFuncColumn(EmptyColumn())
+  abstract class MathConst                                         extends MathFuncColumn(EmptyColumn)
   abstract class MathTransformation(val numericCol: NumericCol[_])    extends MathFuncColumn(numericCol.column)
 
   case class E()  extends MathConst()

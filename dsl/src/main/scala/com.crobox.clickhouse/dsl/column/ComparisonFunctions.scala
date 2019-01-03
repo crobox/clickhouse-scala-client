@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
 
 trait ComparisonFunctions { self: Magnets =>
 
-  case class ComparisonColumn(left: Magnet[_], operator: String, right: Magnet[_]) extends ExpressionColumn[Boolean](EmptyColumn())
+  case class ComparisonColumn(left: Magnet[_], operator: String, right: Magnet[_]) extends ExpressionColumn[Boolean](EmptyColumn)
 
   trait ComparableWith[M <: Magnet[_]] { self: Magnet[_] =>
     def <(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "<", other)

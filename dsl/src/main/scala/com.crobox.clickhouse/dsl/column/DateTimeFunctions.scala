@@ -10,7 +10,7 @@ trait DateTimeFunctions { self: Magnets =>
       extends ExpressionColumn(ddt.column)
       with DateTimeFunction
 
-  abstract class DateTimeConst[V]()                                    extends ExpressionColumn[V](EmptyColumn()) with DateTimeFunction
+  abstract class DateTimeConst[V]()                                    extends ExpressionColumn[V](EmptyColumn) with DateTimeFunction
   case class Year(d: DateOrDateTime[_])                                extends DateTimeFunctionCol[Int](d)
   case class YYYYMM(d: DateOrDateTime[_])                              extends DateTimeFunctionCol[String](d)
   case class Month(d: DateOrDateTime[_])                               extends DateTimeFunctionCol[Int](d)

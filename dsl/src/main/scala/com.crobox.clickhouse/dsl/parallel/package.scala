@@ -90,7 +90,7 @@ package object parallel {
         //Map to a simple column so that we just add the select to top level
         .map(origCol => RefColumn(origCol.name))
         .toList
-        .filterNot(col => col.name.isEmpty)
+        .filterNot(_.name == EmptyColumn.name)
         .:+(all())
 
       select(joinCols: _*)

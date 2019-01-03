@@ -1,7 +1,7 @@
 version: '3'
 services:
   clickhouse:
-      image: crobox/clickhouse:18.12.17
+      image: crobox/clickhouse:latest
       expose:
         - "8123"
       ports:

@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn, TableColumn}
 
 trait HigherOrderFunctions { self: Magnets =>
-  abstract class HigherOrderFunction[I,O,R](val func: Option[TableColumn[I] => ExpressionColumn[O]], val arr1: ArrayColMagnet[_ <: Iterable[I]]) extends ExpressionColumn[R](EmptyColumn())
+  abstract class HigherOrderFunction[I,O,R](val func: Option[TableColumn[I] => ExpressionColumn[O]], val arr1: ArrayColMagnet[_ <: Iterable[I]]) extends ExpressionColumn[R](EmptyColumn)
 //TODO funcs should be optional mostly
   case class ArrayMap[I,O]   (_func: TableColumn[I] => ExpressionColumn[O], _arr1: ArrayColMagnet[_ <: Iterable[I]])      extends HigherOrderFunction[I,O,Iterable[I]](Some(_func), _arr1)
   case class ArrayFilter[I](_func: TableColumn[I] => ExpressionColumn[Boolean] , _arr1: ArrayColMagnet[_ <: Iterable[I]])      extends HigherOrderFunction[I,Boolean,Iterable[I]](Some(_func), _arr1)

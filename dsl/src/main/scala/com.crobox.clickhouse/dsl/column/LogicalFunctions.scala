@@ -11,7 +11,7 @@ trait LogicalFunctions { this: Magnets =>
   case object Not extends LogicalOperator
 
   case class LogicalFunction(left: LogicalOpsMagnet, operator: LogicalOperator, right: LogicalOpsMagnet)
-      extends ExpressionColumn[Boolean](EmptyColumn())
+      extends ExpressionColumn[Boolean](EmptyColumn)
 
   trait LogicalOps { this: LogicalOpsMagnet =>
     def and(other: LogicalOpsMagnet): ExpressionColumn[Boolean] = _and(this, other)

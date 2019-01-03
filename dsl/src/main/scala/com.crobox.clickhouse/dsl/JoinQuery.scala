@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
 object JoinQuery {
 
-  trait JoinType
+  sealed trait JoinType
 
   case object AnyInnerJoin extends JoinType
 

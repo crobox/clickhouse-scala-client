@@ -80,13 +80,13 @@ trait Magnets { self:
 
   implicit def InFuncRHMagnetFromQuery(s: OperationalQuery): InFuncRHMagnet =
     new InFuncRHMagnet {
-      override val column = EmptyColumn()
+      override val column = EmptyColumn
       override val query: Option[OperationalQuery] = Some(s)
     }
 
   implicit def InFuncRHMagnetFromTable(s: Table): InFuncRHMagnet =
     new InFuncRHMagnet {
-      override val column = EmptyColumn()
+      override val column = EmptyColumn
       override val tableRef: Option[Table] = Some(s)
     }
   

@@ -7,11 +7,11 @@ trait ArrayFunctions { this: Magnets =>
   sealed trait ArrayFunction
 
   abstract class ArrayFunctionOp[V]
-    extends ExpressionColumn[V](EmptyColumn())
+    extends ExpressionColumn[V](EmptyColumn)
     with ArrayFunction
 
   abstract class ArrayFunctionConst[V]
-    extends ExpressionColumn[Iterable[V]](EmptyColumn())
+    extends ExpressionColumn[Iterable[V]](EmptyColumn)
     with ArrayFunction
 
   case class EmptyArrayUInt8()  extends ArrayFunctionConst[Long]

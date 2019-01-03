@@ -68,14 +68,12 @@ trait ClickhouseTokenizerModule
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
            | ${tokenizeLimit(limit)}
-           |${tokenizeUnionAll(union)}""".toString.trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
+           | ${tokenizeUnionAll(union)}""".toString.trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
     }
 
   private def tokenizeUnionAll(unions : Seq[OperationalQuery])(implicit database: Database) = {
     if (unions.nonEmpty) {
-      unions.map(q =>
-        fast"""UNION ALL
-               | ${toRawSql(q.internalQuery)}""".toString.stripMargin).mkString
+      unions.map(q => fast"UNION ALL ${toRawSql(q.internalQuery)}").mkString
     } else {
       ""
     }
@@ -90,14 +88,14 @@ trait ClickhouseTokenizerModule
   private def tokenizeFrom(from: Option[FromQuery], withPrefix: Boolean = true)(implicit database: Database) = {
     require(from != null)
 
-    val prefix = if (withPrefix) "FROM " else ""
+    val prefix = if (withPrefix) "FROM" else ""
     from match {
       case Some(fromClause: InnerFromQuery) =>
         fast"$prefix (${toRawSql(fromClause.innerQuery.internalQuery)})"
       case Some(TableFromQuery(table: Table, None)) =>
         fast"$prefix $database.${table.name}"
       case Some(TableFromQuery(table: Table, Some(altDb))) =>
-        fast"$prefix  $altDb.${table.name}"
+        fast"$prefix $altDb.${table.name}"
       case _ => ""
     }
   }
@@ -107,6 +105,7 @@ trait ClickhouseTokenizerModule
   protected def tokenizeColumn(column: AnyTableColumn)(implicit database: Database): String = {
     require(column != null)
     column match {
+      case EmptyColumn => ""
       case AliasedColumn(original, alias) =>
         val originalColumnToken = tokenizeColumn(original)
         if (originalColumnToken.isEmpty) alias else fast"$originalColumnToken AS $alias"
@@ -144,9 +143,10 @@ trait ClickhouseTokenizerModule
       case col: TypeCastColumn[_]            => tokenizeTypeCastColumn(col)
       case col: URLFunction[_]               => tokenizeURLFunction(col)
       case All()                             => "*"
+      case RawColumn(rawSql)                 => rawSql
       case Conditional(cases, default) =>
         fast"CASE ${cases
-          .map(ccase => fast"WHEN ${tokenizeColumn(ccase.condition)} THEN ${tokenizeColumn(ccase.result)}")
+          .map(`case` => fast"WHEN ${tokenizeColumn(`case`.condition)} THEN ${tokenizeColumn(`case`.result)}")
           .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
       case c: Const[_] => c.parsed
       case a@_ => throw new NotImplementedError(a.getClass.getCanonicalName + " with superclass " + a.getClass.getSuperclass.getCanonicalName + " could not be matched.")
@@ -222,16 +222,13 @@ trait ClickhouseTokenizerModule
     }
 
   private[language] def tokenizeColumns(columns: Set[AnyTableColumn])(implicit database: Database): String =
-    columns.map(tokenizeColumn).mkString(", ")
+    tokenizeColumns(columns.toSeq)
 
   private[language] def tokenizeColumns(columns: Seq[AnyTableColumn])(implicit database: Database): String =
-    columns
-      .filterNot {
-        case _: EmptyColumn => true
-        case _              => false
-      }
-      .map(tokenizeColumn)
-      .mkString(", ")
+    columns.filterNot{
+      case EmptyColumn => true
+      case _ => false
+    }.map(tokenizeColumn).mkString(", ")
 
   private def tokenizeJoinType(joinType: JoinQuery.JoinType): String =
     joinType match {
@@ -249,11 +246,26 @@ trait ClickhouseTokenizerModule
       case Some(condition) => fast"$keyword ${tokenizeColumn(condition)}"
     }
 
-  private def tokenizeGroupBy(groupBy: Seq[AnyTableColumn])(implicit database: Database): String =
-    groupBy.toList match {
-      case Nil | null => ""
-      case _          => fast"GROUP BY ${tokenizeColumnsAliased(groupBy)}"
+  private def tokenizeGroupBy(groupBy: Option[GroupByQuery])(implicit database: Database): String = {
+    val groupByColumns = groupBy match {
+      case Some(GroupByQuery(usingColumns, _, _)) if usingColumns.nonEmpty =>
+        Some(fast"GROUP BY ${tokenizeColumnsAliased(usingColumns)}")
+      case _ =>
+        None
     }
+    val groupByMode = groupBy match {
+      case Some(GroupByQuery(_, Some(mode), _)) => Some(mode match {
+        case GroupByQuery.WithRollup => "WITH ROLLUP"
+        case GroupByQuery.WithCube => "WITH CUBE"
+      })
+      case _ => None
+    }
+    val groupByWithTotals = groupBy match {
+      case Some(GroupByQuery(_, _, true)) => Some("WITH TOTALS")
+      case _ => None
+    }
+    (groupByColumns ++ groupByMode ++ groupByWithTotals).mkString(" ")
+  }
 
   private def tokenizeOrderBy(orderBy: Seq[(AnyTableColumn, OrderingDirection)])(implicit database: Database): String =
     orderBy.toList match {
@@ -264,15 +276,14 @@ trait ClickhouseTokenizerModule
   private def tokenizeLimit(limit: Option[Limit]): String =
     limit match {
       case None                      => ""
-      case Some(Limit(size, offset)) => fast" LIMIT $offset, $size"
+      case Some(Limit(size, offset)) => fast"LIMIT $offset, $size"
     }
 
   private def tokenizeColumnsAliased(columns: Seq[AnyTableColumn])(implicit database: Database): String =
     columns.map(aliasOrName).mkString(", ")
 
   private def tokenizeTuplesAliased(columns: Seq[(AnyTableColumn, OrderingDirection)])(implicit database: Database): String =
-    columns
-      .map {
+    columns.map {
         case (column, dir) =>
           aliasOrName(column) + " " + direction(dir)
       }
@@ -280,6 +291,7 @@ trait ClickhouseTokenizerModule
 
   private def aliasOrName(column: AnyTableColumn)(implicit database: Database) =
     column match {
+      case EmptyColumn                   => ""
       case AliasedColumn(_, alias)       => alias
       case regularColumn: AnyTableColumn => regularColumn.name
     }

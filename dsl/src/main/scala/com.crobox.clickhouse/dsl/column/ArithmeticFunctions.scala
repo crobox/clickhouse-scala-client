@@ -14,7 +14,7 @@ trait ArithmeticFunctions { self: Magnets =>
   }
 
   abstract class ArithmeticFunctionOp[V](val left: AddSubtractable[_], val right: AddSubtractable[_])
-      extends ExpressionColumn[V](EmptyColumn())
+      extends ExpressionColumn[V](EmptyColumn)
         with ArithmeticFunction with NumericCol[V] {
     override val column = this
   }

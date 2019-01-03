@@ -11,7 +11,7 @@ trait DictionaryFunctions { self: Magnets =>
     DictionaryFuncColumn[V]
 
   sealed abstract class DictionaryFuncColumn[V] extends
-    ExpressionColumn[V](EmptyColumn())
+    ExpressionColumn[V](EmptyColumn)
 
   case class DictGetUInt8(_dictName: StringColMagnet[_], _attrName: StringColMagnet[_], _id: ConstOrColMagnet[_], _default: Option[Magnet[Long]] = None)
     extends DictionaryGetFuncColumn[Long](_dictName,_attrName,_id,_default)
