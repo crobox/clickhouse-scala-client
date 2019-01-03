@@ -169,7 +169,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       )
     )
     query should be (
-      s"SELECT WHERE ${col.rawSql} FORMAT JSON"
+      s"SELECT ${col.rawSql} WHERE ${col.rawSql} FORMAT JSON"
     )
   }
 

@@ -225,7 +225,10 @@ trait ClickhouseTokenizerModule
     tokenizeColumns(columns.toSeq)
 
   private[language] def tokenizeColumns(columns: Seq[AnyTableColumn])(implicit database: Database): String =
-    columns.filterNot(_.name == EmptyColumn.name).map(tokenizeColumn).mkString(", ")
+    columns.filterNot{
+      case EmptyColumn => true
+      case _ => false
+    }.map(tokenizeColumn).mkString(", ")
 
   private def tokenizeJoinType(joinType: JoinQuery.JoinType): String =
     joinType match {
