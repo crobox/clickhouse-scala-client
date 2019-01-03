@@ -143,6 +143,7 @@ trait ClickhouseTokenizerModule
       case col: TypeCastColumn[_]            => tokenizeTypeCastColumn(col)
       case col: URLFunction[_]               => tokenizeURLFunction(col)
       case All()                             => "*"
+      case RawColumn(rawSql)                 => rawSql
       case Conditional(cases, default) =>
         fast"CASE ${cases
           .map(`case` => fast"WHEN ${tokenizeColumn(`case`.condition)} THEN ${tokenizeColumn(`case`.result)}")

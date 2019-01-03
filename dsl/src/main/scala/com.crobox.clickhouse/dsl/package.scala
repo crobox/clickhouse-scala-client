@@ -78,17 +78,13 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
   def conditional(column: AnyTableColumn, condition: Boolean): AnyTableColumn =
     if (condition) column else EmptyColumn
 
-  def ref[V](refName: String) =
-    RefColumn[V](refName)
+  def ref[V](refName: String): RefColumn[V] = RefColumn[V](refName)
 
-  def const[V: QueryValue](const: V) =
-    Const(const)
+  def const[V: QueryValue](const: V): Const[V] = Const(const)
 
-  def rawColumn(tableColumn: AnyTableColumn) =
-    RawColumn(tableColumn)
+  def raw(rawSql: String): RawColumn = RawColumn(rawSql)
 
-  def all() =
-    All()
+  def all(): All = All()
 
   def columnCase[V](condition: TableColumn[Boolean], result: TableColumn[V]): Case[V] = Case[V](condition, result)
 

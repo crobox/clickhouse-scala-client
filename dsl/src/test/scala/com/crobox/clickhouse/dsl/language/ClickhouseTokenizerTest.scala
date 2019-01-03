@@ -158,6 +158,21 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     this.tokenizeColumn(const(3).as(col2)) shouldBe s"3 AS ${col2.name}"
   }
 
+
+  "raw()" should "allow to behave like little bobby tables" in {
+    val col = RawColumn("Robert'); DROP TABLE students;")
+    val select = SelectQuery(Seq(col))
+    val query = testSubject.toSql(
+      InternalQuery(
+        select = Some(select),
+        where = Some(col)
+      )
+    )
+    query should be (
+      s"SELECT WHERE ${col.rawSql} FORMAT JSON"
+    )
+  }
+
   "Aggregated functions" should "build with combinators" in {
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1))) shouldBe s"uniqIf(${col1.name},${col1.name} = 'test')"
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1, UniqModifier.HLL12))) shouldBe s"uniqHLL12If(${col1.name},${col1.name} = 'test')"

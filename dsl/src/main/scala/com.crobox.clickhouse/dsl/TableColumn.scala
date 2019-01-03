@@ -52,7 +52,7 @@ case class Conditional[V](cases: Seq[Case[V]], default: AnyTableColumn) extends 
 /**
  * Used when referencing to a column in an expression
  */
-case class RawColumn(tableColumn: AnyTableColumn) extends ExpressionColumn[Boolean](tableColumn)
+case class RawColumn(rawSql: String) extends ExpressionColumn[Boolean](EmptyColumn)
 
 /**
  * Parse the supplied value as a constant value column in the query
