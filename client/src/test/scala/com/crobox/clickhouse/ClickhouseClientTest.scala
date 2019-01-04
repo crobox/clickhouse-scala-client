@@ -1,7 +1,7 @@
 package com.crobox.clickhouse
 
 import akka.stream.scaladsl.{Keep, Sink}
-import com.crobox.clickhouse.internal.progress.QueryProgress.{QueryAccepted, QueryFinished, QueryProgress}
+import com.crobox.clickhouse.internal.progress.QueryProgress.{Progress, QueryAccepted, QueryFinished, QueryProgress}
 import com.typesafe.config.ConfigFactory
 
 /**
@@ -42,7 +42,7 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
     }
   }
 
-  it should "publish query progress messages" in {
+  "Query progress" should "publish query progress messages" in {
     client
       .queryWithProgress("select 1 + 2")
       .runWith(Sink.seq[QueryProgress])
@@ -55,6 +55,18 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
       .toMat(Sink.ignore)(Keep.left)
       .run()
       .map(result => result.shouldBe("3\n"))
+  }
+
+  it should "send full progress messages" in {
+    client
+      .queryWithProgress("select sum(number) FROM (select number from system.numbers limit 100000000)")
+      .runWith(Sink.seq[QueryProgress])
+      .map(progress => {
+        println(progress)
+        progress collect {
+          case qp: Progress => qp
+        } should not be empty
+      })
   }
 
 }
