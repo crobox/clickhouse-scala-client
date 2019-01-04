@@ -7,6 +7,7 @@ import scala.util.Try
 
 trait Table {
   val name: String
+  lazy val quoted: String = ClickhouseStatement.quoteIdentifier(name)
   val columns: Seq[NativeColumn[_]]
 }
 

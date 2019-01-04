@@ -6,12 +6,8 @@ trait DistributedDdlSupport {
 
   val clusterName : Option[String]
 
-  def requireValidCluster(errorMsg : String): Unit = {
-    require(clusterName.forall(ClickhouseStatement.isValidIdentifier), errorMsg)
-  }
-
   protected[schemabuilder] def printOnCluster() : String = {
-    clusterName.map(cluster => s" ON CLUSTER $cluster").getOrElse("")
+    clusterName.map(cluster => s" ON CLUSTER ${ClickhouseStatement.quoteIdentifier(cluster)}").getOrElse("")
   }
 
 }

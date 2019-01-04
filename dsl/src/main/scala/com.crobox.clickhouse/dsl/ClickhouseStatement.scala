@@ -21,8 +21,6 @@ object ClickhouseStatement {
     .addEscape('`', "\\`")
     .build
 
-  def isValidIdentifier(identifier: String): Boolean = identifier != null && identifier.matches(UnquotedIdentifier)
-
   def escape(input: String): String = {
     if (input == null) return "NULL"
     Escaper.escape(input)
@@ -30,7 +28,12 @@ object ClickhouseStatement {
 
   def quoteIdentifier(input: String): String = {
     require(input != null, "Can't quote null as identifier")
-    "`" + Escaper.escape(input) + "`"
+    require(input != "", "Can't quote empty string as identifier")
+    if(input.matches(UnquotedIdentifier)) {
+      input
+    } else {
+      "`" + Escaper.escape(input) + "`"
+    }
   }
 }
 

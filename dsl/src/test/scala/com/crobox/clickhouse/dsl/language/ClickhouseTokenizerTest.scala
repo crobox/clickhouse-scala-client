@@ -190,4 +190,19 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
                             MultiDuration(TimeUnit.Month)))
     ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
   }
+
+  "build custom refs" should "quote them correctly" in {
+    val name = "props.key"
+    val col = RefColumn(name)
+    val select = SelectQuery(Seq(col))
+    val query = testSubject.toSql(
+      InternalQuery(
+        select = Some(select)
+
+      )
+    )
+    query should be (
+      s"SELECT `$name` FORMAT JSON"
+    )
+  }
 }

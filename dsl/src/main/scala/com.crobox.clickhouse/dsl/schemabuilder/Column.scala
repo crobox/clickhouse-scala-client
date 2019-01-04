@@ -71,7 +71,7 @@ object ColumnType {
   case class Nested(columns: NativeColumn[_]*) extends ColumnType {
     require(!columns.exists(c => c.clickhouseType.isInstanceOf[Nested]), "Only a single nesting level is supported.")
 
-    override def toString: String = s"Nested(${columns.map(_.query()).mkString(", ")})"
+    override def toString: String = s"Nested(${columns.map(_.query).mkString(", ")})"
   }
 
 //  TODO modifi this to accept and expression column
