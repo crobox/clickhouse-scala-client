@@ -6,13 +6,7 @@ package object time {
   type IntervalStart = DateTime
 
   implicit class FixedDurationExtension(multiDuration: MultiDuration) {
-
-    def millis(): Long =
-      multiDuration match {
-        case MultiDuration(value, fixedTimeUnit: FixedTimeUnit) =>
-          fixedTimeUnit.standardMillis * value
-        case _ => throw new IllegalArgumentException("Cannot calculate millis for non fixed duration.")
-      }
+    def millis(): Long = multiDuration.asPeriod.toStandardDuration.getMillis
   }
 
   implicit class IntervalExtras(obj: DateTime) {

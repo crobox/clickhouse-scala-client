@@ -100,7 +100,7 @@ object MultiInterval {
         val detYear = ref.getYear - (ref.getYear % value)
 
         ref.withYear(detYear)
-      case SimpleDuration(Total) =>
+      case TotalDuration =>
         start
       case d => throw new IllegalArgumentException(s"Invalid duration: $d")
     }
@@ -108,7 +108,7 @@ object MultiInterval {
 
   private def endFromDate(date: DateTime, duration: Duration) =
     duration match {
-      case SimpleDuration(Total) =>
+      case TotalDuration =>
         date
       case _ =>
         nextStartFromDate(startFromDate(date, duration), duration)

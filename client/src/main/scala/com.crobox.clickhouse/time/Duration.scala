@@ -33,4 +33,9 @@ object MultiDuration {
   def apply(unit: MultiTimeUnit): MultiDuration = MultiDuration(1, unit)
 }
 
-case class SimpleDuration(override val unit: SimpleTimeUnit) extends Duration
+/**
+  * Special duration class that indicates the whole duration; similar to Duration.Inf
+  */
+case object TotalDuration extends Duration {
+  override val unit: TimeUnit = TimeUnit.Total
+}

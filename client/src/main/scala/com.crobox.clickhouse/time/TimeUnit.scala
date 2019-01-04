@@ -8,21 +8,16 @@ sealed trait TimeUnit {
 
   def forValue(value: Int): Duration =
     this match {
-      case unit: SimpleTimeUnit =>
-        SimpleDuration(unit)
+      case TimeUnit.Total =>
+        TotalDuration
       case unit: MultiTimeUnit =>
         MultiDuration(value, unit)
     }
 }
 
-sealed trait FixedTimeUnit { this: TimeUnit =>
-  protected[time] val standardMillis: Long
-}
-
-abstract class SimpleTimeUnit(override val labels: Array[String], override val mainLabel: String) extends TimeUnit
-
 abstract class MultiTimeUnit(override val labels: Array[String], override val mainLabel: String) extends TimeUnit {
   val asPeriod: Period
+  lazy protected[time] val standardMillis: Long = asPeriod.toStandardDuration.getMillis
 }
 
 /**
@@ -34,28 +29,23 @@ object TimeUnit {
   private lazy val allUnits =
     Seq(Second, Minute, Hour, Day, Week, Month, Quarter, Year, Total)
 
-  case object Second extends MultiTimeUnit(Array("s", "second", "seconds"), "second") with FixedTimeUnit {
-    override protected[time] val standardMillis: Long = 1000
+  case object Second extends MultiTimeUnit(Array("s", "second", "seconds"), "second") {
     override val asPeriod: Period = Period.seconds(1)
   }
 
-  case object Minute extends MultiTimeUnit(Array("m", "minute", "minutes"), "minute") with FixedTimeUnit {
-    override protected[time] val standardMillis: Long = Second.standardMillis * 60
+  case object Minute extends MultiTimeUnit(Array("m", "minute", "minutes"), "minute") {
     override val asPeriod: Period = Period.minutes(1)
   }
 
-  case object Hour extends MultiTimeUnit(Array("h", "hour", "hours"), "hour") with FixedTimeUnit {
-    override protected[time] val standardMillis: Long = Minute.standardMillis * 60
+  case object Hour extends MultiTimeUnit(Array("h", "hour", "hours"), "hour") {
     override val asPeriod: Period = Period.hours(1)
   }
 
-  case object Day extends MultiTimeUnit(Array("d", "day", "days"), "day") with FixedTimeUnit {
-    override protected[time] val standardMillis: Long = Hour.standardMillis * 24
+  case object Day extends MultiTimeUnit(Array("d", "day", "days"), "day") {
     override val asPeriod: Period = Period.days(1)
   }
 
-  case object Week extends MultiTimeUnit(Array("w", "week", "weeks"), "week") with FixedTimeUnit {
-    override protected[time] val standardMillis: Long = Day.standardMillis * 7
+  case object Week extends MultiTimeUnit(Array("w", "week", "weeks"), "week") {
     override val asPeriod: Period = Period.weeks(1)
   }
 
@@ -71,11 +61,15 @@ object TimeUnit {
     override val asPeriod: Period = Period.years(1)
   }
 
-  case object Total extends SimpleTimeUnit(Array("t", "total"), "total")
+  case object Total extends TimeUnit {
+    override val labels: Array[String] = Array("t", "total")
+    override val mainLabel: String = "total"
+  }
 
 
-  def lookup(label: String): TimeUnit =
-    extractUnit(label)
+  def lookup(label: String): TimeUnit = allUnits
+    .find(_.labels.contains(label))
+    .getOrElse(throw new IllegalArgumentException(s"Invalid label $label for time unit."))
 
   def apply(period: Period): Option[TimeUnit] = period.toString match {
     case "PT1S" => Some(TimeUnit.Second)
@@ -88,12 +82,5 @@ object TimeUnit {
     case "P1Y"  => Some(TimeUnit.Year)
     case _      => None
   }
-
-
-
-  private[time] def extractUnit(unitLabel: String) =
-    allUnits
-      .find(_.labels.contains(unitLabel))
-      .getOrElse(throw new IllegalArgumentException(s"Invalid label $unitLabel for time unit."))
 
 }

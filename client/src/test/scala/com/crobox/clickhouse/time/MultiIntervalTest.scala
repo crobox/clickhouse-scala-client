@@ -95,7 +95,7 @@ class MultiIntervalTest extends FlatSpecLike with Matchers with TableDrivenPrope
           (time: DateTime) => time.plusMonths(3),
           IndexedSeq(toDateTime(2014, 1, 1, 0, 0, 0, 0) to
             toDateTime(2015, 1, 1, 0, 0, 0, 0))),
-        (SimpleDuration(TimeUnit.Total),
+        (TotalDuration,
           (time: DateTime) => time.plusMonths(3),
           IndexedSeq(dateTime to dateTime.plusMonths(3)))
       )
@@ -112,7 +112,7 @@ class MultiIntervalTest extends FlatSpecLike with Matchers with TableDrivenPrope
   it should "build correctly full time interval" in {
     val start    = DateTime.now().withTimeAtStartOfDay()
     val end      = start.plusDays(1)
-    val interval = MultiInterval(start, end, SimpleDuration(TimeUnit.Total))
+    val interval = MultiInterval(start, end, TotalDuration)
     interval.getStart should be(start)
     interval.subIntervals should contain theSameElementsInOrderAs IndexedSeq(start to end)
     interval.getEnd should be(end)

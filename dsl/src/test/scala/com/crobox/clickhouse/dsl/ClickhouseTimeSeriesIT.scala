@@ -6,7 +6,7 @@ import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
 import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
 import com.crobox.clickhouse.ClickhouseClientSpec
-import com.crobox.clickhouse.time.{IntervalStart, MultiDuration, MultiInterval, SimpleDuration, TimeUnit}
+import com.crobox.clickhouse.time.{IntervalStart, MultiDuration, MultiInterval, TotalDuration, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone, Days}
 import org.scalactic.TripleEqualsSupport
 import org.scalatest.concurrent.ScalaFutures
@@ -53,7 +53,7 @@ class ClickhouseTimeSeriesIT
 
   "Grouping on total" should "return full result" in {
     val modifiedStartInterval                = startInterval.minus(12416)
-    val multiInterval                        = MultiInterval(modifiedStartInterval, lastSecondEntryDate, SimpleDuration(TimeUnit.Total))
+    val multiInterval                        = MultiInterval(modifiedStartInterval, lastSecondEntryDate, TotalDuration)
     val results: Future[QueryResult[Result]] = getEntries(multiInterval, secondsId)
     val rows                                 = results.futureValue.rows
     rows.size should be(1)

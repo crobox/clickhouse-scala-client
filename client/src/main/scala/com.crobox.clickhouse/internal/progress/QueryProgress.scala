@@ -3,8 +3,8 @@ import akka.NotUsed
 import akka.stream.scaladsl.{BroadcastHub, Keep, RunnableGraph, Source, SourceQueueWithComplete}
 import akka.stream.{ActorAttributes, OverflowStrategy, Supervision}
 import com.typesafe.scalalogging.LazyLogging
-
-import scala.util.parsing.json.JSON
+import spray.json._
+import spray.json.DefaultJsonProtocol._
 import scala.util.{Failure, Success, Try}
 
 object QueryProgress extends LazyLogging {
@@ -28,15 +28,17 @@ object QueryProgress extends LazyLogging {
             Some(ClickhouseQueryProgress(queryId, QueryAccepted))
           case queryId :: progressJson :: Nil =>
             Try {
-              val parsedJson = JSON.parseFull(progressJson).map(_.asInstanceOf[Map[String, String]])
-              if (parsedJson.isEmpty || parsedJson.get.size != 3) {
-                throw new IllegalArgumentException(s"Cannot extract progress from $parsedJson")
-              } else {
-                val jsonMap = parsedJson.get
-                ClickhouseQueryProgress(
-                  queryId,
-                  Progress(jsonMap("read_rows").toLong, jsonMap("read_bytes").toLong, jsonMap("total_rows").toLong)
-                )
+              progressJson.parseJson match {
+                case JsObject(fields) if fields.size == 3 =>
+                  ClickhouseQueryProgress(
+                    queryId,
+                    Progress(
+                        fields("read_rows").convertTo[Long],
+                        fields("read_bytes").convertTo[Long],
+                        fields("total_rows").convertTo[Long]
+                    )
+                  )
+                case _ => throw new IllegalArgumentException(s"Cannot extract progress from $progressJson")
               }
             } match {
               case Success(value) => Some(value)

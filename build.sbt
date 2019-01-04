@@ -3,7 +3,7 @@ import com.typesafe.sbt.pgp.PgpKeys
 import xerial.sbt.Sonatype._
 
 //scalafmt settings
-scalafmtVersion in ThisBuild := "1.0.0"
+scalafmtVersion in ThisBuild := "1.5.1"
 scalafmtOnCompile in ThisBuild := false     // all projects
 scalafmtTestOnCompile in ThisBuild := false // all projects
 
@@ -18,8 +18,8 @@ lazy val root = (project in file("."))
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
-        scalaVersion := "2.12.7",
-        crossScalaVersions := List("2.11.12", "2.12.7"),
+        scalaVersion := "2.12.8",
+        crossScalaVersions := List("2.11.12", "2.12.8"),
         scalacOptions ++= List(
           "-unchecked",
           "-deprecation",
@@ -67,11 +67,12 @@ lazy val client: Project = (project in file("client"))
     name := "client",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
+      "io.spray"                   %% "spray-json" % "1.3.5",
       "com.typesafe.akka"          %% "akka-actor" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-stream" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-http" % AkkaHttpVersion,
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
-      "joda-time"                  % "joda-time" % "2.10"
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
+      "joda-time"                  % "joda-time" % "2.10.1"
     ) ++ testDependencies.map(_    % Test)
   )
 
@@ -101,9 +102,8 @@ lazy val dsl = (project in file("dsl"))
     },
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
-      "io.spray" %% "spray-json" % "1.3.5",
-      "com.google.guava" % "guava" % "19.0",
-      "com.dongxiguo" %% "fastring" % "0.3.1"
+      "com.google.guava" % "guava" % "23.0",
+      "com.dongxiguo" %% "fastring" % "1.0.0"
     )
   )
   .dependsOn(client, client % "test->test", testkit % Test)

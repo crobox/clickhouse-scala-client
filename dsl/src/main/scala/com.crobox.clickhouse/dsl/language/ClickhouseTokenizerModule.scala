@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
-import com.crobox.clickhouse.time.{MultiDuration, SimpleDuration, TimeUnit}
+import com.crobox.clickhouse.time.{MultiDuration, TotalDuration, TimeUnit}
 import com.dongxiguo.fastring.Fastring.Implicits._
 import com.typesafe.scalalogging.Logger
 import org.joda.time.{DateTime, DateTimeZone}
@@ -166,7 +166,7 @@ trait ClickhouseTokenizerModule
     def toDateTime(inner: String): String = fast"toDateTime($inner, '$dateZone')"
 
     interval.duration match {
-      case SimpleDuration(TimeUnit.Total) => fast"${interval.getStartMillis}"
+      case TotalDuration => fast"${interval.getStartMillis}"
       case MultiDuration(1, TimeUnit.Year) => toDateTime(convert("toStartOfYear"))
       case MultiDuration(1, TimeUnit.Quarter) => toDateTime(convert("toStartOfQuarter"))
       case MultiDuration(1, TimeUnit.Month) => toDateTime(convert("toStartOfMonth"))
