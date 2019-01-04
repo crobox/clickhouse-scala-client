@@ -41,7 +41,7 @@ object Engine {
   }
 
   private def monthPartitionCompat(dateColumn: NativeColumn[LocalDate]): Seq[String] =
-    Seq(s"toYYYYMM(${dateColumn.name})")
+    Seq(s"toYYYYMM(${dateColumn.quoted})")
 
   sealed abstract class MergeTreeEngine(val name: String) extends Engine {
     val partition: Seq[String]
@@ -51,7 +51,7 @@ object Engine {
 
     private val partitionArgument = Option(partition.mkString(", ")).filter(_.nonEmpty)
     private val orderByArgument = Option(
-      (primaryKey.map(col => Option(col.name)) ++ Seq(samplingExpression)).flatten.mkString(", ")
+      (primaryKey.map(col => Option(col.quoted)) ++ Seq(samplingExpression)).flatten.mkString(", ")
     ).filter(_.nonEmpty)
     private val settingsArgument = s"index_granularity=$indexGranularity"
 
@@ -130,7 +130,7 @@ object Engine {
     override def toString: String = {
       val summingColArg =
         if (summingColumns.isEmpty) ""
-        else "((" + summingColumns.map(_.name).mkString(", ") + "))"
+        else "((" + summingColumns.map(_.quoted).mkString(", ") + "))"
 
       s"""$name$summingColArg
          |${statements.mkString("\n")}""".stripMargin
@@ -187,7 +187,7 @@ object Engine {
     override def toString: String = {
       val summingColArg = Seq(engine).collect {
         case s: SummingMergeTree if s.summingColumns.nonEmpty =>
-          "(" + s.summingColumns.map(_.name).mkString(", ") + ")"
+          "(" + s.summingColumns.map(_.quoted).mkString(", ") + ")"
       }
 
       val replicationArgs = (Seq(zookeeperPath, replicaName).map(StringQueryValue(_)) ++ summingColArg).mkString(", ")

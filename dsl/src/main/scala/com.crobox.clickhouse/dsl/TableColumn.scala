@@ -9,10 +9,10 @@ case object EmptyColumn extends TableColumn("NULL")
 
 trait Column {
   val name: String
+  lazy val quoted: String = ClickhouseStatement.quoteIdentifier(name)
 }
 
 class TableColumn[V](val name: String) extends Column {
-  require(ClickhouseStatement.isValidIdentifier(name), s"Invalid column name: $name")
 
   def as(alias: String): AliasedColumn[V] =
     AliasedColumn(this, alias)
@@ -28,7 +28,7 @@ case class NativeColumn[V](override val name: String,
                            defaultValue: DefaultValue = DefaultValue.NoDefault)
     extends TableColumn[V](name) {
 
-  def query(): String = fast"$name $clickhouseType$defaultValue".toString
+  def query: String = fast"$quoted $clickhouseType$defaultValue".toString
 }
 
 object TableColumn {

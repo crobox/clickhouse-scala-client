@@ -92,10 +92,8 @@ trait ClickhouseTokenizerModule
     from match {
       case Some(fromClause: InnerFromQuery) =>
         fast"$prefix (${toRawSql(fromClause.innerQuery.internalQuery)})"
-      case Some(TableFromQuery(table: Table, None)) =>
-        fast"$prefix $database.${table.name}"
-      case Some(TableFromQuery(table: Table, Some(altDb))) =>
-        fast"$prefix $altDb.${table.name}"
+      case Some(TableFromQuery(table: Table, altDb)) =>
+        fast"$prefix ${ClickhouseStatement.quoteIdentifier(altDb.getOrElse(database))}.${table.quoted}"
       case _ => ""
     }
   }
@@ -106,12 +104,12 @@ trait ClickhouseTokenizerModule
     require(column != null)
     column match {
       case EmptyColumn => ""
-      case AliasedColumn(original, alias) =>
-        val originalColumnToken = tokenizeColumn(original)
-        if (originalColumnToken.isEmpty) alias else fast"$originalColumnToken AS $alias"
+      case alias: AliasedColumn[_] =>
+        val originalColumnToken = tokenizeColumn(alias.original)
+        if (originalColumnToken.isEmpty) alias.quoted else fast"$originalColumnToken AS ${alias.quoted}"
       case tuple: TupleColumn[_]         => fast"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
       case col: ExpressionColumn[_]      => tokenizeExpressionColumn(col)
-      case regularColumn: AnyTableColumn => regularColumn.name
+      case col: AnyTableColumn           => col.quoted
     }
   }
 
@@ -292,8 +290,8 @@ trait ClickhouseTokenizerModule
   private def aliasOrName(column: AnyTableColumn)(implicit database: Database) =
     column match {
       case EmptyColumn                   => ""
-      case AliasedColumn(_, alias)       => alias
-      case regularColumn: AnyTableColumn => regularColumn.name
+      case alias: AliasedColumn[_]       => alias.quoted
+      case col: AnyTableColumn           => col.quoted
     }
 
   private def direction(dir: OrderingDirection): String =

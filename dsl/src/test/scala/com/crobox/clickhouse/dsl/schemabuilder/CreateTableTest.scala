@@ -20,12 +20,15 @@ class CreateTableTest extends FlatSpecLike with Matchers {
     intercept[IllegalArgumentException](
       CreateTable(TestTable("abc", List()), Engine.TinyLog)
     )
-    intercept[IllegalArgumentException](
-      CreateTable(TestTable(".Fool", List(NativeColumn("a"))), Engine.TinyLog)
+  }
+
+  it should "quote invalid names" in {
+    CreateTable(TestTable(".Fool", List(NativeColumn(".a"))), Engine.TinyLog).toString should be (
+      """CREATE TABLE default.`.Fool` (
+        |  `.a` String
+        |) ENGINE = TinyLog""".stripMargin
     )
-    intercept[IllegalArgumentException](
-      NativeColumn(".a")
-    )
+
   }
 
   it should "make add IF NOT EXISTS" in {

@@ -9,32 +9,19 @@ class DistributedDdlSupportTest extends FlatSpec with Matchers {
   it should "consider None as a valid cluster and NOT print ON CLUSTER statement" in {
     val underTest = new Dummy(None)
 
-    underTest.requireValidCluster("")
     underTest.printOnCluster() should be ("")
   }
 
   it should "consider Some(\"valid_cluster\") as a valid cluster and print ON CLUSTER statement" in {
     val underTest = new Dummy(Some("valid_cluster"))
 
-    underTest.requireValidCluster("")
     underTest.printOnCluster() should be (" ON CLUSTER valid_cluster")
   }
 
-  it should "reject an invalid cluster name" in {
-    an[IllegalArgumentException] should be thrownBy {
-      new Dummy(Some("")).requireValidCluster("")
-    }
+  it should "consider Some(\";DROP TABLE students;\") as a valid cluster and print ON CLUSTER statement" in {
+    val underTest = new Dummy(Some(";DROP TABLE students;"))
 
-    an[IllegalArgumentException] should be thrownBy {
-      new Dummy(Some(null)).requireValidCluster("")
-    }
-
-    an[IllegalArgumentException] should be thrownBy {
-      new Dummy(Some("9aze")).requireValidCluster("")
-    }
-
-    an[IllegalArgumentException] should be thrownBy {
-      new Dummy(Some("aze@")).requireValidCluster("")
-    }
+    underTest.printOnCluster() should be (" ON CLUSTER `;DROP TABLE students;`")
   }
+
 }
