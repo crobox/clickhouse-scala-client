@@ -33,9 +33,9 @@ object QueryProgress extends LazyLogging {
                   ClickhouseQueryProgress(
                     queryId,
                     Progress(
-                        fields("read_rows").convertTo[Long],
-                        fields("read_bytes").convertTo[Long],
-                        fields("total_rows").convertTo[Long]
+                        fields("read_rows").convertTo[String].toLong,
+                        fields("read_bytes").convertTo[String].toLong,
+                        fields("total_rows").convertTo[String].toLong
                     )
                   )
                 case _ => throw new IllegalArgumentException(s"Cannot extract progress from $progressJson")
