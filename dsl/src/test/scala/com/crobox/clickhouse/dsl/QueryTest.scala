@@ -7,6 +7,7 @@ import com.crobox.clickhouse.dsl.column._
 import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.ClickhouseClientSpec
+import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import org.joda.time.{DateTime, LocalDate}
 
 import scala.util.{Failure, Success}
@@ -52,6 +53,27 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     clickhouseTokenizer.toSql(composed.internalQuery) should be (
       s"SELECT shield_id FROM $tokenizerDatabase.captainAmerica WHERE column_2 >= 2 FORMAT JSON"
     )
+  }
+
+  it should "compose indexOf and arrayElement" in {
+
+    def lookupNestedValue(column: NativeColumn[_], elm: String): ExpressionColumn[String] = column.clickhouseType match {
+      case ColumnType.Nested(k, v) =>
+        val keyColumn = ref[Seq[String]](column.name +"."+ k.name)
+        val valueColumn = ref[Seq[String]](column.name +"."+ v.name)
+        arrayElement(valueColumn, indexOf(keyColumn, elm))
+      case _ =>
+        throw new IllegalArgumentException(s"ColumnType ${column.clickhouseType} is unsupported for nested lookup")
+    }
+
+    val nested = NativeColumn("props", ColumnType.Nested(NativeColumn("key"), NativeColumn("value")))
+    clickhouseTokenizer.toSql(
+      select(lookupNestedValue(nested, "cate'gory")).internalQuery
+    ) should be (
+
+      "SELECT `props.value`[indexOf(`props.key`,'cate\\'gory')] FORMAT JSON"
+    )
+
   }
 
   it should "overrule with right preference" in {

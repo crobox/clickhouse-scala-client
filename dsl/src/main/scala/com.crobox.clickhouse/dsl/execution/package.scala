@@ -6,9 +6,9 @@ package object execution {
 
   case class Statistic(rowsRead: Long, rowsBeforeLimit: Long)
 
-  case class ColumnType(name: String, columnType: String)
+  case class ResultColumnType(name: String, columnType: String)
 
-  case class ResultMeta(columnTypes: Seq[ColumnType])
+  case class ResultMeta(columnTypes: Seq[ResultColumnType])
 
   case class QueryResult[V](rows: Seq[V], meta: Option[ResultMeta] = None, statistic: Option[Statistic] = None) {
 
@@ -27,7 +27,7 @@ package object execution {
         val meta = jsObject.fields.get("meta").map {
           case JsArray(columnDefinitions) =>
             ResultMeta(columnDefinitions.map(_.asJsObject.getFields("name", "type") match {
-              case Seq(JsString(name), JsString(colType)) => ColumnType(name, colType)
+              case Seq(JsString(name), JsString(colType)) => ResultColumnType(name, colType)
             }))
         }
         val statistic = jsObject.getFields("rows_before_limit_at_least", "rows") match {
