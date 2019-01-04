@@ -5,6 +5,8 @@ import org.joda.time.format.{DateTimeFormatter, DateTimeFormatterBuilder, ISODat
 import org.joda.time.{DateTime, DateTimeZone}
 import spray.json.{JsNumber, JsString, JsValue, JsonFormat, deserializationError, _}
 
+import scala.util.Try
+
 trait ClickhouseJsonSupport {
 
   /**
@@ -54,11 +56,10 @@ trait ClickhouseJsonSupport {
             case _                   =>
               // sometimes clickhouse mistakenly returns a long / int value as JsString. Therefor, first try to
               // parse it as a long...
-              val dateTime = try {
-                Option(new DateTime(value.toLong, DateTimeZone.UTC))
-              } catch {
-                case _: Throwable => None
-              }
+              val dateTime = Try {
+                new DateTime(value.toLong, DateTimeZone.UTC)
+              }.toOption
+
               // continue with parsing using the formatter
               dateTime.getOrElse {
                 try {
