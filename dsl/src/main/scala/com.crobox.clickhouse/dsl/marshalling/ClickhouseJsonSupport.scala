@@ -50,13 +50,24 @@ trait ClickhouseJsonSupport {
                 .withZoneRetainFields(DateTimeZone.forID(timezoneId))
                 .withZone(DateTimeZone.UTC)
             case msTimestamp(millis) => new DateTime(millis.toLong, DateTimeZone.UTC)
-            case timestamp(secs) => new DateTime(secs.toLong * 1000, DateTimeZone.UTC)
-            case _ =>
-              try {
-                formatter.parseDateTime(value)
+            case timestamp(secs)     => new DateTime(secs.toLong * 1000, DateTimeZone.UTC)
+            case _                   =>
+              // sometimes clickhouse mistakenly returns a long / int value as JsString. Therefor, first try to
+              // parse it as a long...
+              val dateTime = try {
+                Option(new DateTime(value.toLong, DateTimeZone.UTC))
               } catch {
-                case _: IllegalArgumentException      => error(s"Couldn't parse $value into valid date time")
-                case _: UnsupportedOperationException => error("Unsupported operation, programmatic misconfiguration?")
+                case _: Throwable => None
+              }
+              // continue with parsing using the formatter
+              dateTime.getOrElse {
+                try {
+                  formatter.parseDateTime(value)
+                } catch {
+                  case _: IllegalArgumentException => error(s"Couldn't parse $value into valid date time")
+                  case _: UnsupportedOperationException =>
+                    error("Unsupported operation, programmatic misconfiguration?")
+                }
               }
           }
         case JsNumber(millis) => new DateTime(millis.longValue(), DateTimeZone.UTC)
