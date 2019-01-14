@@ -10,6 +10,7 @@ import akka.stream.scaladsl.{Keep, Sink, Source, SourceQueueWithComplete}
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.progress.QueryProgress._
 import com.crobox.clickhouse.internal.progress.{QueryProgress, StreamingProgressClickhouseTransport}
+import com.crobox.clickhouse.{ClickhouseExecutionException, TooManyQueriesException}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
@@ -88,7 +89,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       case QueueOfferResult.Enqueued =>
         promise.future
       case QueueOfferResult.Dropped =>
-        Future.failed(new RuntimeException(s"Queue is full"))
+        Future.failed(TooManyQueriesException())
       case QueueOfferResult.QueueClosed =>
         Future.failed(new RuntimeException(s"Queue is closed"))
       case QueueOfferResult.Failure(e) =>
@@ -129,7 +130,8 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       request: () => Future[String]
   ): Future[String] =
     request().recoverWith {
-      // The http server closed the connection unexpectedly before delivering responses for 1 outstanding requests
+      case clickException: ClickhouseExecutionException if !clickException.retryable => // TODO use more fine grained exceptions in the client and remove the match on `Exception`
+        Future.failed(clickException)
       case e: StreamTcpException if retries > 0 =>
         progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
         logger.warn(s"Stream exception, retries left: $retries", e)
@@ -140,7 +142,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
         progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
         executeWithRetries(retries - 1, progressQueue, settings)(request)
       case e: Exception if settings.idempotent && retries > 0 =>
-        logger.warn(s"Query execution exception while executing idempotent query, retries let: $retries", e)
+        logger.warn(s"Query execution exception while executing idempotent query, retries left: $retries", e)
         progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
         executeWithRetries(retries - 1, progressQueue, settings)(request)
     }
