@@ -3,11 +3,11 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.stream.scaladsl.{Sink, SourceQueue}
 import akka.stream.{Materializer, StreamTcpException}
-import com.crobox.clickhouse.ClickhouseClientAsyncSpec
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.balancing.iterator.CircularIteratorSet
 import com.crobox.clickhouse.internal.QuerySettings.{AllQueries, ReadQueries}
 import com.crobox.clickhouse.internal.progress.QueryProgress.{QueryProgress, QueryRetry}
+import com.crobox.clickhouse.{ClickhouseClientAsyncSpec, TooManyQueriesException}
 import com.typesafe.config.Config
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -94,6 +94,17 @@ class ClickhouseExecutorTest extends ClickhouseClientAsyncSpec {
                                                       QueryRetry(exception, 2),
                                                       QueryRetry(exception, 3))
         servedHosts should contain theSameElementsAs balancingHosts
+      })
+  }
+
+  it should "not retry non retryable exceptions" in {
+    val exception = TooManyQueriesException()
+    response = _ => Future.failed(exception)
+    executor
+      .executeRequestWithProgress("", QuerySettings(AllQueries))
+      .runWith(Sink.seq[QueryProgress])
+      .map(progress => {
+        progress should contain theSameElementsAs Seq()
       })
   }
 }
