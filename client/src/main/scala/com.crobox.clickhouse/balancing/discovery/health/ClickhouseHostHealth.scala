@@ -5,6 +5,7 @@ import akka.actor.{ActorSystem, Cancellable}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.settings.ConnectionPoolSettings
+import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Source}
 import com.crobox.clickhouse.balancing.HostBalancer
@@ -69,8 +70,8 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
       host: Uri
   )(implicit ec: ExecutionContext, mat: Materializer): Flow[(Try[HttpResponse], T), ClickhouseHostStatus, NotUsed] =
     Flow[(Try[HttpResponse], T)].mapAsync(1) {
-      case (Success(response @ akka.http.scaladsl.model.HttpResponse(StatusCodes.OK, _, entity, _)), _) =>
-        entityToString(entity, response.encoding, None)
+      case (Success(response @ akka.http.scaladsl.model.HttpResponse(StatusCodes.OK, _, _, _)), _) =>
+        Unmarshaller.stringUnmarshaller(decodeResponse(response).entity)
           .map(splitResponse)
           .map(
             stringResponse =>

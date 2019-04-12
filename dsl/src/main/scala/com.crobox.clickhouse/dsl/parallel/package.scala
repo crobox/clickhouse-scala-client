@@ -13,27 +13,6 @@ package object parallel {
     def merge(query: OperationalQuery): MergingQueries =
       MergingQueries(operationalQuery, query)
 
-    def combine(query: OperationalQuery): OperationalQuery =
-      CumulativeQueries(operationalQuery, query)
-  }
-
-  /**
-   * The Parallel one just adds the results together...so for 1000 and 1000 you will get a result containing 2000 entries
-   */
-  case class CumulativeQueries(first: OperationalQuery, second: OperationalQuery) extends OperationalQuery {
-    override val internalQuery: InternalQuery = null
-
-    override def groupBy(columns: AnyTableColumn*): OperationalQuery = {
-      val firstQueryGrouped  = first.groupBy(columns: _*)
-      val secondQueryGrouped = second.groupBy(columns: _*)
-      this.copy(firstQueryGrouped, secondQueryGrouped)
-    }
-
-    override def orderBy(columns: AnyTableColumn*): OperationalQuery = {
-      val firstQueryGrouped  = first.orderBy(columns: _*)
-      val secondQueryGrouped = second.orderBy(columns: _*)
-      this.copy(firstQueryGrouped, secondQueryGrouped)
-    }
   }
 
   /**

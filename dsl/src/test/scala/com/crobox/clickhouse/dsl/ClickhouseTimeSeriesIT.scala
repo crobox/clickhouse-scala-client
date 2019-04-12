@@ -20,8 +20,7 @@ class ClickhouseTimeSeriesIT
     extends ClickhouseClientSpec
     with TestSchemaClickhouseQuerySpec
     with ScalaFutures
-    with TableDrivenPropertyChecks
-    with QueryFactory {
+    with TableDrivenPropertyChecks {
 
   case class Result(time: IntervalStart, shields: String)
   override implicit def patienceConfig =
