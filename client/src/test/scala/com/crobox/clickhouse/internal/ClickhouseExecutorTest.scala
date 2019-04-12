@@ -59,7 +59,7 @@ class ClickhouseExecutorTest extends ClickhouseClientAsyncSpec {
     val exception = new IllegalArgumentException("please retry me")
     response = _ => Future.failed(exception)
     executor
-      .executeRequestWithProgress("", QuerySettings(AllQueries, idempotent = true))
+      .executeRequestWithProgress("", QuerySettings(AllQueries, idempotent = Some(true)))
       .runWith(Sink.seq[QueryProgress])
       .map(progress => {
         progress should contain theSameElementsAs Seq(QueryRetry(exception, 1),
@@ -87,7 +87,7 @@ class ClickhouseExecutorTest extends ClickhouseClientAsyncSpec {
       Future.failed(exception)
     }
     executor
-      .executeRequestWithProgress("", QuerySettings(AllQueries, idempotent = true))
+      .executeRequestWithProgress("", QuerySettings(AllQueries, idempotent = Some(true)))
       .runWith(Sink.seq[QueryProgress])
       .map(progress => {
         progress should contain theSameElementsAs Seq(QueryRetry(exception, 1),

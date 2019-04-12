@@ -40,7 +40,7 @@ private[clickhouse] object ClusterConnectionFlow
       .mapAsync(1)(host => {
         val query = s"SELECT host_address FROM system.clusters WHERE cluster='$cluster'"
         val request =
-          toRequest(host, query, None, QuerySettings(readOnly = ReadQueries, idempotent = true), None)(
+          toRequest(host, query, None, QuerySettings(readOnly = ReadQueries, idempotent = Some(true)), None)(
             system.settings.config
           )
         processClickhouseResponse(http.singleRequest(request, settings = settings), query, host, None)

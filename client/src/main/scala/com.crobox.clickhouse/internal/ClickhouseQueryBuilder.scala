@@ -37,7 +37,7 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
           headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
         )
       case None
-          if settings.idempotent && settings.readOnly == ReadQueries && urlQuery
+          if settings.idempotent.contains(true) && settings.readOnly == ReadQueries && urlQuery
             .toString()
             .getBytes
             .length < MaxUriSize => //max url size

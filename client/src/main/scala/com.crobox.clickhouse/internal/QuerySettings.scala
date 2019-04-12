@@ -12,7 +12,7 @@ case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
                          profile: Option[String] = None,
                          httpCompression: Option[Boolean] = None,
                          settings: Map[String, String] = Map.empty,
-                         idempotent: Boolean = false) {
+                         idempotent: Option[Boolean] = None) {
 
   def asQueryParams: Query =
     Query(

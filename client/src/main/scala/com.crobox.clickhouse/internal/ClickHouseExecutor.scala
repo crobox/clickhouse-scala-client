@@ -118,7 +118,9 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       val request = toRequest(actualHost,
                               query,
                               Some(queryIdentifier),
-                              settings.copy(progressHeaders = Some(progressQueue.isDefined)),
+                              settings.copy(
+                                progressHeaders = settings.progressHeaders.orElse(Some(progressQueue.isDefined))
+                              ),
                               entity)(config)
       processClickhouseResponse(singleRequest(request), query, actualHost, progressQueue)
     })
@@ -141,7 +143,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
         logger.warn(s"Unexpected connection closure, retries left: $retries", e)
         progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
         executeWithRetries(retries - 1, progressQueue, settings)(request)
-      case e: Exception if settings.idempotent && retries > 0 =>
+      case e: Exception if settings.idempotent.contains(true) && retries > 0 =>
         logger.warn(s"Query execution exception while executing idempotent query, retries left: $retries", e)
         progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
         executeWithRetries(retries - 1, progressQueue, settings)(request)
