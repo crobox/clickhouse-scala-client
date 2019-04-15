@@ -2,12 +2,12 @@ package com.crobox.clickhouse.dsl.language
 
 import java.util.UUID
 
-import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.ClickhouseClientSpec
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
 
-class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with ClickhouseTokenizerModule  {
+class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with ClickhouseTokenizerModule {
   val testSubject = this
 
   "building select statement" should "build select statement" in {
@@ -40,7 +40,11 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   "building where clause" should "add simple condition between columns" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
-      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, None, Some(shieldId < itemId))
+      InternalQuery(Some(select),
+                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                    false,
+                    None,
+                    Some(shieldId < itemId))
     )
     query should be("SELECT shield_id FROM default.captainAmerica WHERE shield_id < item_id FORMAT JSON")
   }
@@ -50,7 +54,11 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val uuid   = UUID.randomUUID()
     val query =
       testSubject.toSql(
-        InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), false, None, Some(shieldId < uuid))
+        InternalQuery(Some(select),
+                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                      false,
+                      None,
+                      Some(shieldId < uuid))
       )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -60,19 +68,37 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val uuid   = UUID.randomUUID()
     val query = testSubject.toSql(
       InternalQuery(Some(select),
-                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,None, Some(shieldId < uuid and shieldId < itemId))
+                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                    false,
+                    None,
+                    Some(shieldId < uuid and shieldId < itemId))
     )
     query should be(
       s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
     )
   }
 
+  it should "add brackets between or/and" in {
+    val select = SelectQuery(Seq(shieldId))
+    val uuid   = UUID.randomUUID()
+    val internalQuery = InternalQuery(Some(select),
+                                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                                      false,
+                                      None,
+                                      Some((shieldId < uuid and (shieldId isEq itemId)) or shieldId < itemId))
+    testSubject.toSql(
+      internalQuery
+    ) should be(
+      s"SELECT shield_id FROM default.captainAmerica WHERE ((shield_id < '$uuid' AND shield_id = item_id) OR (shield_id < item_id)) FORMAT JSON"
+    )
+  }
+
   "building group by" should "add columns as group by clauses" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
-      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-        groupBy = Some(GroupByQuery(Seq(shieldId))))
+      InternalQuery(Some(select),
+                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                    groupBy = Some(GroupByQuery(Seq(shieldId))))
     )
     query should be("SELECT shield_id FROM default.captainAmerica GROUP BY shield_id FORMAT JSON")
   }
@@ -81,8 +107,9 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val alias  = shieldId as "preferable"
     val select = SelectQuery(Seq(alias))
     val query = testSubject.toSql(
-      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-        groupBy = Some(GroupByQuery(Seq(alias))))
+      InternalQuery(Some(select),
+                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                    groupBy = Some(GroupByQuery(Seq(alias))))
     )
     query should be("SELECT shield_id AS preferable FROM default.captainAmerica GROUP BY preferable FORMAT JSON")
   }
@@ -90,17 +117,23 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   it should "group by with rollup if using group by mode" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
-      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-        groupBy = Some(GroupByQuery(Seq(shieldId), mode = Some(GroupByQuery.WithRollup), withTotals = true)))
+      InternalQuery(
+        Some(select),
+        Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+        groupBy = Some(GroupByQuery(Seq(shieldId), mode = Some(GroupByQuery.WithRollup), withTotals = true))
+      )
     )
-    query should be("SELECT shield_id FROM default.captainAmerica GROUP BY shield_id WITH ROLLUP WITH TOTALS FORMAT JSON")
+    query should be(
+      "SELECT shield_id FROM default.captainAmerica GROUP BY shield_id WITH ROLLUP WITH TOTALS FORMAT JSON"
+    )
   }
 
   it should "group by with cube if using group by mode" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
-      InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-        groupBy = Some(GroupByQuery(mode = Some(GroupByQuery.WithCube))))
+      InternalQuery(Some(select),
+                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+                    groupBy = Some(GroupByQuery(mode = Some(GroupByQuery.WithCube))))
     )
     query should be("SELECT shield_id FROM default.captainAmerica WITH CUBE FORMAT JSON")
 
@@ -150,17 +183,15 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
 
   it should "generate cases" in {
     this.tokenizeColumn(switch(const(3))) shouldBe "3"
-    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId))
-    ) shouldBe s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
+    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
   }
 
   it should "use constant" in {
     this.tokenizeColumn(const(3).as(col2)) shouldBe s"3 AS ${col2.name}"
   }
 
-
   "raw()" should "allow to behave like little bobby tables" in {
-    val col = RawColumn("Robert'); DROP TABLE students;")
+    val col    = RawColumn("Robert'); DROP TABLE students;")
     val select = SelectQuery(Seq(col))
     val query = testSubject.toSql(
       InternalQuery(
@@ -168,7 +199,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
         where = Some(col)
       )
     )
-    query should be (
+    query should be(
       s"SELECT ${col.rawSql} WHERE ${col.rawSql} FORMAT JSON"
     )
   }
@@ -179,29 +210,32 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1, UniqModifier.Combined))) shouldBe s"uniqCombinedIf(${col1.name},${col1.name} = 'test')"
     this.tokenizeColumn(
       CombinedAggregatedFunction(Combinator.If(col1.isEq("test")),
-                                 CombinedAggregatedFunction(Combinator.If(col2.isEq(3)), Uniq(col1, UniqModifier.Exact)))
+                                 CombinedAggregatedFunction(Combinator.If(col2.isEq(3)),
+                                                            Uniq(col1, UniqModifier.Exact)))
     ) shouldBe s"uniqExactIfIf(${col1.name},${col2.name} = 3,${col1.name} = 'test')"
   }
 
   "build time series" should "use zone name for monthly" in {
     this.tokenizeTimeSeries(
-      TimeSeries(timestampColumn, MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
-                            DateTime.now(DateTimeZone.forOffsetHours(2)),
-                            MultiDuration(TimeUnit.Month)))
+      TimeSeries(
+        timestampColumn,
+        MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
+                      DateTime.now(DateTimeZone.forOffsetHours(2)),
+                      MultiDuration(TimeUnit.Month))
+      )
     ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
   }
 
   "build custom refs" should "quote them correctly" in {
-    val name = "props.key"
-    val col = RefColumn(name)
+    val name   = "props.key"
+    val col    = RefColumn(name)
     val select = SelectQuery(Seq(col))
     val query = testSubject.toSql(
       InternalQuery(
         select = Some(select)
-
       )
     )
-    query should be (
+    query should be(
       s"SELECT `$name` FORMAT JSON"
     )
   }
