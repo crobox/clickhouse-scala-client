@@ -27,12 +27,11 @@ private[clickhouse] object ClusterConnectionFlow
     materializer: Materializer,
     ec: ExecutionContext): Source[Connections, Cancellable] = {
     val http                   = Http(system)
-    val connectionPoolSettings = ConnectionPoolSettings(system)
-    val settings = connectionPoolSettings
+    val settings = ConnectionPoolSettings(system)
       .withMaxConnections(1)
       .withMaxOpenRequests(1)
-      .withConnectionSettings(
-        connectionPoolSettings.connectionSettings.withIdleTimeout(scanningInterval.plus(1.second))
+      .withUpdatedConnectionSettings(
+        _.withIdleTimeout(scanningInterval.plus(1.second))
       )
     Source
       .tick(0.millis, scanningInterval, {})

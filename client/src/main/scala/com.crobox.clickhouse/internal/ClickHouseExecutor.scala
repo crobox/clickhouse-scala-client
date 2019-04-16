@@ -132,7 +132,8 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       request: () => Future[String]
   ): Future[String] =
     request().recoverWith {
-      case clickException: ClickhouseExecutionException if !clickException.retryable => // TODO use more fine grained exceptions in the client and remove the match on `Exception`
+      case clickException: ClickhouseExecutionException if !clickException.retryable =>
+        // TODO use more fine grained exceptions in the client and remove the match on `Exception`
         Future.failed(clickException)
       case e: StreamTcpException if retries > 0 =>
         progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
