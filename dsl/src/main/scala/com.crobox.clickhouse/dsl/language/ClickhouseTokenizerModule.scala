@@ -213,11 +213,13 @@ trait ClickhouseTokenizerModule
     option match {
       case None =>
         ""
-      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], usingCols)) =>
-        fast"${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))}) USING ${tokenizeColumns(usingCols)}"
-      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, usingCols)) =>
-        fast"${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin),false)} USING ${tokenizeColumns(usingCols)}"
+      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], usingCols, global)) =>
+        fast"${isGlobal(global)}${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))}) USING ${tokenizeColumns(usingCols)}"
+      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, usingCols, global)) =>
+        fast"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin),false)} USING ${tokenizeColumns(usingCols)}"
     }
+
+  private def isGlobal(global:Boolean) = if (global) "GLOBAL " else ""
 
   private[language] def tokenizeColumns(columns: Set[AnyTableColumn])(implicit database: Database): String =
     tokenizeColumns(columns.toSeq)

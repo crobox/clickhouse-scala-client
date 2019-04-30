@@ -132,35 +132,37 @@ trait OperationalQuery extends Query {
     newSelect
   }
 
-  def allInnerJoin(query: OperationalQuery): OperationalQuery = {
-    val newJoin = JoinQuery(JoinQuery.AllInnerJoin, InnerFromQuery(query))
-    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
-  }
-
-  def allLeftJoin(query: OperationalQuery): OperationalQuery = {
-    val newJoin = JoinQuery(JoinQuery.AllLeftJoin, InnerFromQuery(query))
-    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
-  }
-
-  def anyLeftJoin(query: OperationalQuery): OperationalQuery = {
-    val newJoin = JoinQuery(JoinQuery.AnyLeftJoin, InnerFromQuery(query))
-    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
-  }
-
-  def anyInnerJoin(query: OperationalQuery): OperationalQuery = {
-    val newJoin = JoinQuery(JoinQuery.AnyInnerJoin, InnerFromQuery(query))
-    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
-  }
-
   def join[TargetTable <: Table](`type`: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery = {
-    val newJoin = JoinQuery(`type`, InnerFromQuery(query))
-    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, InnerFromQuery(query)))))
   }
 
   def join[TargetTable <: Table](`type`: JoinQuery.JoinType, table: TargetTable): OperationalQuery = {
-    val newJoin = JoinQuery(`type`, TableFromQuery(table))
-    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, TableFromQuery(table)))))
   }
+
+  def globalJoin[TargetTable <: Table](`type`: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery = {
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, InnerFromQuery(query), global = true))))
+  }
+
+  def globalJoin[TargetTable <: Table](`type`: JoinQuery.JoinType, table: TargetTable): OperationalQuery = {
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, TableFromQuery(table), global = true))))
+  }
+
+  def allInnerJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllInnerJoin, query)
+  def allLeftJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllLeftJoin, query)
+  def allRightJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllRightJoin, query)
+
+  def anyInnerJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AnyInnerJoin, query)
+  def anyLeftJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AnyLeftJoin, query)
+  def anyRightJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AnyRightJoin, query)
+
+  def globalAllInnerJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AllInnerJoin, query)
+  def globalAllLeftJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AllLeftJoin, query)
+  def globalAllRightJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AllRightJoin, query)
+
+  def globalAnyInnerJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AnyInnerJoin, query)
+  def globalAnyLeftJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AnyLeftJoin, query)
+  def globalAnyRightJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AnyRightJoin, query)
 
   def using(
     column: AnyTableColumn,

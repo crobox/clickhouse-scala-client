@@ -21,4 +21,4 @@ object JoinQuery {
 
 }
 
-case class JoinQuery(`type`: JoinType, other: FromQuery, usingColumns: Set[AnyTableColumn] = Set[AnyTableColumn]())
+case class JoinQuery(`type`: JoinType, other: FromQuery, usingColumns: Set[AnyTableColumn] = Set[AnyTableColumn](), global: Boolean = false)
