@@ -17,7 +17,7 @@ object QueryProgress extends LazyLogging {
   case class QueryRetry(cause: Throwable, retryNumber: Int) extends QueryProgress
 
   case class ClickhouseQueryProgress(identifier: String, progress: QueryProgress)
-  case class Progress(rowsRead: Long, bytesRead: Long, totalRows: Long) extends QueryProgress
+  case class Progress(rowsRead: Long, bytesRead: Long, rowsWritten: Long, bytesWritten: Long, totalRows: Long) extends QueryProgress
 
   def queryProgressStream: RunnableGraph[(SourceQueueWithComplete[String], Source[ClickhouseQueryProgress, NotUsed])] =
     Source
@@ -35,7 +35,20 @@ object QueryProgress extends LazyLogging {
                     Progress(
                         fields("read_rows").convertTo[String].toLong,
                         fields("read_bytes").convertTo[String].toLong,
+                        0,
+                        0,
                         fields("total_rows").convertTo[String].toLong
+                    )
+                  )
+                case JsObject(fields) if fields.size == 5 =>
+                  ClickhouseQueryProgress(
+                    queryId,
+                    Progress(
+                      fields("read_rows").convertTo[String].toLong,
+                      fields("read_bytes").convertTo[String].toLong,
+                      fields("written_rows").convertTo[String].toLong,
+                      fields("written_bytes").convertTo[String].toLong,
+                      fields("total_rows_to_read").convertTo[String].toLong
                     )
                   )
                 case _ => throw new IllegalArgumentException(s"Cannot extract progress from $progressJson")
