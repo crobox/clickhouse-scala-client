@@ -4,8 +4,9 @@ import org.joda.time._
 
 class DateTimeFunctionTest extends ColumnFunctionTest {
   "Tokenization" should "succeed for DateTimeFunctions" in {
-    val now = new DateTime().withZone(DateTimeZone.UTC)
-    val epoch = new DateTime(0).withZone(DateTimeZone.UTC)
+    val now         = new DateTime().withZone(DateTimeZone.UTC)
+    val epoch       = new DateTime(0).withZone(DateTimeZone.UTC)
+    val August_8_19 = new DateTime().withZone(DateTimeZone.UTC).withYear(2019).withMonthOfYear(8).withDayOfMonth(8)
 
     def dynNow = new DateTime().withZone(DateTimeZone.UTC)
 
@@ -18,13 +19,13 @@ class DateTimeFunctionTest extends ColumnFunctionTest {
     r(toMinute(now)) shouldBe now.getMinuteOfHour.toString
     r(toSecond(now)) shouldBe now.getSecondOfMinute.toString
     r(toMonday(now)) shouldBe now.withDayOfWeek(1).printAsDate
-    r(addSeconds(now,2)) shouldBe now.plusSeconds(2).printAsDateTime
-    r(addMinutes(now,2)) shouldBe now.plusMinutes(2).printAsDateTime
-    r(addHours(now,2)) shouldBe now.plusHours(2).printAsDateTime
-    r(addDays(now,2)) shouldBe now.plusDays(2).printAsDateTime
-    r(addWeeks(now,2)) shouldBe now.plusWeeks(2).printAsDateTime
-    r(addMonths(now,2)) shouldBe now.plusMonths(2).printAsDateTime
-    r(addYears(now,2)) shouldBe now.plusYears(2).printAsDateTime
+    r(addSeconds(now, 2)) shouldBe now.plusSeconds(2).printAsDateTime
+    r(addMinutes(now, 2)) shouldBe now.plusMinutes(2).printAsDateTime
+    r(addHours(now, 2)) shouldBe now.plusHours(2).printAsDateTime
+    r(addDays(now, 2)) shouldBe now.plusDays(2).printAsDateTime
+    r(addWeeks(now, 2)) shouldBe now.plusWeeks(2).printAsDateTime
+    r(addMonths(now, 2)) shouldBe now.plusMonths(2).printAsDateTime
+    r(addYears(now, 2)) shouldBe now.plusYears(2).printAsDateTime
     r(toStartOfMonth(now)) shouldBe now.withDayOfMonth(1).printAsDate
     r(toStartOfQuarter(now)) shouldBe now.toStartOfQuarter.printAsDate
     r(toStartOfYear(now)) shouldBe now.withDayOfYear(1).printAsDate
@@ -37,7 +38,9 @@ class DateTimeFunctionTest extends ColumnFunctionTest {
     r(toRelativeYearNum(now)) shouldBe now.getYear.toString
     r(toRelativeQuarterNum(now)) shouldBe ((now.getYear * 4) + (now.getMonthOfYear - 1) / 3).toString
     r(toRelativeMonthNum(now)) shouldBe ((now.getYear * 12) + now.getMonthOfYear).toString
-    r(toRelativeWeekNum(now)) should (equal(Weeks.weeksBetween(epoch, now).getWeeks.toString) or equal((Weeks.weeksBetween(epoch, now).getWeeks + 1).toString))
+    r(toRelativeWeekNum(now)) should (equal(Weeks.weeksBetween(epoch, now).getWeeks.toString) or equal(
+      (Weeks.weeksBetween(epoch, now).getWeeks + 1).toString
+    ))
     r(toRelativeDayNum(now)) shouldBe Days.daysBetween(epoch, now).getDays.toString
     r(toRelativeHourNum(now)) shouldBe Hours.hoursBetween(epoch, now).getHours.toString
     r(toRelativeMinuteNum(now)) shouldBe Minutes.minutesBetween(epoch, now).getMinutes.toString
@@ -46,6 +49,19 @@ class DateTimeFunctionTest extends ColumnFunctionTest {
     r(chYesterday()) shouldBe dynNow.minusDays(1).printAsDate
     r(chToday()) shouldBe dynNow.withTimeAtStartOfDay().printAsDate
     r(timeSlot(now)) shouldBe now.toStartOfMin(30).printAsDateTime
-    r(timeSlots(now,toUInt32(1800))) shouldBe s"['${now.toStartOfMin(30).printAsDateTime}','${now.plusMinutes(30).toStartOfMin(30).printAsDateTime}']"
+    r(timeSlots(now, toUInt32(1800))) shouldBe s"['${now.toStartOfMin(30).printAsDateTime}','${now.plusMinutes(30).toStartOfMin(30).printAsDateTime}']"
+    r(toISOWeek(August_8_19)) shouldBe "32"
+    r(toISOYear(August_8_19)) shouldBe "2019"
+    r(toWeek(August_8_19)) shouldBe "31"
+    r(toWeek(August_8_19, mode = 0)) shouldBe "31"
+    r(toWeek(August_8_19, mode = 1)) shouldBe "32"
+    r(toWeek(August_8_19, mode = 2)) shouldBe "31"
+    r(toWeek(August_8_19, mode = 3)) shouldBe "32"
+    r(toWeek(August_8_19, mode = 4)) shouldBe "32"
+    r(toWeek(August_8_19, mode = 5)) shouldBe "31"
+    r(toWeek(August_8_19, mode = 6)) shouldBe "32"
+    r(toWeek(August_8_19, mode = 7)) shouldBe "31"
+    r(toWeek(August_8_19, mode = 8)) shouldBe "32"
+    r(toWeek(August_8_19, mode = 9)) shouldBe "32"
   }
 }

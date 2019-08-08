@@ -49,6 +49,9 @@ trait DateTimeFunctions { self: Magnets =>
   case class Yesterday()                                               extends DateTimeConst[LocalDate]()
   case class TimeSlot(d: DateOrDateTime[_])                            extends DateTimeFunctionCol[DateTime](d)
   case class TimeSlots(d: DateOrDateTime[_], duration: NumericCol[_])  extends DateTimeFunctionCol[DateTime](d)
+  case class ISOYear(d: DateOrDateTime[_])                             extends DateTimeFunctionCol[Int](d)
+  case class ISOWeek(d: DateOrDateTime[_])                             extends DateTimeFunctionCol[Int](d)
+  case class Week(d: DateOrDateTime[_], mode: Int)                     extends DateTimeFunctionCol[Int](d)
 
   def toYear(col: DateOrDateTime[_])                              = Year(col)
   def toYYYYMM(col: DateOrDateTime[_])                            = YYYYMM(col)
@@ -76,7 +79,7 @@ trait DateTimeFunctions { self: Magnets =>
   def toStartOfDay[T](col: DateOrDateTime[T])                     = StartOfDay[T](col)
   def toTime(col: DateOrDateTime[_])                              = Time(col)
   def toRelativeYearNum[T](col: DateOrDateTime[T])                = RelativeYearNum[T](col)
-  def toRelativeQuarterNum[T](col: DateOrDateTime[T])               = RelativeQuarterNum[T](col)
+  def toRelativeQuarterNum[T](col: DateOrDateTime[T])             = RelativeQuarterNum[T](col)
   def toRelativeMonthNum[T](col: DateOrDateTime[T])               = RelativeMonthNum[T](col)
   def toRelativeWeekNum[T](col: DateOrDateTime[T])                = RelativeWeekNum[T](col)
   def toRelativeDayNum[T](col: DateOrDateTime[T])                 = RelativeDayNum[T](col)
@@ -88,4 +91,7 @@ trait DateTimeFunctions { self: Magnets =>
   def chToday()                                                   = Today()
   def timeSlot(col: DateOrDateTime[_])                            = TimeSlot(col)
   def timeSlots(col: DateOrDateTime[_], duration: NumericCol[_])  = TimeSlots(col, duration)
+  def toISOWeek(col: DateOrDateTime[_])                           = ISOWeek(col)
+  def toISOYear(col: DateOrDateTime[_])                           = ISOYear(col)
+  def toWeek(col: DateOrDateTime[_], mode: Int = 0)               = Week(col, mode)
 }

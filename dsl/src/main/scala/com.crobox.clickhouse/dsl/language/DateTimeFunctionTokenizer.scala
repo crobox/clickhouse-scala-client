@@ -44,6 +44,9 @@ trait DateTimeFunctionTokenizer {
       case RelativeSecondNum(d: DateOrDateTime[_]) => fast"toRelativeSecondNum(${tokenizeColumn(d.column)})"
       case TimeSlot(d: DateOrDateTime[_]) => fast"timeSlot(${tokenizeColumn(d.column)})"
       case TimeSlots(d: DateOrDateTime[_], duration: NumericCol[_]) => fast"timeSlots(${tokenizeColumn(d.column)},${tokenizeColumn(duration.column)})"
+      case ISOWeek(d: DateOrDateTime[_]) => fast"toISOWeek(${tokenizeColumn(d.column)})"
+      case ISOYear(d: DateOrDateTime[_]) => fast"toISOYear(${tokenizeColumn(d.column)})"
+      case Week(d: DateOrDateTime[_], mode: Int) => fast"toWeek(${tokenizeColumn(d.column)},$mode)"
     }
 
   protected def tokenizeDateTimeConst(col: DateTimeConst[_]): String =
