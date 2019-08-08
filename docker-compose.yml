@@ -1,7 +1,8 @@
 version: '3'
 services:
   clickhouse:
-      image: crobox/clickhouse:latest
+      # https://hub.docker.com/r/yandex/clickhouse-server/
+      image: yandex/clickhouse-server:19.13.1.11
       expose:
         - "8123"
       ports:
