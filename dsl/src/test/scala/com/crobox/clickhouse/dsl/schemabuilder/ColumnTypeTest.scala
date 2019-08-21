@@ -31,4 +31,7 @@ class ColumnTypeTest extends FlatSpecLike with Matchers {
     )
   }
 
+  it should "support LowCardinality column type" in {
+    ColumnType.LowCardinality(ColumnType.String).toString should be("LowCardinality(String)")
+  }
 }

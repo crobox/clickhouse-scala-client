@@ -31,7 +31,7 @@ class ClickhouseTimeSeriesIT
   }
 
   implicit val clickhouseClient                   = clickClient
-  val startInterval                               = DateTime.parse("2019-03-01T").withTimeAtStartOfDay().withZone(DateTimeZone.UTC)
+  val startInterval                               = DateTime.parse("2019-03-01").withTimeAtStartOfDay().withZone(DateTimeZone.UTC)
   val secondsId                                   = UUID.randomUUID()
   val dayId                                       = UUID.randomUUID()
   val minutesId                                   = UUID.randomUUID()

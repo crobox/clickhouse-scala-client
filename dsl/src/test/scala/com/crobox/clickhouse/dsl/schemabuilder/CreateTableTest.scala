@@ -78,6 +78,7 @@ class CreateTableTest extends FlatSpecLike with Matchers {
     val hitId       = NativeColumn("hit_id", ColumnType.FixedString(16))
     val testColumn  = NativeColumn("test_column", ColumnType.String)
     val testColumn2 = NativeColumn("test_column2", ColumnType.Int8, Default("2"))
+    val testColumn3 = NativeColumn("test_column3", ColumnType.LowCardinality(ColumnType.String), Default("<default>"))
     val result = CreateTable(
       TestTable(
         "merge_tree_table",
@@ -86,7 +87,8 @@ class CreateTableTest extends FlatSpecLike with Matchers {
           clientId,
           hitId,
           testColumn,
-          testColumn2
+          testColumn2,
+          testColumn3
         )
       ),
       Engine.MergeTree(Seq(s"toYYYYMM(${date.name})"), Seq(date, clientId, hitId), Some("int64Hash(client_id)"))
@@ -97,7 +99,8 @@ class CreateTableTest extends FlatSpecLike with Matchers {
         |  client_id FixedString(16),
         |  hit_id FixedString(16),
         |  test_column String,
-        |  test_column2 Int8 DEFAULT 2
+        |  test_column2 Int8 DEFAULT 2,
+        |  test_column3 LowCardinality(String) DEFAULT <default>
         |) ENGINE = MergeTree
         |PARTITION BY (toYYYYMM(date))
         |ORDER BY (date, client_id, hit_id, int64Hash(client_id))

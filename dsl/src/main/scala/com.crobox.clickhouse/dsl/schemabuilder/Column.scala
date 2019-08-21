@@ -35,11 +35,11 @@ object ColumnType {
   case object Int32 extends SimpleColumnType("Int32")
 
   val Int: ColumnType = Int32
-  
+
   case object Int64 extends SimpleColumnType("Int64")
 
   val Long: ColumnType = Int64
-  
+
   case object Float32 extends SimpleColumnType("Float32")
 
   val Float: ColumnType = Float32
@@ -74,10 +74,15 @@ object ColumnType {
     override def toString: String = s"Nested(${columns.map(_.query).mkString(", ")})"
   }
 
-//  TODO modifi this to accept and expression column
+//  TODO modify this to accept and expression column
   case class AggregateFunctionColumn(function: String, columnType: ColumnType, nextTypes: ColumnType*)
-      extends SimpleColumnType(s"AggregateFunction($function, ${(columnType +: nextTypes).map(_.toString).mkString(", ")})")
+      extends SimpleColumnType(
+        s"AggregateFunction($function, ${(columnType +: nextTypes).map(_.toString).mkString(", ")})"
+      )
 
+  case class LowCardinality(columnType: ColumnType) extends ColumnType {
+    override def toString: String = s"LowCardinality(${columnType.toString})"
+  }
 }
 
 sealed trait DefaultValue
