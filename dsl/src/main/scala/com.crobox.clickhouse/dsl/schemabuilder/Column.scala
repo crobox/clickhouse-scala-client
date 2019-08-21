@@ -74,7 +74,7 @@ object ColumnType {
     override def toString: String = s"Nested(${columns.map(_.query).mkString(", ")})"
   }
 
-//  TODO modifi this to accept and expression column
+//  TODO modify this to accept and expression column
   case class AggregateFunctionColumn(function: String, columnType: ColumnType, nextTypes: ColumnType*)
       extends SimpleColumnType(
         s"AggregateFunction($function, ${(columnType +: nextTypes).map(_.toString).mkString(", ")})"
