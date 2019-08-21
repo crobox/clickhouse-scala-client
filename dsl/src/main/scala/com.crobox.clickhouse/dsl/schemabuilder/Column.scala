@@ -81,7 +81,7 @@ object ColumnType {
       )
 
   case class LowCardinality(columnType: ColumnType) extends ColumnType {
-    override def toString: String = s"LowCardinality($columnType)"
+    override def toString: String = s"LowCardinality(${columnType.toString})"
   }
 }
 
