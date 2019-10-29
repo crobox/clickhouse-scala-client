@@ -198,9 +198,19 @@ object Engine {
           "(" + s.summingColumns.map(_.quoted).mkString(", ") + ")"
       }
 
-      val replicationArgs = (Seq(zookeeperPath, replicaName).map(StringQueryValue(_)) ++ summingColArg).mkString(", ")
+      var replicationArgs = Seq(zookeeperPath, replicaName).map(StringQueryValue(_)) ++ summingColArg
+      var engineName      = engine.name
 
-      s"""Replicated${engine.name}($replicationArgs)
+      engine match {
+        case x: ReplacingMergeTree =>
+          x.version.foreach(col => {
+            replicationArgs :+= col.name
+            engineName = "ReplacingMergeTree" // strip off version column
+          })
+        case _ =>
+      }
+
+      s"""Replicated$engineName(${replicationArgs.mkString(", ")})
          |${engine.statements.mkString("\n")}""".stripMargin
     }
   }

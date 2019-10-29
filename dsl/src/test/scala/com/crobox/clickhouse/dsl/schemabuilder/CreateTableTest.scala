@@ -226,7 +226,7 @@ class CreateTableTest extends FlatSpecLike with Matchers {
           "{replica}",
           replacingMergeTree.engine
             .asInstanceOf[Engine.ReplacingMergeTree]
-            .copy(samplingExpression = None, version = None)
+            .copy(samplingExpression = None)
         )
       )
       .toString
@@ -237,7 +237,7 @@ class CreateTableTest extends FlatSpecLike with Matchers {
                        |  test_column String,
                        |  test_column2 Int8 DEFAULT 2,
                        |  version UInt8
-                       |) ENGINE = ReplicatedReplacingMergeTree('/zookeeper/{item}', '{replica}')
+                       |) ENGINE = ReplicatedReplacingMergeTree('/zookeeper/{item}', '{replica}', version)
                        |PARTITION BY (toYYYYMM(date))
                        |ORDER BY (date, client_id, hit_id)
                        |SETTINGS index_granularity=8192""".stripMargin)
