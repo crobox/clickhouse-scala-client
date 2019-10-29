@@ -136,9 +136,9 @@ class ClickhouseTimeSeriesIT
         val results: Future[QueryResult[Result]] = getEntries(multiInterval, dayId)
         val expectedIntervalStarts               = multiInterval.subIntervals.map(_.getStart.withZone(DateTimeZone.UTC))
         var rows                                 = results.futureValue.rows
-        if (rows.size == expectedIntervalStarts.size - 1) rows = rows.init
         val expectedCountInFullInterval = duration * 30 +- duration * 3
         validateFullRows(rows, expectedCountInFullInterval)
+        if (rows.size == expectedIntervalStarts.size - 1) rows = rows.init
         rows.map(_.time) should contain theSameElementsInOrderAs expectedIntervalStarts
       }
     }
