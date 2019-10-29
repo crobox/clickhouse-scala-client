@@ -96,8 +96,9 @@ object Engine {
   case class ReplacingMergeTree(partition: Seq[String],
                                 primaryKey: Seq[Column],
                                 samplingExpression: Option[String] = None,
-                                indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
-      extends MergeTreeEngine("ReplacingMergeTree")
+                                indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+                                version: Option[Column] = None)
+      extends MergeTreeEngine("ReplacingMergeTree" + version.map(col => s"(${col.name})").getOrElse(""))
 
   object ReplacingMergeTree {
 
@@ -116,7 +117,14 @@ object Engine {
               primaryKey: Seq[Column],
               samplingExpression: Option[String],
               indexGranularity: Int): ReplacingMergeTree =
-      apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity)
+      apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity, version = None)
+
+    def apply(dateColumn: NativeColumn[LocalDate],
+              primaryKey: Seq[Column],
+              samplingExpression: Option[String],
+              indexGranularity: Int,
+              version: Option[Column]): ReplacingMergeTree =
+      apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity, version)
   }
 //SummingMergeTree(EventDate, (OrderID, EventDate, BannerID, ...), 8192)
 
