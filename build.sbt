@@ -18,8 +18,8 @@ lazy val root = (project in file("."))
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
-        scalaVersion := "2.12.8",
-        crossScalaVersions := List("2.11.12", "2.12.8"),
+        scalaVersion := "2.12.10",
+        crossScalaVersions := List("2.11.12", "2.12.10"),
         scalacOptions ++= List(
           "-unchecked",
           "-deprecation",
@@ -71,8 +71,8 @@ lazy val client: Project = (project in file("client"))
       "com.typesafe.akka"          %% "akka-actor" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-stream" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-http" % AkkaHttpVersion,
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
-      "joda-time"                  % "joda-time" % "2.10.1"
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
+      "joda-time"                  % "joda-time" % "2.10.5"
     ) ++ testDependencies.map(_    % Test)
   )
 
