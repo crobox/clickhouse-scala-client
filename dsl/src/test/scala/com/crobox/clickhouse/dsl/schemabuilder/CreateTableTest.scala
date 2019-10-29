@@ -23,7 +23,7 @@ class CreateTableTest extends FlatSpecLike with Matchers {
   }
 
   it should "quote invalid names" in {
-    CreateTable(TestTable(".Fool", List(NativeColumn(".a"))), Engine.TinyLog).toString should be (
+    CreateTable(TestTable(".Fool", List(NativeColumn(".a"))), Engine.TinyLog).toString should be(
       """CREATE TABLE default.`.Fool` (
         |  `.a` String
         |) ENGINE = TinyLog""".stripMargin
@@ -177,11 +177,12 @@ class CreateTableTest extends FlatSpecLike with Matchers {
   }
 
   lazy val replacingMergeTree = {
-    val date        = NativeColumn[LocalDate]("date", ColumnType.Date)
-    val clientId    = NativeColumn("client_id", ColumnType.FixedString(16))
-    val hitId       = NativeColumn("hit_id", ColumnType.FixedString(16))
-    val testColumn  = NativeColumn("test_column", ColumnType.String)
-    val testColumn2 = NativeColumn("test_column2", ColumnType.Int8, Default("2"))
+    val date          = NativeColumn[LocalDate]("date", ColumnType.Date)
+    val clientId      = NativeColumn("client_id", ColumnType.FixedString(16))
+    val hitId         = NativeColumn("hit_id", ColumnType.FixedString(16))
+    val testColumn    = NativeColumn("test_column", ColumnType.String)
+    val testColumn2   = NativeColumn("test_column2", ColumnType.Int8, Default("2"))
+    val versionColumn = NativeColumn("version", ColumnType.UInt8)
     CreateTable(
       TestTable(
         "merge_tree_table",
@@ -190,12 +191,14 @@ class CreateTableTest extends FlatSpecLike with Matchers {
           clientId,
           hitId,
           testColumn,
-          testColumn2
+          testColumn2,
+          versionColumn
         )
       ),
       Engine.ReplacingMergeTree(Seq(s"toYYYYMM(${date.name})"),
                                 Seq(date, clientId, hitId),
-                                Some("int64Hash(client_id)"))
+                                Some("int64Hash(client_id)"),
+                                version = Option(versionColumn))
     )
   }
 
@@ -206,8 +209,9 @@ class CreateTableTest extends FlatSpecLike with Matchers {
         |  client_id FixedString(16),
         |  hit_id FixedString(16),
         |  test_column String,
-        |  test_column2 Int8 DEFAULT 2
-        |) ENGINE = ReplacingMergeTree
+        |  test_column2 Int8 DEFAULT 2,
+        |  version UInt8
+        |) ENGINE = ReplacingMergeTree(version)
         |PARTITION BY (toYYYYMM(date))
         |ORDER BY (date, client_id, hit_id, int64Hash(client_id))
         |SAMPLE BY int64Hash(client_id)
@@ -217,11 +221,13 @@ class CreateTableTest extends FlatSpecLike with Matchers {
   it should "make a valid CREATE TABLE query for ReplicatedReplacingMergeTree" in {
     val result = replacingMergeTree
       .copy(
-        engine = Engine.Replicated("/zookeeper/{item}",
-                                   "{replica}",
-                                   replacingMergeTree.engine
-                                     .asInstanceOf[Engine.ReplacingMergeTree]
-                                     .copy(samplingExpression = None))
+        engine = Engine.Replicated(
+          "/zookeeper/{item}",
+          "{replica}",
+          replacingMergeTree.engine
+            .asInstanceOf[Engine.ReplacingMergeTree]
+            .copy(samplingExpression = None)
+        )
       )
       .toString
     result should be("""CREATE TABLE default.merge_tree_table (
@@ -229,8 +235,9 @@ class CreateTableTest extends FlatSpecLike with Matchers {
                        |  client_id FixedString(16),
                        |  hit_id FixedString(16),
                        |  test_column String,
-                       |  test_column2 Int8 DEFAULT 2
-                       |) ENGINE = ReplicatedReplacingMergeTree('/zookeeper/{item}', '{replica}')
+                       |  test_column2 Int8 DEFAULT 2,
+                       |  version UInt8
+                       |) ENGINE = ReplicatedReplacingMergeTree('/zookeeper/{item}', '{replica}', version)
                        |PARTITION BY (toYYYYMM(date))
                        |ORDER BY (date, client_id, hit_id)
                        |SETTINGS index_granularity=8192""".stripMargin)

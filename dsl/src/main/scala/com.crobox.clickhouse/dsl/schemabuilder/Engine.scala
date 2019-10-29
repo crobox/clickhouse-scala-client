@@ -96,8 +96,9 @@ object Engine {
   case class ReplacingMergeTree(partition: Seq[String],
                                 primaryKey: Seq[Column],
                                 samplingExpression: Option[String] = None,
-                                indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
-      extends MergeTreeEngine("ReplacingMergeTree")
+                                indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+                                version: Option[Column] = None)
+      extends MergeTreeEngine("ReplacingMergeTree" + version.map(col => s"(${col.name})").getOrElse(""))
 
   object ReplacingMergeTree {
 
@@ -116,7 +117,14 @@ object Engine {
               primaryKey: Seq[Column],
               samplingExpression: Option[String],
               indexGranularity: Int): ReplacingMergeTree =
-      apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity)
+      apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity, version = None)
+
+    def apply(dateColumn: NativeColumn[LocalDate],
+              primaryKey: Seq[Column],
+              samplingExpression: Option[String],
+              indexGranularity: Int,
+              version: Option[Column]): ReplacingMergeTree =
+      apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity, version)
   }
 //SummingMergeTree(EventDate, (OrderID, EventDate, BannerID, ...), 8192)
 
@@ -190,10 +198,16 @@ object Engine {
           "(" + s.summingColumns.map(_.quoted).mkString(", ") + ")"
       }
 
-      val replicationArgs = (Seq(zookeeperPath, replicaName).map(StringQueryValue(_)) ++ summingColArg).mkString(", ")
+      val replicationArgs = Seq(zookeeperPath, replicaName).map(StringQueryValue(_)) ++ summingColArg
 
-      s"""Replicated${engine.name}($replicationArgs)
-         |${engine.statements.mkString("\n")}""".stripMargin
+      engine match {
+        case x: ReplacingMergeTree if x.version.isDefined =>
+          s"""ReplicatedReplacingMergeTree(${(replicationArgs :+ x.version.get.name).mkString(", ")})
+             |${engine.statements.mkString("\n")}""".stripMargin
+        case _ =>
+          s"""Replicated${engine.name}(${replicationArgs.mkString(", ")})
+             |${engine.statements.mkString("\n")}""".stripMargin
+      }
     }
   }
 }
