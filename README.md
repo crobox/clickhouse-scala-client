@@ -257,7 +257,7 @@ client.sink("INSERT INTO my_table", Source.single(ByteString("el1"))).map(result
 We only expose progress when running read only queries. The current implementation is recommended to be used only for long running queries which return a result relatively small in size (fits easily in memory).
 The returned source is materialized with the query result.
 
-When running queris with progress we set a custom client transport for the super pool used by client to run the queries. Due to limitation in the akka implementation which does not allow for the headers to be streamed we are parsing the raw http output and intercept the http headers to receive the progress.
+When running queries with progress we set a custom client transport for the super pool used by client to run the queries. Due to limitation in the akka implementation which does not allow for the headers to be streamed we are parsing the raw http output and intercept the http headers to receive the progress.
 
 We expose multiple events for the progress:
  * QueryAccepted - clickhouse returned the http response with code 200 (query might still fail)
