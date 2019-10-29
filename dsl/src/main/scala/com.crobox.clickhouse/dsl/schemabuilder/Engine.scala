@@ -198,20 +198,16 @@ object Engine {
           "(" + s.summingColumns.map(_.quoted).mkString(", ") + ")"
       }
 
-      var replicationArgs = Seq(zookeeperPath, replicaName).map(StringQueryValue(_)) ++ summingColArg
-      var engineName      = engine.name
+      val replicationArgs = Seq(zookeeperPath, replicaName).map(StringQueryValue(_)) ++ summingColArg
 
       engine match {
-        case x: ReplacingMergeTree =>
-          x.version.foreach(col => {
-            replicationArgs :+= col.name
-            engineName = "ReplacingMergeTree" // strip off version column
-          })
+        case x: ReplacingMergeTree if x.version.isDefined =>
+          s"""ReplicatedReplacingMergeTree(${(replicationArgs :+ x.version.get.name).mkString(", ")})
+             |${engine.statements.mkString("\n")}""".stripMargin
         case _ =>
+          s"""Replicated${engine.name}(${replicationArgs.mkString(", ")})
+             |${engine.statements.mkString("\n")}""".stripMargin
       }
-
-      s"""Replicated$engineName(${replicationArgs.mkString(", ")})
-         |${engine.statements.mkString("\n")}""".stripMargin
     }
   }
 }
