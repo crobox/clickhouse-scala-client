@@ -2,10 +2,10 @@ package com.crobox.clickhouse.dsl
 
 import java.util.UUID
 
-import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
 import com.crobox.clickhouse.time.{IntervalStart, MultiDuration, MultiInterval, TimeUnit, TotalDuration}
+import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import org.joda.time.{DateTime, DateTimeZone, Days}
 import org.scalactic.TripleEqualsSupport
 import org.scalatest.concurrent.ScalaFutures
@@ -136,9 +136,11 @@ class ClickhouseTimeSeriesIT
         val results: Future[QueryResult[Result]] = getEntries(multiInterval, dayId)
         val expectedIntervalStarts               = multiInterval.subIntervals.map(_.getStart.withZone(DateTimeZone.UTC))
         var rows                                 = results.futureValue.rows
-        val expectedCountInFullInterval = duration * 30 +- duration * 3
+        val expectedCountInFullInterval          = duration * 30 +- duration * 3
         validateFullRows(rows, expectedCountInFullInterval)
+
         if (rows.size == expectedIntervalStarts.size - 1) rows = rows.init
+        rows.size should be(expectedIntervalStarts.size)
         rows.map(_.time) should contain theSameElementsInOrderAs expectedIntervalStarts
       }
     }
