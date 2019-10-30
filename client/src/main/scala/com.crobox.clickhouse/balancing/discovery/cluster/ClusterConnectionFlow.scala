@@ -29,7 +29,9 @@ private[clickhouse] object ClusterConnectionFlow
     val http                   = Http(system)
     val settings = ConnectionPoolSettings(system)
       .withMaxConnections(1)
-      .withMaxOpenRequests(1)
+      .withMinConnections(1)
+      .withMaxOpenRequests(2)
+      .withMaxRetries(3)
       .withUpdatedConnectionSettings(
         _.withIdleTimeout(scanningInterval.plus(1.second))
       )

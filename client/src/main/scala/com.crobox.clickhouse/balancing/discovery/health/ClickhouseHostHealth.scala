@@ -52,7 +52,9 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
       host.effectivePort,
       settings = ConnectionPoolSettings(system)
         .withMaxConnections(1)
-        .withMaxOpenRequests(1)
+        .withMinConnections(1)
+        .withMaxOpenRequests(2)
+        .withMaxRetries(3)
         .withUpdatedConnectionSettings(
           _.withIdleTimeout(healthCheckTimeout + healthCheckInterval).withConnectingTimeout(healthCheckTimeout)
         )
