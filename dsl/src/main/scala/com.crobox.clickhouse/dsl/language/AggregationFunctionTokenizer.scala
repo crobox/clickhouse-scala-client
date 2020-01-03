@@ -1,12 +1,11 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
-  def tokenizeAggregateFunction(agg: AggregateFunction[_])(implicit database: Database): String =
+  def tokenizeAggregateFunction(agg: AggregateFunction[_]): String =
     agg match {
       case nested: CombinedAggregatedFunction[_, _] =>
         val tokenizedCombinators = collectCombinators(nested).map(tokenizeCombinator)
@@ -33,7 +32,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case value                                     => value
     }
 
-  private def tokenizeInnerAggregatedFunction(agg: AggregateFunction[_])(implicit database: Database): (String, String) =
+  private def tokenizeInnerAggregatedFunction(agg: AggregateFunction[_]): (String, String) =
     agg match {
       case Avg(column)   => ("avg", tokenizeColumn(column))
       case Count(column) => ("count", tokenizeColumn(column.getOrElse(EmptyColumn)))
@@ -61,7 +60,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
         throw new IllegalArgumentException(s"Cannot use $f aggregated function with combinator")
     }
 
-  def tokenizeLevelModifier(level: LevelModifier)(implicit database: Database): (String, Option[String]) =
+  def tokenizeLevelModifier(level: LevelModifier): (String, Option[String]) =
     level match {
       case LevelModifier.Simple                      => ("", None)
       case LevelModifier.Deterministic(determinator) => ("Deterministic", Some(tokenizeColumn(determinator)))
@@ -95,7 +94,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case AnyModifier.Last   => "Last"
     }
 
-  private def tokenizeCombinator(combinator: Combinator[_, _])(implicit database: Database): (String, Option[String]) =
+  private def tokenizeCombinator(combinator: Combinator[_, _]): (String, Option[String]) =
     combinator match {
       case Combinator.If(condition)     => ("If", Some(tokenizeColumn(condition)))
       case Combinator.CombinatorArray() => ("Array", None)

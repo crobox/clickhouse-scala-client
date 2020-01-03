@@ -6,8 +6,9 @@ import com.dongxiguo.fastring.Fastring.Implicits._
 import scala.util.Try
 
 trait Table {
+  val database: String
   val name: String
-  lazy val quoted: String = ClickhouseStatement.quoteIdentifier(name)
+  lazy val quoted: String = s"${ClickhouseStatement.quoteIdentifier(database)}.${ClickhouseStatement.quoteIdentifier(name)}"
   val columns: Seq[NativeColumn[_]]
 }
 

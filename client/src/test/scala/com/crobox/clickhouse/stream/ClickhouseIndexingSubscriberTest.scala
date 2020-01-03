@@ -12,7 +12,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
 
   import system.dispatcher
 
-  val client: ClickhouseClient = new ClickhouseClient(config)
+  val client: ClickhouseClient = new ClickhouseClient(Some(config))
 
   var subscriberCompletes: Promise[Unit] = Promise[Unit]
 

@@ -1,13 +1,12 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait DateTimeFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  protected def tokenizeDateTimeColumn(col: DateTimeFunctionCol[_])(implicit database: Database): String =
+  protected def tokenizeDateTimeColumn(col: DateTimeFunctionCol[_]): String =
     col match {
       case Year(d: DateOrDateTime[_]) => fast"toYear(${tokenizeColumn(d.column)})"
       case YYYYMM(d: DateOrDateTime[_]) => fast"toYYYYMM(${tokenizeColumn(d.column)})"

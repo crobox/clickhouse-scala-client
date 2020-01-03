@@ -16,7 +16,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor { self: TokenizerModule =>
   def execute[V: JsonReader](query: Query)(implicit executionContext: ExecutionContext,
                                            settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] = {
     import QueryResult._
-    val queryResult = client.query(toSql(query.internalQuery)(client.database))
+    val queryResult = client.query(toSql(query.internalQuery))
     queryResult.map(_.parseJson.convertTo[QueryResult[V]])
   }
 
@@ -25,7 +25,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor { self: TokenizerModule =>
   )(implicit executionContext: ExecutionContext,
     settings: QuerySettings = QuerySettings()): Source[QueryProgress, Future[QueryResult[V]]] = {
     import QueryResult._
-    val queryResult = client.queryWithProgress(toSql(query.internalQuery)(client.database))
+    val queryResult = client.queryWithProgress(toSql(query.internalQuery))
     queryResult.mapMaterializedValue(_.map(_.parseJson.convertTo[QueryResult[V]]))
   }
 
@@ -36,15 +36,15 @@ trait ClickhouseQueryExecutor extends QueryExecutor { self: TokenizerModule =>
     Future {
       values.map(_.toJson.compactPrint).mkString("\n") + "\n"
     }.flatMap(
-      entity => client.execute(s"INSERT INTO ${client.table(table.name)} FORMAT JSONEachRow", entity)
+      entity => client.execute(s"INSERT INTO ${table.quoted} FORMAT JSONEachRow", entity)
     )
 
 }
 
 object ClickhouseQueryExecutor {
 
-  def default(clickhouseCLient: ClickhouseClient): ClickhouseQueryExecutor =
-    new DefaultClickhouseQueryExecutor(clickhouseCLient)
+  def default(clickhouseClient: ClickhouseClient): ClickhouseQueryExecutor =
+    new DefaultClickhouseQueryExecutor(clickhouseClient)
 }
 
 class DefaultClickhouseQueryExecutor(override val client: ClickhouseClient)

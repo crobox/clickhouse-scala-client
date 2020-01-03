@@ -1,11 +1,10 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait TypeCastFunctionTokenizer { self: ClickhouseTokenizerModule =>
-  protected def tokenizeTypeCastColumn(col: TypeCastColumn[_])(implicit database: Database): String = {
+  protected def tokenizeTypeCastColumn(col: TypeCastColumn[_]): String = {
     def tknz(orZero: Boolean): String =
       if (orZero) "OrZero" else ""
 

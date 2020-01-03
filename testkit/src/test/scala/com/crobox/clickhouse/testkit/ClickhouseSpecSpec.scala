@@ -12,7 +12,7 @@ class ClickhouseSpecSpec extends FlatSpecLike with Matchers with ClickhouseSpec 
   override val config: Config = ConfigFactory.load()
 
   "ClickhouseSpec" should "have working utilities" in {
-    val table = clickClient.table("dummy")
+    val table = s"$database.dummy"
     clickClient.execute(s"CREATE TABLE $table (date Date) ENGINE = Memory")
     blockUntilTableExists(table)
     blockUntilTableDropped(table)

@@ -2,13 +2,15 @@ package com.crobox.clickhouse.dsl
 
 import java.util.UUID
 
-import com.crobox.clickhouse.dsl.language.TokenizerModule
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import org.joda.time.DateTime
 import spray.json._
 
 trait TestSchema {
+
+  val database: String
+
   implicit object UUIDFormat extends JsonFormat[UUID] {
 
     def write(obj: UUID): JsValue = {
@@ -26,19 +28,22 @@ trait TestSchema {
       case _ => deserializationError("String expected")
     }
   }
-  implicit val tokenizerDatabase: TokenizerModule.Database = "default"
 
+  private lazy val _db = database
   case object OneTestTable extends Table {
+    override lazy val database: String = _db
     override val name: String                   = "captainAmerica"
     override val columns: List[NativeColumn[_]] = List(shieldId, timestampColumn, numbers)
   }
 
   case object TwoTestTable extends Table {
+    override lazy val database: String = _db
     override val name: String                   = "twoTestTable"
     override val columns: List[NativeColumn[_]] = List(itemId, col1, col2, col3, col4)
   }
 
   case object ThreeTestTable extends Table {
+    override lazy val database: String = _db
     override val name: String                   = "threeTestTable"
     override val columns: List[NativeColumn[_]] = List(itemId, col4, col5, col6)
   }
@@ -81,8 +86,5 @@ trait TestSchema {
     implicit val entry2Format =
       jsonFormat(Table2Entry.apply, "item_id", "column_1", "column_2", "column_3", "column_4")
   }
-}
 
-object TestSchema {
-  case class TestTable(override val name: String, override val columns: Seq[NativeColumn[_]]) extends Table
 }

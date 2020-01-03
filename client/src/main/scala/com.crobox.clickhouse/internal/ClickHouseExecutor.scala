@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.internal
 
-import akka.Done
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Terminated}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.settings.{ClientConnectionSettings, ConnectionPoolSettings}
@@ -20,10 +19,10 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   this: ClickhouseResponseParser with ClickhouseQueryBuilder =>
 
   protected implicit val system: ActorSystem
-  protected implicit lazy val materializer: Materializer = ActorMaterializer()
+  protected implicit val materializer: Materializer
   protected implicit val executionContext: ExecutionContext
   protected val hostBalancer: HostBalancer
-  protected val config: Config
+  protected val reference: Config
 
   lazy val (progressQueue, progressSource) = {
     val builtSource = QueryProgress.queryProgressStream
@@ -40,7 +39,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
 
   private lazy val pool = Http().superPool[Promise[HttpResponse]](settings = superPoolSettings)
   protected lazy val bufferSize: Int =
-    config.getInt("crobox.clickhouse.client.buffer-size")
+    reference.getInt("buffer-size")
 
   private lazy val (queue, completion) = Source
     .queue[(HttpRequest, Promise[HttpResponse])](bufferSize, OverflowStrategy.dropNew)
@@ -51,7 +50,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     })(Keep.both)
     .run
 
-  private lazy val queryRetries: Int = config.getInt("crobox.clickhouse.client.retries")
+  private lazy val queryRetries: Int = reference.getInt("retries")
 
   def executeRequest(query: String,
                      settings: QuerySettings,
@@ -77,9 +76,11 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
         executeRequest(query, settings, entity, Some(queue))
       })
 
-  def shutdown(): Future[Done] = {
+  def shutdown(): Future[Terminated] = {
     queue.complete()
-    queue.watchCompletion().flatMap(_ => completion)
+    queue.watchCompletion()
+      .flatMap(_ => completion)
+      .flatMap(_ => system.terminate())
   }
 
   protected def singleRequest(request: HttpRequest): Future[HttpResponse] = {
@@ -121,7 +122,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
                               settings.copy(
                                 progressHeaders = settings.progressHeaders.orElse(Some(progressQueue.isDefined))
                               ),
-                              entity)(config)
+                              entity)(reference)
       processClickhouseResponse(singleRequest(request), query, actualHost, progressQueue)
     })
   }

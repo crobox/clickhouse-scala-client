@@ -14,20 +14,19 @@ import org.scalatest._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class ClickhouseClientAsyncSpec
-    extends TestKit(ActorSystem("clickhouseClientTestSystem"))
+abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load())
+    extends TestKit(ActorSystem("clickhouseClientAsyncTestSystem", config.getConfig("crobox.clickhouse.client")))
     with AsyncFlatSpecLike
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfterEach {
 
-  val config: Config        = ConfigFactory.load()
   implicit val timeout      = durationToTimeout(5 second)
   implicit val materializer = ActorMaterializer()
 
   override protected def afterAll(): Unit = {
-    super.afterAll()
-    system.terminate()
+    try super.afterAll()
+    finally system.terminate()
   }
 
   def requestParallelHosts(balancer: HostBalancer, connections: Int = 10): Future[Seq[Uri]] =

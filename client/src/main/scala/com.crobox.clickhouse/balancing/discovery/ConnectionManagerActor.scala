@@ -11,9 +11,8 @@ import com.typesafe.config.Config
 
 import scala.collection.mutable
 import scala.concurrent.duration._
-import scala.language.postfixOps
 
-class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, Cancellable], config: Config)(
+class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, Cancellable], optionalConfig: Option[Config])(
     implicit materializer: Materializer
 ) extends Actor
     with ActorLogging
@@ -21,21 +20,19 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
 
   import ConnectionManagerActor._
 
-  private val configHost: Uri = HostBalancer.extractHost(config.getConfig(HostBalancer.ConnectionConfigPrefix))
-  private val fallbackToConfigurationHost =
-    config.getBoolean(s"${HostBalancer.ConnectionConfigPrefix}.fallback-to-config-host-during-initialization")
+  private val config = optionalConfig.getOrElse(context.system.settings.config).getConfig("connection")
+  private val fallbackToConfigurationHost = config.getBoolean("fallback-to-config-host-during-initialization")
 
   //  state
-  val connectionIterator: CircularIteratorSet[Uri] =
-    new CircularIteratorSet[Uri]()
+  val connectionIterator: CircularIteratorSet[Uri] = new CircularIteratorSet[Uri]()
   val hostsStatus                      = mutable.Map.empty[Uri, ClickhouseHostStatus]
   val hostHealthScheduler              = mutable.Map.empty[Uri, Cancellable]
   var currentConfiguredHosts: Set[Uri] = Set.empty
   var initialized                      = false
 
-  context.system.scheduler.schedule(30 seconds, 30 seconds, self, LogDeadConnections)(context.system.dispatcher)
+  context.system.scheduler.schedule(30.seconds, 30.seconds, self, LogDeadConnections)(context.system.dispatcher)
 
-  override def receive = {
+  override def receive: Receive = {
     case Connections(hosts) =>
       hosts
         .foreach(host => {
@@ -53,7 +50,7 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
       if (!initialized) {
         if (fallbackToConfigurationHost) {
           log.warning("Not yet initialized, returning the config host.")
-          sender ! configHost
+          sender ! HostBalancer.extractHost(config)
         } else {
           log.warning("Stashing get connection message until connection message is sent to initialize the manager.")
           stash()
@@ -128,9 +125,8 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
 
 object ConnectionManagerActor {
 
-  def props(healthProvider: Uri => Source[ClickhouseHostStatus, Cancellable],
-            config: Config)(implicit materializer: Materializer): Props =
-    Props(new ConnectionManagerActor(healthProvider, config))
+  def props(healthProvider: Uri => Source[ClickhouseHostStatus, Cancellable], optionalConfig: Option[Config] = None)
+           (implicit materializer: Materializer): Props = Props(new ConnectionManagerActor(healthProvider, optionalConfig))
 
   def healthCheckActorName(host: Uri) =
     s"${host.authority.host.address()}:${host.authority.port}"

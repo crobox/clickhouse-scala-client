@@ -1,9 +1,8 @@
 package com.crobox.clickhouse.dsl.language
-import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.execution.ClickhouseQueryExecutor
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.crobox.clickhouse.dsl.{OperationalQuery, select}
+import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.scalatest.concurrent.ScalaFutures
@@ -12,9 +11,6 @@ import scala.concurrent.Future
 
 trait ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec with ScalaFutures with ClickhouseTokenizerModule{
   implicit val clickhouseClient = clickClient
-  implicit val db: Database = clickhouseClient.database
-
-  val ex = ClickhouseQueryExecutor.default(clickhouseClient)
 
   protected def r(query: AnyTableColumn): String = {
     runSql(select(query)).futureValue.trim

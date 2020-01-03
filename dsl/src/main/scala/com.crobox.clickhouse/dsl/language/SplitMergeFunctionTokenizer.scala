@@ -1,13 +1,12 @@
 package com.crobox.clickhouse.dsl.language
 
-import com.dongxiguo.fastring.Fastring.Implicits._
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
+import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait SplitMergeFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeSplitMergeFunction(col: SplitMergeFunction[_])(implicit database: Database): String = col match {
+  def tokenizeSplitMergeFunction(col: SplitMergeFunction[_]): String = col match {
     case SplitByChar(sep: StringColMagnet[_], col: StringColMagnet[_]) =>
       fast"splitByChar(${tokenizeColumn(sep.column)},${tokenizeColumn(col.column)})"
     case SplitByString(sep: StringColMagnet[_], col: StringColMagnet[_]) =>
