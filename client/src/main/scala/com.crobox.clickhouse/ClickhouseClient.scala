@@ -20,19 +20,20 @@ import scala.concurrent.{ExecutionContext, Future}
   * @author Sjoerd Mulder
   * @since 31-03-17
   */
-class ClickhouseClient(config: Option[Config] = None)
+class ClickhouseClient(configuration: Option[Config] = None)
   extends ClickHouseExecutor
     with ClickhouseResponseParser
     with ClickhouseQueryBuilder {
 
-  override val reference: Config = config.getOrElse(ConfigFactory.load()).getConfig("crobox.clickhouse.client")
-  override protected implicit val system: ActorSystem = ActorSystem("clickhouse-client", reference)
+  override protected val config: Config = configuration.getOrElse(ConfigFactory.load())
+    .getConfig("crobox.clickhouse.client")
+  override protected implicit val system: ActorSystem = ActorSystem("clickhouse-client", config)
   override protected implicit val materializer: Materializer = ActorMaterializer()
   override protected implicit val executionContext: ExecutionContext = system.dispatcher
 
   override protected val hostBalancer = HostBalancer()
 
-  private val MaximumFrameLength: Int = 1024 * 1024 // 1 MB
+  private val MaximumFrameLength: Int = config.getInt("maximum-frame-length")
 
   logger.info(s"Starting Clickhouse Client connecting to $hostBalancer")
 
@@ -99,7 +100,7 @@ class ClickhouseClient(config: Option[Config] = None)
                       )(implicit settings: QuerySettings = QuerySettings(ReadQueries)): Source[ByteString, NotUsed] =
     Source
       .fromFuture(hostBalancer.nextHost.flatMap { host =>
-        singleRequest(toRequest(host, sql, None, settings, None)(reference))
+        singleRequest(toRequest(host, sql, None, settings, None)(config))
       })
       .flatMapConcat(response => response.entity.withoutSizeLimit().dataBytes)
 

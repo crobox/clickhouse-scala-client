@@ -22,7 +22,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   protected implicit val materializer: Materializer
   protected implicit val executionContext: ExecutionContext
   protected val hostBalancer: HostBalancer
-  protected val reference: Config
+  protected val config: Config
 
   lazy val (progressQueue, progressSource) = {
     val builtSource = QueryProgress.queryProgressStream
@@ -39,7 +39,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
 
   private lazy val pool = Http().superPool[Promise[HttpResponse]](settings = superPoolSettings)
   protected lazy val bufferSize: Int =
-    reference.getInt("buffer-size")
+    config.getInt("buffer-size")
 
   private lazy val (queue, completion) = Source
     .queue[(HttpRequest, Promise[HttpResponse])](bufferSize, OverflowStrategy.dropNew)
@@ -50,7 +50,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     })(Keep.both)
     .run
 
-  private lazy val queryRetries: Int = reference.getInt("retries")
+  private lazy val queryRetries: Int = config.getInt("retries")
 
   def executeRequest(query: String,
                      settings: QuerySettings,
@@ -122,7 +122,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
                               settings.copy(
                                 progressHeaders = settings.progressHeaders.orElse(Some(progressQueue.isDefined))
                               ),
-                              entity)(reference)
+                              entity)(config)
       processClickhouseResponse(singleRequest(request), query, actualHost, progressQueue)
     })
   }

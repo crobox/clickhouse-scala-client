@@ -22,7 +22,7 @@ class ClickhouseExecutorTest extends ClickhouseClientAsyncSpec {
       override protected implicit val system: ActorSystem = self.system
       override protected implicit val materializer: Materializer = self.materializer
       override protected implicit val executionContext: ExecutionContext = system.dispatcher
-      override protected val reference: Config = self.config.getConfig("crobox.clickhouse.client")
+      override protected val config: Config = self.config.getConfig("crobox.clickhouse.client")
       override protected val hostBalancer: HostBalancer = new HostBalancer {
         override def nextHost: Future[Uri] = Future.successful(hosts.next())
       }
