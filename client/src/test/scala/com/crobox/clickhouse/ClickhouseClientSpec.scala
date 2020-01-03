@@ -6,14 +6,14 @@ import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKit
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
-
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
-import scala.concurrent.duration._
-import scala.util.Random
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
+import scala.util.Random
 
 abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
     extends TestKit(ActorSystem("clickhouseClientTestSystem", config.getConfig("crobox.clickhouse.client")))
@@ -29,7 +29,7 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
 
   override protected def afterAll(): Unit = {
     try super.afterAll()
-    finally system.terminate()
+    finally Await.result(system.terminate(), 10.seconds)
   }
 
   def randomUUID: UUID =
