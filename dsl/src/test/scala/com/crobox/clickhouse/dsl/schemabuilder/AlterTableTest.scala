@@ -2,13 +2,14 @@ package com.crobox.clickhouse.dsl.schemabuilder
 
 import com.crobox.clickhouse.dsl.NativeColumn
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnOperation.{AddColumn, DropColumn, ModifyColumn}
-import org.scalatest.{FlatSpecLike, Matchers}
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
 /**
  * @author Sjoerd Mulder
  * @since 2-1-17
  */
-class AlterTableTest extends FlatSpecLike with Matchers {
+class AlterTableTest extends AnyFlatSpecLike with Matchers {
 
   it should "create various alter tables" in {
     AlterTable(

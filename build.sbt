@@ -19,7 +19,7 @@ lazy val root = (project in file("."))
       List(
         organization := "com.crobox.clickhouse",
         scalaVersion := "2.12.10",
-        crossScalaVersions := List("2.11.12", "2.12.10"),
+        crossScalaVersions := List("2.12.10", "2.13.1"),
         scalacOptions ++= List(
           "-unchecked",
           "-deprecation",
@@ -88,18 +88,6 @@ lazy val testkit = (project in file("testkit"))
 lazy val dsl = (project in file("dsl"))
   .settings(
     name := "dsl",
-    skip in compile := {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, scalaMajor)) if scalaMajor >= 12 => false
-        case _ => true
-      }
-    },
-    skip in publish := {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, scalaMajor)) if scalaMajor >= 12 => false
-        case _ => true
-      }
-    },
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
       "com.google.guava" % "guava" % "23.0",
@@ -107,3 +95,4 @@ lazy val dsl = (project in file("dsl"))
     )
   )
   .dependsOn(client, client % "test->test", testkit % Test)
+

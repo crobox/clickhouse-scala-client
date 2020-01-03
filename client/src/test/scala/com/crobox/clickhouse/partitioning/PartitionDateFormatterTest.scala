@@ -3,9 +3,10 @@ package com.crobox.clickhouse.partitioning
 import java.util.Date
 
 import org.joda.time.DateTime
-import org.scalatest.{FlatSpecLike, Matchers}
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
-class PartitionDateFormatterTest extends FlatSpecLike with Matchers {
+class PartitionDateFormatterTest extends AnyFlatSpecLike with Matchers {
 
   val expectedResult = "2017-12-31"
   val inputTimestamp = 1514709779000L

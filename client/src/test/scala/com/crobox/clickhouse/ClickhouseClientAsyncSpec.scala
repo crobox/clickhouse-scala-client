@@ -13,6 +13,8 @@ import org.scalatest._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import org.scalatest.flatspec.AsyncFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
 abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load())
     extends TestKit(ActorSystem("clickhouseClientAsyncTestSystem", config.getConfig("crobox.clickhouse.client")))

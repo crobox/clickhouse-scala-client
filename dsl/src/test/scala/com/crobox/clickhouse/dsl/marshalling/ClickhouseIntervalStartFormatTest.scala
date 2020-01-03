@@ -2,10 +2,11 @@ package com.crobox.clickhouse.dsl.marshalling
 
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport.ClickhouseIntervalStartFormat
 import org.joda.time.{DateTime, DateTimeZone}
-import org.scalatest.{FlatSpec, Matchers}
 import spray.json.{JsNumber, JsString}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ClickhouseIntervalStartFormatTest extends FlatSpec with Matchers {
+class ClickhouseIntervalStartFormatTest extends AnyFlatSpec with Matchers {
 
   val zone = DateTimeZone.forID("Europe/Bucharest")
 

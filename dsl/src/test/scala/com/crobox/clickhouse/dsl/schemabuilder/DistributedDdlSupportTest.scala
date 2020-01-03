@@ -1,8 +1,9 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class DistributedDdlSupportTest extends FlatSpec with Matchers {
+class DistributedDdlSupportTest extends AnyFlatSpec with Matchers {
 
   class Dummy(val clusterName: Option[String]) extends DistributedDdlSupport
 

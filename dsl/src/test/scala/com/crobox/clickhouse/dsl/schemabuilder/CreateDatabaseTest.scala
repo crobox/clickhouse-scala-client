@@ -1,12 +1,13 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import org.scalatest.{FlatSpecLike, Matchers}
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
 /**
  * @author Sjoerd Mulder
  * @since 2-1-17
  */
-class CreateDatabaseTest extends FlatSpecLike with Matchers {
+class CreateDatabaseTest extends AnyFlatSpecLike with Matchers {
 
   it should "deny creating invalid databases" in {
     intercept[IllegalArgumentException](

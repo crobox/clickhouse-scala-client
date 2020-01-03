@@ -4,13 +4,14 @@ import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.schemabuilder.DefaultValue.Default
 import com.crobox.clickhouse.dsl.schemabuilder.Engine.{DistributedEngine, SummingMergeTree}
 import org.joda.time.LocalDate
-import org.scalatest.{FlatSpecLike, Matchers}
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
 /**
  * @author Sjoerd Mulder
  * @since 30-12-16
  */
-class CreateTableTest extends FlatSpecLike with Matchers {
+class CreateTableTest extends AnyFlatSpecLike with Matchers {
 
   case class TestTable(override val name: String,
                        override val columns: Seq[NativeColumn[_]],
