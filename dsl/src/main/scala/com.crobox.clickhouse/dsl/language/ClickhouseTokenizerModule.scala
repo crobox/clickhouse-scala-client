@@ -41,7 +41,7 @@ trait ClickhouseTokenizerModule
 
   protected def tokenizeSeqCol[C <: TableColumn[_]](colSeq: Seq[C]): String = {
     val prefix = if (colSeq.isEmpty) "" else ", "
-    prefix + colSeq.map(tokenizeColumn).mkString(", ")
+    prefix + colSeq.map(tokenizeColumn).mkFastring(", ")
   }
 
   override def toSql(query: InternalQuery,
@@ -72,7 +72,7 @@ trait ClickhouseTokenizerModule
 
   private def tokenizeUnionAll(unions : Seq[OperationalQuery]) = {
     if (unions.nonEmpty) {
-      unions.map(q => fast"UNION ALL ${toRawSql(q.internalQuery)}").mkString
+      unions.map(q => fast"UNION ALL ${toRawSql(q.internalQuery)}").mkFastring
     } else {
       ""
     }
@@ -106,7 +106,7 @@ trait ClickhouseTokenizerModule
       case alias: AliasedColumn[_] =>
         val originalColumnToken = tokenizeColumn(alias.original)
         if (originalColumnToken.isEmpty) alias.quoted else fast"$originalColumnToken AS ${alias.quoted}"
-      case tuple: TupleColumn[_]         => fast"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
+      case tuple: TupleColumn[_]         => fast"(${tuple.elements.map(tokenizeColumn).mkFastring(",")})"
       case col: ExpressionColumn[_]      => tokenizeExpressionColumn(col)
       case col: AnyTableColumn           => col.quoted
     }
@@ -144,7 +144,7 @@ trait ClickhouseTokenizerModule
       case Conditional(cases, default) =>
         fast"CASE ${cases
           .map(`case` => fast"WHEN ${tokenizeColumn(`case`.condition)} THEN ${tokenizeColumn(`case`.result)}")
-          .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
+          .mkFastring(" ")} ELSE ${tokenizeColumn(default)} END"
       case c: Const[_] => c.parsed
       case a@_ => throw new NotImplementedError(a.getClass.getCanonicalName + " with superclass " + a.getClass.getSuperclass.getCanonicalName + " could not be matched.")
     }
@@ -227,7 +227,7 @@ trait ClickhouseTokenizerModule
     columns.filterNot{
       case EmptyColumn => true
       case _ => false
-    }.map(tokenizeColumn).mkString(", ")
+    }.map(tokenizeColumn).mkFastring(", ")
 
   private def tokenizeJoinType(joinType: JoinQuery.JoinType): String =
     joinType match {
@@ -263,7 +263,7 @@ trait ClickhouseTokenizerModule
       case Some(GroupByQuery(_, _, true)) => Some("WITH TOTALS")
       case _ => None
     }
-    (groupByColumns ++ groupByMode ++ groupByWithTotals).mkString(" ")
+    (groupByColumns ++ groupByMode ++ groupByWithTotals).mkFastring(" ")
   }
 
   private def tokenizeOrderBy(orderBy: Seq[(AnyTableColumn, OrderingDirection)]): String =
@@ -279,14 +279,14 @@ trait ClickhouseTokenizerModule
     }
 
   private def tokenizeColumnsAliased(columns: Seq[AnyTableColumn]): String =
-    columns.map(aliasOrName).mkString(", ")
+    columns.map(aliasOrName).mkFastring(", ")
 
   private def tokenizeTuplesAliased(columns: Seq[(AnyTableColumn, OrderingDirection)]): String =
     columns.map {
         case (column, dir) =>
           aliasOrName(column) + " " + direction(dir)
       }
-      .mkString(", ")
+      .mkFastring(", ")
 
   private def aliasOrName(column: AnyTableColumn) =
     column match {

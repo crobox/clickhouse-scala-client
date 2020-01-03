@@ -9,8 +9,8 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
     agg match {
       case nested: CombinedAggregatedFunction[_, _] =>
         val tokenizedCombinators = collectCombinators(nested).map(tokenizeCombinator)
-        val combinators          = tokenizedCombinators.map(_._1).mkString("")
-        val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkString(",")
+        val combinators          = tokenizedCombinators.map(_._1).mkFastring("")
+        val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkFastring(",")
         val (function, values)   = tokenizeInnerAggregatedFunction(extractTarget(nested))
         val separator            = if (values.isEmpty || combinatorsValues.isEmpty) "" else ","
         fast"$function$combinators($values$separator$combinatorsValues)"
@@ -46,11 +46,11 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case Quantiles(column, levels, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (fast"quantiles$modifierName",
-          fast"${levels.mkString(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
-      case Uniq(column, modifier)      => (s"uniq${tokenizeUniqModifier(modifier)}", tokenizeColumn(column))
-      case Sum(column, modifier)       => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
-      case SumMap(key, value)          => (s"sumMap", tokenizeColumns(Seq(key, value)))
-      case AnyResult(column, modifier) => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
+          fast"${levels.mkFastring(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
+      case Uniq(column, modifier)      => (fast"uniq${tokenizeUniqModifier(modifier)}", tokenizeColumn(column))
+      case Sum(column, modifier)       => (fast"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
+      case SumMap(key, value)          => (fast"sumMap", tokenizeColumns(Seq(key, value)))
+      case AnyResult(column, modifier) => (fast"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
       case Min(tableColumn)            => ("min", tokenizeColumn(tableColumn))
       case Max(tableColumn)            => ("max", tokenizeColumn(tableColumn))
       case GroupUniqArray(tableColumn) => ("groupUniqArray", tokenizeColumn(tableColumn))

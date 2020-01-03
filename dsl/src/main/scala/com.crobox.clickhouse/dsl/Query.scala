@@ -8,7 +8,7 @@ import scala.util.Try
 trait Table {
   val database: String
   val name: String
-  lazy val quoted: String = s"${ClickhouseStatement.quoteIdentifier(database)}.${ClickhouseStatement.quoteIdentifier(name)}"
+  lazy val quoted: String = fast"${ClickhouseStatement.quoteIdentifier(database)}.${ClickhouseStatement.quoteIdentifier(name)}"
   val columns: Seq[NativeColumn[_]]
 }
 

@@ -7,12 +7,12 @@ trait InFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
   def tokenizeInFunction(col: InFunction): String = col match {
-    case t: Tuple => fast"(${t.coln.map(col => tokenizeColumn(col.column)).mkString(", ")})" // Tuple Creation Operator
+    case t: Tuple => fast"(${t.coln.map(col => tokenizeColumn(col.column)).mkFastring(", ")})" // Tuple Creation Operator
     case t: TupleElement[_] => fast"${tokenizeColumn(t.tuple.column)}.${tokenizeColumn(t.index.column)})" // Access Operators
     case col: InFunctionCol[_] => tokenizeInFunctionCol(col)
   }
 
-  private def tokenizeInFunctionCol(col: InFunctionCol[_]) = col match {
+  private def tokenizeInFunctionCol(col: InFunctionCol[_]): String = col match {
     case In(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
       fast"${tokenizeColumn(l.column)} IN ${tokenizeInFunRHCol(r)}"
     case NotIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>

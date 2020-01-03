@@ -19,7 +19,7 @@ lazy val root = (project in file("."))
       List(
         organization := "com.crobox.clickhouse",
         scalaVersion := "2.12.10",
-        crossScalaVersions := List("2.12.10", "2.13.1"),
+        crossScalaVersions := List("2.12.10"),//, "2.13.1"), disabled because of fastring not yet compatible
         scalacOptions ++= List(
           "-unchecked",
           "-deprecation",

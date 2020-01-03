@@ -26,7 +26,7 @@ trait TypeCastFunctionTokenizer { self: ClickhouseTokenizerModule =>
       case FixedString(tableColumn, n)  => fast"toFixedString(${tokenizeColumn(tableColumn.column)},$n)"
       case StringCutToZero(tableColumn) => fast"toStringCutToZero(${tokenizeColumn(tableColumn.column)})"
 
-      case Reinterpret(typeCastColumn) => "reinterpretAs" + tokenizeTypeCastColumn(typeCastColumn).substring(2)
+      case Reinterpret(typeCastColumn)  => fast"reinterpretAs${tokenizeTypeCastColumn(typeCastColumn).substring(2)}"
 
       case Cast(tableColumn, simpleColumnType) => fast"cast(${tokenizeColumn(tableColumn.column)} AS $simpleColumnType)"
     }
