@@ -4,11 +4,11 @@ import java.util.UUID
 
 import com.crobox.clickhouse.dsl.ClickhouseStatement
 import com.crobox.clickhouse.partitioning.PartitionDateFormatter
+import com.dongxiguo.fastring.Fastring.Implicits._
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, LocalDate}
 
 import scala.annotation.implicitNotFound
-import scala.collection.immutable.Iterable
 
 /**
   * Parse a value into its Clickhouse SQL representation and vice - versa.
@@ -71,7 +71,6 @@ trait QueryValueFormats {
 
     override def apply(v: String): String = quote(ClickhouseStatement.escape(v))
 
-    //TODO: Unescape?
     override def unapply(v: String): String = unquote(v)
   }
 
@@ -102,17 +101,15 @@ trait QueryValueFormats {
   class IterableQueryValue[V](ev: QueryValue[V]) extends QueryValue[scala.Iterable[V]] {
 
     override def apply(value: scala.Iterable[V]): String =
-      s"""[${value.map(ev.apply).mkString(",")}]"""
+      fast"[${value.map(ev.apply).mkFastring(",")}]".toString
 
     override def unapply(queryRep: String): scala.Iterable[V] =
       unquote(queryRep).split(",").map(ev.unapply).asInstanceOf[scala.Iterable[V]]
   }
 
-  private def unquote(v: String) =
-    v.substring(1, v.length - 2)
+  private def unquote(v: String): String = v.substring(1, v.length - 2)
 
-  private def quote(v: String) =
-    "'" + v + "'"
+  private def quote(v: String): String = fast"'$v'".toString
 
 }
 

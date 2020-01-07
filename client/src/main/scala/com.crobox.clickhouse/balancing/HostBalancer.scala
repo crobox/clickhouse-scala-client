@@ -21,13 +21,12 @@ trait HostBalancer extends LazyLogging {
 }
 
 object HostBalancer extends ClickhouseHostBuilder {
-  val ConnectionConfigPrefix = "crobox.clickhouse.client.connection"
 
   def apply(
-      config: Config
+      optionalConfig: Option[Config] = None
   )(implicit system: ActorSystem, materializer: Materializer, ec: ExecutionContext): HostBalancer = {
-    val connectionConfig =
-      config.getConfig(ConnectionConfigPrefix)
+    val config = optionalConfig.getOrElse(system.settings.config)
+    val connectionConfig = config.getConfig("connection")
     val connectionType           = ConnectionType(connectionConfig.getString("type"))
     val connectionHostFromConfig = extractHost(connectionConfig)
     connectionType match {
@@ -35,7 +34,7 @@ object HostBalancer extends ClickhouseHostBuilder {
       case BalancingHosts =>
         val manager = system.actorOf(
           ConnectionManagerActor
-            .props(ClickhouseHostHealth.healthFlow(_), config)
+            .props(ClickhouseHostHealth.healthFlow(_))
         )
         MultiHostBalancer(connectionConfig
                             .getConfigList("hosts")
@@ -45,16 +44,15 @@ object HostBalancer extends ClickhouseHostBuilder {
                           manager)
       case ClusterAware =>
         val manager = system.actorOf(
-          ConnectionManagerActor
-            .props(ClickhouseHostHealth.healthFlow(_), config)
+          ConnectionManagerActor.props(ClickhouseHostHealth.healthFlow(_))
         )
         ClusterAwareHostBalancer(
           connectionHostFromConfig,
           connectionConfig.getString("cluster"),
           manager,
-          connectionConfig.getDuration("scanning-interval").getSeconds seconds
+          connectionConfig.getDuration("scanning-interval").getSeconds.seconds
         )(system,
-          config.getDuration("crobox.clickhouse.client.host-retrieval-timeout").getSeconds seconds,
+          config.getDuration("host-retrieval-timeout").getSeconds.seconds,
           ec,
           materializer)
     }

@@ -8,7 +8,6 @@ import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Source}
-import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.ClickhouseResponseParser
 
 import scala.concurrent.duration._
@@ -40,12 +39,12 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
   ): Source[ClickhouseHostStatus, Cancellable] = {
     val healthCheckInterval: FiniteDuration =
       system.settings.config
-        .getDuration(s"${HostBalancer.ConnectionConfigPrefix}.health-check.interval")
-        .getSeconds seconds
+        .getDuration("connection.health-check.interval")
+        .getSeconds.seconds
     val healthCheckTimeout: FiniteDuration =
       system.settings.config
-        .getDuration(s"${HostBalancer.ConnectionConfigPrefix}.health-check.timeout")
-        .getSeconds seconds
+        .getDuration("connection.health-check.timeout")
+        .getSeconds.seconds
 
     val healthCachedPool = Http(system).cachedHostConnectionPool[Int](
       host.authority.host.address(),
@@ -60,7 +59,7 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
         )
     )
     Source
-      .tick(0 milliseconds, healthCheckInterval, 0)
+      .tick(0.milliseconds, healthCheckInterval, 0)
       .map(tick => {
         (HttpRequest(method = HttpMethods.GET, uri = host), tick)
       })

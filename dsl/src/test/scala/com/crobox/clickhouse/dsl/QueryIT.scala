@@ -30,7 +30,7 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
     case class Result(columnResult: String, empty: Int)
     implicit val resultFormat: RootJsonFormat[Result] =
       jsonFormat[String, Int, Result](Result.apply, "column_1", "empty")
-    val results: Future[QueryResult[Result]] = chExecuter.execute[Result](
+    val results: Future[QueryResult[Result]] = chExecutor.execute[Result](
       select  (shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable join (AnyInnerJoin, TwoTestTable) using itemId
     )
     results.futureValue.rows.map(_.columnResult) should be(table2Entries.map(_.firstColumn))
@@ -110,7 +110,7 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
   }
 
   def runQry(query: OperationalQuery): Future[String] = {
-    val che = chExecuter.asInstanceOf[DefaultClickhouseQueryExecutor]
-    clickhouseClient.query(che.toSql(query.internalQuery)(clickhouseClient.database))
+    val che = chExecutor.asInstanceOf[DefaultClickhouseQueryExecutor]
+    clickhouseClient.query(che.toSql(query.internalQuery))
   }
 }

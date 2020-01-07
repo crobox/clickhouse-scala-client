@@ -3,9 +3,10 @@ package com.crobox.clickhouse.time
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone.UTC
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.{FlatSpecLike, Matchers}
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
-class MultiIntervalTest extends FlatSpecLike with Matchers with TableDrivenPropertyChecks {
+class MultiIntervalTest extends AnyFlatSpecLike with Matchers with TableDrivenPropertyChecks {
 
   def toDateTime(year: Int, month: Int, day: Int, hour: Int, minutes: Int, seconds: Int, millis: Int) =
     new DateTime(year, month, day, hour, minutes, seconds, millis, UTC)

@@ -7,24 +7,20 @@ import com.typesafe.config.Config
 import org.scalatest._
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Random, Try}
 
 trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterAll {
   this: Suite =>
 
   val config: Config
-  //  actor system needs to be lazy, if wanting to override it please override this method
-  def buildClickHouseSystem(): ActorSystem = ActorSystem("clickhouse-test")
 
-  private lazy implicit val system: ActorSystem        = buildClickHouseSystem()
-  private lazy implicit val materializer: Materializer = ActorMaterializer()
-  import system.dispatcher
+  val clickhouseSpecTimeout: FiniteDuration = 10.seconds
+  val database                            = s"crobox_clickhouse_client_${Random.nextInt(1000000)}"
 
   def clickClient: ClickhouseClient = internalClient
 
-  protected val database                            = s"crobox_clickhouse_client_${Random.nextInt(1000000)}"
-  private lazy val internalClient: ClickhouseClient = new ClickhouseClient(config, database)
+  private lazy val internalClient: ClickhouseClient = new ClickhouseClient(Some(config))
 
   private def sql(query: String): String = {
     val result = if (query.startsWith("SHOW") || query.startsWith("SELECT")) {
@@ -35,7 +31,7 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
     Await
       .result(result.recoverWith {
         case e: Throwable => Future.successful(e.getMessage)
-      }, 10.seconds)
+      }(ExecutionContext.Implicits.global), clickhouseSpecTimeout)
       .trim()
   }
 
@@ -46,7 +42,7 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
     } else {
       val tables = rawTables.split("\n")
       // Drop all tables
-      tables.foreach(t => blockUntilTableDropped(clickClient.table(t)))
+      tables.foreach(t => blockUntilTableDropped(s"$database.$t"))
       tables.size
     }
   }
@@ -101,5 +97,8 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
 
   override protected def afterAll(): Unit =
     try super.afterAll() // To be stackable, must call super.afterAll
-    finally sql(s"DROP DATABASE IF EXISTS $database")
+    finally {
+      sql(s"DROP DATABASE IF EXISTS $database")
+      Await.result(internalClient.shutdown(), clickhouseSpecTimeout)
+    }
 }

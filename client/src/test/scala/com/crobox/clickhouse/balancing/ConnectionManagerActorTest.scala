@@ -33,7 +33,7 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventual
   override protected def beforeEach(): Unit = {
     super.beforeEach()
     uris = hosts()
-    manager = system.actorOf(ConnectionManagerActor.props(uri => uris(uri)._2, config))
+    manager = system.actorOf(ConnectionManagerActor.props(uri => uris(uri)._2))
   }
 
   override protected def afterEach(): Unit = {
@@ -101,10 +101,11 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventual
       system.actorOf(
         ConnectionManagerActor.props(
           uri => uris(uri)._2,
-          config
-            .withValue("crobox.clickhouse.client.connection.fallback-to-config-host-during-initialization",
-                       ConfigValueFactory.fromAnyRef(true))
-            .withValue("crobox.clickhouse.client.connection.host", ConfigValueFactory.fromAnyRef(host))
+          Some(config
+            .getConfig("crobox.clickhouse.client")
+            .withValue("connection.fallback-to-config-host-during-initialization", ConfigValueFactory.fromAnyRef(true))
+            .withValue("connection.host", ConfigValueFactory.fromAnyRef(host))
+          )
         )
       )
     manager.tell(GetConnection(), client.ref)

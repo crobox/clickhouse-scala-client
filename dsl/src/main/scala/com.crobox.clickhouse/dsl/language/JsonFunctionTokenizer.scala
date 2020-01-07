@@ -1,13 +1,12 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait JsonFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeJsonFunction(col: JsonFunction[_])(implicit database: Database): String = {
+  def tokenizeJsonFunction(col: JsonFunction[_]): String = {
     val command = col match {
       case VisitParamHas(_, _)           => "visitParamHas"
       case VisitParamExtractUInt(_, _)   => "visitParamExtractUInt"

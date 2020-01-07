@@ -180,7 +180,7 @@ class ClickhouseTimeSeriesIT
   }
 
   private def getEntries(multiInterval: MultiInterval, entriesId: UUID) =
-    chExecuter.execute[Result](
+    chExecutor.execute[Result](
       select(count() as "shields", toUInt64(timeSeries(timestampColumn, multiInterval)) as alias)
         .from(OneTestTable)
         .groupBy(alias)

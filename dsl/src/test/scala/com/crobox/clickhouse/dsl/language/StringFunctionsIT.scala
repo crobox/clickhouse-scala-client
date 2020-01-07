@@ -27,21 +27,21 @@ class StringFunctionsIT
 
   it should "split by character" in {
     val resultRows =
-      chExecuter.execute[Result](select(arrayJoin(splitByChar(",", col1)) as "result") from TwoTestTable).futureValue.rows
+      chExecutor.execute[Result](select(arrayJoin(splitByChar(",", col1)) as "result") from TwoTestTable).futureValue.rows
     resultRows.length shouldBe 3
     resultRows.map(_.result) should contain theSameElementsAs Seq("oneem", "twoem", "threeem")
   }
 
   it should "split by string" in {
     val resultRows =
-      chExecuter.execute[Result](select(arrayJoin(splitByString("em,", col1)) as "result") from TwoTestTable).futureValue.rows
+      chExecutor.execute[Result](select(arrayJoin(splitByString("em,", col1)) as "result") from TwoTestTable).futureValue.rows
     resultRows.length shouldBe 3
     resultRows.map(_.result) should contain theSameElementsAs Seq("one", "two", "threeem")
   }
 
   it should "concatenate string back" in {
     val resultRows =
-      chExecuter
+      chExecutor
         .execute[Result](select(arrayStringConcat(splitByChar(",", col1), ",") as "result") from TwoTestTable)
         .futureValue
         .rows

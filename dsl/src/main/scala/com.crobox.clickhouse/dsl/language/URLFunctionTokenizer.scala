@@ -1,13 +1,12 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait URLFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeURLFunction(col: URLFunction[_])(implicit database: Database): String = {
+  def tokenizeURLFunction(col: URLFunction[_]): String = {
     val command = col match {
       case Protocol(_)                       => "protocol"
       case Domain(_)                         => "domain"

@@ -26,10 +26,10 @@ class AggregationFunctionsIT
       def result = columnResult.toInt
     }
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
-    val resultSimple = chExecuter
+    val resultSimple = chExecutor
       .execute[Result](select(uniq(shieldId) as "result") from OneTestTable)
       .futureValue
-    val resultExact = chExecuter
+    val resultExact = chExecutor
       .execute[Result](select(uniqExact(shieldId) as "result") from OneTestTable)
       .futureValue
     resultSimple.rows.head.result shouldBe (entries +- entries / 100)
@@ -40,7 +40,7 @@ class AggregationFunctionsIT
   it should "run quantiles" in {
     case class Result(result: Seq[Int])
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[Int], Result](Result.apply, "result")
-    val result = chExecuter
+    val result = chExecutor
       .execute[Result](
         select(quantiles(col2, 0.1F, 0.2F, 0.3F, 0.4F, 0.5F, 0.99F) as ref[Seq[Int]]("result")) from TwoTestTable
       )
@@ -51,7 +51,7 @@ class AggregationFunctionsIT
   it should "run for each" in {
     case class Result(result: Seq[String])
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[String], Result](Result.apply, "result")
-    val result = chExecuter
+    val result = chExecutor
       .execute[Result](
         select(forEach[Int, TableColumn[Seq[Int]], Double](numbers) { column =>
           sum(column)

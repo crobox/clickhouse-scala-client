@@ -1,18 +1,17 @@
 package com.crobox.clickhouse.dsl.language
 
-import com.dongxiguo.fastring.Fastring.Implicits._
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
+import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait MiscellaneousFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeMiscellaneousFunction(col: MiscellaneousFunction)(implicit database: Database): String = col match {
+  def tokenizeMiscellaneousFunction(col: MiscellaneousFunction): String = col match {
     case col: MiscellaneousOp[_]    => tokenizeMiscOp(col)
     case col: MiscellaneousConst[_] => tokenizeMiscConst(col)
   }
 
-  def tokenizeMiscOp(col: MiscellaneousOp[_])(implicit database: Database): String = col match {
+  def tokenizeMiscOp(col: MiscellaneousOp[_]): String = col match {
     case VisibleWidth(col: ConstOrColMagnet[_]) => fast"visibleWidth(${tokenizeColumn(col.column)})"
     case ToTypeName(col: ConstOrColMagnet[_])   => fast"toTypeName(${tokenizeColumn(col.column)})"
     case Materialize(col: ConstOrColMagnet[_])  => fast"materialize(${tokenizeColumn(col.column)})"
@@ -40,7 +39,7 @@ trait MiscellaneousFunctionTokenizer {
     case MACStringToOUI(col: StringColMagnet[_])     => fast"MACStringToOUI(${tokenizeColumn(col.column)})"
   }
 
-  def tokenizeMiscConst(const: MiscellaneousConst[_])(implicit db: Database): String = const match {
+  def tokenizeMiscConst(const: MiscellaneousConst[_]): String = const match {
     case HostName()                          => "hostName()"
     case BlockSize()                         => "blockSize()"
     case Ignore(coln @ _*) =>
@@ -56,7 +55,7 @@ trait MiscellaneousFunctionTokenizer {
     case RowNumberInAllBlocks() => "rowNumberInAllBlocks()"
   }
 
-  private def tokenizeOpt(col: Option[Magnet[_]])(implicit database: Database) = col match {
+  private def tokenizeOpt(col: Option[Magnet[_]]) = col match {
     case Some(magnetizedCol) => "," + tokenizeColumn(magnetizedCol.column)
     case _                   => ""
   }

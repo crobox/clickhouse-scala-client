@@ -11,7 +11,7 @@ import com.typesafe.config.ConfigFactory
  */
 class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
 
-  val client: ClickhouseClient = new ClickhouseClient(config)
+  val client: ClickhouseClient = new ClickhouseClient(Some(config))
 
   "Clickhouse client" should "select" in {
     client
@@ -29,7 +29,7 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
 
   it should "support compression" in {
     val client: ClickhouseClient = new ClickhouseClient(
-      config.resolveWith(ConfigFactory.parseString("crobox.clickhouse.client.http-compression = true"))
+      Some(config.resolveWith(ConfigFactory.parseString("crobox.clickhouse.client.http-compression = true")))
     )
     client.query("select count(*) from system.tables").map { f =>
       f.trim.toInt > 10 should be(true)
@@ -62,7 +62,7 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
       .queryWithProgress("select sum(number) FROM (select number from system.numbers limit 100000000)")
       .runWith(Sink.seq[QueryProgress])
       .map(progress => {
-        println(progress)
+//        println(progress)
         progress collect {
           case qp: Progress => qp
         } should not be empty

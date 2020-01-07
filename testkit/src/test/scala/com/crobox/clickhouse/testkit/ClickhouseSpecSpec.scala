@@ -1,18 +1,19 @@
 package com.crobox.clickhouse.testkit
 
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalatest.{FlatSpecLike, Matchers}
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
 /**
   * @author Sjoerd Mulder
   * @since 22-10-18
   */
-class ClickhouseSpecSpec extends FlatSpecLike with Matchers with ClickhouseSpec {
+class ClickhouseSpecSpec extends AnyFlatSpecLike with Matchers with ClickhouseSpec {
 
   override val config: Config = ConfigFactory.load()
 
   "ClickhouseSpec" should "have working utilities" in {
-    val table = clickClient.table("dummy")
+    val table = s"$database.dummy"
     clickClient.execute(s"CREATE TABLE $table (date Date) ENGINE = Memory")
     blockUntilTableExists(table)
     blockUntilTableDropped(table)

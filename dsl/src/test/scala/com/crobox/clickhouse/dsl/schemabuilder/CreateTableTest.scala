@@ -1,17 +1,21 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import com.crobox.clickhouse.dsl.TestSchema.TestTable
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.schemabuilder.DefaultValue.Default
 import com.crobox.clickhouse.dsl.schemabuilder.Engine.{DistributedEngine, SummingMergeTree}
 import org.joda.time.LocalDate
-import org.scalatest.{FlatSpecLike, Matchers}
+import org.scalatest.flatspec.AnyFlatSpecLike
+import org.scalatest.matchers.should.Matchers
 
 /**
  * @author Sjoerd Mulder
  * @since 30-12-16
  */
-class CreateTableTest extends FlatSpecLike with Matchers {
+class CreateTableTest extends AnyFlatSpecLike with Matchers {
+
+  case class TestTable(override val name: String,
+                       override val columns: Seq[NativeColumn[_]],
+                       override val database: String = "default") extends Table
 
   it should "deny creating invalid tables and columns" in {
     intercept[IllegalArgumentException](
@@ -35,10 +39,10 @@ class CreateTableTest extends FlatSpecLike with Matchers {
     CreateTable(TestTable("a",
                           List(
                             NativeColumn("b", ColumnType.String)
-                          )),
+                          ), "b"),
                 Engine.TinyLog,
                 ifNotExists = true,
-                "b").toString should be("""CREATE TABLE IF NOT EXISTS b.a (
+                ).toString should be("""CREATE TABLE IF NOT EXISTS b.a (
         |  b String
         |) ENGINE = TinyLog""".stripMargin)
 

@@ -1,17 +1,16 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
-  def tokenizeAggregateFunction(agg: AggregateFunction[_])(implicit database: Database): String =
+  def tokenizeAggregateFunction(agg: AggregateFunction[_]): String =
     agg match {
       case nested: CombinedAggregatedFunction[_, _] =>
         val tokenizedCombinators = collectCombinators(nested).map(tokenizeCombinator)
-        val combinators          = tokenizedCombinators.map(_._1).mkString("")
-        val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkString(",")
+        val combinators          = tokenizedCombinators.map(_._1).mkFastring("")
+        val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkFastring(",")
         val (function, values)   = tokenizeInnerAggregatedFunction(extractTarget(nested))
         val separator            = if (values.isEmpty || combinatorsValues.isEmpty) "" else ","
         fast"$function$combinators($values$separator$combinatorsValues)"
@@ -33,7 +32,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case value                                     => value
     }
 
-  private def tokenizeInnerAggregatedFunction(agg: AggregateFunction[_])(implicit database: Database): (String, String) =
+  private def tokenizeInnerAggregatedFunction(agg: AggregateFunction[_]): (String, String) =
     agg match {
       case Avg(column)   => ("avg", tokenizeColumn(column))
       case Count(column) => ("count", tokenizeColumn(column.getOrElse(EmptyColumn)))
@@ -47,11 +46,11 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case Quantiles(column, levels, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (fast"quantiles$modifierName",
-          fast"${levels.mkString(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
-      case Uniq(column, modifier)      => (s"uniq${tokenizeUniqModifier(modifier)}", tokenizeColumn(column))
-      case Sum(column, modifier)       => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
-      case SumMap(key, value)          => (s"sumMap", tokenizeColumns(Seq(key, value)))
-      case AnyResult(column, modifier) => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
+          fast"${levels.mkFastring(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
+      case Uniq(column, modifier)      => (fast"uniq${tokenizeUniqModifier(modifier)}", tokenizeColumn(column))
+      case Sum(column, modifier)       => (fast"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
+      case SumMap(key, value)          => (fast"sumMap", tokenizeColumns(Seq(key, value)))
+      case AnyResult(column, modifier) => (fast"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
       case Min(tableColumn)            => ("min", tokenizeColumn(tableColumn))
       case Max(tableColumn)            => ("max", tokenizeColumn(tableColumn))
       case GroupUniqArray(tableColumn) => ("groupUniqArray", tokenizeColumn(tableColumn))
@@ -61,7 +60,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
         throw new IllegalArgumentException(s"Cannot use $f aggregated function with combinator")
     }
 
-  def tokenizeLevelModifier(level: LevelModifier)(implicit database: Database): (String, Option[String]) =
+  def tokenizeLevelModifier(level: LevelModifier): (String, Option[String]) =
     level match {
       case LevelModifier.Simple                      => ("", None)
       case LevelModifier.Deterministic(determinator) => ("Deterministic", Some(tokenizeColumn(determinator)))
@@ -95,7 +94,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case AnyModifier.Last   => "Last"
     }
 
-  private def tokenizeCombinator(combinator: Combinator[_, _])(implicit database: Database): (String, Option[String]) =
+  private def tokenizeCombinator(combinator: Combinator[_, _]): (String, Option[String]) =
     combinator match {
       case Combinator.If(condition)     => ("If", Some(tokenizeColumn(condition)))
       case Combinator.CombinatorArray() => ("Array", None)

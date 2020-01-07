@@ -1,13 +1,12 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait DictionaryFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  private def tokenizeDictionaryGet(col: DictionaryGetFuncColumn[_], typeName: String)(implicit database: Database) = {
+  private def tokenizeDictionaryGet(col: DictionaryGetFuncColumn[_], typeName: String) = {
     val default = col.default
       .map(col => "," + tokenizeColumn(col.column))
       .getOrElse("")
@@ -17,7 +16,7 @@ trait DictionaryFunctionTokenizer {
     fast"dictGet$typeName$orDefault(${tokenizeColumn(col.dictName.column)},${tokenizeColumn(col.attrName.column)},${tokenizeColumn(col.id.column)}$default)"
   }
 
-  def tokenizeDictionaryFunction(col: DictionaryFuncColumn[_])(implicit database: Database): String = col match {
+  def tokenizeDictionaryFunction(col: DictionaryFuncColumn[_]): String = col match {
     case col: DictGetUInt8    => tokenizeDictionaryGet(col, "UInt8")
     case col: DictGetUInt16   => tokenizeDictionaryGet(col, "UInt16")
     case col: DictGetUInt32   => tokenizeDictionaryGet(col, "UInt32")

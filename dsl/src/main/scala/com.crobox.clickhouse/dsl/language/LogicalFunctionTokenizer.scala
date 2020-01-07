@@ -1,13 +1,12 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.language.TokenizerModule.Database
 import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait LogicalFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeLogicalFunction(col: LogicalFunction)(implicit database: Database): String = {
+  def tokenizeLogicalFunction(col: LogicalFunction): String = {
     (col.left.asOption, col.right.asOption) match {
       case (None, None) => "1"
       case (Some(left), None) => tokenizeColumn(left)

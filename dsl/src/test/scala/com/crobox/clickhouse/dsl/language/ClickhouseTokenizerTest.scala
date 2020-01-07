@@ -9,6 +9,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 
 class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with ClickhouseTokenizerModule {
   val testSubject = this
+  val database = "default"
 
   "building select statement" should "build select statement" in {
     val select = SelectQuery(Seq(shieldId))

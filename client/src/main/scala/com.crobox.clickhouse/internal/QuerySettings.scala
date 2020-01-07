@@ -44,7 +44,7 @@ case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
     )
   }
 
-  private def path(setting: String) = s"crobox.clickhouse.client.settings.$setting"
+  private def path(setting: String) = s"settings.$setting"
 
 }
 
