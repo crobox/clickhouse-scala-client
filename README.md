@@ -15,11 +15,9 @@ Features:
 * load balancing with internal health checks (multi host and cluster aware host balancer)
 * ability to retry queries
 
-
 *Current implementation should be considered WIP with no guarantees on API back-compatibility*  
 
-Scala versions: 
-- 2.11 (excluding dsl)
+Scala version: 
 - 2.12
 
 Artifacts:
@@ -30,7 +28,7 @@ for sbt you can use
 
 ```
 // https://mvnrepository.com/artifact/com.crobox/clickhouse-scala-client_2.12 
-libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.8.5"
+libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.9.0"
 ```
 
 ## Documentation
