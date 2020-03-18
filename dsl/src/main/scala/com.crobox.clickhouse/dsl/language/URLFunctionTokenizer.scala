@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait URLFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
@@ -37,6 +36,6 @@ trait URLFunctionTokenizer {
       case _                          => ""
     }
 
-    fast"$command(${tokenizeColumn(col.urlColumn.column)}$tail)"
+    s"$command(${tokenizeColumn(col.urlColumn.column)}$tail)"
   }
 }

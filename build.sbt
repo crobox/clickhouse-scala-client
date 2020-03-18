@@ -18,8 +18,8 @@ lazy val root = (project in file("."))
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
-        scalaVersion := "2.12.10",
-        crossScalaVersions := List("2.12.10"),//, "2.13.1"), disabled because of fastring not yet compatible
+        scalaVersion := "2.12.11",
+        crossScalaVersions := List("2.12.11"),//, "2.13.1"), WIP: Not yet fully compile free
         scalacOptions ++= List(
           "-unchecked",
           "-deprecation",
@@ -90,8 +90,7 @@ lazy val dsl = (project in file("dsl"))
     name := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % "23.0",
-      "com.dongxiguo" %% "fastring" % "1.0.0"
+      "com.google.guava" % "guava" % "23.0"
     )
   )
   .dependsOn(client, client % "test->test", testkit % Test)

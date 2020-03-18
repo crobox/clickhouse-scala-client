@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait HigherOrderFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
@@ -17,17 +16,17 @@ trait HigherOrderFunctionTokenizer {
   }
 
   def tokenizeHigherOrderFunction(col: HigherOrderFunction[_, _, _]): String = col match {
-    case col: ArrayMap[_, _]         => fast"arrayMap(${tokenizeHOParams(col)})"
-    case col: ArrayFilter[_]         => fast"arrayFilter(${tokenizeHOParams(col)})"
-    case col: ArrayCount[_]          => fast"arrayCount(${tokenizeHOParams(col)})"
-    case col: ArrayExists[_]         => fast"arrayExists(${tokenizeHOParams(col)})"
-    case col: ArrayAll[_, _]         => fast"arrayAll(${tokenizeHOParams(col)})"
-    case col: ArraySum[_, _]         => fast"arraySum(${tokenizeHOParams(col)})"
-    case col: ArrayFirst[_]          => fast"arrayFirst(${tokenizeHOParams(col)})"
-    case col: ArrayFirstIndex[_]     => fast"arrayFirstIndex(${tokenizeHOParams(col)})"
-    case col: ArrayCumSum[_, _]      => fast"arrayCumSum(${tokenizeHOParams(col)})"
-    case col: ArraySort[_, _]        => fast"arraySort(${tokenizeHOParams(col)})"
-    case col: ArrayReverseSort[_, _] => fast"arrayReverseSort(${tokenizeHOParams(col)})"
+    case col: ArrayMap[_, _]         => s"arrayMap(${tokenizeHOParams(col)})"
+    case col: ArrayFilter[_]         => s"arrayFilter(${tokenizeHOParams(col)})"
+    case col: ArrayCount[_]          => s"arrayCount(${tokenizeHOParams(col)})"
+    case col: ArrayExists[_]         => s"arrayExists(${tokenizeHOParams(col)})"
+    case col: ArrayAll[_, _]         => s"arrayAll(${tokenizeHOParams(col)})"
+    case col: ArraySum[_, _]         => s"arraySum(${tokenizeHOParams(col)})"
+    case col: ArrayFirst[_]          => s"arrayFirst(${tokenizeHOParams(col)})"
+    case col: ArrayFirstIndex[_]     => s"arrayFirstIndex(${tokenizeHOParams(col)})"
+    case col: ArrayCumSum[_, _]      => s"arrayCumSum(${tokenizeHOParams(col)})"
+    case col: ArraySort[_, _]        => s"arraySort(${tokenizeHOParams(col)})"
+    case col: ArrayReverseSort[_, _] => s"arrayReverseSort(${tokenizeHOParams(col)})"
   }
 
 }

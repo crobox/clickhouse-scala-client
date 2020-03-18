@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
@@ -9,15 +8,15 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
     agg match {
       case nested: CombinedAggregatedFunction[_, _] =>
         val tokenizedCombinators = collectCombinators(nested).map(tokenizeCombinator)
-        val combinators          = tokenizedCombinators.map(_._1).mkFastring("")
-        val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkFastring(",")
+        val combinators          = tokenizedCombinators.map(_._1).mkString("")
+        val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkString(",")
         val (function, values)   = tokenizeInnerAggregatedFunction(extractTarget(nested))
         val separator            = if (values.isEmpty || combinatorsValues.isEmpty) "" else ","
-        fast"$function$combinators($values$separator$combinatorsValues)"
+        s"$function$combinators($values$separator$combinatorsValues)"
       case timeSeries: TimeSeries => tokenizeTimeSeries(timeSeries)
       case aggregated: AggregateFunction[_] =>
         val (function, values) = tokenizeInnerAggregatedFunction(aggregated)
-        fast"$function($values)"
+        s"$function($values)"
     }
 
   def collectCombinators(function: AggregateFunction[_]): Seq[Combinator[_, _]] =
@@ -38,24 +37,24 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case Count(column) => ("count", tokenizeColumn(column.getOrElse(EmptyColumn)))
       case Median(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
-        (fast"median$modifierName", fast"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
+        (s"median$modifierName", s"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
       case Quantile(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
-        (fast"quantile$modifierName",
-          fast"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")})")
+        (s"quantile$modifierName",
+          s"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")})")
       case Quantiles(column, levels, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
-        (fast"quantiles$modifierName",
-          fast"${levels.mkFastring(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
-      case Uniq(column, modifier)      => (fast"uniq${tokenizeUniqModifier(modifier)}", tokenizeColumn(column))
-      case Sum(column, modifier)       => (fast"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
-      case SumMap(key, value)          => (fast"sumMap", tokenizeColumns(Seq(key, value)))
-      case AnyResult(column, modifier) => (fast"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
+        (s"quantiles$modifierName",
+          s"${levels.mkString(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
+      case Uniq(column, modifier)      => (s"uniq${tokenizeUniqModifier(modifier)}", tokenizeColumn(column))
+      case Sum(column, modifier)       => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
+      case SumMap(key, value)          => (s"sumMap", tokenizeColumns(Seq(key, value)))
+      case AnyResult(column, modifier) => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
       case Min(tableColumn)            => ("min", tokenizeColumn(tableColumn))
       case Max(tableColumn)            => ("max", tokenizeColumn(tableColumn))
       case GroupUniqArray(tableColumn) => ("groupUniqArray", tokenizeColumn(tableColumn))
       case GroupArray(tableColumn, maxValues) =>
-        ("groupArray", fast"${maxValues.map(_.toString + ")(").getOrElse("")}${tokenizeColumn(tableColumn)}")
+        ("groupArray", s"${maxValues.map(_.toString + ")(").getOrElse("")}${tokenizeColumn(tableColumn)}")
       case f: AggregateFunction[_] =>
         throw new IllegalArgumentException(s"Cannot use $f aggregated function with combinator")
     }

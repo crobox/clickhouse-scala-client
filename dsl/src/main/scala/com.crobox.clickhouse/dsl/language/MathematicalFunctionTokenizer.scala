@@ -1,13 +1,12 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait MathematicalFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
   def tokenizeMathematicalFunction(col: MathFuncColumn): String = col match {
-    case Pow(x: NumericCol[_], y: NumericCol[_]) => fast"pow(${tokenizeColumn(x.column)},${tokenizeColumn(y.column)})"
+    case Pow(x: NumericCol[_], y: NumericCol[_]) => s"pow(${tokenizeColumn(x.column)},${tokenizeColumn(y.column)})"
     case c: MathConst                      => tokenizeMathConst(c)
     case c: MathTransformation             => tokenizeMathTransformation(c)
 
@@ -40,7 +39,7 @@ trait MathematicalFunctionTokenizer {
       case Atan(_)   => "atan"
     }
 
-    fast"$command(${tokenizeColumn(col.numericCol.column)})"
+    s"$command(${tokenizeColumn(col.numericCol.column)})"
   }
 
 }

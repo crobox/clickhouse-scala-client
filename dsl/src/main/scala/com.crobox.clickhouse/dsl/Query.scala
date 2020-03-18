@@ -1,14 +1,13 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.dongxiguo.fastring.Fastring.Implicits._
 
 import scala.util.Try
 
 trait Table {
   val database: String
   val name: String
-  lazy val quoted: String = fast"${ClickhouseStatement.quoteIdentifier(database)}.${ClickhouseStatement.quoteIdentifier(name)}"
+  lazy val quoted: String = s"${ClickhouseStatement.quoteIdentifier(database)}.${ClickhouseStatement.quoteIdentifier(name)}"
   val columns: Seq[NativeColumn[_]]
 }
 
@@ -92,7 +91,7 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
           case (ts: Boolean, tt: Boolean) =>
             true
         },
-        fast"Conflicting parts ${productElement(id)} and ${other.productElement(id)}"
+        s"Conflicting parts ${productElement(id)} and ${other.productElement(id)}"
       )
     })
     :+>(other)

@@ -4,10 +4,10 @@ import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
 import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryResult}
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
-import com.dongxiguo.fastring.Fastring.Implicits._
 import spray.json.{JsonReader, JsonWriter}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.math.BigDecimal
 import scala.util.Try
 
 package object dsl extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats {
@@ -15,8 +15,6 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
   //Naive union type context bound
   trait Contra[-A]
   type Union[A, B] = Contra[A] <:< Contra[B]
-
-  implicit def fstr2str(fstr: Fastring): String = fstr.toString
 
   implicit class QueryExecution(query: Query) {
 
@@ -72,7 +70,14 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
 
     override def toDouble(x: Boolean): Double = if (x) 1 else 0
 
-    override def compare(x: Boolean, y: Boolean): Int = ???
+    def parseString(str: String): Option[Boolean] = Try(str == "1").toOption
+
+    override def compare(x: Boolean, y: Boolean): Int = (x, y) match {
+      case (false, true) => -1
+      case (true, false) => 1
+      case _ => 0
+    }
+
   }
 
   def conditional(column: AnyTableColumn, condition: Boolean): AnyTableColumn =

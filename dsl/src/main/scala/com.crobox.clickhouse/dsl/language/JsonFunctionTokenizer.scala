@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait JsonFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
@@ -17,7 +16,7 @@ trait JsonFunctionTokenizer {
       case VisitParamExtractString(_, _) => "visitParamExtractString"
     }
 
-    fast"$command(${tokenizeColumn(col.params.column)},${tokenizeColumn(col.fieldName.column)})"
+    s"$command(${tokenizeColumn(col.params.column)},${tokenizeColumn(col.fieldName.column)})"
   }
 
 }

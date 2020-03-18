@@ -31,7 +31,7 @@ package object execution {
             }))
         }
         val statistic = jsObject.getFields("rows_before_limit_at_least", "rows") match {
-          case Seq(JsNumber(limit), JsNumber(rowsRead)) => Some(Statistic(rowsRead.longValue(), limit.longValue()))
+          case Seq(JsNumber(limit), JsNumber(rowsRead)) => Some(Statistic(rowsRead.longValue, limit.longValue))
           case _                                        => None
         }
         QueryResult(rows, meta, statistic)

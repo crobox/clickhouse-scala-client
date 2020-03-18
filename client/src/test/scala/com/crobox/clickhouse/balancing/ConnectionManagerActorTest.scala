@@ -69,7 +69,7 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventual
       .flatMap(_ => returnsConnectionsInRoundRobinFashion(manager, uris.keySet.-(host3)))
       .flatMap(_ => {
         uris(host3)._1.offer(ClickhouseHostHealth.Alive(host3))
-        ensureCompleted(uris.filterKeys(_ == host3))
+        ensureCompleted(uris.filter(_._1 == host3))
           .flatMap(_ => returnsConnectionsInRoundRobinFashion(manager, uris.keySet))
       })
   }

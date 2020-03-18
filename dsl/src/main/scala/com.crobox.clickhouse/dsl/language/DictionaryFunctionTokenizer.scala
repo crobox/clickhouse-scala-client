@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait DictionaryFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
@@ -13,7 +12,7 @@ trait DictionaryFunctionTokenizer {
 
     val orDefault = col.default.map(_ => "orDefault").getOrElse("")
 
-    fast"dictGet$typeName$orDefault(${tokenizeColumn(col.dictName.column)},${tokenizeColumn(col.attrName.column)},${tokenizeColumn(col.id.column)}$default)"
+    s"dictGet$typeName$orDefault(${tokenizeColumn(col.dictName.column)},${tokenizeColumn(col.attrName.column)},${tokenizeColumn(col.id.column)}$default)"
   }
 
   def tokenizeDictionaryFunction(col: DictionaryFuncColumn[_]): String = col match {
@@ -32,10 +31,10 @@ trait DictionaryFunctionTokenizer {
     case col: DictGetUUID     => tokenizeDictionaryGet(col, "UUID")
     case col: DictGetString   => tokenizeDictionaryGet(col, "String")
     case DictIsIn(dictName: StringColMagnet[_], childId: ConstOrColMagnet[_], ancestorId: ConstOrColMagnet[_]) =>
-      fast"dictIsIn(${tokenizeColumn(dictName.column)},${tokenizeColumn(childId.column)},${tokenizeColumn(ancestorId.column)})"
+      s"dictIsIn(${tokenizeColumn(dictName.column)},${tokenizeColumn(childId.column)},${tokenizeColumn(ancestorId.column)})"
     case DictGetHierarchy(dictName: StringColMagnet[_], id: ConstOrColMagnet[_]) =>
-      fast"dictGetHierarchy(${tokenizeColumn(dictName.column)},${tokenizeColumn(id.column)})"
+      s"dictGetHierarchy(${tokenizeColumn(dictName.column)},${tokenizeColumn(id.column)})"
     case DictHas(dictName: StringColMagnet[_], id: ConstOrColMagnet[_]) =>
-      fast"dictHas(${tokenizeColumn(dictName.column)},${tokenizeColumn(id.column)})"
+      s"dictHas(${tokenizeColumn(dictName.column)},${tokenizeColumn(id.column)})"
   }
 }

@@ -1,6 +1,5 @@
 package com.crobox.clickhouse.dsl.language
 
-import com.dongxiguo.fastring.Fastring.Implicits._
 import com.crobox.clickhouse.dsl._
 
 trait RandomFunctionTokenizer {

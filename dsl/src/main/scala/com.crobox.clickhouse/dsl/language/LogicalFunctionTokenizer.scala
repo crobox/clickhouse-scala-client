@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait LogicalFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
@@ -18,18 +17,18 @@ trait LogicalFunctionTokenizer {
           else if (right.isConstTrue)
             tokenizeColumn(left)
           else
-            fast"${tokenizeColumn(left)} AND ${tokenizeColumn(right)}"
+            s"${tokenizeColumn(left)} AND ${tokenizeColumn(right)}"
         case Or =>
           if (left.isConstFalse)
             tokenizeColumn(right)
           else if (right.isConstFalse)
             tokenizeColumn(left)
           else
-            fast"((${tokenizeColumn(left)}) OR (${tokenizeColumn(right)}))"
+            s"((${tokenizeColumn(left)}) OR (${tokenizeColumn(right)}))"
         case Xor =>
-          fast"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
+          s"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
         case Not =>
-          fast"not(${tokenizeColumn(left)})"
+          s"not(${tokenizeColumn(left)})"
       }
     }
   }

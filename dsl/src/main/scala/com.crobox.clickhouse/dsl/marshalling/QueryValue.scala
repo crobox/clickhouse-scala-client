@@ -4,7 +4,6 @@ import java.util.UUID
 
 import com.crobox.clickhouse.dsl.ClickhouseStatement
 import com.crobox.clickhouse.partitioning.PartitionDateFormatter
-import com.dongxiguo.fastring.Fastring.Implicits._
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, LocalDate}
 
@@ -67,6 +66,20 @@ trait QueryValueFormats {
     override def unapply(v: String): Long = v.toLong
   }
 
+  implicit object BigDecimalQueryValue extends QueryValue[BigDecimal] {
+
+    override def apply(v: BigDecimal): String = v.toString
+
+    override def unapply(v: String): BigDecimal = BigDecimal(v)
+  }
+
+  implicit object BigIntQueryValue extends QueryValue[BigInt] {
+
+    override def apply(v: BigInt): String = v.toString
+
+    override def unapply(v: String): BigInt = BigInt(v)
+  }
+
   implicit object StringQueryValue extends QueryValue[String] {
 
     override def apply(v: String): String = quote(ClickhouseStatement.escape(v))
@@ -101,7 +114,7 @@ trait QueryValueFormats {
   class IterableQueryValue[V](ev: QueryValue[V]) extends QueryValue[scala.Iterable[V]] {
 
     override def apply(value: scala.Iterable[V]): String =
-      fast"[${value.map(ev.apply).mkFastring(",")}]".toString
+      s"[${value.map(ev.apply).mkString(",")}]".toString
 
     override def unapply(queryRep: String): scala.Iterable[V] =
       unquote(queryRep).split(",").map(ev.unapply).asInstanceOf[scala.Iterable[V]]
@@ -109,7 +122,7 @@ trait QueryValueFormats {
 
   private def unquote(v: String): String = v.substring(1, v.length - 2)
 
-  private def quote(v: String): String = fast"'$v'".toString
+  private def quote(v: String): String = s"'$v'".toString
 
 }
 

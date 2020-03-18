@@ -34,7 +34,7 @@ abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load
 
   def requestParallelHosts(balancer: HostBalancer, connections: Int = 10): Future[Seq[Uri]] =
     Future.sequence(
-      (1 to connections).toParArray
+      (1 to connections)
         .map(_ => {
           balancer.nextHost
         })
@@ -43,7 +43,7 @@ abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load
 
   def getConnections(manager: ActorRef, connections: Int = 10): Future[Seq[Uri]] =
     Future.sequence(
-      (1 to connections).toParArray
+      (1 to connections)
         .map(_ => {
           (manager ? GetConnection()).mapTo[Uri]
         })

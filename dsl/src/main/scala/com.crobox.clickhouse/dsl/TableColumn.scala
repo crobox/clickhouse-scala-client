@@ -3,7 +3,6 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue}
-import com.dongxiguo.fastring.Fastring.Implicits._
 
 case object EmptyColumn extends TableColumn("NULL")
 
@@ -26,9 +25,9 @@ class TableColumn[V](val name: String) extends Column {
 case class NativeColumn[V](override val name: String,
                            clickhouseType: ColumnType = ColumnType.String,
                            defaultValue: DefaultValue = DefaultValue.NoDefault)
-    extends TableColumn[V](name) {
+  extends TableColumn[V](name) {
 
-  def query: String = fast"$quoted $clickhouseType$defaultValue".toString
+  def query: String = s"$quoted $clickhouseType$defaultValue".toString
 }
 
 object TableColumn {
@@ -50,13 +49,13 @@ case class Case[V](condition: TableColumn[Boolean], result: TableColumn[V])
 case class Conditional[V](cases: Seq[Case[V]], default: AnyTableColumn) extends ExpressionColumn[V](EmptyColumn)
 
 /**
- * Used when referencing to a column in an expression
- */
+  * Used when referencing to a column in an expression
+  */
 case class RawColumn(rawSql: String) extends ExpressionColumn[Boolean](EmptyColumn)
 
 /**
- * Parse the supplied value as a constant value column in the query
- */
+  * Parse the supplied value as a constant value column in the query
+  */
 case class Const[V: QueryValue](const: V) extends ExpressionColumn[V](EmptyColumn) {
   val parsed = implicitly[QueryValue[V]].apply(const)
 }

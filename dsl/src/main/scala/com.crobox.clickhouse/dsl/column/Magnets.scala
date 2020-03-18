@@ -6,6 +6,8 @@ import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.crobox.clickhouse.dsl.{Const, EmptyColumn, OperationalQuery, Table, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
 
+import scala.reflect.ClassTag
+
 trait Magnets { self:
   ArithmeticFunctions with
   ComparisonFunctions with
@@ -212,38 +214,38 @@ trait Magnets { self:
   trait NumericCol[C] extends Magnet[C] with AddSubtractable[C] with HexCompatible[C]
     with ComparableWith[NumericCol[_]] with ArithmeticOps[C]
 
-  implicit def numericFromLong[T <: Long : QueryValue](s: T): NumericCol[T] =
-    new NumericCol[T] {
+  implicit def numericFromLong[T <: Long : QueryValue](s: T): NumericCol[Long] =
+    new NumericCol[Long] {
       override val column = Const(s)
     }
 
-  implicit def numericFromInt[T <: Int : QueryValue](s: T): NumericCol[T] =
-    new NumericCol[T] {
+  implicit def numericFromInt[T <: Int : QueryValue](s: T): NumericCol[Int] =
+    new NumericCol[Int] {
       override val column = Const(s)
     }
 
-  implicit def numericFromDouble[T <: Double : QueryValue](s: T): NumericCol[T] =
-    new NumericCol[T] {
+  implicit def numericFromDouble[T <: Double : QueryValue](s: T): NumericCol[Double] =
+    new NumericCol[Double] {
       override val column = Const(s)
     }
 
-  implicit def numericFromFloat[T <: Float : QueryValue](s: T): NumericCol[T] =
-    new NumericCol[T] {
+  implicit def numericFromFloat[T <: Float : QueryValue](s: T): NumericCol[Float] =
+    new NumericCol[Float] {
       override val column = Const(s)
     }
 
-  implicit def numericFromBigInt[T <: BigInt : QueryValue](s: T): NumericCol[T] =
-    new NumericCol[T] {
+  implicit def numericFromBigInt[T <: BigInt : QueryValue](s: T): NumericCol[BigInt] =
+    new NumericCol[BigInt] {
       override val column = Const(s)
     }
 
-  implicit def numericFromBigDecimal[T <: BigDecimal : QueryValue](s: T): NumericCol[T] =
-    new NumericCol[T] {
+  implicit def numericFromBigDecimal[T <: BigDecimal : QueryValue](s: T): NumericCol[BigDecimal] =
+    new NumericCol[BigDecimal] {
       override val column = Const(s)
     }
 
-  implicit def numericFromBoolean[T <: Boolean : QueryValue](s: T): NumericCol[T] =
-    new NumericCol[T] {
+  implicit def numericFromBoolean[T <: Boolean : QueryValue](s: T): NumericCol[Boolean] =
+    new NumericCol[Boolean] {
       override val column = Const(s)
     }
 

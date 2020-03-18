@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.dongxiguo.fastring.Fastring.Implicits._
 
 trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
   protected def tokenizeArithmeticFunction(col: ArithmeticFunction): String = col match {
@@ -12,7 +11,7 @@ trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
   protected def tokenizeArithmeticFunctionColumn(col: ArithmeticFunctionCol[_]): String =
     col match {
       case s: Negate[_] => "-" + tokenizeColumn(s.numericCol.column)
-      case s: Abs[_]    => fast"abs(${tokenizeColumn(s.numericCol.column)})"
+      case s: Abs[_]    => s"abs(${tokenizeColumn(s.numericCol.column)})"
     }
 
   protected def tokenizeArithmeticFunctionOperator(col: ArithmeticFunctionOp[_]): String =
@@ -32,6 +31,6 @@ trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
     tokenizeColumn(col.left.column) + " " + operator + " " + tokenizeColumn(col.right.column)
 
   private def tokenizeAsFunction(col: ArithmeticFunctionOp[_], fn: String) =
-    fast"$fn(${tokenizeColumn(col.left.column)}, ${tokenizeColumn(col.right.column)})"
+    s"$fn(${tokenizeColumn(col.left.column)}, ${tokenizeColumn(col.right.column)})"
 
 }

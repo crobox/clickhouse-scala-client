@@ -71,7 +71,7 @@ trait ClickhouseJsonSupport {
                 }
               }
           }
-        case JsNumber(millis) => new DateTime(millis.longValue(), DateTimeZone.UTC)
+        case JsNumber(millis) => new DateTime(millis.longValue, DateTimeZone.UTC)
         case _                => throw DeserializationException(s"Unknown date format read from clickhouse for $json")
       }
 
