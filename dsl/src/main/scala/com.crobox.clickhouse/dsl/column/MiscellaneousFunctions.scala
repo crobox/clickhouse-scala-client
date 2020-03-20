@@ -2,6 +2,8 @@ package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
 
+import scala.reflect.ClassTag
+
 trait MiscellaneousFunctions { self: Magnets =>
   sealed trait MiscellaneousFunction
 
@@ -46,16 +48,16 @@ trait MiscellaneousFunctions { self: Magnets =>
   case class MACStringToOUI(col: StringColMagnet[_])               extends MiscellaneousOp[Long](col.column)
 
   def hostName()                          = HostName()
-  def visibleWidth(col: ConstOrColMagnet[_]) = VisibleWidth(col)
-  def toTypeName(col: ConstOrColMagnet[_])   = ToTypeName(col)
-  def blockSize()                         = BlockSize()
-  def materialize(col: ConstOrColMagnet[_])  = Materialize(col)
+  def visibleWidth[T: ClassTag](col: ConstOrColMagnet[T]) = VisibleWidth(col)
+  def toTypeName[T: ClassTag](col: ConstOrColMagnet[T])   = ToTypeName(col)
+  def blockSize[T: ClassTag]()                         = BlockSize()
+  def materialize[T: ClassTag](col: ConstOrColMagnet[T])  = Materialize(col)
   def ignore(coln: ConstOrColMagnet[_]*)     = Ignore(coln: _*)
-  def sleep(col: NumericCol[_])              = Sleep(col: NumericCol[_])
+  def sleep[T: ClassTag](col: NumericCol[T])              = Sleep(col: NumericCol[T])
   def currentDatabase()                   = CurrentDatabase()
   def isFinite[O](col: NumericCol[O])           = IsFinite(col)
-  def isInfinite(col: NumericCol[_])         = IsInfinite(col)
-  def isNaN(col: NumericCol[_])              = IsNaN(col: NumericCol[_])
+  def isInfinite[T: ClassTag](col: NumericCol[T])         = IsInfinite(col)
+  def isNaN[T: ClassTag](col: NumericCol[T])              = IsNaN(col: NumericCol[T])
 
   def hasColumnInTable(database: StringColMagnet[_],
                        table: StringColMagnet[_],
@@ -69,16 +71,16 @@ trait MiscellaneousFunctions { self: Magnets =>
 
   def transform[L,R](col: ConstOrColMagnet[L], arrayFrom: ArrayColMagnet[Iterable[L]], arrayTo: ArrayColMagnet[Iterable[R]], default: ConstOrColMagnet[R]) =
     Transform[L,R](col, arrayFrom, arrayTo, default)
-  def formatReadableSize(col: NumericCol[_])                = FormatReadableSize(col)
-  def least(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_])    = Least(a: ConstOrColMagnet[_], b)
-  def greatest(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_]) = Greatest(a: ConstOrColMagnet[_], b)
+  def formatReadableSize[T: ClassTag](col: NumericCol[T])                = FormatReadableSize(col)
+  def least[L, R: ClassTag](a: ConstOrColMagnet[L], b: ConstOrColMagnet[R])    = Least(a: ConstOrColMagnet[L], b)
+  def greatest[L, R: ClassTag](a: ConstOrColMagnet[L], b: ConstOrColMagnet[R]) = Greatest(a: ConstOrColMagnet[L], b)
   def uptime()                                           = Uptime()
   def version()                                          = Version()
   def rowNumberInAllBlocks()                             = RowNumberInAllBlocks()
-  def runningDifference(col: ConstOrColMagnet[_])           = RunningDifference(col)
-  def mACNumToString(col: NumericCol[_])                    = MACNumToString(col)
-  def mACStringToNum(col: StringColMagnet[_])               = MACStringToNum(col)
-  def mACStringToOUI(col: StringColMagnet[_])               = MACStringToOUI(col)
+  def runningDifference[T: ClassTag](col: ConstOrColMagnet[T])           = RunningDifference(col)
+  def mACNumToString[T: ClassTag](col: NumericCol[T])                    = MACNumToString(col)
+  def mACStringToNum[T: ClassTag](col: StringColMagnet[T])               = MACStringToNum(col)
+  def mACStringToOUI[T: ClassTag](col: StringColMagnet[T])               = MACStringToOUI(col)
   /*
 
   hostName()

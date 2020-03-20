@@ -4,6 +4,8 @@ import com.crobox.clickhouse.dsl.{ExpressionColumn, TableColumn}
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
 
+import scala.reflect.ClassTag
+
 trait TypeCastFunctions { self: Magnets =>
 
   abstract class TypeCastColumn[V](val targetColumn: ConstOrColMagnet[_]) extends ExpressionColumn[V](targetColumn.column)
@@ -81,38 +83,38 @@ trait TypeCastFunctions { self: Magnets =>
   implicit object DateCastOutBind        extends CastOutBind[ColumnType.Date.type, Int]
   implicit object DateTimeCastOutBind    extends CastOutBind[ColumnType.DateTime.type, Int]
 
-  def toUInt8(tableColumn: ConstOrColMagnet[_])  = UInt8(tableColumn)
-  def toUInt16(tableColumn: ConstOrColMagnet[_]) = UInt16(tableColumn)
-  def toUInt32(tableColumn: ConstOrColMagnet[_]) = UInt32(tableColumn)
-  def toUInt64(tableColumn: ConstOrColMagnet[_]) = UInt64(tableColumn)
+  def toUInt8[T: ClassTag](tableColumn: ConstOrColMagnet[T])  = UInt8(tableColumn)
+  def toUInt16[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = UInt16(tableColumn)
+  def toUInt32[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = UInt32(tableColumn)
+  def toUInt64[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = UInt64(tableColumn)
 
-  def toInt8(tableColumn: ConstOrColMagnet[_])  = Int8(tableColumn)
-  def toInt16(tableColumn: ConstOrColMagnet[_]) = Int16(tableColumn)
-  def toInt32(tableColumn: ConstOrColMagnet[_]) = Int32(tableColumn)
-  def toInt64(tableColumn: ConstOrColMagnet[_]) = Int64(tableColumn)
+  def toInt8[T: ClassTag](tableColumn: ConstOrColMagnet[T])  = Int8(tableColumn)
+  def toInt16[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = Int16(tableColumn)
+  def toInt32[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = Int32(tableColumn)
+  def toInt64[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = Int64(tableColumn)
 
-  def toFloat32(tableColumn: ConstOrColMagnet[_]) = Float32(tableColumn)
-  def toFloat64(tableColumn: ConstOrColMagnet[_]) = Float64(tableColumn)
+  def toFloat32[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = Float32(tableColumn)
+  def toFloat64[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = Float64(tableColumn)
 
-  def toUInt8OrZero(tableColumn: ConstOrColMagnet[_])  = UInt8(tableColumn, true)
-  def toUInt16OrZero(tableColumn: ConstOrColMagnet[_]) = UInt16(tableColumn, true)
-  def toUInt32OrZero(tableColumn: ConstOrColMagnet[_]) = UInt32(tableColumn, true)
-  def toUInt64OrZero(tableColumn: ConstOrColMagnet[_]) = UInt64(tableColumn, true)
+  def toUInt8OrZero[T: ClassTag](tableColumn: ConstOrColMagnet[T])  = UInt8(tableColumn, true)
+  def toUInt16OrZero[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = UInt16(tableColumn, true)
+  def toUInt32OrZero[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = UInt32(tableColumn, true)
+  def toUInt64OrZero[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = UInt64(tableColumn, true)
 
-  def toInt8OrZero(tableColumn: ConstOrColMagnet[_])  = Int8(tableColumn, true)
-  def toInt16OrZero(tableColumn: ConstOrColMagnet[_]) = Int16(tableColumn, true)
-  def toInt32OrZero(tableColumn: ConstOrColMagnet[_]) = Int32(tableColumn, true)
-  def toInt64OrZero(tableColumn: ConstOrColMagnet[_]) = Int64(tableColumn, true)
+  def toInt8OrZero[T: ClassTag](tableColumn: ConstOrColMagnet[T])  = Int8(tableColumn, true)
+  def toInt16OrZero[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = Int16(tableColumn, true)
+  def toInt32OrZero[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = Int32(tableColumn, true)
+  def toInt64OrZero[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = Int64(tableColumn, true)
 
-  def toFloat32OrZero(tableColumn: ConstOrColMagnet[_]) = Float32(tableColumn, true)
-  def toFloat64OrZero(tableColumn: ConstOrColMagnet[_]) = Float64(tableColumn, true)
+  def toFloat32OrZero[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = Float32(tableColumn, true)
+  def toFloat64OrZero[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = Float64(tableColumn, true)
 
-  def toDate(tableColumn: ConstOrColMagnet[_])     = DateRep(tableColumn)
-  def toDateTime(tableColumn: ConstOrColMagnet[_]) = DateTimeRep(tableColumn)
+  def toDate[T: ClassTag](tableColumn: ConstOrColMagnet[T])     = DateRep(tableColumn)
+  def toDateTime[T: ClassTag](tableColumn: ConstOrColMagnet[T]) = DateTimeRep(tableColumn)
 
-  def toStringRep(tableColumn: ConstOrColMagnet[_])           = StringRep(tableColumn)
-  def toFixedString(tableColumn: ConstOrColMagnet[_], n: Int) = FixedString(tableColumn, n)
-  def toStringCutToZero(tableColumn: ConstOrColMagnet[_])     = StringCutToZero(tableColumn)
+  def toStringRep[T: ClassTag](tableColumn: ConstOrColMagnet[T])           = StringRep(tableColumn)
+  def toFixedString[T: ClassTag](tableColumn: ConstOrColMagnet[T], n: Int) = FixedString(tableColumn, n)
+  def toStringCutToZero[T: ClassTag](tableColumn: ConstOrColMagnet[T])     = StringCutToZero(tableColumn)
 
   def reinterpret[V](typeCastColumn: TypeCastColumn[_] with Reinterpretable) = Reinterpret[V](typeCastColumn)
 

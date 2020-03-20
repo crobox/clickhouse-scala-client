@@ -3,6 +3,8 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.dsl.ExpressionColumn
 import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
+import scala.reflect.ClassTag
+
 trait HashFunctions { self: Magnets =>
   abstract class HashFunction(col: AnyTableColumn) extends ExpressionColumn[String](col)
 
@@ -28,5 +30,5 @@ trait HashFunctions { self: Magnets =>
   def sHA1(col: ConstOrColMagnet[_])                                 = SHA1(col)
   def sHA224(col: ConstOrColMagnet[_])                               = SHA224(col)
   def sHA256(col: ConstOrColMagnet[_])                               = SHA256(col)
-  def uRLHash(col: ConstOrColMagnet[_], depth: NumericCol[_])           = URLHash(col, depth)
+  def uRLHash[T: ClassTag](col: ConstOrColMagnet[T], depth: NumericCol[_])           = URLHash(col, depth)
 }

@@ -8,6 +8,7 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, LocalDate}
 
 import scala.annotation.implicitNotFound
+import scala.reflect.ClassTag
 
 /**
   * Parse a value into its Clickhouse SQL representation and vice - versa.
@@ -108,10 +109,10 @@ trait QueryValueFormats {
     override def unapply(v: String): LocalDate = LocalDate.parse(unquote(v))
   }
 
-  implicit def queryValueToSeq[V](ev: QueryValue[V]): QueryValue[scala.Iterable[V]] =
+  implicit def queryValueToSeq[V: ClassTag](ev: QueryValue[V]): QueryValue[scala.Iterable[V]] =
     new IterableQueryValue(ev)
 
-  class IterableQueryValue[V](ev: QueryValue[V]) extends QueryValue[scala.Iterable[V]] {
+  class IterableQueryValue[V: ClassTag](ev: QueryValue[V]) extends QueryValue[scala.Iterable[V]] {
 
     override def apply(value: scala.Iterable[V]): String =
       s"[${value.map(ev.apply).mkString(",")}]".toString
