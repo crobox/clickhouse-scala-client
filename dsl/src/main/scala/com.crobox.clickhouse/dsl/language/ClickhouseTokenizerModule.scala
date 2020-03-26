@@ -209,6 +209,7 @@ trait ClickhouseTokenizerModule
       .getID
     targetZone
   }
+
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
   private def tokenizeJoin(option: Option[JoinQuery]): String =
     option match {
