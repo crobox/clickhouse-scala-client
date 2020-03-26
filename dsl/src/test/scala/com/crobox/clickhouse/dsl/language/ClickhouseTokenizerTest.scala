@@ -109,6 +109,21 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     )
   }
 
+  it should "add brackets in nested and/or" in {
+    val select = SelectQuery(Seq(shieldId))
+    val uuid   = UUID.randomUUID()
+    val internalQuery = InternalQuery(Some(select),
+      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+      false,
+      None,
+      Some(shieldId < uuid or ((shieldId isEq itemId) or (shieldId < itemId and shieldId > "cro"))))
+    testSubject.toSql(
+      internalQuery
+    ) should be(
+      s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' OR (shield_id = item_id OR (shield_id < item_id AND shield_id > 'cro')) FORMAT JSON"
+    )
+  }
+
   it should "add columns as group by clauses" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
