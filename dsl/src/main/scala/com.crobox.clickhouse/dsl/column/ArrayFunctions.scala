@@ -66,7 +66,7 @@ trait ArrayFunctions { this: Magnets =>
   def emptyArrayDate: EmptyArrayDate                                       = EmptyArrayDate()
   def emptyArrayDateTime: EmptyArrayDateTime                               = EmptyArrayDateTime()
   def emptyArrayString: EmptyArrayString                                   = EmptyArrayString()
-  def emptyArrayToSingle[O](col: ArrayColMagnet[O]): EmptyArrayToSingle[O] = EmptyArrayToSingle[O](col)
+  def emptyArrayToSingle[V](col: ArrayColMagnet[V]): EmptyArrayToSingle[V] = EmptyArrayToSingle[V](col)
   def range(n: NumericCol[_]): Range                                       = Range(n)
 
   def arrayConcat[V](col1: ArrayColMagnet[V], col2: ArrayColMagnet[V], coln: ArrayColMagnet[V]*): ArrayConcat[V] =
