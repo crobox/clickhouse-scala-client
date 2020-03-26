@@ -102,8 +102,9 @@ trait ClickhouseTokenizerModule
       case alias: AliasedColumn[_] =>
         val originalColumnToken = tokenizeColumn(alias.original)
         if (originalColumnToken.isEmpty) alias.quoted else s"$originalColumnToken AS ${alias.quoted}"
-      case tuple: TupleColumn[_]    => s"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
-      case col: LogicalFunction     => s"(${tokenizeExpressionColumn(col)})"
+      case tuple: TupleColumn[_] => s"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
+//      // Can't enable this. Results in failing NumericColFunctionTest
+//      case col: LogicalFunction     => s"(${tokenizeExpressionColumn(col)})"
       case col: ExpressionColumn[_] => tokenizeExpressionColumn(col)
       case col: Column              => col.quoted
     }

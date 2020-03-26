@@ -11,7 +11,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   val testSubject = this
   val database = "default"
 
-  "building select statement" should "build select statement" in {
+  it should "build select statement" in {
     val select = SelectQuery(Seq(shieldId))
     val generatedSql =
       testSubject.toSql(InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable))))
@@ -38,7 +38,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     generatedSql2 should be("SELECT shield_id FROM default.captainAmerica LIMIT 0, 45 FORMAT JSON")
   }
 
-  "building where clause" should "add simple condition between columns" in {
+  it should "add simple condition between columns" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
       InternalQuery(Some(select),
@@ -79,7 +79,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     )
   }
 
-  it should "add brackets between or/and (left double, right single)" in {
+  "" should "add brackets between or/and (left double, right single)" in {
     val select = SelectQuery(Seq(shieldId))
     val uuid   = UUID.randomUUID()
     val internalQuery = InternalQuery(Some(select),
@@ -90,7 +90,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     testSubject.toSql(
       internalQuery
     ) should be(
-      s"SELECT shield_id FROM default.captainAmerica WHERE ((shield_id < '$uuid' AND shield_id = item_id) OR shield_id < item_id) FORMAT JSON"
+      s"SELECT shield_id FROM default.captainAmerica WHERE (shield_id < '$uuid' AND shield_id = item_id) OR shield_id < item_id FORMAT JSON"
     )
   }
 
@@ -105,11 +105,11 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     testSubject.toSql(
       internalQuery
     ) should be(
-      s"SELECT shield_id FROM default.captainAmerica WHERE ((shield_id < '$uuid' AND shield_id = item_id) OR (shield_id < item_id OR shield_id > 'cro')) FORMAT JSON"
+      s"SELECT shield_id FROM default.captainAmerica WHERE (shield_id < '$uuid' AND shield_id = item_id) OR (shield_id < item_id OR shield_id > 'cro') FORMAT JSON"
     )
   }
 
-  "building group by" should "add columns as group by clauses" in {
+  it should "add columns as group by clauses" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
       InternalQuery(Some(select),
@@ -155,7 +155,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
 
   }
 
-  "building joins" should "build table join using select all style" in {
+  it should "build table join using select all style" in {
     val select = SelectQuery(Seq(shieldId))
     val query = testSubject.toSql(
       InternalQuery(

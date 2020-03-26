@@ -30,7 +30,15 @@ trait LogicalFunctionTokenizer {
             else {
               // Depending on the number of clauses (to the right or left) we should add parentheses/brackets or not
               //s"((${tokenizeColumn(left)}) OR (${tokenizeColumn(right)}))"
-              s"${tokenizeColumn(left)} OR ${tokenizeColumn(right)}"
+              val leftSide = left match {
+                case l: LogicalFunction => s"(${tokenizeColumn(left)})"
+                case l                  => tokenizeColumn(left)
+              }
+              val rightSide = right match {
+                case r: LogicalFunction => s"(${tokenizeColumn(right)})"
+                case r                  => tokenizeColumn(right)
+              }
+              s"$leftSide OR $rightSide"
             }
           case Xor =>
             s"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
