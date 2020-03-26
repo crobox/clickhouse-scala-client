@@ -40,7 +40,7 @@ package object parallel {
                     leftTableQry: OperationalQuery,
                     groupCols: Seq[AnyTableColumn]): OperationalQuery = {
 
-      def recursiveCollectCols(qry: InternalQuery, cols: Set[AnyTableColumn] = Set.empty): Set[AnyTableColumn] = {
+      def recursiveCollectCols(qry: InternalQuery, cols: Seq[AnyTableColumn] = Seq.empty): Seq[AnyTableColumn] = {
         val uQry = qry
 
         val selectAll = uQry.select.toSeq.flatMap(_.columns).contains(all())
@@ -49,12 +49,12 @@ package object parallel {
           case Some(value: InnerFromQuery) if selectAll =>
             recursiveCollectCols(value.innerQuery.internalQuery)
           case Some(value: TableFromQuery[_]) if selectAll =>
-            value.table.columns.toSet
+            value.table.columns
           case _ =>
-            Set.empty
+            Seq.empty
         }
 
-        val newCols = cols ++ maybeFromCols ++ uQry.select.toSeq.flatMap(_.columns)
+        val newCols = (cols ++ maybeFromCols ++ uQry.select.toSeq.flatMap(_.columns)).distinct
 
         uQry.join match {
           case Some(JoinQuery(_, q, _, _)) if selectAll => recursiveCollectCols(q.internalQuery, newCols)
@@ -70,7 +70,7 @@ package object parallel {
         .map(origCol => RefColumn(origCol.name))
         .toList
         .filterNot(_.name == EmptyColumn.name)
-        .:+(all())
+        .:+(all()).distinct
 
       select(joinCols: _*)
         .from(leftTableQry)

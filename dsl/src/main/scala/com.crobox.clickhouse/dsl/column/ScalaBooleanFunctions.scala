@@ -5,8 +5,8 @@ import com.crobox.clickhouse.dsl.{Const, TableColumn}
 trait ScalaBooleanFunctions {
   self: Magnets with ComparisonFunctions =>
 
-  trait ScalaBooleanFunctionOps[C] {
-    self: ConstOrColMagnet[C] =>
+  trait ScalaBooleanFunctionOps {
+    self: ConstOrColMagnet[_] =>
 
     def isFalse: TableColumn[Boolean] = _equals(self, Const(false))
 

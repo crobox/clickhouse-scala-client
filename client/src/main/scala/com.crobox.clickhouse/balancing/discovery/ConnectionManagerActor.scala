@@ -106,7 +106,7 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
     hostHealthScheduler.remove(host)
   }
 
-  private def logHostStatus(status: ClickhouseHostStatus) {
+  private def logHostStatus(status: ClickhouseHostStatus): Unit = {
     val host = status.host
     if (!hostsStatus.contains(host)) {
       log.info(s"Adding host status $status")
