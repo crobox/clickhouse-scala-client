@@ -28,6 +28,8 @@ class ArrayFunctionsIT extends ClickhouseClientSpec with ClickhouseSpec {
   it should "arrayFunction: hasAny" in {
     execute(select(hasAny(Array(1, 2, 3, 4), Array(2)))).futureValue.toInt should be(1)
     execute(select(hasAny(Array(1, 2, 3, 4), Array(5)))).futureValue.toInt should be(0)
+    execute(select(hasAny(Array(1, 2, 3, 4), Array(1,2)))).futureValue.toInt should be(1)
+    execute(select(hasAny(Array(1, 2, 3, 4), Array(1,5)))).futureValue.toInt should be(1)
   }
 
   it should "arrayFunction: hasAll" in {
