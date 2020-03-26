@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.language
 import com.crobox.clickhouse.dsl._
 
 trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
-  protected def tokenizeArrayFunction(col: ArrayFunction) = col match {
+  protected def tokenizeArrayFunction(col: ArrayFunction): String = col match {
     case col: ArrayFunctionOp[_]    => tokenizeArrayFunctionOp(col)
     case col: ArrayFunctionConst[_] => tokenizeArrayFunctionConst(col)
   }
@@ -35,8 +35,8 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
       s"arrayPushBack(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
     case ArrayPushFront(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
       s"arrayPushFront(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
-    case ArrayResize(col: ArrayColMagnet[_], offset: NumericCol[_], length: NumericCol[_]) =>
-      s"arraySlice(${tokenizeColumn(col.column)},${tokenizeColumn(offset.column)},${tokenizeColumn(length.column)})"
+    case ArrayResize(col: ArrayColMagnet[_], size: NumericCol[_], extender: ConstOrColMagnet[_]) =>
+      s"arrayResize(${tokenizeColumn(col.column)},${tokenizeColumn(size.column)},${tokenizeColumn(extender.column)})"
     case ArraySlice(col: ArrayColMagnet[_], offset: NumericCol[_], length: NumericCol[_]) =>
       s"arraySlice(${tokenizeColumn(col.column)},${tokenizeColumn(offset.column)},${tokenizeColumn(length.column)})"
     case ArrayUniq(col1: ArrayColMagnet[_], coln @ _*) =>

@@ -36,4 +36,14 @@ class ArrayFunctionsIT extends ClickhouseClientSpec with ClickhouseSpec {
     execute(select(hasAll(Array(1, 2, 3, 4), Array(1,2)))).futureValue.toInt should be(1)
     execute(select(hasAll(Array(1, 2, 3, 4), Array(1,5)))).futureValue.toInt should be(0)
   }
+
+  it should "arrayFunction: resize" in {
+    execute(select(arrayResize(Array(1, 2, 3, 4), 3, 0))).futureValue should be("[1,2,3]")
+    execute(select(arrayResize(Array(1, 2, 3, 4), 4, 0))).futureValue should be("[1,2,3,4]")
+    execute(select(arrayResize(Array(1, 2, 3, 4), 5, 0))).futureValue should be("[1,2,3,4,0]")
+
+    execute(select(arrayResize(Array("a", "b", "c", "d"), 3, "z"))).futureValue should be("['a','b','c']")
+    execute(select(arrayResize(Array("a", "b", "c", "d"), 4, "z"))).futureValue should be("['a','b','c','d']")
+    execute(select(arrayResize(Array("a", "b", "c", "d"), 5, "z"))).futureValue should be("['a','b','c','d','z']")
+  }
 }

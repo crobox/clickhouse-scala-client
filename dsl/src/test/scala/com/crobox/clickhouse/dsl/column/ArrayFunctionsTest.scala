@@ -35,8 +35,21 @@ class ArrayFunctionsTest extends ClickhouseClientSpec with TestSchema {
     extractCondition(query) should be(s"hasAny($arrayNumbersSerialized,[1, 2])")
   }
 
-  def extractCondition(query: Query) = {
-    var sql = clickhouseTokenizer.toSql(query.internalQuery)
+  it should "arrayFunction: resize" in {
+    var query = select(arrayResize(numbers, 4, 0)).from(OneTestTable)
+    extractSelect(query) should be("arrayResize(numbers,4,0)")
+
+    query = select(arrayResize(arrayNumbers, 4, 0)).from(OneTestTable)
+    extractSelect(query) should be(s"arrayResize($arrayNumbersSerialized,4,0)")
+  }
+
+  def extractCondition(query: Query): String = {
+    val sql = clickhouseTokenizer.toSql(query.internalQuery)
     sql.substring(sql.indexOf("WHERE") + 6, sql.indexOf(" FORMAT"))
+  }
+
+  def extractSelect(query: Query): String = {
+    val sql = clickhouseTokenizer.toSql(query.internalQuery)
+    sql.substring(sql.indexOf("SELECT") + 7, sql.indexOf(" FROM"))
   }
 }
