@@ -42,8 +42,7 @@ trait ClickhouseTokenizerModule
     prefix + colSeq.map(tokenizeColumn).mkString(", ")
   }
 
-  override def toSql(query: InternalQuery,
-                     formatting: Option[String] = Some("JSON")): String = {
+  override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON")): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
     val sql       = (toRawSql(query) + formatSql).trim().replaceAll(" +", " ")
     logger.debug(s"Generated sql [$sql]")
@@ -68,13 +67,12 @@ trait ClickhouseTokenizerModule
            | ${tokenizeUnionAll(union)}""".toString.trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
     }
 
-  private def tokenizeUnionAll(unions : Seq[OperationalQuery]) = {
+  private def tokenizeUnionAll(unions: Seq[OperationalQuery]) =
     if (unions.nonEmpty) {
       unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString
     } else {
       ""
     }
-  }
 
   private def tokenizeSelect(select: Option[SelectQuery]) =
     select match {
@@ -104,9 +102,10 @@ trait ClickhouseTokenizerModule
       case alias: AliasedColumn[_] =>
         val originalColumnToken = tokenizeColumn(alias.original)
         if (originalColumnToken.isEmpty) alias.quoted else s"$originalColumnToken AS ${alias.quoted}"
-      case tuple: TupleColumn[_]         => s"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
-      case col: ExpressionColumn[_]      => tokenizeExpressionColumn(col)
-      case col: Column                   => col.quoted
+      case tuple: TupleColumn[_]    => s"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
+      case col: LogicalFunction     => s"(${tokenizeExpressionColumn(col)})"
+      case col: ExpressionColumn[_] => tokenizeExpressionColumn(col)
+      case col: Column              => col.quoted
     }
   }
 
@@ -144,7 +143,10 @@ trait ClickhouseTokenizerModule
           .map(`case` => s"WHEN ${tokenizeColumn(`case`.condition)} THEN ${tokenizeColumn(`case`.result)}")
           .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
       case c: Const[_] => c.parsed
-      case a@_ => throw new NotImplementedError(a.getClass.getCanonicalName + " with superclass " + a.getClass.getSuperclass.getCanonicalName + " could not be matched.")
+      case a @ _ =>
+        throw new NotImplementedError(
+          a.getClass.getCanonicalName + " with superclass " + a.getClass.getSuperclass.getCanonicalName + " could not be matched."
+        )
     }
 
   private[language] def tokenizeTimeSeries(timeSeries: TimeSeries): String = {
@@ -152,7 +154,7 @@ trait ClickhouseTokenizerModule
     tokenizeDuration(timeSeries, column)
   }
 
-  private def tokenizeDuration(timeSeries: TimeSeries, column: String):String = {
+  private def tokenizeDuration(timeSeries: TimeSeries, column: String): String = {
     val interval = timeSeries.interval
     val dateZone = determineZoneId(interval.rawStart)
 
@@ -161,15 +163,15 @@ trait ClickhouseTokenizerModule
     def toDateTime(inner: String): String = s"toDateTime($inner, '$dateZone')"
 
     interval.duration match {
-      case TotalDuration => s"${interval.getStartMillis}"
-      case MultiDuration(1, TimeUnit.Year) => toDateTime(convert("toStartOfYear"))
+      case TotalDuration                      => s"${interval.getStartMillis}"
+      case MultiDuration(1, TimeUnit.Year)    => toDateTime(convert("toStartOfYear"))
       case MultiDuration(1, TimeUnit.Quarter) => toDateTime(convert("toStartOfQuarter"))
-      case MultiDuration(1, TimeUnit.Month) => toDateTime(convert("toStartOfMonth"))
-      case MultiDuration(1, TimeUnit.Week) => toDateTime(convert("toMonday"))
-      case MultiDuration(1, TimeUnit.Day) => convert("toStartOfDay")
-      case MultiDuration(1, TimeUnit.Hour) => convert("toStartOfHour")
-      case MultiDuration(1, TimeUnit.Minute) => convert("toStartOfMinute")
-      case MultiDuration(1, TimeUnit.Second) => toDateTime(s"$column / 1000")
+      case MultiDuration(1, TimeUnit.Month)   => toDateTime(convert("toStartOfMonth"))
+      case MultiDuration(1, TimeUnit.Week)    => toDateTime(convert("toMonday"))
+      case MultiDuration(1, TimeUnit.Day)     => convert("toStartOfDay")
+      case MultiDuration(1, TimeUnit.Hour)    => convert("toStartOfHour")
+      case MultiDuration(1, TimeUnit.Minute)  => convert("toStartOfMinute")
+      case MultiDuration(1, TimeUnit.Second)  => toDateTime(s"$column / 1000")
       case MultiDuration(nth, TimeUnit.Year) =>
         toDateTime(s"subtractYears(${convert("toStartOfYear")}, ${convert("toRelativeYearNum")} % $nth)")
       case MultiDuration(nth, TimeUnit.Quarter) =>
@@ -189,7 +191,6 @@ trait ClickhouseTokenizerModule
     }
   }
 
-
   //TODO this is a fallback to find a similar timezone when the provided interval does not have a set timezone id. We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries (probably default to failing)
   private def determineZoneId(start: DateTime) = {
     val provider = DateTimeZone.getProvider
@@ -198,13 +199,17 @@ trait ClickhouseTokenizerModule
     val targetZone = zones
       .find(_.getID == zone.getID)
       .orElse(
-        zones.find(targetZone => targetZone.getID.startsWith("Etc/") &&
-          targetZone.getOffset(start.getMillis) == start.getZone.getOffset(start.getMillis))
+        zones.find(
+          targetZone =>
+            targetZone.getID.startsWith("Etc/") &&
+            targetZone.getOffset(start.getMillis) == start.getZone.getOffset(start.getMillis)
+        )
       )
       .getOrElse(throw new IllegalArgumentException(s"Could not determine the zone from source $zone"))
       .getID
     targetZone
   }
+
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
   private def tokenizeJoin(option: Option[JoinQuery]): String =
     option match {
@@ -213,16 +218,19 @@ trait ClickhouseTokenizerModule
       case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], usingCols, global)) =>
         s"${isGlobal(global)}${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))}) USING ${tokenizeColumns(usingCols)}"
       case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, usingCols, global)) =>
-        s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin),false)} USING ${tokenizeColumns(usingCols)}"
+        s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin), false)} USING ${tokenizeColumns(usingCols)}"
     }
 
-  private def isGlobal(global:Boolean): String = if (global) "GLOBAL " else ""
+  private def isGlobal(global: Boolean): String = if (global) "GLOBAL " else ""
 
   private[language] def tokenizeColumns(columns: Seq[Column]): String =
-    columns.filterNot{
-      case EmptyColumn => true
-      case _ => false
-    }.map(tokenizeColumn).mkString(", ")
+    columns
+      .filterNot {
+        case EmptyColumn => true
+        case _           => false
+      }
+      .map(tokenizeColumn)
+      .mkString(", ")
 
   private def tokenizeJoinType(joinType: JoinQuery.JoinType): String =
     joinType match {
@@ -248,15 +256,16 @@ trait ClickhouseTokenizerModule
         None
     }
     val groupByMode = groupBy match {
-      case Some(GroupByQuery(_, Some(mode), _)) => Some(mode match {
-        case GroupByQuery.WithRollup => "WITH ROLLUP"
-        case GroupByQuery.WithCube => "WITH CUBE"
-      })
+      case Some(GroupByQuery(_, Some(mode), _)) =>
+        Some(mode match {
+          case GroupByQuery.WithRollup => "WITH ROLLUP"
+          case GroupByQuery.WithCube   => "WITH CUBE"
+        })
       case _ => None
     }
     val groupByWithTotals = groupBy match {
       case Some(GroupByQuery(_, _, true)) => Some("WITH TOTALS")
-      case _ => None
+      case _                              => None
     }
     (groupByColumns ++ groupByMode ++ groupByWithTotals).mkString(" ")
   }
@@ -277,7 +286,8 @@ trait ClickhouseTokenizerModule
     columns.map(aliasOrName).mkString(", ")
 
   private def tokenizeTuplesAliased(columns: Seq[(Column, OrderingDirection)]): String =
-    columns.map {
+    columns
+      .map {
         case (column, dir) =>
           aliasOrName(column) + " " + direction(dir)
       }
@@ -285,9 +295,9 @@ trait ClickhouseTokenizerModule
 
   private def aliasOrName(column: Column) =
     column match {
-      case EmptyColumn                   => ""
-      case alias: AliasedColumn[_]       => alias.quoted
-      case col: Column                   => col.quoted
+      case EmptyColumn             => ""
+      case alias: AliasedColumn[_] => alias.quoted
+      case col: Column             => col.quoted
     }
 
   private def direction(dir: OrderingDirection): String =

@@ -5,32 +5,38 @@ import com.crobox.clickhouse.dsl._
 trait LogicalFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeLogicalFunction(col: LogicalFunction): String = {
+  def tokenizeLogicalFunction(col: LogicalFunction): String =
     (col.left.asOption, col.right.asOption) match {
-      case (None, None) => "1"
-      case (Some(left), None) => tokenizeColumn(left)
+      case (None, None)        => "1"
+      case (Some(left), None)  => tokenizeColumn(left)
       case (None, Some(right)) => tokenizeColumn(right)
-      case (Some(left), Some(right)) => col.operator match {
-        case And =>
-          if (left.isConstTrue)
-            tokenizeColumn(right)
-          else if (right.isConstTrue)
-            tokenizeColumn(left)
-          else
-            s"${tokenizeColumn(left)} AND ${tokenizeColumn(right)}"
-        case Or =>
-          if (left.isConstFalse)
-            tokenizeColumn(right)
-          else if (right.isConstFalse)
-            tokenizeColumn(left)
-          else
-            s"((${tokenizeColumn(left)}) OR (${tokenizeColumn(right)}))"
-        case Xor =>
-          s"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
-        case Not =>
-          s"not(${tokenizeColumn(left)})"
-      }
+      case (Some(left), Some(right)) =>
+        col.operator match {
+          case And =>
+            if (left.isConstTrue)
+              tokenizeColumn(right)
+            else if (right.isConstTrue)
+              tokenizeColumn(left)
+            else {
+              // Depending on the number of clauses (to the right or left) we should add parenthesis/brackets or not
+              //s"((${tokenizeColumn(left)}) AND (${tokenizeColumn(right)}))"
+              s"${tokenizeColumn(left)} AND ${tokenizeColumn(right)}"
+            }
+          case Or =>
+            if (left.isConstFalse)
+              tokenizeColumn(right)
+            else if (right.isConstFalse)
+              tokenizeColumn(left)
+            else {
+              // Depending on the number of clauses (to the right or left) we should add parenthesis/brackets or not
+              //s"((${tokenizeColumn(left)}) OR (${tokenizeColumn(right)}))"
+              s"${tokenizeColumn(left)} OR ${tokenizeColumn(right)}"
+            }
+          case Xor =>
+            s"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
+          case Not =>
+            s"not(${tokenizeColumn(left)})"
+        }
     }
-  }
 
 }
