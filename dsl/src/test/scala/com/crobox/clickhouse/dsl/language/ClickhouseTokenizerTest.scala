@@ -79,7 +79,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     )
   }
 
-  "" should "add brackets between or/and (left double, right single)" in {
+  it should "add brackets between or/and (left double, right single)" in {
     val select = SelectQuery(Seq(shieldId))
     val uuid   = UUID.randomUUID()
     val internalQuery = InternalQuery(Some(select),
