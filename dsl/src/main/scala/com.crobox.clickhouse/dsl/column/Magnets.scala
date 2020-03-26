@@ -25,7 +25,7 @@ trait Magnets { self:
     * The pattern provides implicit conversion to wrapper classes,
     * this allows the DSL to accept multiple compatible column types in a single function.
     */
-  trait Magnet[C] {
+  trait Magnet[+C] {
     val column: TableColumn[C]
   }
 
@@ -33,7 +33,7 @@ trait Magnets { self:
     * Any constant or column.
     * Sidenote: The current implementation doesn't represent collections.
     */
-  trait ConstOrColMagnet[C] extends Magnet[C] with ScalaBooleanFunctionOps[C] with InOps
+  trait ConstOrColMagnet[+C] extends Magnet[C] with ScalaBooleanFunctionOps with InOps
 
   implicit def constOrColMagnetFromCol[C](s: TableColumn[C]): ConstOrColMagnet[C] =
     new ConstOrColMagnet[C] {
@@ -96,7 +96,7 @@ trait Magnets { self:
   /**
     * Represents any collection
     */
-  sealed trait ArrayColMagnet[C] extends Magnet[C]
+  sealed trait ArrayColMagnet[+C] extends Magnet[C]
 
   implicit def arrayColMagnetFromIterable[T : QueryValue](s: Iterable[T]): ArrayColMagnet[Iterable[T]] =
     new ArrayColMagnet[Iterable[T]] {

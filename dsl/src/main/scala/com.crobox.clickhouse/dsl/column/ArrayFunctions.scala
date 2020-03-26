@@ -30,13 +30,13 @@ trait ArrayFunctions { this: Magnets =>
   case class ArrayConcat[V](col1: ArrayColMagnet[V], col2: ArrayColMagnet[V], coln: ArrayColMagnet[V]*)
       extends ArrayFunctionOp[Iterable[V]]
   case class ArrayElement[V](col: ArrayColMagnet[_ <: Iterable[V]], n: NumericCol[_])    extends ArrayFunctionOp[V]
-  case class Has(col: ArrayColMagnet[_], elm: Magnet[_])                                 extends ArrayFunctionOp[Boolean]
-  case class HasAll(col: ArrayColMagnet[_], elm: Magnet[_])                              extends ArrayFunctionOp[Boolean]
-  case class HasAny(col: ArrayColMagnet[_], elm: Magnet[_])                              extends ArrayFunctionOp[Boolean]
+  case class Has[V](col: ArrayColMagnet[V], elm: Magnet[V])                              extends ArrayFunctionOp[Boolean]
+  case class HasAll[V](col: ArrayColMagnet[V], elm: Magnet[V])                           extends ArrayFunctionOp[Boolean]
+  case class HasAny[V](col: ArrayColMagnet[V], elm: Magnet[V])                           extends ArrayFunctionOp[Boolean]
   case class IndexOf[V](col: ArrayColMagnet[_ <: Iterable[V]], elm: ConstOrColMagnet[V]) extends ArrayFunctionOp[Long]
   case class CountEqual[V](col: ArrayColMagnet[_ <: Iterable[V]], elm: ConstOrColMagnet[V])
       extends ArrayFunctionOp[Long]
-  case class ArrayEnumerate(col: ArrayColMagnet[_]) extends ArrayFunctionOp[Iterable[Long]]
+  case class ArrayEnumerate[V](col: ArrayColMagnet[V]) extends ArrayFunctionOp[Iterable[Long]]
   case class ArrayEnumerateUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]], coln: ArrayColMagnet[_ <: Iterable[V]]*)
       extends ArrayFunctionOp[Iterable[Long]]
   case class ArrayPopBack[V](col: ArrayColMagnet[_ <: Iterable[V]])  extends ArrayFunctionOp[Iterable[V]]
@@ -72,14 +72,14 @@ trait ArrayFunctions { this: Magnets =>
   def arrayConcat[V](col1: ArrayColMagnet[V], col2: ArrayColMagnet[V], coln: ArrayColMagnet[V]*): ArrayConcat[V] =
     ArrayConcat(col1, col2, coln: _*)
   def arrayElement[V](col: ArrayColMagnet[_ <: Iterable[V]], n: NumericCol[_]): ArrayElement[V] = ArrayElement(col, n)
-  def has(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]): Has                                = Has(col, elm)
-  def hasAll(col: ArrayColMagnet[_], elm: ArrayColMagnet[_]): HasAll                            = HasAll(col, elm)
-  def hasAny(col: ArrayColMagnet[_], elm: ArrayColMagnet[_]): HasAny                            = HasAny(col, elm)
+  def has[V](col: ArrayColMagnet[V], elm: ConstOrColMagnet[V]): Has[V]                          = Has(col, elm)
+  def hasAll[V](col: ArrayColMagnet[V], elm: ArrayColMagnet[V]): HasAll[V]                      = HasAll(col, elm)
+  def hasAny[V](col: ArrayColMagnet[V], elm: ArrayColMagnet[V]): HasAny[V]                      = HasAny(col, elm)
   def indexOf[V](col: ArrayColMagnet[_ <: Iterable[V]], elm: ConstOrColMagnet[V]): IndexOf[V]   = IndexOf[V](col, elm)
 
   def countEqual[V](col: ArrayColMagnet[_ <: Iterable[V]], elm: ConstOrColMagnet[V]): CountEqual[V] =
     CountEqual[V](col, elm)
-  def arrayEnumerate(col: ArrayColMagnet[_]): ArrayEnumerate = ArrayEnumerate(col)
+  def arrayEnumerate[V](col: ArrayColMagnet[V]): ArrayEnumerate[V] = ArrayEnumerate(col)
 
   def arrayEnumerateUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]],
                             coln: ArrayColMagnet[_ <: Iterable[V]]*): ArrayEnumerateUniq[V] =

@@ -56,9 +56,9 @@ private[clickhouse] trait ClickhouseResponseParser {
 
   protected def decodeResponse(response: HttpResponse): HttpResponse = {
     val decoder = response.encoding match {
-      case HttpEncodings.gzip ⇒ Gzip
-      case HttpEncodings.deflate ⇒ Deflate
-      case HttpEncodings.identity ⇒ NoCoding
+      case HttpEncodings.gzip => Gzip
+      case HttpEncodings.deflate => Deflate
+      case HttpEncodings.identity => NoCoding
     }
     decoder.decodeMessage(response)
   }

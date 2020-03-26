@@ -11,7 +11,7 @@ trait Column {
   lazy val quoted: String = ClickhouseStatement.quoteIdentifier(name)
 }
 
-class TableColumn[V](val name: String) extends Column {
+abstract class TableColumn[+V](val name: String) extends Column {
 
   def as(alias: String): AliasedColumn[V] =
     AliasedColumn(this, alias)
@@ -19,7 +19,7 @@ class TableColumn[V](val name: String) extends Column {
   def aliased(alias: String): AliasedColumn[V] =
     AliasedColumn(this, alias)
 
-  def as[C <: TableColumn[V]](alias: C): AliasedColumn[V] = AliasedColumn(this, alias.name)
+  def as[C <: Column](alias: C): AliasedColumn[V] = AliasedColumn(this, alias.name)
 }
 
 case class NativeColumn[V](override val name: String,
@@ -36,11 +36,11 @@ object TableColumn {
 
 case class RefColumn[V](ref: String) extends TableColumn[V](ref)
 
-case class AliasedColumn[V](original: TableColumn[V], alias: String) extends TableColumn[V](alias)
+case class AliasedColumn[+V](original: TableColumn[V], alias: String) extends TableColumn[V](alias)
 
 case class TupleColumn[V](elements: AnyTableColumn*) extends TableColumn[V](EmptyColumn.name)
 
-abstract class ExpressionColumn[V](targetColumn: AnyTableColumn) extends TableColumn[V](targetColumn.name)
+abstract class ExpressionColumn[+V](targetColumn: AnyTableColumn) extends TableColumn[V](targetColumn.name)
 
 case class All() extends ExpressionColumn[Long](EmptyColumn)
 
