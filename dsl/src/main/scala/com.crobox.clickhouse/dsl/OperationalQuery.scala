@@ -1,7 +1,5 @@
 package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-
 import scala.util.Try
 
 object OperationalQuery {
@@ -14,12 +12,12 @@ object OperationalQuery {
 
 trait OperationalQuery extends Query {
 
-  def select(columns: AnyTableColumn*): OperationalQuery = {
+  def select(columns: Column*): OperationalQuery = {
     val newSelect = Some(SelectQuery(Seq(columns: _*)))
     OperationalQuery(internalQuery.copy(select = newSelect))
   }
 
-  def distinct(columns: AnyTableColumn*): OperationalQuery = {
+  def distinct(columns: Column*): OperationalQuery = {
     val newSelect = Some(SelectQuery(Seq(columns: _*), "DISTINCT"))
     OperationalQuery(internalQuery.copy(select = newSelect))
   }
@@ -48,7 +46,7 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(asFinal = true))
   }
 
-  def groupBy(columns: AnyTableColumn*): OperationalQuery = {
+  def groupBy(columns: Column*): OperationalQuery = {
     val internalGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery())
     val newGroupBy = Some(internalGroupBy.copy(usingColumns = internalGroupBy.usingColumns ++ columns))
     val newSelect = mergeOperationalColumns(columns)
@@ -83,11 +81,11 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(having = Option(comparison)))
   }
 
-  def orderBy(columns: AnyTableColumn*): OperationalQuery =
+  def orderBy(columns: Column*): OperationalQuery =
     orderByWithDirection(columns.map(c => (c, ASC)): _*)
 
-  def orderByWithDirection(columns: (AnyTableColumn, OrderingDirection)*): OperationalQuery = {
-    val newOrderingColumns: Seq[(_ <: AnyTableColumn, OrderingDirection)] =
+  def orderByWithDirection(columns: (Column, OrderingDirection)*): OperationalQuery = {
+    val newOrderingColumns: Seq[(Column, OrderingDirection)] =
       Seq(columns: _*)
     val newSelect = mergeOperationalColumns(columns.map(_._1))
     OperationalQuery(
@@ -107,7 +105,7 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(unionAll = internalQuery.unionAll :+ otherQuery))
   }
 
-  private def mergeOperationalColumns(newOrderingColumns: Seq[AnyTableColumn]): Option[SelectQuery] = {
+  private def mergeOperationalColumns(newOrderingColumns: Seq[Column]): Option[SelectQuery] = {
     val selectForGroup     = internalQuery.select
 
     val selectForGroupCols = selectForGroup.toSeq.flatMap(_.columns)
@@ -165,12 +163,12 @@ trait OperationalQuery extends Query {
   def globalAnyRightJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AnyRightJoin, query)
 
   def using(
-    column: AnyTableColumn,
-    columns: AnyTableColumn*
+    column: Column,
+    columns: Column*
   ): OperationalQuery = {
     require(internalQuery.join.isDefined)
 
-    val newUsing = (columns :+ column).toSet
+    val newUsing = (columns :+ column).distinct
 
     val newJoin = this.internalQuery.join.get.copy(usingColumns = newUsing)
 

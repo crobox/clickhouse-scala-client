@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.dsl.ExpressionColumn
 
 trait StringSearchFunctions { self: Magnets =>
-  abstract class StringSearchFunc[V](val col1: StringColMagnet[_], val col2: StringColMagnet[_]) extends ExpressionColumn[V](col1.column)
+  abstract class StringSearchFunc[+V](val col1: StringColMagnet[_], val col2: StringColMagnet[_]) extends ExpressionColumn[V](col1.column)
   abstract class StringSearchReplaceFunc(col1: StringColMagnet[_], col2: StringColMagnet[_], val replace: StringColMagnet[_]) extends StringSearchFunc[String](col1, col2)
   
   case class Position(col: StringColMagnet[_], needle: StringColMagnet[_], caseSensitive: Boolean = true) extends StringSearchFunc[Long](col,needle)
@@ -41,7 +41,7 @@ trait StringSearchFunctions { self: Magnets =>
     def strMatch(pattern: StringColMagnet[_]) = StrMatch(self, pattern)
     def extract(pattern: StringColMagnet[_]) = Extract(self, pattern)
     def extractAll(pattern: StringColMagnet[_]) = ExtractAll(self, pattern)
-    def like(pattern: StringColMagnet[_]) = Like(self, pattern)
+    def like(pattern: StringColMagnet[_]): Like = Like(self, pattern)
     def notLike(pattern: StringColMagnet[_]) = NotLike(self, pattern)
     def replaceOne(pattern: StringColMagnet[_], replacement: StringColMagnet[_]) = ReplaceOne(self, pattern, replacement)
     def replaceAll(pattern: StringColMagnet[_], replacement: StringColMagnet[_]) = ReplaceAll(self, pattern, replacement)

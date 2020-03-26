@@ -1,10 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.ExpressionColumn
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
+import com.crobox.clickhouse.dsl.{Column, ExpressionColumn}
 
 trait IPFunctions { self: Magnets =>
-  abstract class IPFunction[O](col: AnyTableColumn) extends ExpressionColumn[O](col)
+  abstract class IPFunction[O](col: Column) extends ExpressionColumn[O](col)
 
   case class IPv4NumToString(col: NumericCol[_])       extends IPFunction[String](col.column)
   case class IPv4StringToNum(col: StringColMagnet[_])  extends IPFunction[Long](col.column)

@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.GroupByQuery.GroupByMode
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
 object GroupByQuery {
 
@@ -12,6 +11,6 @@ object GroupByQuery {
 
 }
 
-case class GroupByQuery(usingColumns: Seq[AnyTableColumn] = Seq.empty,
+case class GroupByQuery(usingColumns: Seq[Column] = Seq.empty,
                         mode: Option[GroupByMode] = None,
                         withTotals: Boolean = false)

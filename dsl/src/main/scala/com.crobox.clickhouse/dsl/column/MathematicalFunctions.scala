@@ -1,14 +1,13 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
+import com.crobox.clickhouse.dsl.{Column, EmptyColumn, ExpressionColumn}
 
 trait MathematicalFunctions { self: Magnets =>
 
-  sealed abstract class MathFuncColumn(col: AnyTableColumn) extends ExpressionColumn[Float](col)
+  sealed abstract class MathFuncColumn(col: Column) extends ExpressionColumn[Double](col)
 
-  abstract class MathConst                                         extends MathFuncColumn(EmptyColumn)
-  abstract class MathTransformation(val numericCol: NumericCol[_])    extends MathFuncColumn(numericCol.column)
+  abstract class MathConst                                          extends MathFuncColumn(EmptyColumn)
+  abstract class MathTransformation(val numericCol: NumericCol[_])  extends MathFuncColumn(numericCol.column)
 
   case class E()  extends MathConst()
   case class Pi() extends MathConst()

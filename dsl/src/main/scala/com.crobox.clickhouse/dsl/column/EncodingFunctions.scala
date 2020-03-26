@@ -1,10 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.{ExpressionColumn, TableColumn}
+import com.crobox.clickhouse.dsl.{Column, ExpressionColumn}
 
 trait EncodingFunctions { self: Magnets =>
-  abstract class EncodingFunction[O](val column: AnyTableColumn) extends ExpressionColumn[O](column)
+  abstract class EncodingFunction[O](val column: Column) extends ExpressionColumn[O](column)
 
   case class Hex(col: HexCompatible[_])            extends EncodingFunction[String](col.column)
   case class Unhex(col: StringColMagnet[_])           extends EncodingFunction[String](col.column)

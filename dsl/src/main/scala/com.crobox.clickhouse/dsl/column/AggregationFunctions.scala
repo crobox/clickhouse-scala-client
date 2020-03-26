@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.column
 
 
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.time.MultiInterval
 
@@ -18,9 +17,9 @@ trait AggregationFunctions
 
   //https://clickhouse.yandex/docs/en/agg_functions/reference
 
-  abstract class AggregateFunction[V](targetColumn: AnyTableColumn) extends ExpressionColumn[V](targetColumn)
+  abstract class AggregateFunction[+V](targetColumn: Column) extends ExpressionColumn[V](targetColumn)
 
-  case class Count(column: Option[AnyTableColumn] = None) extends AggregateFunction[Long](column.getOrElse(EmptyColumn))
+  case class Count(column: Option[Column] = None) extends AggregateFunction[Long](column.getOrElse(EmptyColumn))
 
   case class Avg[V](tableColumn: TableColumn[V]) extends AggregateFunction[Double](tableColumn)
 
@@ -76,7 +75,7 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
 
   sealed trait StateResult[V]
 
-  sealed trait Combinator[T <: Column, Result]
+  sealed trait Combinator[+T <: Column, Result]
 
   object Combinator {
     case class If[T <: Column, Res](condition: TableColumn[Boolean])    extends Combinator[T, Res]
@@ -112,8 +111,8 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
     ): CombinedAggregatedFunction[T, StateResult[Res]] =
       CombinedAggregatedFunction(
         Combinator.State[T, Res](),
-        aggregated.asInstanceOf[AggregateFunction[StateResult[Res]]])
-
+        aggregated
+      )
 
     def merge[T <: TableColumn[StateResult[Res]], Res](aggregated: AggregateFunction[Res]): CombinedAggregatedFunction[T, Res] =
       CombinedAggregatedFunction(Combinator.Merge[T, Res](), aggregated)
@@ -123,7 +122,7 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
 trait UniqFunctions { self: Magnets with AggregationFunctions =>
   sealed trait UniqModifier
 
-  case class Uniq(tableColumn: AnyTableColumn, modifier: UniqModifier = UniqModifier.Simple)
+  case class Uniq(tableColumn: Column, modifier: UniqModifier = UniqModifier.Simple)
     extends AggregateFunction[Long](tableColumn)
 
   object UniqModifier {
@@ -133,11 +132,10 @@ trait UniqFunctions { self: Magnets with AggregationFunctions =>
     case object Exact    extends UniqModifier
   }
 
-    def uniq(tableColumn: AnyTableColumn) =
-      Uniq(tableColumn)
-    def uniqCombined(tableColumn: AnyTableColumn): Uniq = Uniq(tableColumn, UniqModifier.Combined)
-    def uniqExact(tableColumn: AnyTableColumn): Uniq    = Uniq(tableColumn, UniqModifier.Exact)
-    def uniqHLL12(tableColumn: AnyTableColumn): Uniq    = Uniq(tableColumn, UniqModifier.HLL12)
+    def uniq(tableColumn: Column) = Uniq(tableColumn)
+    def uniqCombined(tableColumn: Column): Uniq = Uniq(tableColumn, UniqModifier.Combined)
+    def uniqExact(tableColumn: Column): Uniq    = Uniq(tableColumn, UniqModifier.Exact)
+    def uniqHLL12(tableColumn: Column): Uniq    = Uniq(tableColumn, UniqModifier.HLL12)
 
 }
 
@@ -192,7 +190,7 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
 
 
 trait Leveled { self: Magnets with AggregationFunctions =>
-  sealed abstract class LeveledAggregatedFunction[T](target: AnyTableColumn) extends AggregateFunction[T](target)
+  sealed abstract class LeveledAggregatedFunction[T](target: Column) extends AggregateFunction[T](target)
 
   sealed trait LevelModifier
 

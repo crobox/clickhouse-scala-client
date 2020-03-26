@@ -1,6 +1,5 @@
 package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue}
 
@@ -30,23 +29,19 @@ case class NativeColumn[V](override val name: String,
   def query: String = s"$quoted $clickhouseType$defaultValue".toString
 }
 
-object TableColumn {
-  type AnyTableColumn = Column
-}
-
 case class RefColumn[V](ref: String) extends TableColumn[V](ref)
 
 case class AliasedColumn[+V](original: TableColumn[V], alias: String) extends TableColumn[V](alias)
 
-case class TupleColumn[V](elements: AnyTableColumn*) extends TableColumn[V](EmptyColumn.name)
+case class TupleColumn[V](elements: Column*) extends TableColumn[V](EmptyColumn.name)
 
-abstract class ExpressionColumn[+V](targetColumn: AnyTableColumn) extends TableColumn[V](targetColumn.name)
+abstract class ExpressionColumn[+V](targetColumn: Column) extends TableColumn[V](targetColumn.name)
 
 case class All() extends ExpressionColumn[Long](EmptyColumn)
 
 case class Case[V](condition: TableColumn[Boolean], result: TableColumn[V])
 
-case class Conditional[V](cases: Seq[Case[V]], default: AnyTableColumn) extends ExpressionColumn[V](EmptyColumn)
+case class Conditional[V](cases: Seq[Case[V]], default: Column) extends ExpressionColumn[V](EmptyColumn)
 
 /**
   * Used when referencing to a column in an expression

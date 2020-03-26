@@ -10,24 +10,24 @@ trait ArithmeticFunctions { self: Magnets =>
   abstract class ArithmeticFunctionCol[V](val numericCol: NumericCol[_])
     extends ExpressionColumn[V](numericCol.column)
   with ArithmeticFunction with NumericCol[V] {
-    override val column = this
+    override val column: TableColumn[V] = this
   }
 
   abstract class ArithmeticFunctionOp[V](val left: AddSubtractable[_], val right: AddSubtractable[_])
       extends ExpressionColumn[V](EmptyColumn)
         with ArithmeticFunction with NumericCol[V] {
-    override val column = this
+    override val column: TableColumn[V] = this
   }
 
   trait AddSubtractOps[L] { self: AddSubtractable[_] =>
-    def +[R,O](other: AddSubtractable[R])(implicit ev: AritRetType[L,R,O]) = Plus[O](this, other)
-    def -[R,O](other: AddSubtractable[R])(implicit ev: AritRetType[L,R,O]) = Minus[O](this, other)
+    def +[R,O](other: AddSubtractable[R])(implicit ev: AritRetType[L,R,O]): Plus[O] = Plus[O](this, other)
+    def -[R,O](other: AddSubtractable[R])(implicit ev: AritRetType[L,R,O]): Minus[O] = Minus[O](this, other)
   }
 
   trait ArithmeticOps[L] { self: NumericCol[_] =>
-    def *[R,O](other: NumericCol[R])(implicit ev: AritRetType[L,R,O]) = Multiply[O](this, other)
-    def /[R,O](other: NumericCol[R])(implicit ev: AritRetType[L,R,O])  = Divide[O](this, other)
-    def %[R,O](other: NumericCol[R])(implicit ev: AritRetType[L,R,O]) = Modulo[O](this, other)
+    def *[R,O](other: NumericCol[R])(implicit ev: AritRetType[L,R,O]): Multiply[O] = Multiply[O](this, other)
+    def /[R,O](other: NumericCol[R])(implicit ev: AritRetType[L,R,O]): Divide[O] = Divide[O](this, other)
+    def %[R,O](other: NumericCol[R])(implicit ev: AritRetType[L,R,O]): Modulo[O] = Modulo[O](this, other)
   }
 
   case class Plus[T](l: AddSubtractable[_], r: AddSubtractable[_])    extends ArithmeticFunctionOp[T](l, r)
@@ -101,18 +101,18 @@ trait ArithmeticFunctions { self: Magnets =>
   implicit object DateTimeFloatBinding extends AritRetType[DateTime,Float,DateTime]
   implicit object DateTimeBigDecimalBinding extends AritRetType[DateTime,BigDecimal,DateTime]
   implicit object DateTimeBigIntBinding extends AritRetType[DateTime,BigInt,DateTime]
-  
 
-  def plus[L, R, O](left: AddSubtractable[L], right: AddSubtractable[R])(implicit ev: AritRetType[L,R,O])    = Plus[O](left, right)
-  def minus[L, R, O](left: AddSubtractable[L], right: AddSubtractable[R])(implicit ev: AritRetType[L,R,O])   = Minus[O](left, right)
-  def multiply[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O]) = Multiply[O](left, right)
-  def divide[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O])        = Divide[O](left, right)
-  def intDiv[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O])        = IntDiv[O](left, right)
-  def intDivOrZero[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O])  = IntDivOrZero[O](left, right)
-  def modulo[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O])        = Modulo[O](left, right)
-  def gcd[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O])           = Gcd[O](left, right)
-  def lcm[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O])           = Lcm[O](left, right)
-  def negate[T](targetColumn: NumericCol[T])                      = Negate[T](targetColumn)
-  def abs[T](targetColumn: NumericCol[T])                         = Abs[T](targetColumn)
+
+  def plus[L, R, O](left: AddSubtractable[L], right: AddSubtractable[R])(implicit ev: AritRetType[L,R,O]): Plus[O] = Plus[O](left, right)
+  def minus[L, R, O](left: AddSubtractable[L], right: AddSubtractable[R])(implicit ev: AritRetType[L,R,O]): Minus[O] = Minus[O](left, right)
+  def multiply[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O]): Multiply[O] = Multiply[O](left, right)
+  def divide[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O]): Divide[O] = Divide[O](left, right)
+  def intDiv[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O]): IntDiv[O] = IntDiv[O](left, right)
+  def intDivOrZero[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O]): IntDivOrZero[O] = IntDivOrZero[O](left, right)
+  def modulo[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O]): Modulo[O] = Modulo[O](left, right)
+  def gcd[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O]): Gcd[O] = Gcd[O](left, right)
+  def lcm[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L,R,O]): Lcm[O] = Lcm[O](left, right)
+  def negate[T](targetColumn: NumericCol[T]): Negate[T] = Negate[T](targetColumn)
+  def abs[T](targetColumn: NumericCol[T]): Abs[T] = Abs[T](targetColumn)
 
 }

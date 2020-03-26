@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl.JoinQuery._
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.time.{MultiDuration, TimeUnit, TotalDuration}
 import com.typesafe.scalalogging.Logger
@@ -98,7 +97,7 @@ trait ClickhouseTokenizerModule
 
   private def tokenizeFinal(asFinal: Boolean): String = if (asFinal) "FINAL" else ""
 
-  protected def tokenizeColumn(column: AnyTableColumn): String = {
+  protected def tokenizeColumn(column: Column): String = {
     require(column != null)
     column match {
       case EmptyColumn => ""
@@ -107,7 +106,7 @@ trait ClickhouseTokenizerModule
         if (originalColumnToken.isEmpty) alias.quoted else s"$originalColumnToken AS ${alias.quoted}"
       case tuple: TupleColumn[_]         => s"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
       case col: ExpressionColumn[_]      => tokenizeExpressionColumn(col)
-      case col: AnyTableColumn           => col.quoted
+      case col: Column                   => col.quoted
     }
   }
 
@@ -217,12 +216,9 @@ trait ClickhouseTokenizerModule
         s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin),false)} USING ${tokenizeColumns(usingCols)}"
     }
 
-  private def isGlobal(global:Boolean) = if (global) "GLOBAL " else ""
+  private def isGlobal(global:Boolean): String = if (global) "GLOBAL " else ""
 
-  private[language] def tokenizeColumns(columns: Set[AnyTableColumn]): String =
-    tokenizeColumns(columns.toSeq)
-
-  private[language] def tokenizeColumns(columns: Seq[AnyTableColumn]): String =
+  private[language] def tokenizeColumns(columns: Seq[Column]): String =
     columns.filterNot{
       case EmptyColumn => true
       case _ => false
@@ -265,7 +261,7 @@ trait ClickhouseTokenizerModule
     (groupByColumns ++ groupByMode ++ groupByWithTotals).mkString(" ")
   }
 
-  private def tokenizeOrderBy(orderBy: Seq[(AnyTableColumn, OrderingDirection)]): String =
+  private def tokenizeOrderBy(orderBy: Seq[(Column, OrderingDirection)]): String =
     orderBy.toList match {
       case Nil | null => ""
       case _          => s"ORDER BY ${tokenizeTuplesAliased(orderBy)}"
@@ -277,21 +273,21 @@ trait ClickhouseTokenizerModule
       case Some(Limit(size, offset)) => s"LIMIT $offset, $size"
     }
 
-  private def tokenizeColumnsAliased(columns: Seq[AnyTableColumn]): String =
+  private def tokenizeColumnsAliased(columns: Seq[Column]): String =
     columns.map(aliasOrName).mkString(", ")
 
-  private def tokenizeTuplesAliased(columns: Seq[(AnyTableColumn, OrderingDirection)]): String =
+  private def tokenizeTuplesAliased(columns: Seq[(Column, OrderingDirection)]): String =
     columns.map {
         case (column, dir) =>
           aliasOrName(column) + " " + direction(dir)
       }
       .mkString(", ")
 
-  private def aliasOrName(column: AnyTableColumn) =
+  private def aliasOrName(column: Column) =
     column match {
       case EmptyColumn                   => ""
       case alias: AliasedColumn[_]       => alias.quoted
-      case col: AnyTableColumn           => col.quoted
+      case col: Column                   => col.quoted
     }
 
   private def direction(dir: OrderingDirection): String =

@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery.AllLeftJoin
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
 package object parallel {
 
@@ -23,14 +22,14 @@ package object parallel {
                             joinType: JoinQuery.JoinType = AllLeftJoin)
       extends QueryFactory {
 
-    def on(columns: AnyTableColumn*): OperationalQuery = {
+    def on(columns: Column*): OperationalQuery = {
       val rightTableQryGrouped = rightTableQry.groupBy(columns: _*).orderBy(columns: _*)
       val leftTableQryGrouped  = leftTableQry.groupBy(columns: _*).orderBy(columns: _*)
 
       this._on(rightTableQryGrouped, leftTableQryGrouped, columns)
     }
 
-    def onUngrouped(columns: AnyTableColumn*): OperationalQuery =
+    def onUngrouped(columns: Column*): OperationalQuery =
       this._on(rightTableQry, leftTableQry, columns)
 
     def joinWith(joinType: JoinQuery.JoinType): MergingQueries =
@@ -38,9 +37,9 @@ package object parallel {
 
     private def _on(rightTableQry: OperationalQuery,
                     leftTableQry: OperationalQuery,
-                    groupCols: Seq[AnyTableColumn]): OperationalQuery = {
+                    groupCols: Seq[Column]): OperationalQuery = {
 
-      def recursiveCollectCols(qry: InternalQuery, cols: Seq[AnyTableColumn] = Seq.empty): Seq[AnyTableColumn] = {
+      def recursiveCollectCols(qry: InternalQuery, cols: Seq[Column] = Seq.empty): Seq[Column] = {
         val uQry = qry
 
         val selectAll = uQry.select.toSeq.flatMap(_.columns).contains(all())

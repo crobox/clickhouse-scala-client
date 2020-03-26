@@ -1,10 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.ExpressionColumn
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
+import com.crobox.clickhouse.dsl.{Column, ExpressionColumn}
 
 trait HashFunctions { self: Magnets =>
-  abstract class HashFunction(col: AnyTableColumn) extends ExpressionColumn[String](col)
+  abstract class HashFunction(col: Column) extends ExpressionColumn[String](col)
 
   case class HalfMD5(col: StringColMagnet[_])                               extends HashFunction(col.column)
   case class MD5(col: StringColMagnet[_])                                   extends HashFunction(col.column)

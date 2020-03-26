@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery._
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 
 object JoinQuery {
 
@@ -21,4 +20,4 @@ object JoinQuery {
 
 }
 
-case class JoinQuery(`type`: JoinType, other: FromQuery, usingColumns: Set[AnyTableColumn] = Set[AnyTableColumn](), global: Boolean = false)
+case class JoinQuery(`type`: JoinType, other: FromQuery, usingColumns: Seq[Column] = Seq.empty[Column], global: Boolean = false)

@@ -1,7 +1,5 @@
 package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-
 import scala.util.Try
 
 trait Table {
@@ -31,7 +29,7 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
                                 groupBy: Option[GroupByQuery] = None,
                                 having: Option[TableColumn[Boolean]] = None,
                                 join: Option[JoinQuery] = None,
-                                orderBy: Seq[(AnyTableColumn, OrderingDirection)] = Seq.empty,
+                                orderBy: Seq[(Column, OrderingDirection)] = Seq.empty,
                                 limit: Option[Limit] = None,
                                 unionAll: Seq[OperationalQuery] = Seq.empty
                                ) {

@@ -146,7 +146,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-        join = Some(JoinQuery(JoinQuery.AnyInnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), Set(shieldId)))
+        join = Some(JoinQuery(JoinQuery.AnyInnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), Seq(shieldId)))
       )
     )
     query should be(
@@ -167,7 +167,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
             InnerFromQuery(
               OperationalQuery(InternalQuery(Some(joinSelect), Some(TableFromQuery[TwoTestTable.type](TwoTestTable))))
             ),
-            Set(shieldId),
+            Seq(shieldId),
             true
           )
         )

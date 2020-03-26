@@ -10,17 +10,17 @@ trait MiscellaneousFunctions { self: Magnets =>
       with MiscellaneousFunction
   abstract class MiscellaneousConst[V]() extends ExpressionColumn[V](EmptyColumn) with MiscellaneousFunction
 
-  case class HostName()                          extends MiscellaneousConst[Long]()
+  case class HostName()                             extends MiscellaneousConst[String]()
   case class VisibleWidth(col: ConstOrColMagnet[_]) extends MiscellaneousOp[Long](col)
   case class ToTypeName(col: ConstOrColMagnet[_])   extends MiscellaneousOp[String](col)
-  case class BlockSize()                         extends MiscellaneousConst[Long]()
+  case class BlockSize()                            extends MiscellaneousConst[Long]()
   case class Materialize(col: ConstOrColMagnet[_])  extends MiscellaneousOp[Long](col)
   case class Ignore(coln: ConstOrColMagnet[_]*)     extends MiscellaneousConst[Long]()
   case class Sleep(col: NumericCol[_])              extends MiscellaneousOp[Long](col.column) //is this an operator?
-  case class CurrentDatabase()                   extends MiscellaneousConst[String]()
+  case class CurrentDatabase()                      extends MiscellaneousConst[String]()
   case class IsFinite(col: NumericCol[_])           extends MiscellaneousOp[Boolean](col.column)
   case class IsInfinite(col: NumericCol[_])         extends MiscellaneousOp[Boolean](col.column)
-  case class IsNaN(col: NumericCol[_])              extends MiscellaneousOp[Long](col.column)
+  case class IsNaN(col: NumericCol[_])              extends MiscellaneousOp[Boolean](col.column)
   case class HasColumnInTable(database: StringColMagnet[_],
                               table: StringColMagnet[_],
                               column: StringColMagnet[_],

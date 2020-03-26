@@ -1,11 +1,10 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
-import com.crobox.clickhouse.dsl.{ExpressionColumn, TableColumn}
+import com.crobox.clickhouse.dsl.{Column, ExpressionColumn}
 
 trait StringFunctions { self: Magnets =>
 
-  abstract class StringFunctionCol[V](val innerCol: AnyTableColumn) extends ExpressionColumn[V](innerCol)
+  abstract class StringFunctionCol[+V](val innerCol: Column) extends ExpressionColumn[V](innerCol)
 
   case class Empty(col: EmptyNonEmptyCol[_])      extends StringFunctionCol[Boolean](col.column)
   case class NotEmpty(col: EmptyNonEmptyCol[_])   extends StringFunctionCol[Boolean](col.column)
@@ -29,7 +28,7 @@ trait StringFunctions { self: Magnets =>
 
   // TODO: Enum the charsets?
 
-  trait StringOps{ self: StringColMagnet[_] with EmptyNonEmptyCol[_] =>
+  trait StringOps { self: StringColMagnet[_] with EmptyNonEmptyCol[_] =>
 
     def empty()      = Empty(self)
     def notEmpty()   = NotEmpty(self)

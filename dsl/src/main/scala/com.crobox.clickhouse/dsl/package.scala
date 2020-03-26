@@ -1,13 +1,11 @@
 package com.crobox.clickhouse
 
-import com.crobox.clickhouse.dsl.TableColumn.AnyTableColumn
 import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
 import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryResult}
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import spray.json.{JsonReader, JsonWriter}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.math.BigDecimal
 import scala.util.Try
 
 package object dsl extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats {
@@ -80,7 +78,7 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
 
   }
 
-  def conditional(column: AnyTableColumn, condition: Boolean): AnyTableColumn =
+  def conditional(column: Column, condition: Boolean): Column =
     if (condition) column else EmptyColumn
 
   def ref[V](refName: String): RefColumn[V] = RefColumn[V](refName)
