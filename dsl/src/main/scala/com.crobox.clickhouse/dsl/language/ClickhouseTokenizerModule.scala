@@ -42,8 +42,7 @@ trait ClickhouseTokenizerModule
     prefix + colSeq.map(tokenizeColumn).mkString(", ")
   }
 
-  override def toSql(query: InternalQuery,
-                     formatting: Option[String] = Some("JSON")): String = {
+  override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON")): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
     val sql       = (toRawSql(query) + formatSql).trim().replaceAll(" +", " ")
     logger.debug(s"Generated sql [$sql]")
@@ -68,13 +67,12 @@ trait ClickhouseTokenizerModule
            | ${tokenizeUnionAll(union)}""".toString.trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
     }
 
-  private def tokenizeUnionAll(unions : Seq[OperationalQuery]) = {
+  private def tokenizeUnionAll(unions: Seq[OperationalQuery]) =
     if (unions.nonEmpty) {
       unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString
     } else {
       ""
     }
-  }
 
   private def tokenizeSelect(select: Option[SelectQuery]) =
     select match {
@@ -105,6 +103,7 @@ trait ClickhouseTokenizerModule
         val originalColumnToken = tokenizeColumn(alias.original)
         if (originalColumnToken.isEmpty) alias.quoted else s"$originalColumnToken AS ${alias.quoted}"
       case tuple: TupleColumn[_]         => s"(${tuple.elements.map(tokenizeColumn).mkString(",")})"
+      case col: LogicalFunction     => s"(${tokenizeExpressionColumn(col)})"
       case col: ExpressionColumn[_]      => tokenizeExpressionColumn(col)
       case col: Column                   => col.quoted
     }

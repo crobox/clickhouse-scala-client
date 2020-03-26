@@ -79,7 +79,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     )
   }
 
-  it should "add brackets between or/and" in {
+  it should "add brackets between or/and (left double, right single)" in {
     val select = SelectQuery(Seq(shieldId))
     val uuid   = UUID.randomUUID()
     val internalQuery = InternalQuery(Some(select),
@@ -90,7 +90,22 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     testSubject.toSql(
       internalQuery
     ) should be(
-      s"SELECT shield_id FROM default.captainAmerica WHERE ((shield_id < '$uuid' AND shield_id = item_id) OR (shield_id < item_id)) FORMAT JSON"
+      s"SELECT shield_id FROM default.captainAmerica WHERE ((shield_id < '$uuid' AND shield_id = item_id) OR shield_id < item_id) FORMAT JSON"
+    )
+  }
+
+  it should "add brackets between or/and (left double, right double)" in {
+    val select = SelectQuery(Seq(shieldId))
+    val uuid   = UUID.randomUUID()
+    val internalQuery = InternalQuery(Some(select),
+      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+      false,
+      None,
+      Some((shieldId < uuid and (shieldId isEq itemId)) or (shieldId < itemId or shieldId > "cro")))
+    testSubject.toSql(
+      internalQuery
+    ) should be(
+      s"SELECT shield_id FROM default.captainAmerica WHERE ((shield_id < '$uuid' AND shield_id = item_id) OR (shield_id < item_id OR shield_id > 'cro')) FORMAT JSON"
     )
   }
 
