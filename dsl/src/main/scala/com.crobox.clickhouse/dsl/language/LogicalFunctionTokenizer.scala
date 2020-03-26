@@ -24,7 +24,7 @@ trait LogicalFunctionTokenizer {
           else if (right.isConstFalse)
             tokenizeColumn(left)
           else
-            s"((${tokenizeColumn(left)}) OR (${tokenizeColumn(right)}))"
+            s"${tokenizeColumn(left)} OR ${tokenizeColumn(right)}"
         case Xor =>
           s"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
         case Not =>
