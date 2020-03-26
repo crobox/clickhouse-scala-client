@@ -10,16 +10,16 @@ trait ArrayFunctions { this: Magnets =>
 
   abstract class ArrayFunctionConst[V] extends ExpressionColumn[Iterable[V]](EmptyColumn) with ArrayFunction
 
-  case class EmptyArrayUInt8()       extends ArrayFunctionConst[Long]
-  case class EmptyArrayUInt16()      extends ArrayFunctionConst[Long]
-  case class EmptyArrayUInt32()      extends ArrayFunctionConst[Long]
+  case class EmptyArrayUInt8()       extends ArrayFunctionConst[Boolean]
+  case class EmptyArrayUInt16()      extends ArrayFunctionConst[Short]
+  case class EmptyArrayUInt32()      extends ArrayFunctionConst[Int]
   case class EmptyArrayUInt64()      extends ArrayFunctionConst[Long]
-  case class EmptyArrayInt8()        extends ArrayFunctionConst[Long]
-  case class EmptyArrayInt16()       extends ArrayFunctionConst[Long]
-  case class EmptyArrayInt32()       extends ArrayFunctionConst[Long]
+  case class EmptyArrayInt8()        extends ArrayFunctionConst[Boolean]
+  case class EmptyArrayInt16()       extends ArrayFunctionConst[Short]
+  case class EmptyArrayInt32()       extends ArrayFunctionConst[Int]
   case class EmptyArrayInt64()       extends ArrayFunctionConst[Long]
   case class EmptyArrayFloat32()     extends ArrayFunctionConst[Float]
-  case class EmptyArrayFloat64()     extends ArrayFunctionConst[Float]
+  case class EmptyArrayFloat64()     extends ArrayFunctionConst[Double]
   case class EmptyArrayDate()        extends ArrayFunctionConst[LocalDate]
   case class EmptyArrayDateTime()    extends ArrayFunctionConst[DateTime]
   case class EmptyArrayString()      extends ArrayFunctionConst[String]
