@@ -18,7 +18,7 @@ trait LogicalFunctionTokenizer {
             else if (right.isConstTrue)
               tokenizeColumn(left)
             else {
-              // Depending on the number of clauses (to the right or left) we should add parenthesis/brackets or not
+              // Depending on the number of clauses (to the right or left) we should add parentheses/brackets or not
               //s"((${tokenizeColumn(left)}) AND (${tokenizeColumn(right)}))"
               s"${tokenizeColumn(left)} AND ${tokenizeColumn(right)}"
             }
@@ -28,7 +28,7 @@ trait LogicalFunctionTokenizer {
             else if (right.isConstFalse)
               tokenizeColumn(left)
             else {
-              // Depending on the number of clauses (to the right or left) we should add parenthesis/brackets or not
+              // Depending on the number of clauses (to the right or left) we should add parentheses/brackets or not
               //s"((${tokenizeColumn(left)}) OR (${tokenizeColumn(right)}))"
               s"${tokenizeColumn(left)} OR ${tokenizeColumn(right)}"
             }
