@@ -118,7 +118,7 @@ trait QueryValueFormats {
       s"[${value.map(ev.apply).mkString(",")}]".toString
 
     override def unapply(queryRep: String): scala.Iterable[V] =
-      unquote(queryRep).split(",").map(ev.unapply).asInstanceOf[scala.Iterable[V]]
+      unquote(queryRep).split(",").toIterable.map(ev.unapply)
   }
 
   private def unquote(v: String): String = v.substring(1, v.length - 2)

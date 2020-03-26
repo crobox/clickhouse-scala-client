@@ -22,12 +22,7 @@ class CollectionFunctions extends ColumnFunctionTest {
 
   it should "succeed for IN functions" in {
     val someCollection = Seq(1,4,6,9)
-    val someTuple = tuple(
-      constOrColMagnetFromConst(1),
-      constOrColMagnetFromConst(4),
-      constOrColMagnetFromConst(6),
-      constOrColMagnetFromConst(9)
-    )
+    val someTuple = tuple(1: Int, 4: Int, 6: Int, 9: Int)
     val inNum = 4
     val notInNum = 3
 

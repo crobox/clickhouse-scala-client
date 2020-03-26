@@ -33,7 +33,7 @@ class TypeCastFunctionTest extends ColumnFunctionTest {
     r(toTypeName(toStringRep(someStringNum))) shouldBe "String"
     r(toTypeName(toFixedString(someStringNum,10))) shouldBe "FixedString(10)"
     r(toTypeName(toStringCutToZero(someStringNum))) shouldBe "String"
-    r(reinterpret(toStringRep(65))) shouldBe "A"
+    r(reinterpret(toStringRep(65: Int))) shouldBe "A"
     r(toTypeName(cast(someStringNum,ColumnType.Int32))) shouldBe "Int32"
   }
 

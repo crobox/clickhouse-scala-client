@@ -17,6 +17,6 @@ class HashFunctionTest extends ColumnFunctionTest{
     r(sHA224(someStringData)).nonEmpty shouldBe true
     r(sHA256(someStringData)).nonEmpty shouldBe true
 
-    r(uRLHash("http://www.google.nl/search",1))
+    r(uRLHash("http://www.google.nl/search": String,1: Int))
   }
 }

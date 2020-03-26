@@ -10,7 +10,7 @@ class EncodingFunctionTest extends ColumnFunctionTest {
 
 
     val someUUID = UUID.randomUUID()
-    r(uUIDNumToString(toFixedString("4151302937104031",16))).nonEmpty shouldBe true
+    r(uUIDNumToString(toFixedString("4151302937104031": String,16: Int))).nonEmpty shouldBe true
     r(uUIDStringToNum(someUUID)).nonEmpty shouldBe true
     r(bitmaskToList(2)).nonEmpty shouldBe true
     r(bitmaskToArray(2)).nonEmpty shouldBe true
