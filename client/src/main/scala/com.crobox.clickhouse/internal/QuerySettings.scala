@@ -3,8 +3,9 @@ import akka.http.scaladsl.model.Uri.Query
 import com.crobox.clickhouse.internal.QuerySettings._
 import com.typesafe.config.Config
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
+
 case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
                          authentication: Option[(String, String)] = None,
                          progressHeaders: Option[Boolean] = None,

@@ -2,7 +2,7 @@ package com.crobox.clickhouse.internal
 
 import akka.http.scaladsl.coding.{Deflate, Gzip, NoCoding}
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.HttpEncodings
+import akka.http.scaladsl.model.headers.{HttpEncoding, HttpEncodings}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.Materializer
 import akka.stream.scaladsl.SourceQueue
@@ -59,6 +59,7 @@ private[clickhouse] trait ClickhouseResponseParser {
       case HttpEncodings.gzip => Gzip
       case HttpEncodings.deflate => Deflate
       case HttpEncodings.identity => NoCoding
+      case HttpEncoding(enc) => throw new IllegalArgumentException(s"Unsupported response encoding: $enc")
     }
     decoder.decodeMessage(response)
   }

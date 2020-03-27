@@ -16,7 +16,7 @@ trait StringFunctions { self: Magnets =>
   case class UpperUTF8(col: StringColMagnet[_])   extends StringFunctionCol[String](col.column)
   case class Reverse(col: StringColMagnet[_])     extends StringFunctionCol[String](col.column)
   case class ReverseUTF8(col: StringColMagnet[_]) extends StringFunctionCol[String](col.column)
-  case class Concat(col: StringColMagnet[_], col2: StringColMagnet[_], coln: StringColMagnet[_]*)
+  case class Concat(col: StringColMagnet[_], col2: StringColMagnet[_], columns: StringColMagnet[_]*)
       extends StringFunctionCol[String](col.column)
   case class Substring(col: StringColMagnet[_], offset: NumericCol[_], length: NumericCol[_])
       extends StringFunctionCol[String](col.column)

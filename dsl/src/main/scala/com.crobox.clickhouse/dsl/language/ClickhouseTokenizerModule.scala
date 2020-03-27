@@ -7,7 +7,7 @@ import com.typesafe.scalalogging.Logger
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 trait ClickhouseTokenizerModule
     extends TokenizerModule
@@ -37,10 +37,13 @@ trait ClickhouseTokenizerModule
 
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
-  protected def tokenizeSeqCol[C <: TableColumn[_]](colSeq: Seq[C]): String = {
-    val prefix = if (colSeq.isEmpty) "" else ", "
-    prefix + colSeq.map(tokenizeColumn).mkString(", ")
+  protected def tokenizeSeqCol(col1: Column, columns: Column*): String = {
+    val prefix = if (columns.isEmpty) "" else ", "
+    tokenizeColumn(col1) + prefix + tokenizeSeqCol(columns:_*)
   }
+
+  protected def tokenizeSeqCol(columns: Column*): String =
+    columns.map(tokenizeColumn).mkString(", ")
 
   override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON")): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
@@ -217,7 +220,7 @@ trait ClickhouseTokenizerModule
       case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], usingCols, global)) =>
         s"${isGlobal(global)}${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))}) USING ${tokenizeColumns(usingCols)}"
       case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, usingCols, global)) =>
-        s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin), false)} USING ${tokenizeColumns(usingCols)}"
+        s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin), withPrefix = false)} USING ${tokenizeColumns(usingCols)}"
     }
 
   private def isGlobal(global: Boolean): String = if (global) "GLOBAL " else ""

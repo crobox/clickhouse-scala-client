@@ -18,7 +18,7 @@ trait MiscellaneousFunctionTokenizer {
     case IsFinite(col: NumericCol[_])           => s"isFinite(${tokenizeColumn(col.column)})"
     case IsInfinite(col: NumericCol[_])         => s"isInfinite(${tokenizeColumn(col.column)})"
     case IsNaN(col: NumericCol[_])              => s"isNaN(${tokenizeColumn(col.column)})"
-    case Bar(col: NumericCol[_],from: NumericCol[_],to: NumericCol[_], default: Option[NumericCol[_]]) => {
+    case Bar(col: NumericCol[_], from: NumericCol[_], to: NumericCol[_], default: Option[NumericCol[_]]) => {
       val defaultPart = default.map(col => "," + tokenizeColumn(col.column)).getOrElse("")
       s"bar(${tokenizeColumn(col.column)},${tokenizeColumn(from.column)},${tokenizeColumn(to.column)}${defaultPart})"
     }
@@ -39,12 +39,14 @@ trait MiscellaneousFunctionTokenizer {
   }
 
   def tokenizeMiscConst(const: MiscellaneousConst[_]): String = const match {
-    case HostName()                          => "hostName()"
-    case BlockSize()                         => "blockSize()"
-    case Ignore(coln @ _*) =>
-      s"ignore(${tokenizeSeqCol(coln.map(_.column))})"
-
-    case CurrentDatabase()                   => "currentDatabase()"
+    case HostName() =>
+      "hostName()"
+    case BlockSize() =>
+      "blockSize()"
+    case Ignore(columns @ _*) =>
+      s"ignore(${tokenizeSeqCol(columns.map(_.column): _*)})"
+    case CurrentDatabase() =>
+      "currentDatabase()"
     case HasColumnInTable(database, table, column, hostName, userName, passWord) =>
       s"hasColumnInTable(${tokenizeColumn(database.column)},${tokenizeColumn(table.column)},${tokenizeColumn(
         column.column

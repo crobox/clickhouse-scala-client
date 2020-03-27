@@ -14,7 +14,6 @@ class SingleHostBalancerTest extends ClickhouseClientAsyncSpec {
       .map(_ => {
         balancer.nextHost.map(_ shouldEqual uri)
       })
-      .seq
     Future.sequence(assertions).map(_ => succeed)
   }
 

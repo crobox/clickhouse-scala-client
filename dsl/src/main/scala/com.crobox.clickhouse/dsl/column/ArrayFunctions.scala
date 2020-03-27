@@ -25,10 +25,9 @@ trait ArrayFunctions { this: Magnets =>
   case class EmptyArrayString()      extends ArrayFunctionConst[String]
   case class Range(n: NumericCol[_]) extends ArrayFunctionConst[Long]
 
-  case class EmptyArrayToSingle[V](col: ArrayColMagnet[V])                   extends ArrayFunctionOp[V]
-  case class Array[V](col1: ConstOrColMagnet[V], coln: ConstOrColMagnet[V]*) extends ArrayFunctionOp[Iterable[V]]
-  case class ArrayConcat[V](col1: ArrayColMagnet[V], col2: ArrayColMagnet[V], coln: ArrayColMagnet[V]*)
-      extends ArrayFunctionOp[Iterable[V]]
+  case class EmptyArrayToSingle[V](col: ArrayColMagnet[V])                               extends ArrayFunctionOp[V]
+  case class Array[V](columns: ConstOrColMagnet[V]*)                                     extends ArrayFunctionOp[Iterable[V]]
+  case class ArrayConcat[V](col1: ArrayColMagnet[V], columns: ArrayColMagnet[V]*)        extends ArrayFunctionOp[Iterable[V]]
   case class ArrayElement[V](col: ArrayColMagnet[_ <: Iterable[V]], n: NumericCol[_])    extends ArrayFunctionOp[V]
   case class Has[V](col: ArrayColMagnet[V], elm: Magnet[V])                              extends ArrayFunctionOp[Boolean]
   case class HasAll[V](col: ArrayColMagnet[V], elm: Magnet[V])                           extends ArrayFunctionOp[Boolean]
@@ -37,7 +36,7 @@ trait ArrayFunctions { this: Magnets =>
   case class CountEqual[V](col: ArrayColMagnet[_ <: Iterable[V]], elm: ConstOrColMagnet[V])
       extends ArrayFunctionOp[Long]
   case class ArrayEnumerate[V](col: ArrayColMagnet[V]) extends ArrayFunctionOp[Iterable[Long]]
-  case class ArrayEnumerateUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]], coln: ArrayColMagnet[_ <: Iterable[V]]*)
+  case class ArrayEnumerateUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]], columns: ArrayColMagnet[_ <: Iterable[V]]*)
       extends ArrayFunctionOp[Iterable[Long]]
   case class ArrayPopBack[V](col: ArrayColMagnet[_ <: Iterable[V]])  extends ArrayFunctionOp[Iterable[V]]
   case class ArrayPopFront[V](col: ArrayColMagnet[_ <: Iterable[V]]) extends ArrayFunctionOp[Iterable[V]]
@@ -49,7 +48,7 @@ trait ArrayFunctions { this: Magnets =>
       extends ArrayFunctionOp[Iterable[V]]
   case class ArraySlice[V](col: ArrayColMagnet[_ <: Iterable[V]], offset: NumericCol[_], length: NumericCol[_] = 0)
       extends ArrayFunctionOp[Iterable[V]]
-  case class ArrayUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]], coln: ArrayColMagnet[_ <: Iterable[V]]*)
+  case class ArrayUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]], columns: ArrayColMagnet[_ <: Iterable[V]]*)
       extends ArrayFunctionOp[Long]
   case class ArrayJoin[V](col: ArrayColMagnet[_ <: Iterable[V]]) extends ArrayFunctionOp[V]
 
@@ -69,8 +68,8 @@ trait ArrayFunctions { this: Magnets =>
   def emptyArrayToSingle[V](col: ArrayColMagnet[V]): EmptyArrayToSingle[V] = EmptyArrayToSingle[V](col)
   def range(n: NumericCol[_]): Range                                       = Range(n)
 
-  def arrayConcat[V](col1: ArrayColMagnet[V], col2: ArrayColMagnet[V], coln: ArrayColMagnet[V]*): ArrayConcat[V] =
-    ArrayConcat(col1, col2, coln: _*)
+  def arrayConcat[V](col1: ArrayColMagnet[V], columns: ArrayColMagnet[V]*): ArrayConcat[V] =
+    ArrayConcat(col1, columns: _*)
   def arrayElement[V](col: ArrayColMagnet[_ <: Iterable[V]], n: NumericCol[_]): ArrayElement[V] = ArrayElement(col, n)
   def has[V](col: ArrayColMagnet[V], elm: ConstOrColMagnet[V]): Has[V]                          = Has(col, elm)
   def hasAll[V](col: ArrayColMagnet[V], elm: ArrayColMagnet[V]): HasAll[V]                      = HasAll(col, elm)

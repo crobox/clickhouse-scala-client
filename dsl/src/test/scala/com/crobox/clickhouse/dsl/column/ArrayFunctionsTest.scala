@@ -11,6 +11,17 @@ class ArrayFunctionsTest extends ClickhouseClientSpec with TestSchema {
   val arrayNumbers           = Array(1, 2, 3, 4)
   val arrayNumbersSerialized = "[1, 2, 3, 4]"
 
+
+  it should "arrayFunction: array" in {
+    extractSelect(select(Array())) should be("[]")
+    extractSelect(select(Array(1,2))) should be("[1, 2]")
+  }
+
+  it should "arrayFunction: arrayConcat" in {
+    extractSelect(select(arrayConcat(Array(1)))) should be("arrayConcat([1])")
+    extractSelect(select(arrayConcat(Array(1), Array(2), Array(3)))) should be("arrayConcat([1], [2], [3])")
+  }
+
   it should "arrayFunction: has" in {
     var query = select(All()).from(OneTestTable).where(has(numbers, 1))
     extractCondition(query) should be("has(numbers,1)")
@@ -36,10 +47,10 @@ class ArrayFunctionsTest extends ClickhouseClientSpec with TestSchema {
   }
 
   it should "arrayFunction: resize" in {
-    var query = select(arrayResize(numbers, 4, 0)).from(OneTestTable)
+    var query = select(arrayResize(numbers, 4, 0))
     extractSelect(query) should be("arrayResize(numbers,4,0)")
 
-    query = select(arrayResize(arrayNumbers, 4, 0)).from(OneTestTable)
+    query = select(arrayResize(arrayNumbers, 4, 0))
     extractSelect(query) should be(s"arrayResize($arrayNumbersSerialized,4,0)")
   }
 
@@ -50,6 +61,6 @@ class ArrayFunctionsTest extends ClickhouseClientSpec with TestSchema {
 
   def extractSelect(query: Query): String = {
     val sql = clickhouseTokenizer.toSql(query.internalQuery)
-    sql.substring(sql.indexOf("SELECT") + 7, sql.indexOf(" FROM"))
+    sql.substring(sql.indexOf("SELECT") + 7, sql.indexOf(" FORMAT"))
   }
 }

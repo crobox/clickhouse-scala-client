@@ -9,11 +9,12 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
   }
 
   protected def tokenizeArrayFunctionOp(col: ArrayFunctionOp[_]): String = col match {
-    case EmptyArrayToSingle(col: ArrayColMagnet[_]) => s"emptyArrayToSingle(${tokenizeColumn(col.column)})"
-    case Array(col1: ConstOrColMagnet[_], coln @ _*) =>
-      s"[${tokenizeColumn(col1.column)}${tokenizeSeqCol(coln.map(_.column))}]" //Array Creation Operator
-    case ArrayConcat(col1: ArrayColMagnet[_], col2: ArrayColMagnet[_], coln @ _*) =>
-      s"arrayConcat(${tokenizeColumn(col1.column)},${tokenizeColumn(col2.column)}${tokenizeSeqCol(coln.map(_.column))})"
+    case EmptyArrayToSingle(col: ArrayColMagnet[_]) =>
+      s"emptyArrayToSingle(${tokenizeColumn(col.column)})"
+    case Array(columns @ _*) =>
+      s"[${tokenizeSeqCol(columns.map(_.column): _*)}]" //Array Creation Operator
+    case ArrayConcat(col1: ArrayColMagnet[_], columns @ _*) =>
+      s"arrayConcat(${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
     case ArrayElement(col: ArrayColMagnet[_], n: NumericCol[_]) =>
       s"${tokenizeColumn(col.column)}[${tokenizeColumn(n.column)}]"
     case Has(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
@@ -26,11 +27,14 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
       s"indexOf(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
     case CountEqual(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
       s"countEqual(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
-    case ArrayEnumerate(col: ArrayColMagnet[_]) => s"arrayEnumerate(${tokenizeColumn(col.column)})"
-    case ArrayEnumerateUniq(col1: ArrayColMagnet[_], coln @ _*) =>
-      s"arrayEnumerateUniq(${tokenizeColumn(col1.column)}${tokenizeSeqCol(coln.map(_.column))})"
-    case ArrayPopBack(col: ArrayColMagnet[_])  => s"arrayPopBack(${tokenizeColumn(col.column)})"
-    case ArrayPopFront(col: ArrayColMagnet[_]) => s"arrayPopFront(${tokenizeColumn(col.column)})"
+    case ArrayEnumerate(col: ArrayColMagnet[_]) =>
+      s"arrayEnumerate(${tokenizeColumn(col.column)})"
+    case ArrayEnumerateUniq(col1: ArrayColMagnet[_], columns @ _*) =>
+      s"arrayEnumerateUniq(${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
+    case ArrayPopBack(col: ArrayColMagnet[_]) =>
+      s"arrayPopBack(${tokenizeColumn(col.column)})"
+    case ArrayPopFront(col: ArrayColMagnet[_]) =>
+      s"arrayPopFront(${tokenizeColumn(col.column)})"
     case ArrayPushBack(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
       s"arrayPushBack(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
     case ArrayPushFront(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
@@ -39,8 +43,8 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
       s"arrayResize(${tokenizeColumn(col.column)},${tokenizeColumn(size.column)},${tokenizeColumn(extender.column)})"
     case ArraySlice(col: ArrayColMagnet[_], offset: NumericCol[_], length: NumericCol[_]) =>
       s"arraySlice(${tokenizeColumn(col.column)},${tokenizeColumn(offset.column)},${tokenizeColumn(length.column)})"
-    case ArrayUniq(col1: ArrayColMagnet[_], coln @ _*) =>
-      s"arrayUniq(${tokenizeColumn(col1.column)}${tokenizeSeqCol(coln.map(_.column))})"
+    case ArrayUniq(col1: ArrayColMagnet[_], columns @ _*) =>
+      s"arrayUniq(${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
     case ArrayJoin(col: ArrayColMagnet[_]) => s"arrayJoin(${tokenizeColumn(col.column)})"
   }
 

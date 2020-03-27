@@ -38,7 +38,6 @@ abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load
         .map(_ => {
           balancer.nextHost
         })
-        .seq
     )
 
   def getConnections(manager: ActorRef, connections: Int = 10): Future[Seq[Uri]] =
@@ -47,7 +46,6 @@ abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load
         .map(_ => {
           (manager ? GetConnection()).mapTo[Uri]
         })
-        .seq
     )
 
   //  TODO change this methods to custom matchers
