@@ -28,7 +28,7 @@ trait StringFunctionTokenizer {
       case ReverseUTF8(c) =>
         s"reverseUTF8(${tokenizeColumn(c.column)})"
       case Concat(col1, col2, columns @ _*) =>
-        s"concat(${col1.column}, ${tokenizeSeqCol(col2.column, columns.map(_.column): _*)})"
+        s"concat(${tokenizeColumn(col1.column)}, ${tokenizeSeqCol(col2.column, columns.map(_.column): _*)})"
       case Substring(c, offset, length) =>
         s"substring(${tokenizeColumn(c.column)},${tokenizeColumn(offset.column)},${tokenizeColumn(length.column)})"
       case SubstringUTF8(c, offset, length) =>
