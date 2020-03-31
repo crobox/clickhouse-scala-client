@@ -20,7 +20,7 @@ trait LogicalFunctionTokenizer {
             else {
               // Depending on the number of clauses (to the right or left) we should add parentheses/brackets or not
               //s"((${tokenizeColumn(left)}) AND (${tokenizeColumn(right)}))"
-              s"${tokenizeColumn(left)} AND ${tokenizeColumn(right)}"
+              s"${tokenize(left)} AND ${tokenize(right)}"
             }
           case Or =>
             if (left.isConstFalse)
@@ -30,21 +30,19 @@ trait LogicalFunctionTokenizer {
             else {
               // Depending on the number of clauses (to the right or left) we should add parentheses/brackets or not
               //s"((${tokenizeColumn(left)}) OR (${tokenizeColumn(right)}))"
-              (left, right) match {
-                case (l: LogicalFunction, r: LogicalFunction) =>
-                  // we might even add yet another pair of brackets surrounding the double pair. Although this is not
-                  // necessarily
-                  s"(${tokenizeColumn(l)}) OR (${tokenizeColumn(r)})"
-                case (l: LogicalFunction, r) => s"(${tokenizeColumn(l)}) OR ${tokenizeColumn(r)}"
-                case (l, r: LogicalFunction) => s"${tokenizeColumn(l)} OR (${tokenizeColumn(r)})"
-                case (l, r)                  => s"${tokenizeColumn(l)} OR ${tokenizeColumn(r)}"
-              }
+              s"${tokenize(left)} OR ${tokenize(right)}"
             }
           case Xor =>
             s"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
           case Not =>
             s"not(${tokenizeColumn(left)})"
         }
+    }
+
+  private def tokenize(col: TableColumn[Boolean]): String =
+    col match {
+      case c: LogicalFunction if c.operator != Not => s"(${tokenizeColumn(c)})"
+      case c                                       => tokenizeColumn(c)
     }
 
 }

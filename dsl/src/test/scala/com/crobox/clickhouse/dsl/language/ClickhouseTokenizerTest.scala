@@ -11,6 +11,8 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   val testSubject = this
   val database    = "default"
 
+  def noto(other: LogicalOpsMagnet): ExpressionColumn[Boolean] = LogicalFunction(other, Not, other)
+
   it should "build select statement" in {
     val select = SelectQuery(Seq(shieldId))
     val generatedSql =
@@ -154,13 +156,45 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       false,
       None,
       Some(
-        shieldId isEq "a" or ((shieldId isEq "b") and (shieldId isEq "c")) or ( (shieldId isEq "d") or (shieldId isEq "e"))
+        shieldId isEq "a" or ((shieldId isEq "b") and (shieldId isEq "c")) or (noto(shieldId isEq "d") and noto(shieldId isEq "e"))
       )
     )
     testSubject.toSql(
       internalQuery
     ) should be(
-      s"SELECT shield_id FROM default.captainAmerica WHERE (shield_id = 'a' OR (shield_id = 'b' AND shield_id = 'c')) OR (shield_id = 'd' OR shield_id = 'e') FORMAT JSON"
+      s"SELECT shield_id FROM default.captainAmerica WHERE (shield_id = 'a' OR (shield_id = 'b' AND shield_id = 'c')) OR (not(shield_id = 'd') AND not(shield_id = 'e')) FORMAT JSON"
+    )
+  }
+
+  it should "add brackets 3 (not operator and OR)" in {
+    val select = SelectQuery(Seq(shieldId))
+    val internalQuery = InternalQuery(
+      Some(select),
+      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+      false,
+      None,
+      Some((noto(shieldId isEq "a")) or (noto(shieldId isEq "b")))
+    )
+    testSubject.toSql(
+      internalQuery
+    ) should be(
+      s"SELECT shield_id FROM default.captainAmerica WHERE not(shield_id = 'a') OR not(shield_id = 'b') FORMAT JSON"
+    )
+  }
+
+  it should "add brackets 3 (not operator and AND)" in {
+    val select = SelectQuery(Seq(shieldId))
+    val internalQuery = InternalQuery(
+      Some(select),
+      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+      false,
+      None,
+      Some((noto(shieldId isEq "a")) and (noto(shieldId isEq "b")))
+    )
+    testSubject.toSql(
+      internalQuery
+    ) should be(
+      s"SELECT shield_id FROM default.captainAmerica WHERE not(shield_id = 'a') AND not(shield_id = 'b') FORMAT JSON"
     )
   }
 
