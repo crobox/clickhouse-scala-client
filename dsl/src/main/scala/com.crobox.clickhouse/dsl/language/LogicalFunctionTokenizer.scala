@@ -20,7 +20,7 @@ trait LogicalFunctionTokenizer {
             else {
               // Depending on the number of clauses (to the right or left) we should add parentheses/brackets or not
               //s"((${tokenizeColumn(left)}) AND (${tokenizeColumn(right)}))"
-              s"${tokenize(left)} AND ${tokenize(right)}"
+              s"${tokenizeColumn(left)} AND ${tokenizeColumn(right)}"
             }
           case Or =>
             if (left.isConstFalse)
