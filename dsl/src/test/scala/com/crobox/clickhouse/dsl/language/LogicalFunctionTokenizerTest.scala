@@ -67,7 +67,8 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
   it should "add brackets nested OR (left double, right double)" in {
     testQuery(
       Some((shieldId < "a" and (shieldId isEq "b")) or (shieldId < "c" or shieldId > "d")),
-      s"WHERE (shield_id < 'a' AND shield_id = 'b') OR (shield_id < 'c' OR shield_id > 'd')"
+      //s"WHERE (shield_id < 'a' AND shield_id = 'b') OR (shield_id < 'c' OR shield_id > 'd')"
+      s"WHERE (shield_id < 'a' AND shield_id = 'b') OR shield_id < 'c' OR shield_id > 'd'"
     )
   }
 
@@ -85,14 +86,14 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
           shieldId isEq "e"
         ))
       ),
-      s"WHERE (shield_id = 'a' OR (shield_id = 'b' AND shield_id = 'c')) OR (not(shield_id = 'd') AND not(shield_id = 'e'))"
+      s"WHERE shield_id = 'a' OR (shield_id = 'b' AND shield_id = 'c') OR (not(shield_id = 'd') AND not(shield_id = 'e'))"
     )
   }
 
   it should "add brackets triple OR" in {
     testQuery(
       Some(shieldId isEq "a" or ((shieldId isEq "b") or (shieldId isEq "c") or (shieldId isEq "d"))),
-      "WHERE shield_id = 'a' OR ((shield_id = 'b' OR shield_id = 'c') OR shield_id = 'd')"
+      "WHERE shield_id = 'a' OR shield_id = 'b' OR shield_id = 'c' OR shield_id = 'd'"
     )
   }
 
@@ -106,7 +107,7 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
   it should "add brackets triple AND/OR" in {
     testQuery(
       Some(shieldId isEq "a" or ((shieldId isEq "b") and (shieldId isEq "c") or (shieldId isEq "d"))),
-      s"WHERE shield_id = 'a' OR ((shield_id = 'b' AND shield_id = 'c') OR shield_id = 'd')"
+      s"WHERE shield_id = 'a' OR (shield_id = 'b' AND shield_id = 'c') OR shield_id = 'd'"
     )
   }
 
