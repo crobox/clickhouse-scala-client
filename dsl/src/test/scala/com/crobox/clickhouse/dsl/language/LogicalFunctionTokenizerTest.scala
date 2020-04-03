@@ -60,7 +60,7 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
   it should "add brackets nested AND (left double, right single)" in {
     testQuery(
       Some((shieldId < "a" and (shieldId isEq "b")) and shieldId < "c"),
-      s"WHERE (shield_id < 'a' AND shield_id = 'b') AND shield_id < 'c'"
+      s"WHERE shield_id < 'a' AND shield_id = 'b' AND shield_id < 'c'"
     )
   }
 
@@ -75,7 +75,7 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
   it should "add brackets nested AND (left double, right double)" in {
     testQuery(
       Some((shieldId < "a" and (shieldId isEq "b")) and (shieldId < "c" or shieldId > "d")),
-      s"WHERE (shield_id < 'a' AND shield_id = 'b') AND (shield_id < 'c' OR shield_id > 'd')"
+      s"WHERE shield_id < 'a' AND shield_id = 'b' AND (shield_id < 'c' OR shield_id > 'd')"
     )
   }
 
@@ -100,7 +100,7 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
   it should "add brackets triple AND" in {
     testQuery(
       Some(shieldId isEq "a" or ((shieldId isEq "b") and (shieldId isEq "c") and (shieldId isEq "d"))),
-      s"WHERE shield_id = 'a' OR ((shield_id = 'b' AND shield_id = 'c') AND shield_id = 'd')"
+      s"WHERE shield_id = 'a' OR (shield_id = 'b' AND shield_id = 'c' AND shield_id = 'd')"
     )
   }
 
