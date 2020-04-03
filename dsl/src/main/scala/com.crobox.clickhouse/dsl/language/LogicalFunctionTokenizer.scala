@@ -19,8 +19,7 @@ trait LogicalFunctionTokenizer {
               tokenizeColumn(left)
             else {
               // Depending on the number of clauses (to the right or left) we should add parentheses/brackets or not
-              //s"((${tokenizeColumn(left)}) AND (${tokenizeColumn(right)}))"
-              s"${tokenizeColumn(left)} AND ${tokenizeColumn(right)}"
+              s"${tokenize(left, And)} AND ${tokenize(right, And)}"
             }
           case Or =>
             if (left.isConstFalse)
@@ -29,8 +28,7 @@ trait LogicalFunctionTokenizer {
               tokenizeColumn(left)
             else {
               // Depending on the number of clauses (to the right or left) we should add parentheses/brackets or not
-              //s"((${tokenizeColumn(left)}) OR (${tokenizeColumn(right)}))"
-              s"${tokenize(left)} OR ${tokenize(right)}"
+              s"${tokenize(left, Or)} OR ${tokenize(right, Or)}"
             }
           case Xor =>
             s"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
@@ -39,10 +37,10 @@ trait LogicalFunctionTokenizer {
         }
     }
 
-  private def tokenize(col: TableColumn[Boolean]): String =
+  private def tokenize(col: TableColumn[Boolean], operator: LogicalOperator): String =
     col match {
-      case c: LogicalFunction if c.operator != Not => s"(${tokenizeColumn(c)})"
-      case c                                       => tokenizeColumn(c)
+      case c: LogicalFunction if c.operator == operator => s"${tokenizeColumn(c)}"
+      case c: LogicalFunction if c.operator != Not      => s"(${tokenizeColumn(c)})"
+      case c                                            => tokenizeColumn(c)
     }
-
 }
