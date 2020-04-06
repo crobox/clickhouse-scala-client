@@ -1,8 +1,8 @@
-package com.crobox.clickhouse.dsl.language
+package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
 
-class URLFunctionTest extends ColumnFunctionTest {
+class URLFunctionsTest extends ColumnFunctionTest {
 
   "Tokenization" should "succeed for URLFunctions" in {
     val someUrl = "https://www.lib.crobox.com/clickhouse/dsl/home.html?search=true#123"

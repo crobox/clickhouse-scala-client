@@ -1,5 +1,7 @@
-package com.crobox.clickhouse.dsl.language
-import com.crobox.clickhouse.dsl.{Column, OperationalQuery, select}
+package com.crobox.clickhouse.dsl.column
+
+import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -25,13 +27,13 @@ trait ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
 
     def printAsYYYYMM: String = DateTimeFormat.forPattern("yyyyMM").print(ddt)
 
-    def toStartOfQuarter = {
+    def toStartOfQuarter: DateTime = {
       val remainder = (ddt.getMonthOfYear - 1) % 3
 
       ddt.withDayOfMonth(1).minusMonths(remainder)
     }
 
-    def toStartOfMin(min: Int) = {
+    def toStartOfMin(min: Int): DateTime = {
       val remainder = ddt.getMinuteOfHour % min
 
       ddt
@@ -40,7 +42,7 @@ trait ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
         .minusMinutes(remainder)
     }
 
-    def toStartOfHr = {
+    def toStartOfHr: DateTime = {
       ddt
         .withMinuteOfHour(0)
         .withSecondOfMinute(0)

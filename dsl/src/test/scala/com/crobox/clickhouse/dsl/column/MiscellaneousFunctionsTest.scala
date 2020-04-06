@@ -1,9 +1,9 @@
-package com.crobox.clickhouse.dsl.language
-import com.crobox.clickhouse.dsl._
+package com.crobox.clickhouse.dsl.column
 
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.{dsl => CHDsl}
 
-class MiscFunctionTest extends ColumnFunctionTest {
+class MiscellaneousFunctionsTest extends ColumnFunctionTest {
   "Tokenization" should "succeed for MiscFunctions" in {
     val inf = const(1) / 0
 

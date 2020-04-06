@@ -1,8 +1,8 @@
-package com.crobox.clickhouse.dsl.language
+package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
 
-class ComparisonFunctionTest extends ColumnFunctionTest {
+class ComparisonFunctionsTest extends ColumnFunctionTest {
   "Tokenization" should "succeed for ComparisonFunctions" in {
     val someNum = const(10L)
 

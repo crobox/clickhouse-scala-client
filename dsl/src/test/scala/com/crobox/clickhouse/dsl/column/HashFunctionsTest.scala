@@ -1,7 +1,8 @@
-package com.crobox.clickhouse.dsl.language
+package com.crobox.clickhouse.dsl.column
+
 import com.crobox.clickhouse.dsl._
 
-class HashFunctionTest extends ColumnFunctionTest{
+class HashFunctionsTest extends ColumnFunctionTest{
   "Tokenization" should "succeed for HashFunctions" in {
     val someStringData = "fooBarBaz"
 
