@@ -1,9 +1,9 @@
-package com.crobox.clickhouse.dsl.language
-import com.crobox.clickhouse.dsl._
+package com.crobox.clickhouse.dsl.column
 
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.{dsl => CHDsl}
 
-class StringFunctionTest extends ColumnFunctionTest {
+class StringFunctionsTest extends ColumnFunctionTest {
 
   "Tokenization of functions working with strings" should "succeed for ScalaStringFunctions" in {
     r(toStringRep(pi()).contains("159")) shouldBe "1"

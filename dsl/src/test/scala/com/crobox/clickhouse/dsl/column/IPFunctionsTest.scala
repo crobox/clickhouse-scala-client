@@ -1,8 +1,8 @@
-package com.crobox.clickhouse.dsl.language
+package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
 
-class IPFunctionTest extends ColumnFunctionTest {
+class IPFunctionsTest extends ColumnFunctionTest {
 
   "Tokenization" should "succeed for IPFunctions" in {
     val num = toUInt32(1)

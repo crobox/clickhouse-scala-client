@@ -1,8 +1,9 @@
-package com.crobox.clickhouse.dsl.language
+package com.crobox.clickhouse.dsl.column
+
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 
-class TypeCastFunctionTest extends ColumnFunctionTest {
+class TypeCastFunctionsTest extends ColumnFunctionTest {
   "Tokenization" should "succeed for TypeCastFunctions" in {
     val someStringNum = const("123")
     val someDateStr = const("2018-01-01")

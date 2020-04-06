@@ -1,8 +1,9 @@
-package com.crobox.clickhouse.dsl.language
+package com.crobox.clickhouse.dsl.column
+
 import com.crobox.clickhouse.dsl._
 import org.joda.time._
 
-class DateTimeFunctionTest extends ColumnFunctionTest {
+class DateTimeFunctionsTest extends ColumnFunctionTest {
   "Tokenization" should "succeed for DateTimeFunctions" in {
     val now         = new DateTime().withZone(DateTimeZone.UTC)
     val epoch       = new DateTime(0).withZone(DateTimeZone.UTC)

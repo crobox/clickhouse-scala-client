@@ -1,7 +1,8 @@
-package com.crobox.clickhouse.dsl.language
+package com.crobox.clickhouse.dsl.column
+
 import com.crobox.clickhouse.dsl._
 
-class JsonFunctionTest extends ColumnFunctionTest {
+class JsonFunctionsTest extends ColumnFunctionTest {
   "JSON Function tokenisation" should "succeed for JsonFunctions" in {
     val someJson = """{"foo":"bar", "baz":123, "boz":3.1415, "bool":true}"""
 

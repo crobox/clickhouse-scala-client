@@ -1,9 +1,10 @@
-package com.crobox.clickhouse.dsl.language
+package com.crobox.clickhouse.dsl.column
+
 import java.util.UUID
 
 import com.crobox.clickhouse.dsl._
 
-class EncodingFunctionTest extends ColumnFunctionTest {
+class EncodingFunctionsTest extends ColumnFunctionTest {
   "Tokenization" should "succeed for EncodingFunctions" in {
     r(hex(12)) shouldBe "0C"
     r(unhex("0C")) shouldBe "\\f"

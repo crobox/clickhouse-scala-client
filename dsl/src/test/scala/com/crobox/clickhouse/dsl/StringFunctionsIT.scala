@@ -1,10 +1,8 @@
-package com.crobox.clickhouse.dsl.language
+package com.crobox.clickhouse.dsl
 
 import java.util.UUID
 
-import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
-import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.ClickhouseClientSpec
+import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol.{jsonFormat, _}
