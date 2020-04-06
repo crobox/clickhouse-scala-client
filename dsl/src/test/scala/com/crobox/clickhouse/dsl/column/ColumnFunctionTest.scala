@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.dsl.{Column, OperationalQuery}
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
