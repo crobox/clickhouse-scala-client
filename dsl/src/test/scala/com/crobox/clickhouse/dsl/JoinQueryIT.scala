@@ -60,10 +60,10 @@ class JoinQueryIT
   }
 
   // Apparently a JOIN always require a USING column, which doesn't hold for CROSS JOIN
-  ignore should "correctly handle cross join" in {
+  it should "correctly handle cross join" in {
     val query: OperationalQuery =
       select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
-    //      println(clickhouseTokenizer.toSql(query.internalQuery))
+    println(clickhouseTokenizer.toSql(query.internalQuery))
     val resultRows = chExecutor.execute[Result](query).futureValue.rows
     resultRows.length shouldBe 0
   }
