@@ -2,7 +2,7 @@ version: '3'
 services:
   clickhouse:
       # https://hub.docker.com/r/yandex/clickhouse-server/
-      image: yandex/clickhouse-server:20.1.2.4
+      image: yandex/clickhouse-server:20.3.12.112
       expose:
         - "8123"
       ports:
