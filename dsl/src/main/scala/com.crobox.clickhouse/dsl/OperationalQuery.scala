@@ -146,7 +146,7 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, TableFromQuery(table), global = true))))
   }
 
-  @deprecated("Please use join(JoinQuery.JoinType)", "Clickhouse v20")
+  @deprecated("Please use join(JoinQuery.AllInnerJoin)", "Clickhouse v20")
   def allInnerJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllInnerJoin, query)
   @deprecated("Please use join(JoinQuery.AllLeftJoin)", "Clickhouse v20")
   def allLeftJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllLeftJoin, query)
