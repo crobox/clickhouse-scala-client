@@ -248,6 +248,8 @@ trait ClickhouseTokenizerModule
 
       // custom clickhouse
       case AllInnerJoin  => "ALL INNER JOIN"
+      case AllLeftJoin   => "ALL LEFT JOIN"
+      case AllRightJoin  => "ALL RIGHT JOIN"
       case AntiLeftJoin  => "ANTI LEFT JOIN"
       case AntiRightJoin => "ANTI RIGHT JOIN"
       case AnyInnerJoin  => "ANY INNER JOIN"
@@ -257,10 +259,6 @@ trait ClickhouseTokenizerModule
       case AsOfLeftJoin  => "ASOF LEFT JOIN"
       case SemiLeftJoin  => "SEMI LEFT JOIN"
       case SemiRightJoin => "SEMI RIGHT JOIN"
-
-      // deprecated
-      case AllLeftJoin  => "ALL LEFT JOIN"
-      case AllRightJoin => "ALL RIGHT JOIN"
     }
 
   private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]], keyword: String): String =
