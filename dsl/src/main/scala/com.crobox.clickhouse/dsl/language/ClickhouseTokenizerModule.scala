@@ -39,7 +39,7 @@ trait ClickhouseTokenizerModule
 
   protected def tokenizeSeqCol(col1: Column, columns: Column*): String = {
     val prefix = if (columns.isEmpty) "" else ", "
-    tokenizeColumn(col1) + prefix + tokenizeSeqCol(columns:_*)
+    tokenizeColumn(col1) + prefix + tokenizeSeqCol(columns: _*)
   }
 
   protected def tokenizeSeqCol(columns: Column*): String =
@@ -234,8 +234,30 @@ trait ClickhouseTokenizerModule
       .map(tokenizeColumn)
       .mkString(", ")
 
+  /**
+   * https://clickhouse.tech/docs/en/sql-reference/statements/select/join/
+   */
   private def tokenizeJoinType(joinType: JoinQuery.JoinType): String =
     joinType match {
+      // Standard SQL JOIN https://en.wikipedia.org/wiki/Join_(SQL)
+      case InnerJoin      => "INNER JOIN"
+      case LeftOuterJoin  => "LEFT OUTER JOIN"
+      case RightOuterJoin => "RIGHT OUTER JOIN"
+      case FullOuterJoin  => "FULL OUTER JOIN"
+      case CrossJoin      => "CROSS JOIN"
+
+      // custom clickhouse
+      case AsOfJoin      => "ASOF JOIN"
+      case InnerAnyJoin  => "INNER ANY JOIN"
+      case LeftAntiJoin  => "LEFT ANTI JOIN"
+      case LeftAnyJoin   => "LEFT ANY JOIN"
+      case LeftAsOfJoin  => "LEFT ASOF JOIN"
+      case LeftSemiJoin  => "LEFT SEMI JOIN"
+      case RightAntiJoin => "RIGHT ANTI JOIN"
+      case RightAnyJoin  => "RIGHT ANY JOIN"
+      case RightSemiJoin => "RIGHT SEMI JOIN"
+
+      // deprecated
       case AnyInnerJoin => "ANY INNER JOIN"
       case AnyLeftJoin  => "ANY LEFT JOIN"
       case AnyRightJoin => "ANY RIGHT JOIN"

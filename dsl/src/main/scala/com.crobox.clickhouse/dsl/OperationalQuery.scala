@@ -146,20 +146,30 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, TableFromQuery(table), global = true))))
   }
 
+  @deprecated("Please use join(JoinQuery.JoinType)", "Clickhouse v20")
   def allInnerJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllInnerJoin, query)
+  @deprecated("Please use join(JoinQuery.JoinType)", "Clickhouse v20")
   def allLeftJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllLeftJoin, query)
+  @deprecated("Please use join(JoinQuery.JoinType)", "Clickhouse v20")
   def allRightJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllRightJoin, query)
-
+  @deprecated("Please use join(JoinQuery.JoinType)", "Clickhouse v20")
   def anyInnerJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AnyInnerJoin, query)
+  @deprecated("Please use join(JoinQuery.JoinType)", "Clickhouse v20")
   def anyLeftJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AnyLeftJoin, query)
+  @deprecated("Please use join(JoinQuery.JoinType)", "Clickhouse v20")
   def anyRightJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AnyRightJoin, query)
 
+  @deprecated("Please use globalJoin(JoinQuery.JoinType)")
   def globalAllInnerJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AllInnerJoin, query)
+  @deprecated("Please use globalJoin(JoinQuery.JoinType)")
   def globalAllLeftJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AllLeftJoin, query)
+  @deprecated("Please use globalJoin(JoinQuery.JoinType)")
   def globalAllRightJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AllRightJoin, query)
-
+  @deprecated("Please use globalJoin(JoinQuery.JoinType)")
   def globalAnyInnerJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AnyInnerJoin, query)
+  @deprecated("Please use globalJoin(JoinQuery.JoinType)")
   def globalAnyLeftJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AnyLeftJoin, query)
+  @deprecated("Please use globalJoin(JoinQuery.JoinType)")
   def globalAnyRightJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AnyRightJoin, query)
 
   def using(
