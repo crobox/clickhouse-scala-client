@@ -15,7 +15,6 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
       (JoinQuery.LeftOuterJoin, "LEFT OUTER JOIN"),
       (JoinQuery.RightOuterJoin, "RIGHT OUTER JOIN"),
       (JoinQuery.FullOuterJoin, "FULL OUTER JOIN"),
-      (JoinQuery.CrossJoin, "CROSS JOIN"),
       (JoinQuery.AntiLeftJoin, "ANTI LEFT JOIN"),
       (JoinQuery.AntiRightJoin, "ANTI RIGHT JOIN"),
       (JoinQuery.AnyInnerJoin, "ANY INNER JOIN"),
@@ -35,5 +34,14 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
         s"SELECT item_id FROM (SELECT item_id FROM join_query.twoTestTable $result (SELECT * FROM join_query.threeTestTable) USING item_id ) FORMAT JSON"
       )
     }
+  }
+
+  it should s"join correctly on: ${JoinQuery.CrossJoin}" in {
+    val query: OperationalQuery =
+      select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
+    val sql = clickhouseTokenizer.toSql(query.internalQuery)
+    sql should be(
+      s"SELECT item_id FROM (SELECT item_id FROM join_query.twoTestTable CROSS JOIN (SELECT * FROM join_query.threeTestTable) ) FORMAT JSON"
+    )
   }
 }
