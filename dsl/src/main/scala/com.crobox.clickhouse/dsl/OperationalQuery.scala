@@ -180,7 +180,7 @@ trait OperationalQuery extends Query {
 
     val newUsing = (columns :+ column).distinct
 
-    val newJoin = this.internalQuery.join.get.copy(usingColumns = newUsing)
+    val newJoin = this.internalQuery.join.get.copy(joinKeys = newUsing)
 
     OperationalQuery(internalQuery.copy(join = Some(newJoin)))
   }
