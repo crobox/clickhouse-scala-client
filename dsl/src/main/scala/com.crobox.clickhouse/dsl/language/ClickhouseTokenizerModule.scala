@@ -247,7 +247,7 @@ trait ClickhouseTokenizerModule
       case CrossJoin      => "CROSS JOIN"
 
       // custom clickhouse
-      case AllInnerJoin  => "ANY INNER JOIN"
+      case AllInnerJoin  => "ALL INNER JOIN"
       case AntiLeftJoin  => "ANTI LEFT JOIN"
       case AntiRightJoin => "ANTI RIGHT JOIN"
       case AnyInnerJoin  => "ANY INNER JOIN"
