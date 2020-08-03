@@ -226,10 +226,10 @@ trait ClickhouseTokenizerModule
   private def optionalUsingClause(joinType: JoinType, joinKeys: Seq[Column]) =
     joinType match {
       case CrossJoin =>
-        assert(joinKeys.isEmpty, "When using Cross Join, no using columns should be provided")
+        assert(joinKeys.isEmpty, "When using CrossJoin, no joinKeys should be provided")
         ""
       case _ =>
-        assert(joinKeys.nonEmpty, s"No using columns provided for join: $joinType")
+        assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: $joinType")
         s" USING ${tokenizeColumns(joinKeys)}" // note the prefix space!
     }
 
