@@ -19,7 +19,8 @@ lazy val root = (project in file("."))
       List(
         organization := "com.crobox.clickhouse",
         scalaVersion := "2.13.3",
-        crossScalaVersions := List("2.12.11", "2.13.3"),
+//        crossScalaVersions := List("2.12.11", "2.13.3"),
+        crossScalaVersions := List("2.13.3"),
         scalacOptions ++= List(
           "-unchecked",
           "-deprecation",
@@ -59,8 +60,7 @@ lazy val root = (project in file("."))
     ),
     name := "clickhouse"
   )
-  .aggregate(client,dsl,testkit)
-
+  .aggregate(client, dsl, testkit)
 
 lazy val client: Project = (project in file("client"))
   .settings(
@@ -94,4 +94,3 @@ lazy val dsl = (project in file("dsl"))
     )
   )
   .dependsOn(client, client % "test->test", testkit % Test)
-
