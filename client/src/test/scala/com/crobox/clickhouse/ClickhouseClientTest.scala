@@ -62,10 +62,9 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
       .queryWithProgress("select sum(number) FROM (select number from system.numbers limit 100000000)")
       .runWith(Sink.seq[QueryProgress])
       .map(progress => {
-//        println(progress)
-        progress collect {
+        progress.collect {
           case qp: Progress => qp
-        } should not be empty
+        } shouldBe (empty)
       })
   }
 
