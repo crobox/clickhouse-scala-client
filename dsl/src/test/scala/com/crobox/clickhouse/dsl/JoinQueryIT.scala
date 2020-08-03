@@ -59,6 +59,7 @@ class JoinQueryIT
     }
   }
 
+  // Apparently a JOIN always require a USING column, which doesn't hold for CROSS JOIN
   ignore should "correctly handle cross join" in {
     val query: OperationalQuery =
       select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
