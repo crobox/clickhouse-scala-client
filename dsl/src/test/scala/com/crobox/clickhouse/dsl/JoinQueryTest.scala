@@ -16,15 +16,15 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
       (JoinQuery.RightOuterJoin, "RIGHT OUTER JOIN"),
       (JoinQuery.FullOuterJoin, "FULL OUTER JOIN"),
       (JoinQuery.CrossJoin, "CROSS JOIN"),
+      (JoinQuery.AntiLeftJoin, "ANTI LEFT JOIN"),
+      (JoinQuery.AntiRightJoin, "ANTI RIGHT JOIN"),
+      (JoinQuery.AnyInnerJoin, "ANY INNER JOIN"),
+      (JoinQuery.AnyLeftJoin, "ANY LEFT JOIN"),
+      (JoinQuery.AnyRightJoin, "ANY RIGHT JOIN"),
       (JoinQuery.AsOfJoin, "ASOF JOIN"),
-      (JoinQuery.InnerAnyJoin, "INNER ANY JOIN"),
-      (JoinQuery.LeftAntiJoin, "LEFT ANTI JOIN"),
-      (JoinQuery.LeftAnyJoin, "LEFT ANY JOIN"),
-      (JoinQuery.LeftAsOfJoin, "LEFT ASOF JOIN"),
-      (JoinQuery.LeftSemiJoin, "LEFT SEMI JOIN"),
-      (JoinQuery.RightAntiJoin, "RIGHT ANTI JOIN"),
-      (JoinQuery.RightAnyJoin, "RIGHT ANY JOIN"),
-      (JoinQuery.RightSemiJoin, "RIGHT SEMI JOIN"),
+      (JoinQuery.AsOfLeftJoin, "ASOF LEFT JOIN"),
+      (JoinQuery.SemiLeftJoin, "SEMI LEFT JOIN"),
+      (JoinQuery.SemiRightJoin, "SEMI RIGHT JOIN"),
     )
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {

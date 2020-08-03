@@ -17,17 +17,12 @@ object JoinQuery {
   case object CrossJoin      extends JoinType
 
   // CUSTOM CLICKHOUSE JOIN
-  case object AsOfJoin      extends JoinType
-  case object InnerAnyJoin  extends JoinType
-  case object LeftAntiJoin  extends JoinType
-  case object LeftAnyJoin   extends JoinType
-  case object LeftAsOfJoin  extends JoinType
-  case object LeftSemiJoin  extends JoinType
-  case object RightAntiJoin extends JoinType
-  case object RightAnyJoin  extends JoinType
-  case object RightSemiJoin extends JoinType
+  case object AllLeftJoin   extends JoinType
+  case object AllRightJoin  extends JoinType
+  case object AllInnerJoin  extends JoinType
+  case object AntiLeftJoin  extends JoinType
+  case object AntiRightJoin extends JoinType
 
-  // DEPRECATED
   @deprecated(
     "Please use AllInnerJoin. Old ANY INNER|RIGHT|FULL JOINs are disabled by default. Their logic would be " +
     "changed. Old logic is many-to-one for all kinds of ANY JOINs. It's equal to apply distinct for right table keys. " +
@@ -45,10 +40,11 @@ object JoinQuery {
     "be equal to apply distinct for keys to right, left and both tables respectively",
     "Clickhouse v20"
   )
-  case object AnyRightJoin extends JoinType
-  case object AllLeftJoin  extends JoinType
-  case object AllRightJoin extends JoinType
-  case object AllInnerJoin extends JoinType
+  case object AnyRightJoin  extends JoinType
+  case object AsOfJoin      extends JoinType
+  case object AsOfLeftJoin  extends JoinType
+  case object SemiLeftJoin  extends JoinType
+  case object SemiRightJoin extends JoinType
 }
 
 case class JoinQuery(`type`: JoinType,

@@ -13,6 +13,7 @@ trait TestSchemaClickhouseQuerySpec extends ClickhouseSpec with BeforeAndAfterAl
   this: Suite =>
   val table1Entries: Seq[Table1Entry] = Seq()
   val table2Entries: Seq[Table2Entry] = Seq()
+  val table3Entries: Seq[Table2Entry] = Seq()
 
   implicit val ec: ExecutionContext
 
@@ -31,17 +32,23 @@ trait TestSchemaClickhouseQuerySpec extends ClickhouseSpec with BeforeAndAfterAl
           ifNotExists = true
         ).query
       )
+      _ <- clickClient.execute(
+        CreateTable(
+          ThreeTestTable,
+          Engine.Memory,
+          ifNotExists = true
+        ).query
+      )
     } yield {}
     whenReady(tables) { _ =>
       val inserts = for {
         _ <- table1Entries.into(OneTestTable)
         _ <- table2Entries.into(TwoTestTable)
+        _ <- table3Entries.into(ThreeTestTable)
       } yield {}
       inserts.futureValue
     }
   }
 
-  override def afterAll(): Unit = {
-    super.afterAll()
-  }
+  override def afterAll(): Unit = super.afterAll()
 }
