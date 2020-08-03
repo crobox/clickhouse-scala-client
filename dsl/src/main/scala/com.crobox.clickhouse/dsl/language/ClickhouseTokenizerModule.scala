@@ -217,9 +217,9 @@ trait ClickhouseTokenizerModule
     option match {
       case None =>
         ""
-      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], joinKeys, global)) =>
+      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], joinKeys, global, None)) =>
         s"${isGlobal(global)}${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))})${optionalUsingClause(joinType, joinKeys)}"
-      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, joinKeys, global)) =>
+      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, joinKeys, global, None)) =>
         s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin), withPrefix = false)}${optionalUsingClause(joinType, joinKeys)}"
     }
 
