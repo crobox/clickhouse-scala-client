@@ -2,6 +2,9 @@ package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery._
 
+/**
+  * See https://clickhouse.tech/docs/en/sql-reference/statements/select/join/
+  */
 object JoinQuery {
 
   sealed trait JoinType
