@@ -57,7 +57,7 @@ package object parallel {
 
         uQry.join match {
           case Some(JoinQuery(_, q, _, _, _)) if selectAll => recursiveCollectCols(q.internalQuery, newCols)
-          case _                                               => newCols
+          case _                                           => newCols
         }
       }
 
@@ -69,7 +69,8 @@ package object parallel {
         .map(origCol => RefColumn(origCol.name))
         .toList
         .filterNot(_.name == EmptyColumn.name)
-        .:+(all()).distinct
+        .:+(all())
+        .distinct
 
       select(joinCols: _*)
         .from(leftTableQry)
