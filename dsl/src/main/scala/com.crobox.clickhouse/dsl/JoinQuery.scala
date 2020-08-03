@@ -17,9 +17,9 @@ object JoinQuery {
   case object CrossJoin      extends JoinType
 
   // CUSTOM CLICKHOUSE JOIN
+  case object AllInnerJoin  extends JoinType
   case object AllLeftJoin   extends JoinType
   case object AllRightJoin  extends JoinType
-  case object AllInnerJoin  extends JoinType
   case object AntiLeftJoin  extends JoinType
   case object AntiRightJoin extends JoinType
 
