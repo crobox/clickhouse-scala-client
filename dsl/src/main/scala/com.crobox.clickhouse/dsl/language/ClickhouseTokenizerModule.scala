@@ -217,20 +217,20 @@ trait ClickhouseTokenizerModule
     option match {
       case None =>
         ""
-      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], usingCols, global)) =>
-        s"${isGlobal(global)}${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))})${optionalUsingClause(joinType, usingCols)}"
-      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, usingCols, global)) =>
-        s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin), withPrefix = false)}${optionalUsingClause(joinType, usingCols)}"
+      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], joinKeys, global)) =>
+        s"${isGlobal(global)}${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))})${optionalUsingClause(joinType, joinKeys)}"
+      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, joinKeys, global)) =>
+        s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin), withPrefix = false)}${optionalUsingClause(joinType, joinKeys)}"
     }
 
-  private def optionalUsingClause(joinType: JoinType, usingCols: Seq[Column]) =
+  private def optionalUsingClause(joinType: JoinType, joinKeys: Seq[Column]) =
     joinType match {
       case CrossJoin =>
-        assert(usingCols.isEmpty, "When using Cross Join, no using columns should be provided")
+        assert(joinKeys.isEmpty, "When using Cross Join, no using columns should be provided")
         ""
       case _ =>
-        assert(usingCols.nonEmpty, s"No using columns provided for join: $joinType")
-        s" USING ${tokenizeColumns(usingCols)}" // note the prefix space!
+        assert(joinKeys.nonEmpty, s"No using columns provided for join: $joinType")
+        s" USING ${tokenizeColumns(joinKeys)}" // note the prefix space!
     }
 
   private def isGlobal(global: Boolean): String = if (global) "GLOBAL " else ""
