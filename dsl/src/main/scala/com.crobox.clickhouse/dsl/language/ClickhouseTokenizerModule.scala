@@ -7,7 +7,7 @@ import com.typesafe.scalalogging.Logger
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 trait ClickhouseTokenizerModule
     extends TokenizerModule
