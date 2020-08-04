@@ -61,7 +61,7 @@ trait ClickhouseTokenizerModule
            |${tokenizeSelect(select)}
            | ${tokenizeFrom(from)}
            | ${tokenizeFinal(asFinal)}
-           | ${tokenizeJoin(join)}
+           | ${tokenizeJoin(from, join)}
            | ${tokenizeFiltering(prewhere, "PREWHERE")}
            | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
@@ -214,8 +214,8 @@ trait ClickhouseTokenizerModule
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
-  private def tokenizeJoin(option: Option[JoinQuery]): String =
-    option match {
+  private def tokenizeJoin(from: Option[FromQuery], join: Option[JoinQuery]): String =
+    join match {
       case Some(query) =>
         val other = query.other match {
           case tableJoin: TableFromQuery[_] => s"(SELECT * ${tokenizeFrom(Some(tableJoin))})"
@@ -224,21 +224,43 @@ trait ClickhouseTokenizerModule
         s"""${if (query.global) "GLOBAL " else ""}
            | ${tokenizeJoinType(query.`type`)}
            | $other${query.alias.map(a => s" AS $a").getOrElse("")}
-           | ${tokenizeJoinKeys(query.`type`, query.joinKeys)}""".trim.stripMargin
+           | ${tokenizeJoinKeys(from.get, query)}""".trim.stripMargin
           .replaceAll("\n", "")
           .replaceAll("\r", "")
       case None => ""
     }
 
-  private def tokenizeJoinKeys(joinType: JoinType, joinKeys: Seq[Column]): String =
-    joinType match {
+  private def tokenizeJoinKeys(from: FromQuery, query: JoinQuery): String = {
+    val joinKeys = query.joinKeys.filterNot {
+      case EmptyColumn => true
+      case _           => false
+    }
+    query.`type` match {
       case CrossJoin =>
         assert(joinKeys.isEmpty, "When using CrossJoin, no joinKeys should be provided")
         ""
       case _ =>
-        assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: $joinType")
-        s"USING ${tokenizeColumns(joinKeys)}"
+        assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: ${query.`type`}")
+        query.alias
+          .map(aliasJoin => {
+            val (aliasFrom, columns) = from match {
+              case tableJoin: TableFromQuery[_] => (tableJoin.table.name, tableJoin.table.columns)
+              case innerJoin: InnerFromQuery    => ("", Seq.empty)
+            }
+            "ON " + joinKeys.map(c => {
+              // we need to check if the joinKey is an actual EXISTING column on aliasFrom
+              // SELECT shield_id AS item_id FROM db.fromTable ANY INNER JOIN (SELECT * FROM db.joinTable) AS TTT ON fromTable.item_id = TTT.item_id
+              if(columns.exists(_.name == c.name)) {
+                s"$aliasFrom.${c.name} = $aliasJoin.${c.name}"
+              } else {
+                // Apparently an ALIAS is used as joinKey. Skip the aliasFrom
+                s"${c.name} = $aliasJoin.${c.name}"
+              }
+            }).mkString(",")
+          })
+          .getOrElse(s"USING ${tokenizeColumns(joinKeys)}")
     }
+  }
 
   private[language] def tokenizeColumns(columns: Seq[Column]): String =
     columns

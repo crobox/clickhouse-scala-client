@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.dsl
 
+import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import org.scalatest.concurrent.ScalaFutures
@@ -66,5 +67,29 @@ class JoinQueryIT
     println(clickhouseTokenizer.toSql(query.internalQuery))
     val resultRows = chExecutor.execute[Result](query).futureValue.rows
     resultRows.length shouldBe 0
+  }
+
+  //
+  // NOW TEST FOR ALL COMBINATIONS OF JOIN
+  //
+  val t1 = s"captainAmerica"
+  val t2 = s"twoTestTable"
+  val t3 = s"threeTestTable"
+  val q1 = s"$database.$t1"
+  val q2 = s"$database.$t2"
+  val q3 = s"$database.$t3"
+
+  it should "INNER using alias" in {
+    val query = select(shieldId as itemId).from(OneTestTable).join(InnerJoin, TwoTestTable, Option("TTT")) using itemId
+    clickhouseTokenizer.toSql(query.internalQuery) should be(
+      s"SELECT shield_id AS item_id FROM $q1 INNER JOIN (SELECT * FROM $q2) AS TTT ON item_id = TTT.item_id FORMAT JSON"
+    )
+  }
+
+  it should "INNER normal" in {
+    val query = select(itemId).from(TwoTestTable).join(InnerJoin, ThreeTestTable, Option("TTT")) using itemId
+    clickhouseTokenizer.toSql(query.internalQuery) should be(
+      s"SELECT item_id FROM $q2 INNER JOIN (SELECT * FROM $q3) AS TTT ON $t2.item_id = TTT.item_id FORMAT JSON"
+    )
   }
 }

@@ -3,8 +3,7 @@ package com.crobox.clickhouse.dsl
 import java.util.UUID
 
 import com.crobox.clickhouse.dsl.column._
-
-import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
+import com.crobox.clickhouse.dsl.JoinQuery.{AnyInnerJoin, InnerJoin}
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
@@ -24,9 +23,16 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
   }
 
   it should "generate for join between tables" in {
-    val query = select(col1, shieldId).from(OneTestTable).join(AnyInnerJoin, TwoTestTable, Option("TTT")) using shieldId
+    val query = select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable, Option("TTT")) using shieldId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT column_1, shield_id FROM $database.captainAmerica ANY INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT USING shield_id FORMAT JSON"
+      s"SELECT column_1, shield_id FROM $database.captainAmerica INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id FORMAT JSON"
+    )
+  }
+
+  it should "generate for join between tables" in {
+    val query = select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable, Option("TTT")) using shieldId
+    clickhouseTokenizer.toSql(query.internalQuery) should be(
+      s"SELECT column_1, shield_id FROM $database.captainAmerica INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id FORMAT JSON"
     )
   }
 

@@ -25,7 +25,7 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
     Seq(Table1Entry(oneId), Table1Entry(randomUUID), Table1Entry(randomUUID), Table1Entry(randomUUID))
   override val table2Entries = Seq(Table2Entry(oneId, randomString, Random.nextInt(1000)+1, randomString, None))
 
-  "querying table" should "map as result" in {
+  it should "map as result" in {
 
     case class Result(columnResult: String, empty: Int)
     implicit val resultFormat: RootJsonFormat[Result] =
@@ -80,33 +80,6 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
       (col: TableColumn[_]) => toFixedString(col,10),
       toStringCutToZero _
     )
-
-//    val reinterpToIntResults = reinterpToIntCast.map(caster => runQry(
-//      select(reinterpret(caster(col1)) as "result") from TwoTestTable
-//    ))
-//
-//    val reinterpToStringResults = reinterpToStringCast.map(caster => runQry(
-//      select(reinterpret(caster(col1)) as "result") from TwoTestTable
-//    ))
-//
-//    val stringToNum = takeStringGiveIntCast.map(caster => runQry(
-//      select(caster(col1) as "result") from TwoTestTable
-//    ))
-//
-//    val takeIntResults = takeIntGiveIntCast.map(caster => runQry(
-//      select(caster(col2) as "result") from TwoTestTable
-//    )) ++ takeIntGiveStringCast.map(caster => runQry(
-//      select(caster(col2) as "result") from TwoTestTable
-//    ))
-//
-//
-//    val outcomes = takeIntResults ++ reinterpToStringResults ++
-//      reinterpToIntResults ++ stringToNum
-//
-//    Future
-//      .sequence(outcomes)
-//      .futureValue
-//      .foreach(_.length should be > 1)
   }
 
   def runQry(query: OperationalQuery): Future[String] = {
