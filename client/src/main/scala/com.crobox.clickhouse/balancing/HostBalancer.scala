@@ -10,9 +10,10 @@ import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.collection.JavaConverters._
+//import scala.jdk.CollectionConverters._
 
 trait HostBalancer extends LazyLogging {
 
@@ -25,8 +26,8 @@ object HostBalancer extends ClickhouseHostBuilder {
   def apply(
       optionalConfig: Option[Config] = None
   )(implicit system: ActorSystem, materializer: Materializer, ec: ExecutionContext): HostBalancer = {
-    val config = optionalConfig.getOrElse(system.settings.config)
-    val connectionConfig = config.getConfig("connection")
+    val config                   = optionalConfig.getOrElse(system.settings.config)
+    val connectionConfig         = config.getConfig("connection")
     val connectionType           = ConnectionType(connectionConfig.getString("type"))
     val connectionHostFromConfig = extractHost(connectionConfig)
     connectionType match {
@@ -51,10 +52,7 @@ object HostBalancer extends ClickhouseHostBuilder {
           connectionConfig.getString("cluster"),
           manager,
           connectionConfig.getDuration("scanning-interval").getSeconds.seconds
-        )(system,
-          config.getDuration("host-retrieval-timeout").getSeconds.seconds,
-          ec,
-          materializer)
+        )(system, config.getDuration("host-retrieval-timeout").getSeconds.seconds, ec, materializer)
     }
   }
 

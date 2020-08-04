@@ -8,6 +8,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
+//import scala.jdk.CollectionConverters._
 
 trait ClickhouseTokenizerModule
     extends TokenizerModule
@@ -39,7 +40,7 @@ trait ClickhouseTokenizerModule
 
   protected def tokenizeSeqCol(col1: Column, columns: Column*): String = {
     val prefix = if (columns.isEmpty) "" else ", "
-    tokenizeColumn(col1) + prefix + tokenizeSeqCol(columns:_*)
+    tokenizeColumn(col1) + prefix + tokenizeSeqCol(columns: _*)
   }
 
   protected def tokenizeSeqCol(columns: Column*): String =
@@ -217,10 +218,20 @@ trait ClickhouseTokenizerModule
     option match {
       case None =>
         ""
-      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], usingCols, global)) =>
-        s"${isGlobal(global)}${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))}) USING ${tokenizeColumns(usingCols)}"
-      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, usingCols, global)) =>
-        s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin), withPrefix = false)} USING ${tokenizeColumns(usingCols)}"
+      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], joinKeys, global, None)) =>
+        s"${isGlobal(global)}${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))})${optionalUsingClause(joinType, joinKeys)}"
+      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, joinKeys, global, None)) =>
+        s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin), withPrefix = false)}${optionalUsingClause(joinType, joinKeys)}"
+    }
+
+  private def optionalUsingClause(joinType: JoinType, joinKeys: Seq[Column]) =
+    joinType match {
+      case CrossJoin =>
+        assert(joinKeys.isEmpty, "When using CrossJoin, no joinKeys should be provided")
+        ""
+      case _ =>
+        assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: $joinType")
+        s" USING ${tokenizeColumns(joinKeys)}" // note the prefix space!
     }
 
   private def isGlobal(global: Boolean): String = if (global) "GLOBAL " else ""
@@ -234,14 +245,31 @@ trait ClickhouseTokenizerModule
       .map(tokenizeColumn)
       .mkString(", ")
 
+  /**
+   * https://clickhouse.tech/docs/en/sql-reference/statements/select/join/
+   */
   private def tokenizeJoinType(joinType: JoinQuery.JoinType): String =
     joinType match {
-      case AnyInnerJoin => "ANY INNER JOIN"
-      case AnyLeftJoin  => "ANY LEFT JOIN"
-      case AnyRightJoin => "ANY RIGHT JOIN"
-      case AllLeftJoin  => "ALL LEFT JOIN"
-      case AllRightJoin => "ALL RIGHT JOIN"
-      case AllInnerJoin => "ALL INNER JOIN"
+      // Standard SQL JOIN https://en.wikipedia.org/wiki/Join_(SQL)
+      case InnerJoin      => "INNER JOIN"
+      case LeftOuterJoin  => "LEFT OUTER JOIN"
+      case RightOuterJoin => "RIGHT OUTER JOIN"
+      case FullOuterJoin  => "FULL OUTER JOIN"
+      case CrossJoin      => "CROSS JOIN"
+
+      // custom clickhouse
+      case AllInnerJoin  => "ALL INNER JOIN"
+      case AllLeftJoin   => "ALL LEFT JOIN"
+      case AllRightJoin  => "ALL RIGHT JOIN"
+      case AntiLeftJoin  => "ANTI LEFT JOIN"
+      case AntiRightJoin => "ANTI RIGHT JOIN"
+      case AnyInnerJoin  => "ANY INNER JOIN"
+      case AnyLeftJoin   => "ANY LEFT JOIN"
+      case AnyRightJoin  => "ANY RIGHT JOIN"
+      case AsOfJoin      => "ASOF JOIN"
+      case AsOfLeftJoin  => "ASOF LEFT JOIN"
+      case SemiLeftJoin  => "SEMI LEFT JOIN"
+      case SemiRightJoin => "SEMI RIGHT JOIN"
     }
 
   private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]], keyword: String): String =

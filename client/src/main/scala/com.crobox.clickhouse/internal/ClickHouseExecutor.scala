@@ -48,7 +48,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       case (Success(resp), p) => p.success(resp)
       case (Failure(e), p)    => p.failure(e)
     })(Keep.both)
-    .run
+    .run()
 
   private lazy val queryRetries: Int = config.getInt("retries")
 
@@ -85,7 +85,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   }
 
   protected def singleRequest(request: HttpRequest): Future[HttpResponse] = {
-    val promise = Promise[HttpResponse]
+    val promise = Promise[HttpResponse]()
 
     queue.offer(request -> promise).flatMap {
       case QueueOfferResult.Enqueued =>

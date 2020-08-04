@@ -18,8 +18,8 @@ lazy val root = (project in file("."))
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
-        scalaVersion := "2.13.1",
-        crossScalaVersions := List("2.12.11", "2.13.1"),
+        scalaVersion := "2.13.3",
+        crossScalaVersions := List("2.12.11", "2.13.3"),
         scalacOptions ++= List(
           "-unchecked",
           "-deprecation",
@@ -59,8 +59,7 @@ lazy val root = (project in file("."))
     ),
     name := "clickhouse"
   )
-  .aggregate(client,dsl,testkit)
-
+  .aggregate(client, dsl, testkit)
 
 lazy val client: Project = (project in file("client"))
   .settings(
@@ -72,7 +71,7 @@ lazy val client: Project = (project in file("client"))
       "com.typesafe.akka"          %% "akka-stream" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-http" % AkkaHttpVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
-      "joda-time"                  % "joda-time" % "2.10.5"
+      "joda-time"                  % "joda-time" % "2.10.6"
     ) ++ testDependencies.map(_    % Test)
   )
 
@@ -94,4 +93,3 @@ lazy val dsl = (project in file("dsl"))
     )
   )
   .dependsOn(client, client % "test->test", testkit % Test)
-

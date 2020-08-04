@@ -50,7 +50,7 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
       if (!initialized) {
         if (fallbackToConfigurationHost) {
           log.warning("Not yet initialized, returning the config host.")
-          sender ! HostBalancer.extractHost(config)
+          sender() ! HostBalancer.extractHost(config)
         } else {
           log.warning("Stashing get connection message until connection message is sent to initialize the manager.")
           stash()
@@ -58,9 +58,9 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
       } else {
         if (connectionIterator.hasNext) {
           val uri = connectionIterator.next()
-          sender ! uri
+          sender() ! uri
         } else {
-          sender ! Status.Failure(
+          sender() ! Status.Failure(
             NoHostAvailableException(s"No connection is available. Current connections statuses $hostsStatus")
           )
         }
@@ -79,7 +79,7 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
         log.info(
           s"Received host status $status for host which is no longer enabled for this connection. Killing health check actor for it."
         )
-        sender ! PoisonPill
+        sender() ! PoisonPill
         cleanUpHost(host)
       }
       if (!initialized) {

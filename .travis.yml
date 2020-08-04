@@ -3,8 +3,12 @@ sudo: required
 language: scala
 scala:
   - 2.12.11
-  - 2.13.1
+  - 2.13.3
 jdk: openjdk11
+env:
+  - CLICKHOUSE_VERSION=19.13.1.11
+  - CLICKHOUSE_VERSION=20.1.2.4
+#  -CLICKHOUSE_VERSION=20.3.12.112
 
 sbt_args: "'set resolvers += \"Sonatype OSS Snapshots\" at \"https://oss.sonatype.org/content/repositories/snapshots\"'"
 
