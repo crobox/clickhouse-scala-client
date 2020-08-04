@@ -37,7 +37,8 @@ package object parallel {
 
     private def _on(rightTableQry: OperationalQuery,
                     leftTableQry: OperationalQuery,
-                    groupCols: Seq[Column]): OperationalQuery = {
+                    joinKeys: Seq[Column],
+                    alias: Option[String] = None): OperationalQuery = {
 
       def recursiveCollectCols(qry: InternalQuery, cols: Seq[Column] = Seq.empty): Seq[Column] = {
         val uQry = qry
@@ -64,7 +65,7 @@ package object parallel {
       //Forcefully add the columns of the right table(s), because 'select *' on a join only returns the values of the left table in clickhouse
       val joinCols = recursiveCollectCols(rightTableQry.internalQuery)
       //filter out cols that are already available trough grouping
-        .filterNot(thisCol => groupCols.exists(_.name == thisCol.name))
+        .filterNot(thisCol => joinKeys.exists(_.name == thisCol.name))
         //Map to a simple column so that we just add the select to top level
         .map(origCol => RefColumn(origCol.name))
         .toList
@@ -74,8 +75,8 @@ package object parallel {
 
       select(joinCols: _*)
         .from(leftTableQry)
-        .join(joinType, rightTableQry)
-        .using(groupCols.head, groupCols.tail: _*)
+        .join(joinType, rightTableQry, alias)
+        .using(joinKeys.head, joinKeys.tail: _*)
     }
 
   }

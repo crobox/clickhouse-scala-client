@@ -38,7 +38,7 @@ class JoinQueryIT
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {
       val query: OperationalQuery =
-        select(itemId).from(select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable).using(itemId))
+        select(itemId).from(select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable, Option("TTT")).using(itemId))
       val resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
     }
@@ -53,7 +53,7 @@ class JoinQueryIT
   ) { (joinType, result) =>
     ignore should s"join correctly on: $joinType" in {
       val query: OperationalQuery =
-        select(itemId).from(select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable).using(itemId))
+        select(itemId).from(select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable, Option("TTT")).using(itemId))
       val resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
     }
@@ -62,7 +62,7 @@ class JoinQueryIT
   // Apparently a JOIN always require a USING column, which doesn't hold for CROSS JOIN
   it should "correctly handle cross join" in {
     val query: OperationalQuery =
-      select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
+      select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable, Option("TTT")))
     println(clickhouseTokenizer.toSql(query.internalQuery))
     val resultRows = chExecutor.execute[Result](query).futureValue.rows
     resultRows.length shouldBe 0

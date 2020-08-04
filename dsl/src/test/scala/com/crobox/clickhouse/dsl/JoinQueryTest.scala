@@ -28,20 +28,20 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {
       val query: OperationalQuery =
-        select(itemId).from(select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable).using(itemId))
+        select(itemId).from(select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable, Option("TTT")).using(itemId))
       val sql = clickhouseTokenizer.toSql(query.internalQuery)
       sql should be(
-        s"SELECT item_id FROM (SELECT item_id FROM join_query.twoTestTable $result (SELECT * FROM join_query.threeTestTable) USING item_id ) FORMAT JSON"
+        s"SELECT item_id FROM (SELECT item_id FROM join_query.twoTestTable $result (SELECT * FROM join_query.threeTestTable) AS TTT USING item_id ) FORMAT JSON"
       )
     }
   }
 
   it should s"join correctly on: ${JoinQuery.CrossJoin}" in {
     val query: OperationalQuery =
-      select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
+      select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable, Option("TTT")))
     val sql = clickhouseTokenizer.toSql(query.internalQuery)
     sql should be(
-      s"SELECT item_id FROM (SELECT item_id FROM join_query.twoTestTable CROSS JOIN (SELECT * FROM join_query.threeTestTable) ) FORMAT JSON"
+      s"SELECT item_id FROM (SELECT item_id FROM join_query.twoTestTable CROSS JOIN (SELECT * FROM join_query.threeTestTable) AS TTT ) FORMAT JSON"
     )
   }
 }

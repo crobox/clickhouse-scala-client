@@ -42,14 +42,13 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(from = Some(from)))
   }
 
-  def asFinal: OperationalQuery = {
+  def asFinal: OperationalQuery =
     OperationalQuery(internalQuery.copy(asFinal = true))
-  }
 
   def groupBy(columns: Column*): OperationalQuery = {
     val internalGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery())
-    val newGroupBy = Some(internalGroupBy.copy(usingColumns = internalGroupBy.usingColumns ++ columns))
-    val newSelect = mergeOperationalColumns(columns)
+    val newGroupBy      = Some(internalGroupBy.copy(usingColumns = internalGroupBy.usingColumns ++ columns))
+    val newSelect       = mergeOperationalColumns(columns)
     OperationalQuery(
       internalQuery.copy(select = newSelect, groupBy = newGroupBy)
     )
@@ -96,9 +95,11 @@ trait OperationalQuery extends Query {
   def limit(limit: Option[Limit]): OperationalQuery =
     OperationalQuery(internalQuery.copy(limit = limit))
 
-  def unionAll(otherQuery : OperationalQuery): OperationalQuery = {
-    require(internalQuery.select.isDefined && otherQuery.internalQuery.select.isDefined, "Trying to apply UNION ALL on non SELECT queries.")
-    require(otherQuery.internalQuery.select.get.columns.size == internalQuery.select.get.columns.size,
+  def unionAll(otherQuery: OperationalQuery): OperationalQuery = {
+    require(internalQuery.select.isDefined && otherQuery.internalQuery.select.isDefined,
+            "Trying to apply UNION ALL on non SELECT queries.")
+    require(
+      otherQuery.internalQuery.select.get.columns.size == internalQuery.select.get.columns.size,
       "SELECT queries needs to have the same number of columns to perform UNION ALL."
     )
 
@@ -106,21 +107,21 @@ trait OperationalQuery extends Query {
   }
 
   private def mergeOperationalColumns(newOrderingColumns: Seq[Column]): Option[SelectQuery] = {
-    val selectForGroup     = internalQuery.select
+    val selectForGroup = internalQuery.select
 
     val selectForGroupCols = selectForGroup.toSeq.flatMap(_.columns)
 
     val filteredSelectAll = if (selectForGroupCols.contains(all())) {
       //Only keep aliased, we already select all cols
-      newOrderingColumns.collect{ case c:AliasedColumn[_] => c}
-    }else{
+      newOrderingColumns.collect { case c: AliasedColumn[_] => c }
+    } else {
       newOrderingColumns
     }
 
     val filteredDuplicates = filteredSelectAll.filterNot(column => {
       selectForGroupCols.exists {
         case c: Column => column.name == c.name
-        case _                       => false
+        case _         => false
       }
     })
 
@@ -130,51 +131,81 @@ trait OperationalQuery extends Query {
     newSelect
   }
 
-  def join[TargetTable <: Table](`type`: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery = {
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, InnerFromQuery(query)))))
-  }
+  def join[TargetTable <: Table](`type`: JoinQuery.JoinType,
+                                 query: OperationalQuery,
+                                 alias: Option[String]): OperationalQuery =
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, InnerFromQuery(query), alias = alias))))
 
-  def join[TargetTable <: Table](`type`: JoinQuery.JoinType, table: TargetTable): OperationalQuery = {
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, TableFromQuery(table)))))
-  }
+  def join[TargetTable <: Table](`type`: JoinQuery.JoinType,
+                                 table: TargetTable,
+                                 alias: Option[String]): OperationalQuery =
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, TableFromQuery(table), alias = alias))))
 
-  def globalJoin[TargetTable <: Table](`type`: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery = {
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, InnerFromQuery(query), global = true))))
-  }
+  def globalJoin[TargetTable <: Table](`type`: JoinQuery.JoinType,
+                                       query: OperationalQuery,
+                                       alias: Option[String]): OperationalQuery =
+    OperationalQuery(
+      internalQuery.copy(join = Some(JoinQuery(`type`, InnerFromQuery(query), global = true, alias = alias)))
+    )
 
-  def globalJoin[TargetTable <: Table](`type`: JoinQuery.JoinType, table: TargetTable): OperationalQuery = {
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, TableFromQuery(table), global = true))))
-  }
+  def globalJoin[TargetTable <: Table](`type`: JoinQuery.JoinType,
+                                       table: TargetTable,
+                                       alias: Option[String]): OperationalQuery =
+    OperationalQuery(
+      internalQuery.copy(join = Some(JoinQuery(`type`, TableFromQuery(table), global = true, alias = alias)))
+    )
 
   @deprecated("Please use join(JoinQuery.AllInnerJoin)")
-  def allInnerJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllInnerJoin, query)
+  def allInnerJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    join(JoinQuery.AllInnerJoin, query, alias)
+
   @deprecated("Please use join(JoinQuery.AllLeftJoin)")
-  def allLeftJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllLeftJoin, query)
+  def allLeftJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    join(JoinQuery.AllLeftJoin, query, alias)
+
   @deprecated("Please use join(JoinQuery.AllRightJoin)")
-  def allRightJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AllRightJoin, query)
+  def allRightJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    join(JoinQuery.AllRightJoin, query, alias)
+
   @deprecated("Please use join(JoinQuery.AllInnerJoin)", "Clickhouse v20")
-  def anyInnerJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AnyInnerJoin, query)
+  def anyInnerJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    join(JoinQuery.AnyInnerJoin, query, alias)
+
   @deprecated("Please use join(JoinQuery.AnyLeftJoin)")
-  def anyLeftJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AnyLeftJoin, query)
+  def anyLeftJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    join(JoinQuery.AnyLeftJoin, query, alias)
+
   @deprecated("Please use join(JoinQuery.AllRightJoin)", "Clickhouse v20")
-  def anyRightJoin(query: OperationalQuery): OperationalQuery = join(JoinQuery.AnyRightJoin, query)
+  def anyRightJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    join(JoinQuery.AnyRightJoin, query, alias)
 
   @deprecated("Please use globalJoin(JoinQuery.AllInnerJoin)")
-  def globalAllInnerJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AllInnerJoin, query)
+  def globalAllInnerJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    globalJoin(JoinQuery.AllInnerJoin, query, alias)
+
   @deprecated("Please use globalJoin(JoinQuery.AllLeftJoin)")
-  def globalAllLeftJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AllLeftJoin, query)
+  def globalAllLeftJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    globalJoin(JoinQuery.AllLeftJoin, query, alias)
+
   @deprecated("Please use globalJoin(JoinQuery.AllRightJoin)")
-  def globalAllRightJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AllRightJoin, query)
+  def globalAllRightJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    globalJoin(JoinQuery.AllRightJoin, query, alias)
+
   @deprecated("Please use globalJoin(JoinQuery.AllInnerJoin)", "Clickhouse v20")
-  def globalAnyInnerJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AnyInnerJoin, query)
+  def globalAnyInnerJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    globalJoin(JoinQuery.AnyInnerJoin, query, alias)
+
   @deprecated("Please use globalJoin(JoinQuery.AnyLeftJoin)")
-  def globalAnyLeftJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AnyLeftJoin, query)
+  def globalAnyLeftJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    globalJoin(JoinQuery.AnyLeftJoin, query, alias)
+
   @deprecated("Please use globalJoin(JoinQuery.AllRightJoin)", "Clickhouse v20")
-  def globalAnyRightJoin(query: OperationalQuery): OperationalQuery = globalJoin(JoinQuery.AnyRightJoin, query)
+  def globalAnyRightJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
+    globalJoin(JoinQuery.AnyRightJoin, query, alias)
 
   def using(
-    column: Column,
-    columns: Column*
+      column: Column,
+      columns: Column*
   ): OperationalQuery = {
     require(internalQuery.join.isDefined)
 
@@ -186,31 +217,31 @@ trait OperationalQuery extends Query {
   }
 
   /**
-    * Merge with another OperationalQuery, any conflict on query parts between the 2 joins will be resolved by
-    * preferring the left querypart over the right one.
-    *
-    * @param other The right part to merge with this OperationalQuery
-    * @return A merge of this and other OperationalQuery
-    */
+   * Merge with another OperationalQuery, any conflict on query parts between the 2 joins will be resolved by
+   * preferring the left querypart over the right one.
+   *
+   * @param other The right part to merge with this OperationalQuery
+   * @return A merge of this and other OperationalQuery
+   */
   def :+>(other: OperationalQuery): OperationalQuery =
     OperationalQuery(this.internalQuery :+> other.internalQuery)
 
   /**
-    * Right associative version of the merge (:+>) operator.
-    *
-    * @param other The left part to merge with this OperationalQuery
-    * @return A merge of this and other OperationalQuery
-    */
+   * Right associative version of the merge (:+>) operator.
+   *
+   * @param other The left part to merge with this OperationalQuery
+   * @return A merge of this and other OperationalQuery
+   */
 
   def <+:(other: OperationalQuery): OperationalQuery =
     OperationalQuery(this.internalQuery :+> other.internalQuery)
 
   /**
-    * Tries to merge this OperationalQuery with other
-    *
-    * @param other The Query parts to merge against
-    * @return A Success on merge without conflict, or Failure of IllegalArgumentException otherwise.
-    */
+   * Tries to merge this OperationalQuery with other
+   *
+   * @param other The Query parts to merge against
+   * @return A Success on merge without conflict, or Failure of IllegalArgumentException otherwise.
+   */
   def +(other: OperationalQuery): Try[OperationalQuery] =
     (this.internalQuery + other.internalQuery).map(OperationalQuery.apply)
 

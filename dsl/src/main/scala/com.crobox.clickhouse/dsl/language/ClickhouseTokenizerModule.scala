@@ -216,15 +216,20 @@ trait ClickhouseTokenizerModule
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
   private def tokenizeJoin(option: Option[JoinQuery]): String =
     option match {
-      case None =>
-        ""
-      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], joinKeys, global, None)) =>
-        s"${isGlobal(global)}${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))})${optionalUsingClause(joinType, joinKeys)}"
-      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, joinKeys, global, None)) =>
-        s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin), withPrefix = false)}${optionalUsingClause(joinType, joinKeys)}"
+      case Some(query) =>
+        val other = query.other match {
+          case tableJoin: TableFromQuery[_] => s"(SELECT * ${tokenizeFrom(Some(tableJoin))})"
+          case innerJoin: InnerFromQuery    => tokenizeFrom(Some(innerJoin), withPrefix = false)
+        }
+        s"${isGlobal(query.global)}${tokenizeJoinType(query.`type`)} $other${aliasJoin(query.alias)} ${optionalUsingClause(query.`type`, query.joinKeys)}"
+      case None => ""
     }
 
-  private def optionalUsingClause(joinType: JoinType, joinKeys: Seq[Column]) =
+  private def aliasJoin(alias: Option[String]): String =
+    // assert(alias.nonEmpty, "When using joins, an alias must be provided")
+    s" AS ${alias.get}"
+
+  private def optionalUsingClause(joinType: JoinType, joinKeys: Seq[Column]): String =
     joinType match {
       case CrossJoin =>
         assert(joinKeys.isEmpty, "When using CrossJoin, no joinKeys should be provided")
