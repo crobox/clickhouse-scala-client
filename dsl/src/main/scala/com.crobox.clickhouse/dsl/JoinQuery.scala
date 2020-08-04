@@ -52,6 +52,4 @@ case class JoinQuery(`type`: JoinType,
                      other: FromQuery,
                      joinKeys: Seq[Column] = Seq.empty[Column],
                      global: Boolean = false,
-                     alias: Option[String] = None) {
-  private[dsl] def getAlias = alias.getOrElse(RandomStringGenerator.random())
-}
+                     alias: String = RandomStringGenerator.random())

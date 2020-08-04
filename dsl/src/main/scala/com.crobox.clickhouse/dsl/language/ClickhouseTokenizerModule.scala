@@ -2,6 +2,7 @@ package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.misc.RandomStringGenerator
 import com.crobox.clickhouse.time.{MultiDuration, TimeUnit, TotalDuration}
 import com.typesafe.scalalogging.Logger
 import org.joda.time.{DateTime, DateTimeZone}
@@ -223,7 +224,7 @@ trait ClickhouseTokenizerModule
         }
         s"""${if (query.global) "GLOBAL " else ""}
            | ${tokenizeJoinType(query.`type`)}
-           | $other${query.alias.map(a => s" AS $a").getOrElse("")}
+           | $other AS ${query.alias}
            | ${tokenizeJoinKeys(from.get, query)}""".trim.stripMargin
           .replaceAll("\n", "")
           .replaceAll("\r", "")
@@ -241,24 +242,24 @@ trait ClickhouseTokenizerModule
         ""
       case _ =>
         assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: ${query.`type`}")
-        query.alias
-          .map(aliasJoin => {
-            val (aliasFrom, columns) = from match {
-              case tableJoin: TableFromQuery[_] => (tableJoin.table.name, tableJoin.table.columns)
-              case innerJoin: InnerFromQuery    => ("", Seq.empty)
+
+        val (aliasFrom, columns) = from match {
+          case tableJoin: TableFromQuery[_] => (tableJoin.table.name, tableJoin.table.columns)
+          case innerJoin: InnerFromQuery    => ("", Seq.empty)
+        }
+        "ON " + joinKeys
+          .map(c => {
+            // we need to check if the joinKey is an actual EXISTING column on aliasFrom
+            // SELECT shield_id AS item_id FROM db.fromTable ANY INNER JOIN (SELECT * FROM db.joinTable) AS TTT ON fromTable.item_id = TTT.item_id
+            if (columns.exists(_.name == c.name)) {
+              s"$aliasFrom.${c.name} = ${query.alias}.${c.name}"
+            } else {
+              // Apparently an ALIAS is used as joinKey. Skip the aliasFrom
+              s"${c.name} = ${query.alias}.${c.name}"
             }
-            "ON " + joinKeys.map(c => {
-              // we need to check if the joinKey is an actual EXISTING column on aliasFrom
-              // SELECT shield_id AS item_id FROM db.fromTable ANY INNER JOIN (SELECT * FROM db.joinTable) AS TTT ON fromTable.item_id = TTT.item_id
-              if(columns.exists(_.name == c.name)) {
-                s"$aliasFrom.${c.name} = $aliasJoin.${c.name}"
-              } else {
-                // Apparently an ALIAS is used as joinKey. Skip the aliasFrom
-                s"${c.name} = $aliasJoin.${c.name}"
-              }
-            }).mkString(",")
           })
-          .getOrElse(s"USING ${tokenizeColumns(joinKeys)}")
+          .mkString(",")
+
     }
   }
 

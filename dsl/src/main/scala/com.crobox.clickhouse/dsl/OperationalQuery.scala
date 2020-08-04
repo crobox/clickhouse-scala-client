@@ -1,5 +1,7 @@
 package com.crobox.clickhouse.dsl
 
+import com.crobox.clickhouse.dsl.misc.RandomStringGenerator
+
 import scala.util.Try
 
 object OperationalQuery {
@@ -134,25 +136,47 @@ trait OperationalQuery extends Query {
   def join[TargetTable <: Table](`type`: JoinQuery.JoinType,
                                  query: OperationalQuery,
                                  alias: Option[String]): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, InnerFromQuery(query), alias = alias))))
+    OperationalQuery(
+      internalQuery.copy(
+        join = Some(JoinQuery(`type`, InnerFromQuery(query), alias = alias.getOrElse(RandomStringGenerator.random())))
+      )
+    )
 
   def join[TargetTable <: Table](`type`: JoinQuery.JoinType,
                                  table: TargetTable,
                                  alias: Option[String]): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(`type`, TableFromQuery(table), alias = alias))))
+    OperationalQuery(
+      internalQuery.copy(
+        join = Some(JoinQuery(`type`, TableFromQuery(table), alias = alias.getOrElse(RandomStringGenerator.random())))
+      )
+    )
 
   def globalJoin[TargetTable <: Table](`type`: JoinQuery.JoinType,
                                        query: OperationalQuery,
                                        alias: Option[String]): OperationalQuery =
     OperationalQuery(
-      internalQuery.copy(join = Some(JoinQuery(`type`, InnerFromQuery(query), global = true, alias = alias)))
+      internalQuery.copy(
+        join = Some(
+          JoinQuery(`type`,
+                    InnerFromQuery(query),
+                    global = true,
+                    alias = alias.getOrElse(RandomStringGenerator.random()))
+        )
+      )
     )
 
   def globalJoin[TargetTable <: Table](`type`: JoinQuery.JoinType,
                                        table: TargetTable,
                                        alias: Option[String]): OperationalQuery =
     OperationalQuery(
-      internalQuery.copy(join = Some(JoinQuery(`type`, TableFromQuery(table), global = true, alias = alias)))
+      internalQuery.copy(
+        join = Some(
+          JoinQuery(`type`,
+                    TableFromQuery(table),
+                    global = true,
+                    alias = alias.getOrElse(RandomStringGenerator.random()))
+        )
+      )
     )
 
   @deprecated("Please use join(JoinQuery.AllInnerJoin)")
