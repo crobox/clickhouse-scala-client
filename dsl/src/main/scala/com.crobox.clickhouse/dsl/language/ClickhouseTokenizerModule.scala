@@ -227,7 +227,7 @@ trait ClickhouseTokenizerModule
 
   private def aliasJoin(alias: Option[String]): String =
     // assert(alias.nonEmpty, "When using joins, an alias must be provided")
-    s" AS ${alias.get}"
+    alias.map(a => s" AS $a").getOrElse("")
 
   private def optionalUsingClause(joinType: JoinType, joinKeys: Seq[Column]): String =
     joinType match {
