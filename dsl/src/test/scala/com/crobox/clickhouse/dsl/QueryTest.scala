@@ -29,20 +29,13 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     )
   }
 
-  it should "generate for join between tables" in {
-    val query = select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable, Option("TTT")) using shieldId
-    clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT column_1, shield_id FROM $database.captainAmerica INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id FORMAT JSON"
-    )
-  }
-
   it should "generate inner join" in {
     val expectedUUID                     = UUID.randomUUID()
     val innerQuery: OperationalQuery     = select(shieldId as itemId) from OneTestTable where shieldId.isEq(expectedUUID)
     val joinInnerQuery: OperationalQuery = select(itemId) from TwoTestTable where (col3 isEq "wompalama")
-    val query                            = select(col1, shieldId) from innerQuery join (AnyInnerJoin, joinInnerQuery, Option("TTT")) using itemId
+    val query                            = select(col1, shieldId) from innerQuery join (InnerJoin, joinInnerQuery, Option("TTT")) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT column_1, shield_id FROM (SELECT shield_id AS item_id FROM $database.captainAmerica WHERE shield_id = '$expectedUUID' ) ANY INNER JOIN (SELECT item_id FROM $database.twoTestTable WHERE column_3 = 'wompalama' ) AS TTT USING item_id FORMAT JSON"
+      s"SELECT column_1, shield_id FROM (SELECT shield_id AS item_id FROM $database.captainAmerica WHERE shield_id = '$expectedUUID') INNER JOIN (SELECT item_id FROM $database.twoTestTable WHERE column_3 = 'wompalama') AS TTT ON item_id = TTT.item_id FORMAT JSON"
     )
   }
 

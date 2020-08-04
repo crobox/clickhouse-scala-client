@@ -31,7 +31,7 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
         select(itemId).from(select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable, Option("TTT")).using(itemId))
       val sql = clickhouseTokenizer.toSql(query.internalQuery)
       sql should be(
-        s"SELECT item_id FROM (SELECT item_id FROM join_query.twoTestTable $result (SELECT * FROM join_query.threeTestTable) AS TTT USING item_id ) FORMAT JSON"
+        s"SELECT item_id FROM (SELECT item_id FROM join_query.twoTestTable $result (SELECT * FROM join_query.threeTestTable) AS TTT ON twoTestTable.item_id = TTT.item_id) FORMAT JSON"
       )
     }
   }
@@ -41,7 +41,7 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
       select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable, Option("TTT")))
     val sql = clickhouseTokenizer.toSql(query.internalQuery)
     sql should be(
-      s"SELECT item_id FROM (SELECT item_id FROM join_query.twoTestTable CROSS JOIN (SELECT * FROM join_query.threeTestTable) AS TTT ) FORMAT JSON"
+      s"SELECT item_id FROM (SELECT item_id FROM join_query.twoTestTable CROSS JOIN (SELECT * FROM join_query.threeTestTable) AS TTT) FORMAT JSON"
     )
   }
 }

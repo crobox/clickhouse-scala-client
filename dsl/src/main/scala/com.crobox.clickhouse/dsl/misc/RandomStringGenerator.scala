@@ -4,7 +4,7 @@ import java.security.SecureRandom
 
 import scala.annotation.tailrec
 
-object TableNameGenerator {
+object RandomStringGenerator {
   private lazy val numberGenerator: SecureRandom = new SecureRandom
 
   def random(length: Int = 6): String =

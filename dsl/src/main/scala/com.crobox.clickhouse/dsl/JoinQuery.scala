@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery._
-import com.crobox.clickhouse.dsl.misc.TableNameGenerator
+import com.crobox.clickhouse.dsl.misc.RandomStringGenerator
 
 /**
  * See https://clickhouse.tech/docs/en/sql-reference/statements/select/join/
@@ -53,5 +53,5 @@ case class JoinQuery(`type`: JoinType,
                      joinKeys: Seq[Column] = Seq.empty[Column],
                      global: Boolean = false,
                      alias: Option[String] = None) {
-  private[dsl] def getAlias = alias.getOrElse(TableNameGenerator.random)
+  private[dsl] def getAlias = alias.getOrElse(RandomStringGenerator.random())
 }

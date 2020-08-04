@@ -90,7 +90,7 @@ trait ClickhouseTokenizerModule
     val prefix = if (withPrefix) "FROM" else ""
     from match {
       case Some(fromClause: InnerFromQuery) =>
-        s"$prefix (${toRawSql(fromClause.innerQuery.internalQuery)})"
+        s"$prefix (${toRawSql(fromClause.innerQuery.internalQuery).trim})"
       case Some(TableFromQuery(table: Table)) =>
         s"$prefix ${table.quoted}"
       case _ => ""
