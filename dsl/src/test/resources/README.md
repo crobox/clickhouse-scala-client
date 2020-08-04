@@ -40,9 +40,10 @@ CREATE DATABASE IF NOT EXISTS sc;
 CREATE TABLE IF NOT EXISTS sc.captainAmerica  (
   shield_id String,
   ts UInt64,
-  numbers Array(UInt32)
+  numbers Array(UInt32),
+  date Date DEFAULT toDate(toDateTime(ts / 1000))
 ) ENGINE = MergeTree()
-  PARTITION BY (shield_id, toYYYYMM(ts))
+  PARTITION BY (shield_id, toYYYYMM(date))
   ORDER BY (shield_id);
 
 CREATE TABLE IF NOT EXISTS sc.twoTestTable (
@@ -52,7 +53,7 @@ CREATE TABLE IF NOT EXISTS sc.twoTestTable (
   column_3 String,
   column_4 String
 ) ENGINE = MergeTree()
-  PARTITION BY (item_id, toYYYYMM(ts))
+  PARTITION BY (item_id)
   ORDER BY (item_id);
 
 CREATE TABLE IF NOT EXISTS sc.threeTestTable (
@@ -60,8 +61,8 @@ CREATE TABLE IF NOT EXISTS sc.threeTestTable (
   column_4 String,
   column_5 String,
   column_6 String
-) ENGINE = ENGINE = MergeTree()
-  PARTITION BY (item_id, toYYYYMM(ts))
+) ENGINE = MergeTree()
+  PARTITION BY (item_id)
   ORDER BY (item_id);
 ```
 
