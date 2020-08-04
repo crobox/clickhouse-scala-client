@@ -68,7 +68,7 @@ trait ClickhouseTokenizerModule
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
            | ${tokenizeLimit(limit)}
-           | ${tokenizeUnionAll(union)}""".toString.trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
+           | ${tokenizeUnionAll(union)}""".trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
     }
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery]) =
@@ -221,25 +221,24 @@ trait ClickhouseTokenizerModule
           case tableJoin: TableFromQuery[_] => s"(SELECT * ${tokenizeFrom(Some(tableJoin))})"
           case innerJoin: InnerFromQuery    => tokenizeFrom(Some(innerJoin), withPrefix = false)
         }
-        s"${isGlobal(query.global)}${tokenizeJoinType(query.`type`)} $other${aliasJoin(query.alias)} ${optionalUsingClause(query.`type`, query.joinKeys)}"
+        s"""${if (query.global) "GLOBAL " else ""}
+           | ${tokenizeJoinType(query.`type`)}
+           | $other${query.alias.map(a => s" AS $a").getOrElse("")}
+           | ${tokenizeJoinKeys(query.`type`, query.joinKeys)}""".trim.stripMargin
+          .replaceAll("\n", "")
+          .replaceAll("\r", "")
       case None => ""
     }
 
-  private def aliasJoin(alias: Option[String]): String =
-    // assert(alias.nonEmpty, "When using joins, an alias must be provided")
-    alias.map(a => s" AS $a").getOrElse("")
-
-  private def optionalUsingClause(joinType: JoinType, joinKeys: Seq[Column]): String =
+  private def tokenizeJoinKeys(joinType: JoinType, joinKeys: Seq[Column]): String =
     joinType match {
       case CrossJoin =>
         assert(joinKeys.isEmpty, "When using CrossJoin, no joinKeys should be provided")
         ""
       case _ =>
         assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: $joinType")
-        s" USING ${tokenizeColumns(joinKeys)}" // note the prefix space!
+        s"USING ${tokenizeColumns(joinKeys)}"
     }
-
-  private def isGlobal(global: Boolean): String = if (global) "GLOBAL " else ""
 
   private[language] def tokenizeColumns(columns: Seq[Column]): String =
     columns
