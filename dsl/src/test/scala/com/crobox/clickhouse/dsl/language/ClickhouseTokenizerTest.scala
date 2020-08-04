@@ -149,7 +149,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       )
     )
     query should be(
-      "SELECT shield_id FROM default.captainAmerica GLOBAL ANY LEFT JOIN (SELECT item_id AS shield_id FROM default.twoTestTable ) USING shield_id FORMAT JSON"
+      "SELECT shield_id FROM default.captainAmerica GLOBAL ANY LEFT JOIN (SELECT item_id AS shield_id FROM default.twoTestTable) USING shield_id FORMAT JSON"
     )
   }
 
