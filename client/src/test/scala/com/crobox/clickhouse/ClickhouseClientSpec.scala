@@ -23,14 +23,13 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
     with ScalaFutures {
 
   implicit val materializer: Materializer = ActorMaterializer()
-  implicit val ec: ExecutionContext = system.dispatcher
+  implicit val ec: ExecutionContext       = system.dispatcher
 
-  override implicit def patienceConfig: PatienceConfig  = PatienceConfig(1.seconds, 50.millis)
+  override implicit def patienceConfig: PatienceConfig = PatienceConfig(1.seconds, 50.millis)
 
-  override protected def afterAll(): Unit = {
+  override protected def afterAll(): Unit =
     try super.afterAll()
     finally Await.result(system.terminate(), 10.seconds)
-  }
 
   def randomUUID: UUID =
     UUID.randomUUID
@@ -40,4 +39,12 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
 
   def randomInt: Int =
     Random.nextInt(100000)
+
+  // Returns the Clickhouse Version. DEFAUlt VALUE *must* equal the one set in .travis.yml
+  lazy val ClickHouseVersion: String =
+    Option(System.getenv("CLICKHOUSE_VERSION")).map(_.trim).filter(_.nonEmpty).getOrElse("20.3.12.112")
+  lazy val ClickHouseMayorVersion: Int = ClickHouseVersion.substring(0, ClickHouseVersion.indexOf('.')).toInt
+
+  def mustMatchClickHouseVersion(version: Int, testFun: => Any): Any =
+    if (ClickHouseMayorVersion >= version) testFun
 }
