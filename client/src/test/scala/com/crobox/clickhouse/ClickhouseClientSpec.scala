@@ -40,11 +40,17 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
   def randomInt: Int =
     Random.nextInt(100000)
 
-  // Returns the Clickhouse Version. DEFAUlt VALUE *must* equal the one set in .travis.yml
+  // Returns the Clickhouse Version. DEFAUlt VALUE *must* equal the one set in .travis.yml AND docker-compose.xml
   lazy val ClickHouseVersion: String =
     Option(System.getenv("CLICKHOUSE_VERSION")).map(_.trim).filter(_.nonEmpty).getOrElse("20.3.12.112")
   lazy val ClickHouseMayorVersion: Int = ClickHouseVersion.substring(0, ClickHouseVersion.indexOf('.')).toInt
 
   def mustMatchClickHouseVersion(version: Int, testFun: => Any): Any =
-    if (ClickHouseMayorVersion >= version) testFun
+    if (ClickHouseMayorVersion >= version) {
+      // continue with test
+      testFun
+    } else {
+      // abort test
+      cancel()
+    }
 }
