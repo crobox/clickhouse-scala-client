@@ -48,7 +48,7 @@ object JoinQuery {
   case object SemiRightJoin extends JoinType
 }
 
-case class JoinQuery(`type`: JoinType,
+case class JoinQuery(joinType: JoinType,
                      other: FromQuery,
                      joinKeys: Seq[Column] = Seq.empty[Column],
                      global: Boolean = false,

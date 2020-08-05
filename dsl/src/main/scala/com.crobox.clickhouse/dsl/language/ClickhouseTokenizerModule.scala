@@ -223,7 +223,7 @@ trait ClickhouseTokenizerModule
           case innerJoin: InnerFromQuery    => tokenizeFrom(Some(innerJoin), withPrefix = false)
         }
         s"""${if (query.global) "GLOBAL " else ""}
-           | ${tokenizeJoinType(query.`type`)}
+           | ${tokenizeJoinType(query.joinType)}
            | $other AS ${query.alias}
            | ${tokenizeJoinKeys(from.get, query)}""".trim.stripMargin
           .replaceAll("\n", "")
@@ -236,12 +236,12 @@ trait ClickhouseTokenizerModule
       case EmptyColumn => true
       case _           => false
     }
-    query.`type` match {
+    query.joinType match {
       case CrossJoin =>
         assert(joinKeys.isEmpty, "When using CrossJoin, no joinKeys should be provided")
         ""
       case _ =>
-        assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: ${query.`type`}")
+        assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: ${query.joinType}")
 
         val (aliasFrom, columns) = from match {
           case tableJoin: TableFromQuery[_] => (tableJoin.table.name, tableJoin.table.columns)
