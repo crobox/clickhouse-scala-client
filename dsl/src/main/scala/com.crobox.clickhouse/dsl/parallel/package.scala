@@ -56,7 +56,7 @@ package object parallel {
         val newCols = (cols ++ maybeFromCols ++ uQry.select.toSeq.flatMap(_.columns)).distinct
 
         uQry.join match {
-          case Some(JoinQuery(_, q, _, _, _)) if selectAll => recursiveCollectCols(q.internalQuery, newCols)
+          case Some(JoinQuery(_, q, _, _, _, _)) if selectAll => recursiveCollectCols(q.internalQuery, newCols)
           case _                                           => newCols
         }
       }

@@ -2,7 +2,6 @@ package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.misc.RandomStringGenerator
 import com.crobox.clickhouse.time.{MultiDuration, TimeUnit, TotalDuration}
 import com.typesafe.scalalogging.Logger
 import org.joda.time.{DateTime, DateTimeZone}
@@ -247,21 +246,36 @@ trait ClickhouseTokenizerModule
           case tableJoin: TableFromQuery[_] => (tableJoin.table.name, tableJoin.table.columns)
           case innerJoin: InnerFromQuery    => ("", Seq.empty)
         }
-        "ON " + joinKeys
-          .map(c => {
-            // we need to check if the joinKey is an actual EXISTING column on aliasFrom
-            // SELECT shield_id AS item_id FROM db.fromTable ANY INNER JOIN (SELECT * FROM db.joinTable) AS TTT ON fromTable.item_id = TTT.item_id
-            if (columns.exists(_.name == c.name)) {
-              s"$aliasFrom.${c.name} = ${query.alias}.${c.name}"
-            } else {
-              // Apparently an ALIAS is used as joinKey. Skip the aliasFrom
-              s"${c.name} = ${query.alias}.${c.name}"
-            }
-          })
-          .mkString(",")
 
+        val clause = "ON " + joinKeys.map(c => tokenizeJoinKey(c, columns, aliasFrom, query.alias)).mkString(" AND ")
+
+        // check for match conditions (ASOF)
+        query.joinType match {
+          case AsOfJoin | AsOfLeftJoin =>
+            assert(query.matchConditions.nonEmpty, s"No matchConditions provided for joinType: ${query.joinType}")
+            clause + " AND " + query.matchConditions
+              .map(tuple => tokenizeJoinKey(tuple._1, columns, aliasFrom, query.alias, tuple._2))
+              .mkString(" AND ")
+          case _ =>
+            // fallthrough
+            clause
+        }
     }
   }
+
+  private def tokenizeJoinKey(c: Column,
+                              columns: Seq[NativeColumn[_]],
+                              aliasFrom: String,
+                              aliasOther: String,
+                              operator: String = "="): String =
+    // we need to check if the joinKey is an actual EXISTING column on aliasFrom
+    // SELECT shield_id AS item_id FROM db.fromTable ANY INNER JOIN (SELECT * FROM db.joinTable) AS TTT ON fromTable.item_id = TTT.item_id
+    if (columns.exists(_.name == c.name)) {
+      s"$aliasFrom.${c.name} $operator ${aliasOther}.${c.name}"
+    } else {
+      // Apparently an ALIAS is used as joinKey. Skip the aliasFrom
+      s"${c.name} $operator ${aliasOther}.${c.name}"
+    }
 
   private[language] def tokenizeColumns(columns: Seq[Column]): String =
     columns

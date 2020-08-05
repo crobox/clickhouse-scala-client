@@ -2,15 +2,14 @@ package com.crobox.clickhouse.dsl
 
 import java.util.UUID
 
-import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
-import com.crobox.clickhouse.dsl.JoinQuery.AnyInnerJoin
+import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
+import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.execution.{DefaultClickhouseQueryExecutor, QueryResult}
-import com.crobox.clickhouse.ClickhouseClientSpec
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
-import com.crobox.clickhouse.dsl._
+
 import scala.concurrent.Future
 import scala.util.Random
 
@@ -31,7 +30,7 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
     implicit val resultFormat: RootJsonFormat[Result] =
       jsonFormat[String, Int, Result](Result.apply, "column_1", "empty")
     val results: Future[QueryResult[Result]] = chExecutor.execute[Result](
-      select  (shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable join (AnyInnerJoin, TwoTestTable, Option("TTT")) using itemId
+      select  (shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable join (InnerJoin, TwoTestTable, Option("TTT")) using itemId
     )
     results.futureValue.rows.map(_.columnResult) should be(table2Entries.map(_.firstColumn))
     results.futureValue.rows.map(_.empty).head should be(1)

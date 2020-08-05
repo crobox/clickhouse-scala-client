@@ -39,7 +39,35 @@ class JoinQueryIT
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {
       val query: OperationalQuery =
-        select(itemId).from(select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable, Option("TTT")).using(itemId))
+        select(itemId).from(
+          select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable, Option("TTT")).using(itemId)
+        )
+      val resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows.length shouldBe result
+    }
+  }
+
+  forAll(
+    Table(
+      ("joinType", "result"),
+      (JoinQuery.InnerJoin, 0),
+      (JoinQuery.LeftOuterJoin, 0),
+      (JoinQuery.RightOuterJoin, 0),
+      (JoinQuery.FullOuterJoin, 0),
+      (JoinQuery.AnyInnerJoin, 0),
+      (JoinQuery.AnyLeftJoin, 0),
+      (JoinQuery.AnyRightJoin, 0),
+      (JoinQuery.AntiLeftJoin, 0),
+      (JoinQuery.AntiRightJoin, 0),
+      (JoinQuery.SemiLeftJoin, 0),
+      (JoinQuery.SemiRightJoin, 0),
+    )
+  ) { (joinType, result) =>
+    it should s"join correctly on double keys: $joinType" in {
+      val query: OperationalQuery =
+        select(itemId).from(
+          select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable, Option("TTT")).using(itemId, col4)
+        )
       val resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
     }
@@ -52,9 +80,14 @@ class JoinQueryIT
       (JoinQuery.AsOfLeftJoin, 0),
     )
   ) { (joinType, result) =>
-    ignore should s"join correctly on: $joinType" in {
+    it should s"join correctly on: $joinType" in {
       val query: OperationalQuery =
-        select(itemId).from(select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable, Option("TTT")).using(itemId))
+        select(itemId).from(
+          select(itemId)
+            .from(TwoTestTable)
+            .asOfJoin(joinType, ThreeTestTable, Option("TTT"), (col2, "<="))
+            .using(itemId)
+        )
       val resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
     }
@@ -98,7 +131,9 @@ class JoinQueryIT
   }
 
   it should "OPERATIONAL using alias" in {
-    val query = select(shieldId as itemId).from(OneTestTable).join(InnerJoin, select(itemId).from(TwoTestTable), Option("TTT")) using itemId
+    val query = select(shieldId as itemId)
+      .from(OneTestTable)
+      .join(InnerJoin, select(itemId).from(TwoTestTable), Option("TTT")) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT shield_id AS item_id FROM $q1 INNER JOIN (SELECT item_id FROM $q2) AS TTT ON item_id = TTT.item_id FORMAT JSON"
     )
@@ -107,7 +142,9 @@ class JoinQueryIT
   }
 
   it should "OPERATIONAL normal" in {
-    val query = select(itemId).from(TwoTestTable).join(InnerJoin, select(itemId).from(ThreeTestTable), Option("TTT")) using itemId
+    val query = select(itemId)
+      .from(TwoTestTable)
+      .join(InnerJoin, select(itemId).from(ThreeTestTable), Option("TTT")) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT item_id FROM $q2 INNER JOIN (SELECT item_id FROM $q3) AS TTT ON $t2.item_id = TTT.item_id FORMAT JSON"
     )

@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl
 import java.util.UUID
 
 import com.crobox.clickhouse.dsl.column._
-import com.crobox.clickhouse.dsl.JoinQuery.{AnyInnerJoin, InnerJoin}
+import com.crobox.clickhouse.dsl.JoinQuery.{InnerJoin}
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType

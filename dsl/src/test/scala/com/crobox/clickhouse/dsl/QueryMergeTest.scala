@@ -44,7 +44,7 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema {
       s"""SELECT item_id, column_1, column_2, column_3, column_4, column_5, column_6, * FROM (
          |  SELECT * FROM $database.captainAmerica WHERE shield_id = '$expectedUUID' GROUP BY ts ORDER BY ts ASC
          |) ALL LEFT JOIN (
-         |  SELECT item_id, column_4, column_5, column_6, * FROM (
+         |  SELECT item_id, column_2, column_4, column_5, column_6, * FROM (
          |    SELECT * FROM $database.twoTestTable WHERE column_3 = 'wompalama' GROUP BY ts ORDER BY ts ASC
          |  ) ALL LEFT JOIN (
          |    SELECT * FROM $database.threeTestTable WHERE shield_id = '$expectedUUID' GROUP BY ts ORDER BY ts ASC
