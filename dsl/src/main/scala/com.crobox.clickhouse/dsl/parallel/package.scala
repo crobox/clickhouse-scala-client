@@ -9,9 +9,8 @@ package object parallel {
     /**
      * Merging 2 queries will retaining all grouping and selection of both queries and join them using the grouped columns
      */
-    def merge(query: OperationalQuery): MergingQueries =
-      MergingQueries(operationalQuery, query)
-
+    def merge(query: OperationalQuery, alias: Option[String]): MergingQueries =
+      MergingQueries(operationalQuery, query, AllLeftJoin, alias)
   }
 
   /**
@@ -19,7 +18,8 @@ package object parallel {
    */
   case class MergingQueries(rightTableQry: OperationalQuery,
                             leftTableQry: OperationalQuery,
-                            joinType: JoinQuery.JoinType = AllLeftJoin)
+                            joinType: JoinQuery.JoinType = AllLeftJoin,
+                            alias: Option[String])
       extends QueryFactory {
 
     def on(columns: Column*): OperationalQuery = {
@@ -37,7 +37,7 @@ package object parallel {
 
     private def _on(rightTableQry: OperationalQuery,
                     leftTableQry: OperationalQuery,
-                    groupCols: Seq[Column]): OperationalQuery = {
+                    joinKeys: Seq[Column]): OperationalQuery = {
 
       def recursiveCollectCols(qry: InternalQuery, cols: Seq[Column] = Seq.empty): Seq[Column] = {
         val uQry = qry
@@ -56,7 +56,7 @@ package object parallel {
         val newCols = (cols ++ maybeFromCols ++ uQry.select.toSeq.flatMap(_.columns)).distinct
 
         uQry.join match {
-          case Some(JoinQuery(_, q, _, _, _)) if selectAll => recursiveCollectCols(q.internalQuery, newCols)
+          case Some(JoinQuery(_, q, _, _, _, _)) if selectAll => recursiveCollectCols(q.internalQuery, newCols)
           case _                                           => newCols
         }
       }
@@ -64,7 +64,7 @@ package object parallel {
       //Forcefully add the columns of the right table(s), because 'select *' on a join only returns the values of the left table in clickhouse
       val joinCols = recursiveCollectCols(rightTableQry.internalQuery)
       //filter out cols that are already available trough grouping
-        .filterNot(thisCol => groupCols.exists(_.name == thisCol.name))
+        .filterNot(thisCol => joinKeys.exists(_.name == thisCol.name))
         //Map to a simple column so that we just add the select to top level
         .map(origCol => RefColumn(origCol.name))
         .toList
@@ -74,8 +74,8 @@ package object parallel {
 
       select(joinCols: _*)
         .from(leftTableQry)
-        .join(joinType, rightTableQry)
-        .using(groupCols.head, groupCols.tail: _*)
+        .join(joinType, rightTableQry, alias)
+        .using(joinKeys.head, joinKeys.tail: _*)
     }
 
   }

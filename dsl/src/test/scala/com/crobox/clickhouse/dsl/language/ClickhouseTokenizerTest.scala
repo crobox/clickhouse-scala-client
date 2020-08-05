@@ -4,6 +4,7 @@ import java.util.UUID
 
 import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.misc.RandomStringGenerator
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
 
@@ -121,11 +122,11 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-        join = Some(JoinQuery(JoinQuery.AnyInnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), Seq(shieldId)))
+        join = Some(JoinQuery(JoinQuery.InnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), Seq(shieldId), alias = "TTT"))
       )
     )
     query should be(
-      "SELECT shield_id FROM default.captainAmerica ANY INNER JOIN (SELECT * FROM default.captainAmerica) USING shield_id FORMAT JSON"
+      "SELECT shield_id FROM default.captainAmerica INNER JOIN (SELECT * FROM default.captainAmerica) AS TTT ON captainAmerica.shield_id = TTT.shield_id FORMAT JSON"
     )
   }
 
@@ -143,13 +144,14 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
               OperationalQuery(InternalQuery(Some(joinSelect), Some(TableFromQuery[TwoTestTable.type](TwoTestTable))))
             ),
             Seq(shieldId),
-            true
+            true,
+            "TTT"
           )
         )
       )
     )
     query should be(
-      "SELECT shield_id FROM default.captainAmerica GLOBAL ANY LEFT JOIN (SELECT item_id AS shield_id FROM default.twoTestTable ) USING shield_id FORMAT JSON"
+      "SELECT shield_id FROM default.captainAmerica GLOBAL ANY LEFT JOIN (SELECT item_id AS shield_id FROM default.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id FORMAT JSON"
     )
   }
 

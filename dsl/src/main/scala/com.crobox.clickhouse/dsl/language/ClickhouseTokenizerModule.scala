@@ -61,14 +61,14 @@ trait ClickhouseTokenizerModule
            |${tokenizeSelect(select)}
            | ${tokenizeFrom(from)}
            | ${tokenizeFinal(asFinal)}
-           | ${tokenizeJoin(join)}
+           | ${tokenizeJoin(from, join)}
            | ${tokenizeFiltering(prewhere, "PREWHERE")}
            | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
            | ${tokenizeLimit(limit)}
-           | ${tokenizeUnionAll(union)}""".toString.trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
+           | ${tokenizeUnionAll(union)}""".trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
     }
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery]) =
@@ -90,7 +90,7 @@ trait ClickhouseTokenizerModule
     val prefix = if (withPrefix) "FROM" else ""
     from match {
       case Some(fromClause: InnerFromQuery) =>
-        s"$prefix (${toRawSql(fromClause.innerQuery.internalQuery)})"
+        s"$prefix (${toRawSql(fromClause.innerQuery.internalQuery).trim})"
       case Some(TableFromQuery(table: Table)) =>
         s"$prefix ${table.quoted}"
       case _ => ""
@@ -214,27 +214,68 @@ trait ClickhouseTokenizerModule
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
-  private def tokenizeJoin(option: Option[JoinQuery]): String =
-    option match {
-      case None =>
-        ""
-      case Some(JoinQuery(joinType, tableJoin: TableFromQuery[_], joinKeys, global, None)) =>
-        s"${isGlobal(global)}${tokenizeJoinType(joinType)} (SELECT * ${tokenizeFrom(Some(tableJoin))})${optionalUsingClause(joinType, joinKeys)}"
-      case Some(JoinQuery(joinType, innerJoin: InnerFromQuery, joinKeys, global, None)) =>
-        s"${isGlobal(global)}${tokenizeJoinType(joinType)} ${tokenizeFrom(Some(innerJoin), withPrefix = false)}${optionalUsingClause(joinType, joinKeys)}"
+  private def tokenizeJoin(from: Option[FromQuery], join: Option[JoinQuery]): String =
+    join match {
+      case Some(query) =>
+        val other = query.other match {
+          case tableJoin: TableFromQuery[_] => s"(SELECT * ${tokenizeFrom(Some(tableJoin))})"
+          case innerJoin: InnerFromQuery    => tokenizeFrom(Some(innerJoin), withPrefix = false)
+        }
+        s"""${if (query.global) "GLOBAL " else ""}
+           | ${tokenizeJoinType(query.joinType)}
+           | $other AS ${query.alias}
+           | ${tokenizeJoinKeys(from.get, query)}""".trim.stripMargin
+          .replaceAll("\n", "")
+          .replaceAll("\r", "")
+      case None => ""
     }
 
-  private def optionalUsingClause(joinType: JoinType, joinKeys: Seq[Column]) =
-    joinType match {
+  private def tokenizeJoinKeys(from: FromQuery, query: JoinQuery): String = {
+    val joinKeys = query.joinKeys.filterNot {
+      case EmptyColumn => true
+      case _           => false
+    }
+    query.joinType match {
       case CrossJoin =>
         assert(joinKeys.isEmpty, "When using CrossJoin, no joinKeys should be provided")
         ""
       case _ =>
-        assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: $joinType")
-        s" USING ${tokenizeColumns(joinKeys)}" // note the prefix space!
-    }
+        assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: ${query.joinType}")
 
-  private def isGlobal(global: Boolean): String = if (global) "GLOBAL " else ""
+        val (aliasFrom, columns) = from match {
+          case tableJoin: TableFromQuery[_] => (tableJoin.table.name, tableJoin.table.columns)
+          case innerJoin: InnerFromQuery    => ("", Seq.empty)
+        }
+
+        val clause = "ON " + joinKeys.map(c => tokenizeJoinKey(c, columns, aliasFrom, query.alias)).mkString(" AND ")
+
+        // check for match conditions (ASOF)
+        query.joinType match {
+          case AsOfJoin | AsOfLeftJoin =>
+            assert(query.matchConditions.nonEmpty, s"No matchConditions provided for joinType: ${query.joinType}")
+            clause + " AND " + query.matchConditions
+              .map(tuple => tokenizeJoinKey(tuple._1, columns, aliasFrom, query.alias, tuple._2))
+              .mkString(" AND ")
+          case _ =>
+            // fallthrough
+            clause
+        }
+    }
+  }
+
+  private def tokenizeJoinKey(c: Column,
+                              columns: Seq[NativeColumn[_]],
+                              aliasFrom: String,
+                              aliasOther: String,
+                              operator: String = "="): String =
+    // we need to check if the joinKey is an actual EXISTING column on aliasFrom
+    // SELECT shield_id AS item_id FROM db.fromTable ANY INNER JOIN (SELECT * FROM db.joinTable) AS TTT ON fromTable.item_id = TTT.item_id
+    if (columns.exists(_.name == c.name)) {
+      s"$aliasFrom.${c.name} $operator ${aliasOther}.${c.name}"
+    } else {
+      // Apparently an ALIAS is used as joinKey. Skip the aliasFrom
+      s"${c.name} $operator ${aliasOther}.${c.name}"
+    }
 
   private[language] def tokenizeColumns(columns: Seq[Column]): String =
     columns

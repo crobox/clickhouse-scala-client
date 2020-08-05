@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery._
+import com.crobox.clickhouse.dsl.misc.RandomStringGenerator
 
 /**
  * See https://clickhouse.tech/docs/en/sql-reference/statements/select/join/
@@ -47,8 +48,19 @@ object JoinQuery {
   case object SemiRightJoin extends JoinType
 }
 
-case class JoinQuery(`type`: JoinType,
+/**
+ * @param joinType
+ * @param other
+ * @param joinKeys
+ * @param global
+ * @param alias
+ * @param matchConditions Are used by AsOfJoin queries. Must be provided as tuples of (Column, Operator), where operator
+ *                        must be one of the following: >, >=, <, <=
+ */
+case class JoinQuery(joinType: JoinType,
                      other: FromQuery,
                      joinKeys: Seq[Column] = Seq.empty[Column],
                      global: Boolean = false,
-                     alias: Option[String] = None)
+                     alias: String = RandomStringGenerator.random(),
+//                     matchConditions: Seq[TableColumn[Boolean]] = Seq.empty)
+                     matchConditions: Seq[(Column, String)] = Seq.empty)

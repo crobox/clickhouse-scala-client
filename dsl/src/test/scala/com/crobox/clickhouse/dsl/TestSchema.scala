@@ -45,7 +45,7 @@ trait TestSchema {
   case object ThreeTestTable extends Table {
     override lazy val database: String = _db
     override val name: String                   = "threeTestTable"
-    override val columns: List[NativeColumn[_]] = List(itemId, col4, col5, col6)
+    override val columns: List[NativeColumn[_]] = List(itemId, col2, col4, col5, col6)
   }
 
   val shieldId        = NativeColumn[UUID]("shield_id")
