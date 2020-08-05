@@ -1,20 +1,15 @@
 package com.crobox.clickhouse.dsl.misc
 
-import java.security.SecureRandom
-
-import scala.annotation.tailrec
+import scala.util.Random
 
 object RandomStringGenerator {
-  private lazy val numberGenerator: SecureRandom = new SecureRandom
 
-  def random(length: Int = 6): String =
-    padLeft(Integer.toString(numberGenerator.nextInt(Int.MaxValue - 1) + 1, 36), length)
-
-  @tailrec
-  private def padLeft(string: String, length: Int): String = {
-    if (string.length >= length) {
-      return string
-    }
-    padLeft("0" + string, length)
-  }
+  /**
+   * Generates a random string that can be used o.a. for alias names in Joins.
+   * 'Uniqueness' is defined by the length of the generated sequence, which is default set to 6
+   *
+   * @param length
+   * @return
+   */
+  def random(length: Int = 6): String = Random.alphanumeric.take(length).mkString("")
 }
