@@ -81,19 +81,16 @@ class JoinQueryIT
     )
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {
-      mustMatchClickHouseVersion(
-        20, {
-          val query: OperationalQuery =
-            select(itemId).from(
-              select(itemId)
-                .from(TwoTestTable)
-                .asOfJoin(joinType, ThreeTestTable, Option("TTT"), (col2, "<="))
-                .using(itemId)
-            )
-          val resultRows = chExecutor.execute[Result](query).futureValue.rows
-          resultRows.length shouldBe result
-        }
-      )
+      assumeMinimalClickhouseVersion(20)
+      val query: OperationalQuery =
+        select(itemId).from(
+          select(itemId)
+            .from(TwoTestTable)
+            .asOfJoin(joinType, ThreeTestTable, Option("TTT"), (col2, "<="))
+            .using(itemId)
+        )
+      val resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows.length shouldBe result
     }
   }
 

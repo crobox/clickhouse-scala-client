@@ -6,10 +6,10 @@ import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKit
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Assertion, BeforeAndAfterAll}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
@@ -44,6 +44,9 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
   lazy val ClickHouseVersion: String =
     Option(System.getenv("CLICKHOUSE_VERSION")).map(_.trim).filter(_.nonEmpty).getOrElse("20.3.12.112")
   lazy val ClickHouseMayorVersion: Int = ClickHouseVersion.substring(0, ClickHouseVersion.indexOf('.')).toInt
+
+  def assumeMinimalClickhouseVersion(version: Int): Assertion =
+    assume(ClickHouseMayorVersion >= version, s"ClickhouseVersion: ${} >= $version does NOT hold")
 
   def mustMatchClickHouseVersion(version: Int, testFun: => Any): Any =
     if (ClickHouseMayorVersion >= version) {
