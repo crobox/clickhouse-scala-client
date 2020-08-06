@@ -1,7 +1,5 @@
 package com.crobox.clickhouse.testkit
 
-import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, Materializer}
 import com.crobox.clickhouse.ClickhouseClient
 import com.typesafe.config.Config
 import org.scalatest._
@@ -16,13 +14,16 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
   val config: Config
 
   val clickhouseSpecTimeout: FiniteDuration = 10.seconds
-  val database                            = s"crobox_clickhouse_client_${Random.nextInt(1000000)}"
+  val database                              = s"crobox_clickhouse_client_${Random.nextInt(1000000)}"
+
+  /** Explicitly add this sequence that can be overwritten in order to create multiple databases for a test */
+  val databases = Seq(database)
 
   def clickClient: ClickhouseClient = internalClient
 
   private lazy val internalClient: ClickhouseClient = new ClickhouseClient(Some(config))
 
-  private def sql(query: String): String = {
+  protected def sql(query: String): String = {
     val result = if (query.startsWith("SHOW") || query.startsWith("SELECT")) {
       internalClient.query(query)
     } else {
@@ -35,14 +36,14 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
       .trim()
   }
 
-  def dropAllTables(): Int = {
-    val rawTables = sql(s"SHOW TABLES FROM $database")
-    if(rawTables.isEmpty) {
+  def dropAllTables(db:String = database): Int = {
+    val rawTables = sql(s"SHOW TABLES FROM $db")
+    if (rawTables.isEmpty) {
       0
     } else {
       val tables = rawTables.split("\n")
       // Drop all tables
-      tables.foreach(t => blockUntilTableDropped(s"$database.$t"))
+      tables.foreach(t => blockUntilTableDropped(s"$db.$t"))
       tables.size
     }
   }
@@ -92,13 +93,13 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
   }
   override protected def beforeAll(): Unit = {
     super.beforeAll() // To be stackable, must call super.beforeAll
-    sql(s"CREATE DATABASE IF NOT EXISTS $database")
+    databases.foreach(db => sql(s"CREATE DATABASE IF NOT EXISTS $db"))
   }
 
   override protected def afterAll(): Unit =
     try super.afterAll() // To be stackable, must call super.afterAll
     finally {
-      sql(s"DROP DATABASE IF EXISTS $database")
+      databases.foreach(db => sql(s"DROP DATABASE IF EXISTS $db"))
       Await.result(internalClient.shutdown(), clickhouseSpecTimeout)
     }
 }

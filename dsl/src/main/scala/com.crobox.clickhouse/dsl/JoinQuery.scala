@@ -62,5 +62,4 @@ case class JoinQuery(joinType: JoinType,
                      joinKeys: Seq[Column] = Seq.empty[Column],
                      global: Boolean = false,
                      alias: String = RandomStringGenerator.random(),
-//                     matchConditions: Seq[TableColumn[Boolean]] = Seq.empty)
                      matchConditions: Seq[(Column, String)] = Seq.empty)
