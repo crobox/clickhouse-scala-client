@@ -3,9 +3,9 @@ package com.crobox.clickhouse.dsl
 import java.util.UUID
 
 import com.crobox.clickhouse.dsl.column._
-import com.crobox.clickhouse.dsl.JoinQuery.{InnerJoin}
+import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.ClickhouseClientSpec
+import com.crobox.clickhouse.{ClickhouseClientSpec, dsl}
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import org.joda.time.{DateTime, LocalDate}
 
@@ -171,6 +171,13 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
 
     generatedSql should be(
       s"SELECT item_id FROM (SELECT item_id FROM $database.twoTestTable UNION ALL SELECT item_id FROM $database.threeTestTable) FORMAT JSON"
+    )
+  }
+
+  it should "use alias in subselect" in {
+    val query = select(dsl.all).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable, Option("TTT")) using shieldId)
+    clickhouseTokenizer.toSql(query.internalQuery) should be(
+      s"SELECT * FROM (SELECT column_1, shield_id FROM $database.captainAmerica INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id) FORMAT JSON"
     )
   }
 }
