@@ -37,9 +37,8 @@ trait OperationalQuery extends Query {
   def as(alias: String): OperationalQuery =
     OperationalQuery(internalQuery.copy(as = Some(alias)))
 
-  def from[T <: Table](table: T, alias: Option[String]): OperationalQuery = {
-    val from = TableFromQuery(table, alias = alias.getOrElse(RandomStringGenerator.random()))
-    OperationalQuery(internalQuery.copy(from = Some(from)))
+  def from[T <: Table](table: T, alias: Option[String] = None): OperationalQuery = {
+    OperationalQuery(internalQuery.copy(from = Some(TableFromQuery(table, alias))))
   }
 
   def from(query: OperationalQuery, alias: Option[String]): OperationalQuery = {
@@ -148,9 +147,7 @@ trait OperationalQuery extends Query {
   def join[TargetTable <: Table](joinType: JoinQuery.JoinType,
                                  table: TargetTable,
                                  alias: Option[String]): OperationalQuery =
-    OperationalQuery(
-      internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table, alias.getOrElse(table.name)))))
-    )
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table, alias)))))
 
   def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType,
                                        query: OperationalQuery,
@@ -167,8 +164,7 @@ trait OperationalQuery extends Query {
                                        table: TargetTable,
                                        alias: Option[String] = None): OperationalQuery =
     OperationalQuery(
-      internalQuery
-        .copy(join = Some(JoinQuery(joinType, TableFromQuery(table, alias.getOrElse(table.name)), global = true)))
+      internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table, alias), global = true)))
     )
 
   @deprecated("Please use join(JoinQuery.AllInnerJoin)")
