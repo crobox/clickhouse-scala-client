@@ -38,12 +38,19 @@ class JoinQueryIT
     )
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {
-      val query: OperationalQuery =
+      //
+      // TABLE
+      //
+      var query: OperationalQuery =
         select(itemId).from(
-          select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable, Option("TTT")).using(itemId)
+          select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable).using(itemId)
         )
-      val resultRows = chExecutor.execute[Result](query).futureValue.rows
+      var resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
+
+      //
+      // SUBQUERY
+      //
     }
   }
 
@@ -64,12 +71,19 @@ class JoinQueryIT
     )
   ) { (joinType, result) =>
     it should s"join correctly on double keys: $joinType" in {
-      val query: OperationalQuery =
+      //
+      // TABLE
+      //
+      var query: OperationalQuery =
         select(itemId).from(
-          select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable, Option("TTT")).using(itemId, col4)
+          select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable).using(itemId, col4)
         )
-      val resultRows = chExecutor.execute[Result](query).futureValue.rows
+      var resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
+
+      //
+      // SUBQUERY
+      //
     }
   }
 
@@ -82,22 +96,30 @@ class JoinQueryIT
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {
       assumeMinimalClickhouseVersion(20)
-      val query: OperationalQuery =
+      //
+      // TABLE
+      //
+      var query: OperationalQuery =
         select(itemId).from(
           select(itemId)
             .from(TwoTestTable)
-            .asOfJoin(joinType, ThreeTestTable, Option("TTT"), (col2, "<="))
-            .using(itemId)
+            .asOfJoin(joinType, ThreeTestTable, (col2, "<="))
+            .using(itemId),
+          Option("sq")
         )
-      val resultRows = chExecutor.execute[Result](query).futureValue.rows
+      var resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
+
+      //
+      // SUBQUERY
+      //
     }
   }
 
   // Apparently a JOIN always require a USING column, which doesn't hold for CROSS JOIN
   it should "correctly handle cross join" in {
     val query: OperationalQuery =
-      select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable, Option("TTT")))
+      select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
     println(clickhouseTokenizer.toSql(query.internalQuery))
     val resultRows = chExecutor.execute[Result](query).futureValue.rows
     resultRows.length shouldBe 0
@@ -114,7 +136,7 @@ class JoinQueryIT
   val q3 = s"$database.$t3"
 
   it should "TABLE using alias" in {
-    val query = select(shieldId as itemId).from(OneTestTable).join(InnerJoin, TwoTestTable, Option("TTT")) using itemId
+    val query = select(shieldId as itemId).from(OneTestTable).join(InnerJoin, TwoTestTable) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT shield_id AS item_id FROM $q1 INNER JOIN (SELECT * FROM $q2) AS TTT ON item_id = TTT.item_id FORMAT JSON"
     )
@@ -123,7 +145,7 @@ class JoinQueryIT
   }
 
   it should "TABLE normal" in {
-    val query = select(itemId).from(TwoTestTable).join(InnerJoin, ThreeTestTable, Option("TTT")) using itemId
+    val query = select(itemId).from(TwoTestTable).join(InnerJoin, ThreeTestTable) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT item_id FROM $q2 INNER JOIN (SELECT * FROM $q3) AS TTT ON $t2.item_id = TTT.item_id FORMAT JSON"
     )

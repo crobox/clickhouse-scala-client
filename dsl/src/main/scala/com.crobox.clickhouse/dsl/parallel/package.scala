@@ -73,7 +73,7 @@ package object parallel {
         .distinct
 
       select(joinCols: _*)
-        .from(leftTableQry)
+        .from(leftTableQry, None)
         .join(joinType, rightTableQry, alias)
         .using(joinKeys.head, joinKeys.tail: _*)
     }

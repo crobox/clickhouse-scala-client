@@ -34,18 +34,21 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(where = Some(comparison)))
   }
 
+  def as(alias: String): OperationalQuery =
+    OperationalQuery(internalQuery.copy(as = Some(alias)))
+
   def from[T <: Table](table: T): OperationalQuery = {
     val from = TableFromQuery(table)
     OperationalQuery(internalQuery.copy(from = Some(from)))
   }
 
-  def from(query: OperationalQuery): OperationalQuery = {
-    val from = InnerFromQuery(query)
+  def from(query: OperationalQuery, alias: Option[String] = None): OperationalQuery = {
+    val from = InnerFromQuery(query, alias = alias.orElse(Option(RandomStringGenerator.random())))
     OperationalQuery(internalQuery.copy(from = Some(from)))
   }
 
   def asFinal: OperationalQuery =
-    OperationalQuery(internalQuery.copy(asFinal = true))
+    OperationalQuery(internalQuery.copy(as = Option("FINAL")))
 
   def groupBy(columns: Column*): OperationalQuery = {
     val internalGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery())
@@ -138,18 +141,13 @@ trait OperationalQuery extends Query {
                                  alias: Option[String]): OperationalQuery =
     OperationalQuery(
       internalQuery.copy(
-        join = Some(JoinQuery(joinType, InnerFromQuery(query), alias = alias.getOrElse(RandomStringGenerator.random())))
+        join =
+          Some(JoinQuery(joinType, InnerFromQuery(query, alias = alias.orElse(Option(RandomStringGenerator.random())))))
       )
     )
 
-  def join[TargetTable <: Table](joinType: JoinQuery.JoinType,
-                                 table: TargetTable,
-                                 alias: Option[String]): OperationalQuery =
-    OperationalQuery(
-      internalQuery.copy(
-        join = Some(JoinQuery(joinType, TableFromQuery(table), alias = alias.getOrElse(RandomStringGenerator.random())))
-      )
-    )
+  def join[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable): OperationalQuery =
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table)))))
 
   private val AsOfJoinTypes = Set(JoinQuery.AsOfJoin, JoinQuery.AsOfLeftJoin)
   private val AsOfOperators = Set(">", ">=", "<", "<=")
@@ -178,10 +176,7 @@ trait OperationalQuery extends Query {
     OperationalQuery(
       internalQuery.copy(
         join = Some(
-          JoinQuery(joinType,
-                    InnerFromQuery(query),
-                    alias = alias.getOrElse(RandomStringGenerator.random()),
-                    matchConditions = Seq(matchConditions: _*))
+          JoinQuery(joinType, InnerFromQuery(query, alias), matchConditions = Seq(matchConditions: _*))
         )
       )
     )
@@ -199,7 +194,6 @@ trait OperationalQuery extends Query {
    */
   def asOfJoin[TargetTable <: Table](joinType: JoinQuery.JoinType,
                                      table: TargetTable,
-                                     alias: Option[String],
                                      matchConditions: (Column, String)*): OperationalQuery = {
     assert(AsOfJoinTypes.exists(_ == joinType), s"Join Type must be one of: $AsOfJoinTypes")
     assert(matchConditions.nonEmpty, s"No matchConditions provided for joinType: $joinType")
@@ -211,10 +205,7 @@ trait OperationalQuery extends Query {
     OperationalQuery(
       internalQuery.copy(
         join = Some(
-          JoinQuery(joinType,
-                    TableFromQuery(table),
-                    alias = alias.getOrElse(RandomStringGenerator.random()),
-                    matchConditions = Seq(matchConditions: _*))
+          JoinQuery(joinType, TableFromQuery(table), matchConditions = Seq(matchConditions: _*))
         )
       )
     )
@@ -223,30 +214,10 @@ trait OperationalQuery extends Query {
   def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType,
                                        query: OperationalQuery,
                                        alias: Option[String]): OperationalQuery =
-    OperationalQuery(
-      internalQuery.copy(
-        join = Some(
-          JoinQuery(joinType,
-                    InnerFromQuery(query),
-                    global = true,
-                    alias = alias.getOrElse(RandomStringGenerator.random()))
-        )
-      )
-    )
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, InnerFromQuery(query, alias), global = true))))
 
-  def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType,
-                                       table: TargetTable,
-                                       alias: Option[String]): OperationalQuery =
-    OperationalQuery(
-      internalQuery.copy(
-        join = Some(
-          JoinQuery(joinType,
-                    TableFromQuery(table),
-                    global = true,
-                    alias = alias.getOrElse(RandomStringGenerator.random()))
-        )
-      )
-    )
+  def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable): OperationalQuery =
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table), global = true))))
 
   @deprecated("Please use join(JoinQuery.AllInnerJoin)")
   def allInnerJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =

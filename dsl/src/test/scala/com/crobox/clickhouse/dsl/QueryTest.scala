@@ -23,7 +23,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
   }
 
   it should "generate for join between tables" in {
-    val query = select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable, Option("TTT")) using shieldId
+    val query = select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT column_1, shield_id FROM $database.captainAmerica INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id FORMAT JSON"
     )
@@ -175,7 +175,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
   }
 
   it should "use alias in subselect" in {
-    val query = select(dsl.all).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable, Option("TTT")) using shieldId)
+    val query = select(dsl.all).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT * FROM (SELECT column_1, shield_id FROM $database.captainAmerica INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id) FORMAT JSON"
     )

@@ -44,9 +44,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                     Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    false,
-                    None,
-                    Some(shieldId < itemId))
+                    where = Some(shieldId < itemId))
     )
     query should be("SELECT shield_id FROM default.captainAmerica WHERE shield_id < item_id FORMAT JSON")
   }
@@ -58,9 +56,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       testSubject.toSql(
         InternalQuery(Some(select),
                       Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,
-                      None,
-                      Some(shieldId < uuid))
+                      where = Some(shieldId < uuid))
       )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -71,9 +67,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                     Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    false,
-                    None,
-                    Some(shieldId < uuid and shieldId < itemId))
+                    where = Some(shieldId < uuid and shieldId < itemId))
     )
     query should be(
       s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
@@ -122,7 +116,9 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-        join = Some(JoinQuery(JoinQuery.InnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), Seq(shieldId), alias = "TTT"))
+        join = Some(
+          JoinQuery(JoinQuery.InnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), Seq(shieldId), alias = "TTT")
+        )
       )
     )
     query should be(
@@ -143,9 +139,8 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
             InnerFromQuery(
               OperationalQuery(InternalQuery(Some(joinSelect), Some(TableFromQuery[TwoTestTable.type](TwoTestTable))))
             ),
-            Seq(shieldId),
-            true,
-            "TTT"
+            joinKeys = Seq(shieldId),
+            global = true
           )
         )
       )

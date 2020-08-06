@@ -54,16 +54,15 @@ trait ClickhouseTokenizerModule
   }
 
   private[language] def toRawSql(query: InternalQuery): String =
-    //    require(query != null) because parallel query is null
     query match {
-      case InternalQuery(select, from, asFinal, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
+      case InternalQuery(select, from, as, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
         s"""
            |${tokenizeSelect(select)}
-           | ${tokenizeFrom(from)}
-           | ${tokenizeFinal(asFinal)}
+           | ${tokenizeFrom(from)}            
+           | ${tokenizeAs(as)}
            | ${tokenizeJoin(from, join)}
            | ${tokenizeFiltering(prewhere, "PREWHERE")}
-           | ${tokenizeFiltering(where, "WHERE")}
+           | ${tokenizeFiltering(where, "WHERE")} 
            | ${tokenizeGroupBy(groupBy)}
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
@@ -97,7 +96,12 @@ trait ClickhouseTokenizerModule
     }
   }
 
-  private def tokenizeFinal(asFinal: Boolean): String = if (asFinal) "FINAL" else ""
+  private def tokenizeAs(as: Option[String]): String =
+    as.map {
+        case "FINAL" => "FINAL"
+        case other   => s"AS $other"
+      }
+      .getOrElse("")
 
   protected def tokenizeColumn(column: Column): String = {
     require(column != null)
@@ -244,7 +248,7 @@ trait ClickhouseTokenizerModule
 
         val (aliasFrom, columns) = from match {
           case tableJoin: TableFromQuery[_] => (tableJoin.table.name, tableJoin.table.columns)
-          case innerJoin: InnerFromQuery    => ("", Seq.empty)
+          case subQueryJoin: InnerFromQuery => ("", Seq.empty)
         }
 
         val clause = "ON " + joinKeys.map(c => tokenizeJoinKey(c, columns, aliasFrom, query.alias)).mkString(" AND ")

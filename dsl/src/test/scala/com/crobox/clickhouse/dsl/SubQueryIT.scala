@@ -29,7 +29,6 @@ class SubQueryIT
           .where(notEmpty(itemId))
           .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId)), Option("TTT")) using itemId
       )
-    println(clickhouseTokenizer.toSql(query.internalQuery))
     val resultRows = chExecutor.execute[Result](query).futureValue.rows
     resultRows.length shouldBe 0
   }
@@ -38,10 +37,9 @@ class SubQueryIT
     // MIND / MENTION THE BRACKETS!!!
     val query = select(dsl.all())
       .from(
-        select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
+        select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)).as("SUB")
       )
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId)), Option("TTT")) using itemId
-    println(clickhouseTokenizer.toSql(query.internalQuery))
     val resultRows = chExecutor.execute[Result](query).futureValue.rows
     resultRows.length shouldBe 0
   }
