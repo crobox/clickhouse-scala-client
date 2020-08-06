@@ -37,13 +37,13 @@ trait OperationalQuery extends Query {
   def as(alias: String): OperationalQuery =
     OperationalQuery(internalQuery.copy(as = Some(alias)))
 
-  def from[T <: Table](table: T): OperationalQuery = {
-    val from = TableFromQuery(table)
+  def from[T <: Table](table: T, alias: Option[String]): OperationalQuery = {
+    val from = TableFromQuery(table, alias = alias.getOrElse(RandomStringGenerator.random()))
     OperationalQuery(internalQuery.copy(from = Some(from)))
   }
 
-  def from(query: OperationalQuery, alias: Option[String] = None): OperationalQuery = {
-    val from = InnerFromQuery(query, alias = alias.orElse(Option(RandomStringGenerator.random())))
+  def from(query: OperationalQuery, alias: Option[String]): OperationalQuery = {
+    val from = InnerFromQuery(query, alias = alias.getOrElse(RandomStringGenerator.random()))
     OperationalQuery(internalQuery.copy(from = Some(from)))
   }
 
@@ -141,83 +141,35 @@ trait OperationalQuery extends Query {
                                  alias: Option[String]): OperationalQuery =
     OperationalQuery(
       internalQuery.copy(
-        join =
-          Some(JoinQuery(joinType, InnerFromQuery(query, alias = alias.orElse(Option(RandomStringGenerator.random())))))
+        join = Some(JoinQuery(joinType, InnerFromQuery(query, alias = alias.getOrElse(RandomStringGenerator.random()))))
       )
     )
 
-  def join[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table)))))
-
-  private val AsOfJoinTypes = Set(JoinQuery.AsOfJoin, JoinQuery.AsOfLeftJoin)
-  private val AsOfOperators = Set(">", ">=", "<", "<=")
-
-  /**
-   *
-   * @param joinType
-   * @param query
-   * @param alias
-   * @param matchConditions Are used by AsOfJoin queries. Must be provided as tuples of (Column, Operator), where operator
-   *                        must be one of the following: >, >=, <, <=
-   * @tparam TargetTable
-   * @return
-   */
-  def asOfJoin[TargetTable <: Table](joinType: JoinQuery.JoinType,
-                                     query: OperationalQuery,
-                                     alias: Option[String],
-                                     matchConditions: (Column, String)*): OperationalQuery = {
-    assert(AsOfJoinTypes.exists(_ == joinType), s"Join Type must be one of: $AsOfJoinTypes")
-    assert(matchConditions.nonEmpty, s"No matchConditions provided for joinType: $joinType")
-    matchConditions.foreach(
-      tuple =>
-        assert(AsOfOperators.contains(tuple._2),
-               s"matchCondition ($tuple) must contain supported operator: $AsOfOperators")
-    )
+  def join[TargetTable <: Table](joinType: JoinQuery.JoinType,
+                                 table: TargetTable,
+                                 alias: Option[String]): OperationalQuery =
     OperationalQuery(
-      internalQuery.copy(
-        join = Some(
-          JoinQuery(joinType, InnerFromQuery(query, alias), matchConditions = Seq(matchConditions: _*))
-        )
-      )
+      internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table, alias.getOrElse(table.name)))))
     )
-  }
-
-  /**
-   *
-   * @param joinType
-   * @param table
-   * @param alias
-   * @param matchConditions Are used by AsOfJoin queries. Must be provided as tuples of (Column, Operator), where operator
-   *                        must be one of the following: >, >=, <, <=
-   * @tparam TargetTable
-   * @return
-   */
-  def asOfJoin[TargetTable <: Table](joinType: JoinQuery.JoinType,
-                                     table: TargetTable,
-                                     matchConditions: (Column, String)*): OperationalQuery = {
-    assert(AsOfJoinTypes.exists(_ == joinType), s"Join Type must be one of: $AsOfJoinTypes")
-    assert(matchConditions.nonEmpty, s"No matchConditions provided for joinType: $joinType")
-    matchConditions.foreach(
-      tuple =>
-        assert(AsOfOperators.contains(tuple._2),
-               s"matchCondition ($tuple) must contain supported operator: $AsOfOperators")
-    )
-    OperationalQuery(
-      internalQuery.copy(
-        join = Some(
-          JoinQuery(joinType, TableFromQuery(table), matchConditions = Seq(matchConditions: _*))
-        )
-      )
-    )
-  }
 
   def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType,
                                        query: OperationalQuery,
                                        alias: Option[String]): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, InnerFromQuery(query, alias), global = true))))
+    OperationalQuery(
+      internalQuery.copy(
+        join = Some(
+          JoinQuery(joinType, InnerFromQuery(query, alias.getOrElse(RandomStringGenerator.random())), global = true)
+        )
+      )
+    )
 
-  def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table), global = true))))
+  def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType,
+                                       table: TargetTable,
+                                       alias: Option[String] = None): OperationalQuery =
+    OperationalQuery(
+      internalQuery
+        .copy(join = Some(JoinQuery(joinType, TableFromQuery(table, alias.getOrElse(table.name)), global = true)))
+    )
 
   @deprecated("Please use join(JoinQuery.AllInnerJoin)")
   def allInnerJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
@@ -273,9 +225,20 @@ trait OperationalQuery extends Query {
   ): OperationalQuery = {
     require(internalQuery.join.isDefined)
 
-    val newUsing = (column +: columns).distinct
-    val newJoin  = this.internalQuery.join.get.copy(joinKeys = newUsing)
+    val newJoin = this.internalQuery.join.get.copy(using = (column +: columns).distinct)
+    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+  }
 
+  def on(columns: Column*): OperationalQuery = {
+    require(internalQuery.join.isDefined)
+    OperationalQuery(
+      internalQuery.copy(join = Some(this.internalQuery.join.get.copy(on = columns.map(c => (c, "=", c)))))
+    )
+  }
+
+  def on(condition: (Column, String, Column), conditions: (Column, String, Column)*): OperationalQuery = {
+    require(internalQuery.join.isDefined)
+    val newJoin = this.internalQuery.join.get.copy(on = condition +: conditions)
     OperationalQuery(internalQuery.copy(join = Some(newJoin)))
   }
 

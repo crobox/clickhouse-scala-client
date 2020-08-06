@@ -117,7 +117,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
         join = Some(
-          JoinQuery(JoinQuery.InnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), Seq(shieldId), alias = "TTT")
+          JoinQuery(JoinQuery.InnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), Seq(shieldId))
         )
       )
     )

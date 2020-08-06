@@ -11,5 +11,9 @@ object RandomStringGenerator {
    * @param length
    * @return
    */
-  def random(length: Int = 6): String = Random.alphanumeric.take(length).mkString("")
+  def random(length: Int = 6): String = {
+    // Alphanumeric includes numbers which can be used as first character in ClickHouse
+    //Random.alphanumeric.take(length).mkString("")
+    Random.nextString(length)
+  }
 }
