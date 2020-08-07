@@ -10,6 +10,13 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 //import scala.jdk.CollectionConverters._
 
+case class TokenizeContext(var joinNr: Int = 0) {
+  def incrementJoinNumber(): Unit = joinNr += 1
+
+  lazy val leftAlias  = "l" + joinNr
+  lazy val rightAlias = "r" + joinNr
+}
+
 trait ClickhouseTokenizerModule
     extends TokenizerModule
     with AggregationFunctionTokenizer
@@ -48,21 +55,21 @@ trait ClickhouseTokenizerModule
 
   override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON")): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = (toRawSql(query) + formatSql).trim().replaceAll(" +", " ")
+    val sql       = (toRawSql(query)(TokenizeContext()) + formatSql).trim().replaceAll(" +", " ")
     logger.debug(s"Generated sql [$sql]")
     sql
   }
 
-  private[language] def toRawSql(query: InternalQuery): String =
+  private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
     query match {
       case InternalQuery(select, from, as, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
         s"""
            |${tokenizeSelect(select)}
-           | ${tokenizeFrom(from)}            
+           | ${tokenizeFrom(from)}
            | ${tokenizeAs(as)}
            | ${tokenizeJoin(from.get, join)}
            | ${tokenizeFiltering(prewhere, "PREWHERE")}
-           | ${tokenizeFiltering(where, "WHERE")} 
+           | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
@@ -70,12 +77,8 @@ trait ClickhouseTokenizerModule
            | ${tokenizeUnionAll(union)}""".trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
     }
 
-  private def tokenizeUnionAll(unions: Seq[OperationalQuery]) =
-    if (unions.nonEmpty) {
-      unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString
-    } else {
-      ""
-    }
+  private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext) =
+    if (unions.nonEmpty) unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString else ""
 
   private def tokenizeSelect(select: Option[SelectQuery]) =
     select match {
@@ -83,14 +86,15 @@ trait ClickhouseTokenizerModule
       case _       => ""
     }
 
-  private def tokenizeFrom(from: Option[FromQuery], withPrefix: Boolean = true) = {
+  private def tokenizeFrom(from: Option[FromQuery],
+                           withPrefix: Boolean = true)(implicit ctx: TokenizeContext): String = {
     require(from != null)
 
     val prefix = if (withPrefix) "FROM" else ""
     from match {
       case Some(fromClause: InnerFromQuery) =>
         s"$prefix (${toRawSql(fromClause.innerQuery.internalQuery).trim})"
-      case Some(TableFromQuery(table: Table, _)) =>
+      case Some(TableFromQuery(table: Table)) =>
         s"$prefix ${table.quoted}"
       case _ => ""
     }
@@ -218,7 +222,7 @@ trait ClickhouseTokenizerModule
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
-  private def tokenizeJoin(from: FromQuery, join: Option[JoinQuery]): String =
+  private def tokenizeJoin(from: FromQuery, join: Option[JoinQuery])(implicit ctx: TokenizeContext): String =
     join match {
       case Some(query) =>
         // we always need to provide an alias to the RIGHT side
@@ -227,18 +231,18 @@ trait ClickhouseTokenizerModule
           case query: InnerFromQuery    => tokenizeFrom(Some(query), withPrefix = false)
         }
 
-        s""" AS ${from.alias}
+        ctx.incrementJoinNumber()
+        s""" AS ${ctx.leftAlias}
            | ${if (query.global) "GLOBAL " else ""}
            | ${tokenizeJoinType(query.joinType)}
-           | $right AS ${query.other.alias}
+           | $right AS ${ctx.rightAlias}
            | ${tokenizeJoinKeys(from, query)}""".trim.stripMargin
           .replaceAll("\n", "")
           .replaceAll("\r", "")
       case None => ""
     }
 
-  private val AsOfOperators = Set(">", ">=", "<", "<=")
-  private def tokenizeJoinKeys(from: FromQuery, query: JoinQuery): String = {
+  private def tokenizeJoinKeys(from: FromQuery, query: JoinQuery)(implicit ctx: TokenizeContext): String = {
 
     val using = query.using.filterNot {
       case EmptyColumn => true
@@ -259,7 +263,7 @@ trait ClickhouseTokenizerModule
         } else if (query.on.nonEmpty) {
           // TOKENIZE ON
           "ON " + query.on
-            .map(cond => s"${from.alias}.${cond._1.name} ${cond._2} ${query.other.alias}.${cond._3.name}")
+            .map(cond => s"${ctx.leftAlias}.${cond._1.name} ${cond._2} ${ctx.rightAlias}.${cond._3.name}")
             .mkString(" AND ")
         } else ""
     }

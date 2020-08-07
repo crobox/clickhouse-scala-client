@@ -7,7 +7,8 @@ trait InFunctionTokenizer {
 
   def tokenizeInFunction(col: InFunction): String = col match {
     case t: Tuple => s"(${t.coln.map(col => tokenizeColumn(col.column)).mkString(", ")})" // Tuple Creation Operator
-    case t: TupleElement[_] => s"${tokenizeColumn(t.tuple.column)}.${tokenizeColumn(t.index.column)})" // Access Operators
+    case t: TupleElement[_] =>
+      s"${tokenizeColumn(t.tuple.column)}.${tokenizeColumn(t.index.column)})" // Access Operators
     case col: InFunctionCol[_] => tokenizeInFunctionCol(col)
   }
 
@@ -23,9 +24,9 @@ trait InFunctionTokenizer {
   }
 
   private def tokenizeInFunRHCol(value: InFuncRHMagnet) = value match {
-    case col: InFuncRHMagnet if col.query.isDefined => s"(${toRawSql(col.query.get.internalQuery)})"
+    case col: InFuncRHMagnet if col.query.isDefined    => s"(${toRawSql(col.query.get.internalQuery)(TokenizeContext())})"
     case col: InFuncRHMagnet if col.tableRef.isDefined => col.tableRef.get.quoted
-    case col: InFuncRHMagnet => tokenizeColumn(col.column)
+    case col: InFuncRHMagnet                           => tokenizeColumn(col.column)
   }
 
 }

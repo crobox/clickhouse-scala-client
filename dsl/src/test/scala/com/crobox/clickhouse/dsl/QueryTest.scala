@@ -5,7 +5,7 @@ import java.util.UUID
 import com.crobox.clickhouse.dsl.column._
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.{ClickhouseClientSpec, dsl}
+import com.crobox.clickhouse.{dsl, ClickhouseClientSpec}
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import org.joda.time.{DateTime, LocalDate}
 
@@ -33,7 +33,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val expectedUUID                     = UUID.randomUUID()
     val innerQuery: OperationalQuery     = select(shieldId as itemId) from OneTestTable where shieldId.isEq(expectedUUID)
     val joinInnerQuery: OperationalQuery = select(itemId) from TwoTestTable where (col3 isEq "wompalama")
-    val query                            = select(col1, shieldId) from innerQuery join (InnerJoin, joinInnerQuery, Option("TTT")) using itemId
+    val query                            = select(col1, shieldId) from innerQuery join (InnerJoin, joinInnerQuery) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT column_1, shield_id FROM (SELECT shield_id AS item_id FROM $database.captainAmerica WHERE shield_id = '$expectedUUID') INNER JOIN (SELECT item_id FROM $database.twoTestTable WHERE column_3 = 'wompalama') AS TTT ON item_id = TTT.item_id FORMAT JSON"
     )
@@ -175,7 +175,8 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
   }
 
   it should "use alias in subselect" in {
-    val query = select(dsl.all).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
+    val query =
+      select(dsl.all).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT * FROM (SELECT column_1, shield_id FROM $database.captainAmerica INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id) FORMAT JSON"
     )

@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
+import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec, dsl}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -38,52 +38,46 @@ class JoinQueryIT
     )
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {
-      //
-      // TABLE
-      //
+      // LEFT TABLE  -- RIGHT TABLE
       var query: OperationalQuery =
-        select(itemId).from(
-          select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable).using(itemId)
-        )
+      select(shieldId as itemId)
+        .from(OneTestTable)
+        .where(notEmpty(itemId))
+        .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
       var resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
-      //
-      // SUBQUERY
-      //
-    }
-  }
-
-  forAll(
-    Table(
-      ("joinType", "result"),
-      (JoinQuery.InnerJoin, 0),
-      (JoinQuery.LeftOuterJoin, 0),
-      (JoinQuery.RightOuterJoin, 0),
-      (JoinQuery.FullOuterJoin, 0),
-      (JoinQuery.AnyInnerJoin, 0),
-      (JoinQuery.AnyLeftJoin, 0),
-      (JoinQuery.AnyRightJoin, 0),
-      (JoinQuery.AntiLeftJoin, 0),
-      (JoinQuery.AntiRightJoin, 0),
-      (JoinQuery.SemiLeftJoin, 0),
-      (JoinQuery.SemiRightJoin, 0),
-    )
-  ) { (joinType, result) =>
-    it should s"join correctly on double keys: $joinType" in {
-      //
-      // TABLE
-      //
-      var query: OperationalQuery =
-        select(itemId).from(
-          select(itemId).from(TwoTestTable).join(joinType, ThreeTestTable).using(itemId, col4)
-        )
-      var resultRows = chExecutor.execute[Result](query).futureValue.rows
+      // LEFT TABLE -- RIGHT QUERY (1x aliasLeft, 2x aliasRight)
+      val right = select(itemId, col2).from(
+        select(dsl.all()).from(select(shieldId as itemId).from(TwoTestTable).where(notEmpty(itemId)))
+      )
+      query =
+      select(shieldId as itemId)
+        .from(OneTestTable)
+        .where(notEmpty(itemId))
+        .join(joinType, right) on itemId
+      resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
-      //
-      // SUBQUERY
-      //
+      // LEFT QUERY -- RIGHT TABLE
+      query =
+      select(dsl.all())
+        .from(
+          select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
+        )
+        .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
+      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows.length shouldBe result
+
+      // LEFT QUERY -- RIGHT QUERY (2x aliasLeft, 2x aliasRight)
+      query =
+      select(dsl.all())
+        .from(
+          select(shieldId as itemId).from(right).where(notEmpty(itemId))
+        )
+        .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
+      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows.length shouldBe result
     }
   }
 
@@ -103,9 +97,8 @@ class JoinQueryIT
         select(itemId).from(
           select(itemId)
             .from(TwoTestTable)
-            .asOfJoin(joinType, ThreeTestTable, (col2, "<="))
-            .using(itemId),
-          Option("sq")
+            .join(joinType, ThreeTestTable)
+            .on((itemId, "=", itemId), (col2, "<=", col2)),
         )
       var resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
@@ -136,7 +129,9 @@ class JoinQueryIT
   val q3 = s"$database.$t3"
 
   it should "TABLE using alias" in {
-    val query = select(shieldId as itemId).from(OneTestTable).join(InnerJoin, TwoTestTable) using itemId
+    val query = select(shieldId as itemId)
+      .from(OneTestTable)
+      .join(InnerJoin, TwoTestTable) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT shield_id AS item_id FROM $q1 INNER JOIN (SELECT * FROM $q2) AS TTT ON item_id = TTT.item_id FORMAT JSON"
     )
@@ -156,7 +151,7 @@ class JoinQueryIT
   it should "OPERATIONAL using alias" in {
     val query = select(shieldId as itemId)
       .from(OneTestTable)
-      .join(InnerJoin, select(itemId).from(TwoTestTable), Option("TTT")) using itemId
+      .join(InnerJoin, select(itemId).from(TwoTestTable)) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT shield_id AS item_id FROM $q1 INNER JOIN (SELECT item_id FROM $q2) AS TTT ON item_id = TTT.item_id FORMAT JSON"
     )
@@ -167,7 +162,7 @@ class JoinQueryIT
   it should "OPERATIONAL normal" in {
     val query = select(itemId)
       .from(TwoTestTable)
-      .join(InnerJoin, select(itemId).from(ThreeTestTable), Option("TTT")) using itemId
+      .join(InnerJoin, select(itemId).from(ThreeTestTable)) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
       s"SELECT item_id FROM $q2 INNER JOIN (SELECT item_id FROM $q3) AS TTT ON $t2.item_id = TTT.item_id FORMAT JSON"
     )

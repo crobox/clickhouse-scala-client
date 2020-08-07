@@ -1,7 +1,5 @@
 package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.dsl.misc.RandomStringGenerator
-
 import scala.util.Try
 
 object OperationalQuery {
@@ -37,14 +35,11 @@ trait OperationalQuery extends Query {
   def as(alias: String): OperationalQuery =
     OperationalQuery(internalQuery.copy(as = Some(alias)))
 
-  def from[T <: Table](table: T, alias: Option[String] = None): OperationalQuery = {
-    OperationalQuery(internalQuery.copy(from = Some(TableFromQuery(table, alias))))
-  }
+  def from[T <: Table](table: T): OperationalQuery =
+    OperationalQuery(internalQuery.copy(from = Some(TableFromQuery(table))))
 
-  def from(query: OperationalQuery, alias: Option[String]): OperationalQuery = {
-    val from = InnerFromQuery(query, alias = alias.getOrElse(RandomStringGenerator.random()))
-    OperationalQuery(internalQuery.copy(from = Some(from)))
-  }
+  def from(query: OperationalQuery): OperationalQuery =
+    OperationalQuery(internalQuery.copy(from = Some(InnerFromQuery(query))))
 
   def asFinal: OperationalQuery =
     OperationalQuery(internalQuery.copy(as = Option("FINAL")))
@@ -135,85 +130,65 @@ trait OperationalQuery extends Query {
     newSelect
   }
 
-  def join[TargetTable <: Table](joinType: JoinQuery.JoinType,
-                                 query: OperationalQuery,
-                                 alias: Option[String]): OperationalQuery =
-    OperationalQuery(
-      internalQuery.copy(
-        join = Some(JoinQuery(joinType, InnerFromQuery(query, alias = alias.getOrElse(RandomStringGenerator.random()))))
-      )
-    )
+  def join[TargetTable <: Table](joinType: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery =
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, InnerFromQuery(query)))))
 
-  def join[TargetTable <: Table](joinType: JoinQuery.JoinType,
-                                 table: TargetTable,
-                                 alias: Option[String]): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table, alias)))))
+  def join[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable): OperationalQuery =
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table)))))
 
-  def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType,
-                                       query: OperationalQuery,
-                                       alias: Option[String]): OperationalQuery =
-    OperationalQuery(
-      internalQuery.copy(
-        join = Some(
-          JoinQuery(joinType, InnerFromQuery(query, alias.getOrElse(RandomStringGenerator.random())), global = true)
-        )
-      )
-    )
+  def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery =
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, InnerFromQuery(query), global = true))))
 
-  def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType,
-                                       table: TargetTable,
-                                       alias: Option[String] = None): OperationalQuery =
-    OperationalQuery(
-      internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table, alias), global = true)))
-    )
+  def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable): OperationalQuery =
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table), global = true))))
 
   @deprecated("Please use join(JoinQuery.AllInnerJoin)")
-  def allInnerJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    join(JoinQuery.AllInnerJoin, query, alias)
+  def allInnerJoin(query: OperationalQuery): OperationalQuery =
+    join(JoinQuery.AllInnerJoin, query)
 
   @deprecated("Please use join(JoinQuery.AllLeftJoin)")
-  def allLeftJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    join(JoinQuery.AllLeftJoin, query, alias)
+  def allLeftJoin(query: OperationalQuery): OperationalQuery =
+    join(JoinQuery.AllLeftJoin, query)
 
   @deprecated("Please use join(JoinQuery.AllRightJoin)")
-  def allRightJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    join(JoinQuery.AllRightJoin, query, alias)
+  def allRightJoin(query: OperationalQuery): OperationalQuery =
+    join(JoinQuery.AllRightJoin, query)
 
   @deprecated("Please use join(JoinQuery.AllInnerJoin)", "Clickhouse v20")
-  def anyInnerJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    join(JoinQuery.AnyInnerJoin, query, alias)
+  def anyInnerJoin(query: OperationalQuery): OperationalQuery =
+    join(JoinQuery.AnyInnerJoin, query)
 
   @deprecated("Please use join(JoinQuery.AnyLeftJoin)")
-  def anyLeftJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    join(JoinQuery.AnyLeftJoin, query, alias)
+  def anyLeftJoin(query: OperationalQuery): OperationalQuery =
+    join(JoinQuery.AnyLeftJoin, query)
 
   @deprecated("Please use join(JoinQuery.AllRightJoin)", "Clickhouse v20")
-  def anyRightJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    join(JoinQuery.AnyRightJoin, query, alias)
+  def anyRightJoin(query: OperationalQuery): OperationalQuery =
+    join(JoinQuery.AnyRightJoin, query)
 
   @deprecated("Please use globalJoin(JoinQuery.AllInnerJoin)")
-  def globalAllInnerJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    globalJoin(JoinQuery.AllInnerJoin, query, alias)
+  def globalAllInnerJoin(query: OperationalQuery): OperationalQuery =
+    globalJoin(JoinQuery.AllInnerJoin, query)
 
   @deprecated("Please use globalJoin(JoinQuery.AllLeftJoin)")
-  def globalAllLeftJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    globalJoin(JoinQuery.AllLeftJoin, query, alias)
+  def globalAllLeftJoin(query: OperationalQuery): OperationalQuery =
+    globalJoin(JoinQuery.AllLeftJoin, query)
 
   @deprecated("Please use globalJoin(JoinQuery.AllRightJoin)")
-  def globalAllRightJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    globalJoin(JoinQuery.AllRightJoin, query, alias)
+  def globalAllRightJoin(query: OperationalQuery): OperationalQuery =
+    globalJoin(JoinQuery.AllRightJoin, query)
 
   @deprecated("Please use globalJoin(JoinQuery.AllInnerJoin)", "Clickhouse v20")
-  def globalAnyInnerJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    globalJoin(JoinQuery.AnyInnerJoin, query, alias)
+  def globalAnyInnerJoin(query: OperationalQuery): OperationalQuery =
+    globalJoin(JoinQuery.AnyInnerJoin, query)
 
   @deprecated("Please use globalJoin(JoinQuery.AnyLeftJoin)")
-  def globalAnyLeftJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    globalJoin(JoinQuery.AnyLeftJoin, query, alias)
+  def globalAnyLeftJoin(query: OperationalQuery): OperationalQuery =
+    globalJoin(JoinQuery.AnyLeftJoin, query)
 
   @deprecated("Please use globalJoin(JoinQuery.AllRightJoin)", "Clickhouse v20")
-  def globalAnyRightJoin(query: OperationalQuery, alias: Option[String] = None): OperationalQuery =
-    globalJoin(JoinQuery.AnyRightJoin, query, alias)
+  def globalAnyRightJoin(query: OperationalQuery): OperationalQuery =
+    globalJoin(JoinQuery.AnyRightJoin, query)
 
   def using(
       column: Column,
