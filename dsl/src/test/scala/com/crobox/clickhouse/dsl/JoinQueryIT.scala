@@ -21,6 +21,23 @@ class JoinQueryIT
   case class Result(result: String)
   implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
 
+  it should "correct on condition for alias field" in {
+    var query = select(shieldId as itemId)
+      .from(OneTestTable)
+      .where(notEmpty(itemId))
+      .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
+    var resultRows = chExecutor.execute[Result](query).futureValue.rows
+    resultRows.length shouldBe 0
+
+    // reverse tables to check other side of ON condition
+    query = select(itemId, col2)
+      .from(TwoTestTable)
+      .where(notEmpty(itemId))
+      .join(InnerJoin, select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))) on itemId
+    resultRows = chExecutor.execute[Result](query).futureValue.rows
+    resultRows.length shouldBe 0
+  }
+
   forAll(
     Table(
       ("joinType", "result"),
@@ -88,38 +105,43 @@ class JoinQueryIT
       assumeMinimalClickhouseVersion(20)
 
       var query: OperationalQuery =
-        select(shieldId as itemId)
-          .from(OneTestTable)
-          .where(notEmpty(itemId))
-          .join(joinType, TwoTestTable) using itemId
+      select(shieldId as itemId)
+        .from(OneTestTable)
+        .where(notEmpty(itemId))
+        .join(joinType, TwoTestTable) on ((itemId, "=", itemId), (col2, "<=", col2))
       var resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
       // TABLE -- QUERY
       query =
-        select(shieldId as itemId)
-          .from(OneTestTable)
-          .where(notEmpty(itemId))
-          .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
+      select(shieldId as itemId)
+        .from(OneTestTable)
+        .where(notEmpty(itemId))
+        .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on ((itemId, "=", itemId), (col2,
+                                                                                                                     "<=",
+                                                                                                                     col2))
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- TABLE
       query =
-        select(dsl.all())
-          .from(
-            select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
-          )
-          .join(joinType, TwoTestTable)
-          .where(notEmpty(itemId)) using itemId
+      select(dsl.all())
+        .from(
+          select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
+        )
+        .join(joinType, TwoTestTable)
+        .where(notEmpty(itemId)) on ((itemId, "=", itemId), (col2, "<=", col2))
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- QUERY
       query =
-        select(dsl.all())
-          .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
-          .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
+      select(dsl.all())
+        .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
+        .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on ((itemId, "=", itemId), (col2,
+                                                                                                                     "<=",
+                                                                                                                     col2))
+
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
     }

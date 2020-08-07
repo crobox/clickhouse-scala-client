@@ -67,7 +67,7 @@ trait ClickhouseTokenizerModule
            |${tokenizeSelect(select)}
            | ${tokenizeFrom(from)}
            | ${tokenizeAs(as)}
-           | ${tokenizeJoin(from.get, join)}
+           | ${tokenizeJoin(select.get, from.get, join)}
            | ${tokenizeFiltering(prewhere, "PREWHERE")}
            | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
@@ -222,7 +222,9 @@ trait ClickhouseTokenizerModule
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
-  private def tokenizeJoin(from: FromQuery, join: Option[JoinQuery])(implicit ctx: TokenizeContext): String =
+  private def tokenizeJoin(select: SelectQuery, from: FromQuery, join: Option[JoinQuery])(
+      implicit ctx: TokenizeContext
+  ): String =
     join match {
       case Some(query) =>
         // we always need to provide an alias to the RIGHT side
@@ -236,13 +238,15 @@ trait ClickhouseTokenizerModule
            | ${if (query.global) "GLOBAL " else ""}
            | ${tokenizeJoinType(query.joinType)}
            | $right AS ${ctx.rightAlias}
-           | ${tokenizeJoinKeys(from, query)}""".trim.stripMargin
+           | ${tokenizeJoinKeys(select, from, query)}""".trim.stripMargin
           .replaceAll("\n", "")
           .replaceAll("\r", "")
       case None => ""
     }
 
-  private def tokenizeJoinKeys(from: FromQuery, query: JoinQuery)(implicit ctx: TokenizeContext): String = {
+  private def tokenizeJoinKeys(select: SelectQuery, from: FromQuery, query: JoinQuery)(
+      implicit ctx: TokenizeContext
+  ): String = {
 
     val using = query.using.filterNot {
       case EmptyColumn => true
@@ -262,13 +266,32 @@ trait ClickhouseTokenizerModule
           if (using.size == 1) s"USING ${using.head.name}"
           else s"USING (${using.map(_.name).mkString(",")})"
         } else if (query.on.nonEmpty) {
-          // TOKENIZE ON
+          // TOKENIZE ON. If the fromClause is a TABLE, we need to check on aliases!
           "ON " + query.on
-            .map(cond => s"${ctx.leftAlias}.${cond._1.name} ${cond._2} ${ctx.rightAlias}.${cond._3.name}")
+            .map(cond => {
+              val left = verifyOnCondition(select, from, cond._1)
+              //val right = verifyOnCondition(query, query.other, cond._3)
+
+              s"${ctx.leftAlias}.$left ${cond._2} ${ctx.rightAlias}.${cond._3.name}"
+            })
             .mkString(" AND ")
         } else ""
     }
   }
+
+  private def verifyOnCondition(select: SelectQuery, from: FromQuery, joinKey: Column): String =
+    from match {
+      case _: TableFromQuery[_] =>
+        // check if joinKey is an existing DB field or an alias!
+        select.columns
+          .flatMap {
+            case x: AliasedColumn[_] => if (x.alias == joinKey.name) Option(x.original.name) else None
+            case _                   => None
+          }
+          .headOption
+          .getOrElse(joinKey.name)
+      case _ => joinKey.name
+    }
 
   private[language] def tokenizeColumns(columns: Seq[Column]): String =
     columns
