@@ -25,7 +25,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
   it should "generate for join between tables" in {
     val query = select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT column_1, shield_id FROM $database.captainAmerica INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id FORMAT JSON"
+      s"SELECT column_1, shield_id FROM $database.captainAmerica AS l1 INNER JOIN (SELECT * FROM $database.twoTestTable) AS r1 USING shield_id FORMAT JSON"
     )
   }
 
@@ -35,7 +35,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val joinInnerQuery: OperationalQuery = select(itemId) from TwoTestTable where (col3 isEq "wompalama")
     val query                            = select(col1, shieldId) from innerQuery join (InnerJoin, joinInnerQuery) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT column_1, shield_id FROM (SELECT shield_id AS item_id FROM $database.captainAmerica WHERE shield_id = '$expectedUUID') INNER JOIN (SELECT item_id FROM $database.twoTestTable WHERE column_3 = 'wompalama') AS TTT ON item_id = TTT.item_id FORMAT JSON"
+      s"SELECT column_1, shield_id FROM (SELECT shield_id AS item_id FROM $database.captainAmerica WHERE shield_id = '$expectedUUID') AS l1 INNER JOIN (SELECT item_id FROM $database.twoTestTable WHERE column_3 = 'wompalama') AS r1 USING item_id FORMAT JSON"
     )
   }
 
@@ -178,7 +178,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query =
       select(dsl.all).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
     clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT * FROM (SELECT column_1, shield_id FROM $database.captainAmerica INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id) FORMAT JSON"
+      s"SELECT * FROM (SELECT column_1, shield_id FROM $database.captainAmerica AS l1 INNER JOIN (SELECT * FROM $database.twoTestTable) AS r1 USING shield_id) FORMAT JSON"
     )
   }
 }

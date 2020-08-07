@@ -15,7 +15,7 @@ case class TokenizeContext(var joinNr: Int = 0) {
   def incrementJoinNumber(): Unit =
     joinNr = joinNr + 1
 
-  def leftAlias: String = "l" + joinNr
+  def leftAlias: String  = "l" + joinNr
   def rightAlias: String = "r" + joinNr
 }
 
@@ -70,7 +70,7 @@ trait ClickhouseTokenizerModule
            |${tokenizeSelect(select)}
            | ${tokenizeFrom(from)}
            | ${tokenizeAs(as)}
-           | ${tokenizeJoin(select.get, from.get, join)}
+           | ${tokenizeJoin(select, from, join)}
            | ${tokenizeFiltering(prewhere, "PREWHERE")}
            | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
@@ -228,7 +228,7 @@ trait ClickhouseTokenizerModule
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
-  private def tokenizeJoin(select: SelectQuery, from: FromQuery, join: Option[JoinQuery])(
+  private def tokenizeJoin(select: Option[SelectQuery], from: Option[FromQuery], join: Option[JoinQuery])(
       implicit ctx: TokenizeContext
   ): String =
     join match {
@@ -246,13 +246,13 @@ trait ClickhouseTokenizerModule
            | ${if (query.global) "GLOBAL " else ""}
            | ${tokenizeJoinType(query.joinType)}
            | $right AS ${ctx.rightAlias}
-           | ${tokenizeJoinKeys(select, from, query)}""".trim.stripMargin
+           | ${tokenizeJoinKeys(select, from.get, query)}""".trim.stripMargin
           .replaceAll("\n", "")
           .replaceAll("\r", "")
       case None => ""
     }
 
-  private def tokenizeJoinKeys(select: SelectQuery, from: FromQuery, query: JoinQuery)(
+  private def tokenizeJoinKeys(select: Option[SelectQuery], from: FromQuery, query: JoinQuery)(
       implicit ctx: TokenizeContext
   ): String = {
 
@@ -285,11 +285,13 @@ trait ClickhouseTokenizerModule
     }
   }
 
-  private def verifyOnCondition(select: SelectQuery, from: FromQuery, joinKey: Column): String =
+  private def verifyOnCondition(select: Option[SelectQuery], from: FromQuery, joinKey: Column): String =
     from match {
       case _: TableFromQuery[_] =>
         // check if joinKey is an existing DB field or an alias!
-        select.columns
+        select
+          .map(_.columns)
+          .getOrElse(Seq.empty)
           .flatMap {
             case x: AliasedColumn[_] => if (x.alias == joinKey.name) Option(x.original.name) else None
             case _                   => None
