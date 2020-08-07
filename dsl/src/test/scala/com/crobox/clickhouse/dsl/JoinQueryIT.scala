@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
+import com.crobox.clickhouse.dsl.JoinQuery.{AllLeftJoin, InnerJoin}
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.{dsl, ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import org.scalatest.concurrent.ScalaFutures
@@ -146,7 +146,20 @@ class JoinQueryIT
   it should "correctly handle cross join" in {
     val query: OperationalQuery =
       select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
-    println(clickhouseTokenizer.toSql(query.internalQuery))
+    val resultRows = chExecutor.execute[Result](query).futureValue.rows
+    resultRows.length shouldBe 0
+  }
+
+  it should s"triple complex join query" in {
+    val query =
+      select(itemId)
+        .from(
+          select(itemId)
+            .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
+            .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
+        )
+        .join(AllLeftJoin, ThreeTestTable)
+        .on(itemId)
     val resultRows = chExecutor.execute[Result](query).futureValue.rows
     resultRows.length shouldBe 0
   }
