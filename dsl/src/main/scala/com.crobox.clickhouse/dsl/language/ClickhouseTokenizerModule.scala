@@ -11,10 +11,12 @@ import scala.collection.JavaConverters._
 //import scala.jdk.CollectionConverters._
 
 case class TokenizeContext(var joinNr: Int = 0) {
-  def incrementJoinNumber(): Unit = joinNr += 1
 
-  lazy val leftAlias  = "l" + joinNr
-  lazy val rightAlias = "r" + joinNr
+  def incrementJoinNumber(): Unit =
+    joinNr = joinNr + 1
+
+  def leftAlias: String = "l" + joinNr
+  def rightAlias: String = "r" + joinNr
 }
 
 trait ClickhouseTokenizerModule
@@ -45,12 +47,12 @@ trait ClickhouseTokenizerModule
 
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
-  protected def tokenizeSeqCol(col1: Column, columns: Column*): String = {
+  protected def tokenizeSeqCol(col1: Column, columns: Column*)(implicit ctx: TokenizeContext): String = {
     val prefix = if (columns.isEmpty) "" else ", "
     tokenizeColumn(col1) + prefix + tokenizeSeqCol(columns: _*)
   }
 
-  protected def tokenizeSeqCol(columns: Column*): String =
+  protected def tokenizeSeqCol(columns: Column*)(implicit ctx: TokenizeContext): String =
     columns.map(tokenizeColumn).mkString(", ")
 
   override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON")): String = {
@@ -60,7 +62,8 @@ trait ClickhouseTokenizerModule
     sql
   }
 
-  private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
+  private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String = {
+    logger.warn(s"ENTERING WITH $ctx --> $query")
     query match {
       case InternalQuery(select, from, as, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
         s"""
@@ -76,11 +79,12 @@ trait ClickhouseTokenizerModule
            | ${tokenizeLimit(limit)}
            | ${tokenizeUnionAll(union)}""".trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
     }
+  }
 
-  private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext) =
+  private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
     if (unions.nonEmpty) unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString else ""
 
-  private def tokenizeSelect(select: Option[SelectQuery]) =
+  private def tokenizeSelect(select: Option[SelectQuery])(implicit ctx: TokenizeContext): String =
     select match {
       case Some(s) => s"SELECT ${s.modifier} ${tokenizeColumns(s.columns)}"
       case _       => ""
@@ -107,7 +111,7 @@ trait ClickhouseTokenizerModule
       }
       .getOrElse("")
 
-  protected def tokenizeColumn(column: Column): String = {
+  protected def tokenizeColumn(column: Column)(implicit ctx: TokenizeContext): String = {
     require(column != null)
     column match {
       case EmptyColumn => ""
@@ -120,7 +124,7 @@ trait ClickhouseTokenizerModule
     }
   }
 
-  private def tokenizeExpressionColumn(inCol: ExpressionColumn[_]): String =
+  private def tokenizeExpressionColumn(inCol: ExpressionColumn[_])(implicit ctx: TokenizeContext): String =
     inCol match {
       case agg: AggregateFunction[_]         => tokenizeAggregateFunction(agg)
       case col: ArithmeticFunctionCol[_]     => tokenizeArithmeticFunctionColumn(col)
@@ -160,7 +164,7 @@ trait ClickhouseTokenizerModule
         )
     }
 
-  private[language] def tokenizeTimeSeries(timeSeries: TimeSeries): String = {
+  private[language] def tokenizeTimeSeries(timeSeries: TimeSeries)(implicit ctx: TokenizeContext): String = {
     val column = tokenizeColumn(timeSeries.tableColumn)
     tokenizeDuration(timeSeries, column)
   }
@@ -202,7 +206,9 @@ trait ClickhouseTokenizerModule
     }
   }
 
-  //TODO this is a fallback to find a similar timezone when the provided interval does not have a set timezone id. We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries (probably default to failing)
+  // TODO this is a fallback to find a similar timezone when the provided interval does not have a set timezone id.
+  // We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries
+  // (probably default to failing)
   private def determineZoneId(start: DateTime) = {
     val provider = DateTimeZone.getProvider
     val zones    = provider.getAvailableIDs.asScala.map(provider.getZone)
@@ -227,13 +233,15 @@ trait ClickhouseTokenizerModule
   ): String =
     join match {
       case Some(query) =>
+        ctx.incrementJoinNumber()
+        logger.warn(s"PROCESSING JOIN $ctx --> $query")
+
         // we always need to provide an alias to the RIGHT side
         val right = query.other match {
           case table: TableFromQuery[_] => s"(SELECT * ${tokenizeFrom(Some(table))})"
           case query: InnerFromQuery    => tokenizeFrom(Some(query), withPrefix = false)
         }
 
-        ctx.incrementJoinNumber()
         s""" AS ${ctx.leftAlias}
            | ${if (query.global) "GLOBAL " else ""}
            | ${tokenizeJoinType(query.joinType)}
@@ -270,8 +278,6 @@ trait ClickhouseTokenizerModule
           "ON " + query.on
             .map(cond => {
               val left = verifyOnCondition(select, from, cond._1)
-              //val right = verifyOnCondition(query, query.other, cond._3)
-
               s"${ctx.leftAlias}.$left ${cond._2} ${ctx.rightAlias}.${cond._3.name}"
             })
             .mkString(" AND ")
@@ -293,7 +299,7 @@ trait ClickhouseTokenizerModule
       case _ => joinKey.name
     }
 
-  private[language] def tokenizeColumns(columns: Seq[Column]): String =
+  private[language] def tokenizeColumns(columns: Seq[Column])(implicit ctx: TokenizeContext): String =
     columns
       .filterNot {
         case EmptyColumn => true
@@ -329,7 +335,8 @@ trait ClickhouseTokenizerModule
       case SemiRightJoin => "SEMI RIGHT JOIN"
     }
 
-  private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]], keyword: String): String =
+  private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]],
+                                keyword: String)(implicit ctx: TokenizeContext): String =
     maybeCondition match {
       case None            => ""
       case Some(condition) => s"$keyword ${tokenizeColumn(condition)}"
@@ -392,5 +399,4 @@ trait ClickhouseTokenizerModule
       case ASC  => "ASC"
       case DESC => "DESC"
     }
-
 }

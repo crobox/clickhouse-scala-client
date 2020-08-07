@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl._
 trait LogicalFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeLogicalFunction(col: LogicalFunction): String =
+  def tokenizeLogicalFunction(col: LogicalFunction)(implicit ctx: TokenizeContext): String =
     (col.left.asOption, col.right.asOption) match {
       case (None, None)        => "1"
       case (Some(left), None)  => tokenizeColumn(left)
@@ -37,7 +37,7 @@ trait LogicalFunctionTokenizer {
         }
     }
 
-  private def tokenize(col: TableColumn[Boolean], operator: LogicalOperator): String =
+  private def tokenize(col: TableColumn[Boolean], operator: LogicalOperator)(implicit ctx: TokenizeContext): String =
     col match {
       case c: LogicalFunction if c.operator == operator => s"${tokenizeColumn(c)}"
       case c: LogicalFunction if c.operator != Not      => s"(${tokenizeColumn(c)})"

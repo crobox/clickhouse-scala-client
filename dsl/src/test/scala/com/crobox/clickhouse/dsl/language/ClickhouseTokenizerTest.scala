@@ -4,7 +4,6 @@ import java.util.UUID
 
 import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.misc.RandomStringGenerator
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
 
@@ -151,12 +150,12 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   }
 
   it should "generate cases" in {
-    this.tokenizeColumn(switch(const(3))) shouldBe "3"
-    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
+    this.tokenizeColumn(switch(const(3)))(TokenizeContext()) shouldBe "3"
+    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId)))(TokenizeContext()) shouldBe s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
   }
 
   it should "use constant" in {
-    this.tokenizeColumn(const(3).as(col2)) shouldBe s"3 AS ${col2.name}"
+    this.tokenizeColumn(const(3).as(col2))(TokenizeContext()) shouldBe s"3 AS ${col2.name}"
   }
 
   "raw()" should "allow to behave like little bobby tables" in {
@@ -174,6 +173,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   }
 
   "Aggregated functions" should "build with combinators" in {
+    implicit val ctx = TokenizeContext()
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1))) shouldBe s"uniqIf(${col1.name},${col1.name} = 'test')"
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1, UniqModifier.HLL12))) shouldBe s"uniqHLL12If(${col1.name},${col1.name} = 'test')"
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1, UniqModifier.Combined))) shouldBe s"uniqCombinedIf(${col1.name},${col1.name} = 'test')"
@@ -192,7 +192,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
                       DateTime.now(DateTimeZone.forOffsetHours(2)),
                       MultiDuration(TimeUnit.Month))
       )
-    ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
+    )(TokenizeContext()) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
   }
 
   "build custom refs" should "quote them correctly" in {

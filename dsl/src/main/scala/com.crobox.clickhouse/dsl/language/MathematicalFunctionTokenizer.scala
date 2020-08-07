@@ -5,10 +5,10 @@ import com.crobox.clickhouse.dsl._
 trait MathematicalFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeMathematicalFunction(col: MathFuncColumn): String = col match {
+  def tokenizeMathematicalFunction(col: MathFuncColumn)(implicit ctx: TokenizeContext): String = col match {
     case Pow(x: NumericCol[_], y: NumericCol[_]) => s"pow(${tokenizeColumn(x.column)},${tokenizeColumn(y.column)})"
-    case c: MathConst                      => tokenizeMathConst(c)
-    case c: MathTransformation             => tokenizeMathTransformation(c)
+    case c: MathConst                            => tokenizeMathConst(c)
+    case c: MathTransformation                   => tokenizeMathTransformation(c)
 
   }
 
@@ -17,7 +17,7 @@ trait MathematicalFunctionTokenizer {
     case c: Pi => "pi()"
   }
 
-  private def tokenizeMathTransformation(col: MathTransformation): String = {
+  private def tokenizeMathTransformation(col: MathTransformation)(implicit ctx: TokenizeContext): String = {
     val command = col match {
       case Exp(_)    => "exp"
       case Log(_)    => "log"

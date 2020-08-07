@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl._
 trait HashFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeHashFunction(col: HashFunction): String = col match {
+  def tokenizeHashFunction(col: HashFunction)(implicit ctx: TokenizeContext): String = col match {
     case HalfMD5(col: StringColMagnet[_]) =>
       s"halfMD5(${tokenizeColumn(col.column)})"
     case MD5(col: StringColMagnet[_]) =>

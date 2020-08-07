@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl._
 trait URLFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeURLFunction(col: URLFunction[_]): String = {
+  def tokenizeURLFunction(col: URLFunction[_])(implicit ctx: TokenizeContext): String = {
     val command = col match {
       case Protocol(_)                       => "protocol"
       case Domain(_)                         => "domain"
@@ -28,11 +28,11 @@ trait URLFunctionTokenizer {
       case CutQueryString(_)                 => "cutQueryString"
       case CutFragment(_)                    => "cutFragment"
       case CutQueryStringAndFragment(_)      => "cutQueryStringAndFragment"
-      case CutURLParameter(_,_)              => "cutURLParameter"
+      case CutURLParameter(_, _)             => "cutURLParameter"
     }
     val tail = col match {
       case ExtractURLParameter(_, c2) => "," + tokenizeColumn(c2.column)
-      case CutURLParameter(_, c2) => "," + tokenizeColumn(c2.column)
+      case CutURLParameter(_, c2)     => "," + tokenizeColumn(c2.column)
       case _                          => ""
     }
 

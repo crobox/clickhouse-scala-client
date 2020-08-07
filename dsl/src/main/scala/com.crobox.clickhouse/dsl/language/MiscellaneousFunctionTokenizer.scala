@@ -5,12 +5,12 @@ import com.crobox.clickhouse.dsl._
 trait MiscellaneousFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeMiscellaneousFunction(col: MiscellaneousFunction): String = col match {
+  def tokenizeMiscellaneousFunction(col: MiscellaneousFunction)(implicit ctx: TokenizeContext): String = col match {
     case col: MiscellaneousOp[_]    => tokenizeMiscOp(col)
     case col: MiscellaneousConst[_] => tokenizeMiscConst(col)
   }
 
-  def tokenizeMiscOp(col: MiscellaneousOp[_]): String = col match {
+  def tokenizeMiscOp(col: MiscellaneousOp[_])(implicit ctx: TokenizeContext): String = col match {
     case VisibleWidth(col: ConstOrColMagnet[_]) => s"visibleWidth(${tokenizeColumn(col.column)})"
     case ToTypeName(col: ConstOrColMagnet[_])   => s"toTypeName(${tokenizeColumn(col.column)})"
     case Materialize(col: ConstOrColMagnet[_])  => s"materialize(${tokenizeColumn(col.column)})"
@@ -38,7 +38,7 @@ trait MiscellaneousFunctionTokenizer {
     case MACStringToOUI(col: StringColMagnet[_])     => s"MACStringToOUI(${tokenizeColumn(col.column)})"
   }
 
-  def tokenizeMiscConst(const: MiscellaneousConst[_]): String = const match {
+  def tokenizeMiscConst(const: MiscellaneousConst[_])(implicit ctx: TokenizeContext): String = const match {
     case HostName() =>
       "hostName()"
     case BlockSize() =>
@@ -56,7 +56,7 @@ trait MiscellaneousFunctionTokenizer {
     case RowNumberInAllBlocks() => "rowNumberInAllBlocks()"
   }
 
-  private def tokenizeOpt(col: Option[Magnet[_]]) = col match {
+  private def tokenizeOpt(col: Option[Magnet[_]])(implicit ctx: TokenizeContext): String = col match {
     case Some(magnetizedCol) => "," + tokenizeColumn(magnetizedCol.column)
     case _                   => ""
   }
