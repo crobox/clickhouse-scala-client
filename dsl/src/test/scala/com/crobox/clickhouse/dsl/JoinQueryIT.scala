@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec, dsl}
+import com.crobox.clickhouse.{dsl, ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -38,43 +38,39 @@ class JoinQueryIT
     )
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {
-      // LEFT TABLE  -- RIGHT TABLE
+      // TABLE -- TABLE
       var query: OperationalQuery =
       select(shieldId as itemId)
         .from(OneTestTable)
         .where(notEmpty(itemId))
-        .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
+        .join(joinType, TwoTestTable) using itemId
       var resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
-      // LEFT TABLE -- RIGHT QUERY (1x aliasLeft, 2x aliasRight)
-      val right = select(itemId, col2).from(
-        select(dsl.all()).from(select(shieldId as itemId).from(TwoTestTable).where(notEmpty(itemId)))
-      )
+      // TABLE -- QUERY
       query =
       select(shieldId as itemId)
         .from(OneTestTable)
         .where(notEmpty(itemId))
-        .join(joinType, right) on itemId
+        .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
-      // LEFT QUERY -- RIGHT TABLE
+      // QUERY -- TABLE
       query =
       select(dsl.all())
         .from(
           select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
         )
-        .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
+        .join(joinType, TwoTestTable)
+        .where(notEmpty(itemId)) using itemId
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
-      // LEFT QUERY -- RIGHT QUERY (2x aliasLeft, 2x aliasRight)
+      // QUERY -- QUERY
       query =
       select(dsl.all())
-        .from(
-          select(shieldId as itemId).from(right).where(notEmpty(itemId))
-        )
+        .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
         .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
@@ -90,22 +86,42 @@ class JoinQueryIT
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {
       assumeMinimalClickhouseVersion(20)
-      //
-      // TABLE
-      //
+
       var query: OperationalQuery =
-        select(itemId).from(
-          select(itemId)
-            .from(TwoTestTable)
-            .join(joinType, ThreeTestTable)
-            .on((itemId, "=", itemId), (col2, "<=", col2)),
-        )
+        select(shieldId as itemId)
+          .from(OneTestTable)
+          .where(notEmpty(itemId))
+          .join(joinType, TwoTestTable) using itemId
       var resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
-      //
-      // SUBQUERY
-      //
+      // TABLE -- QUERY
+      query =
+        select(shieldId as itemId)
+          .from(OneTestTable)
+          .where(notEmpty(itemId))
+          .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
+      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows.length shouldBe result
+
+      // QUERY -- TABLE
+      query =
+        select(dsl.all())
+          .from(
+            select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
+          )
+          .join(joinType, TwoTestTable)
+          .where(notEmpty(itemId)) using itemId
+      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows.length shouldBe result
+
+      // QUERY -- QUERY
+      query =
+        select(dsl.all())
+          .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
+          .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
+      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows.length shouldBe result
     }
   }
 

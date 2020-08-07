@@ -255,6 +255,7 @@ trait ClickhouseTokenizerModule
         ""
       case _ =>
         assert(using.nonEmpty || query.on.nonEmpty, s"No USING or ON provided for joinType: ${query.joinType}")
+        assert(!(using.nonEmpty && query.on.nonEmpty), s"Both USING and ON provided for joinType: ${query.joinType}")
 
         if (using.nonEmpty) {
           // TOKENIZE USING
