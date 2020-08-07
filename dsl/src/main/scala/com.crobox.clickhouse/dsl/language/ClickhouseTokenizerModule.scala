@@ -62,8 +62,7 @@ trait ClickhouseTokenizerModule
     sql
   }
 
-  private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String = {
-    logger.warn(s"ENTERING WITH $ctx --> $query")
+  private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
     query match {
       case InternalQuery(select, from, as, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
         s"""
@@ -79,7 +78,6 @@ trait ClickhouseTokenizerModule
            | ${tokenizeLimit(limit)}
            | ${tokenizeUnionAll(union)}""".trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
     }
-  }
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
     if (unions.nonEmpty) unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString else ""
@@ -234,7 +232,6 @@ trait ClickhouseTokenizerModule
     join match {
       case Some(query) =>
         ctx.incrementJoinNumber()
-        logger.warn(s"PROCESSING JOIN $ctx --> $query")
 
         // we always need to provide an alias to the RIGHT side
         val right = query.other match {

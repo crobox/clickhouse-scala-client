@@ -19,13 +19,25 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema {
 
     // PURE SPECULATIVE / SQL ONLY
     // THE REASON WHY IT'S NOT --> ON twoTestTable.ts is that twoTestTable DOESN'T have a ts column.
-    clickhouseTokenizer.toSql(query.internalQuery).replaceAll("[\\s\\n]", "") should be(
-      s"""SELECT shield_id,numbers, * FROM (
-         |  SELECT item_id, ts FROM $database.twoTestTable WHERE column_3 = 'wompalama' GROUP BY ts ORDER BY ts ASC
-         |) ALL LEFT JOIN (
-         |  SELECT * FROM $database.captainAmerica WHERE shield_id = '$expectedUUID' GROUP BY ts ORDER BY ts ASC
-         |) AS TTT ON ts = TTT.ts FORMAT JSON""".stripMargin
-        .replaceAll("[\\s\\n]", "")
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"""
+         |SELECT shield_id,
+         |       numbers,
+         |       *
+         |FROM
+         |  (SELECT item_id,
+         |          ts
+         |   FROM query_merge.twoTestTable
+         |   WHERE column_3 = 'wompalama'
+         |   GROUP BY ts
+         |   ORDER BY ts ASC) AS l1 ALL
+         |LEFT JOIN
+         |  (SELECT *
+         |   FROM query_merge.captainAmerica
+         |   WHERE shield_id = '$expectedUUID'
+         |   GROUP BY ts
+         |   ORDER BY ts ASC) AS r1 USING ts
+         |FORMAT JSON""".stripMargin
     )
   }
 
@@ -35,22 +47,47 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema {
     val right: OperationalQuery  = select(CHDsl.all()) from TwoTestTable where (col3 isEq "wompalama")
     val right2: OperationalQuery = select(CHDsl.all()) from ThreeTestTable where shieldId.isEq(expectedUUID)
     val query                    = right2 merge (right) on timestampColumn merge (left) on timestampColumn
-    val parsed                   = clickhouseTokenizer.toSql(query.internalQuery).replaceAll("[\\s\\n]", "")
 
     // PURE SPECULATIVE / SQL ONLY
     // THE REASON WHY IT'S NOT --> ON twoTestTable.ts is that twoTestTable DOESN'T have a ts column.
-    parsed should equal(
-      s"""SELECT item_id, column_1, column_2, column_3, column_4, column_5, column_6, * FROM (
-         |  SELECT * FROM $database.captainAmerica WHERE shield_id = '$expectedUUID' GROUP BY ts ORDER BY ts ASC
-         |) ALL LEFT JOIN (
-         |  SELECT item_id, column_2, column_4, column_5, column_6, * FROM (
-         |    SELECT * FROM $database.twoTestTable WHERE column_3 = 'wompalama' GROUP BY ts ORDER BY ts ASC
-         |  ) ALL LEFT JOIN (
-         |    SELECT * FROM $database.threeTestTable WHERE shield_id = '$expectedUUID' GROUP BY ts ORDER BY ts ASC
-         |  ) AS TT1 ON ts = TT1.ts GROUP BY ts ORDER BY ts ASC
-         |) AS TT2 ON ts = TT2.ts FORMAT JSON""".stripMargin
-        .replaceAll("[\\s\\n]", "")
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"""
+         |SELECT item_id,
+         |       column_1,
+         |       column_2,
+         |       column_3,
+         |       column_4,
+         |       column_5,
+         |       column_6,
+         |       *
+         |FROM
+         |  (SELECT *
+         |   FROM query_merge.captainAmerica
+         |   WHERE shield_id = '$expectedUUID'
+         |   GROUP BY ts
+         |   ORDER BY ts ASC) AS l2 ALL
+         |LEFT JOIN
+         |  (SELECT item_id,
+         |          column_2,
+         |          column_4,
+         |          column_5,
+         |          column_6,
+         |          *
+         |   FROM
+         |     (SELECT *
+         |      FROM query_merge.twoTestTable
+         |      WHERE column_3 = 'wompalama'
+         |      GROUP BY ts
+         |      ORDER BY ts ASC) AS l2 ALL
+         |   LEFT JOIN
+         |     (SELECT *
+         |      FROM query_merge.threeTestTable
+         |      WHERE shield_id = '$expectedUUID'
+         |      GROUP BY ts
+         |      ORDER BY ts ASC) AS r2 USING ts
+         |   GROUP BY ts
+         |   ORDER BY ts ASC) AS r2 USING ts
+         |FORMAT JSON""".stripMargin
     )
   }
-
 }
