@@ -40,21 +40,23 @@ class JoinQueryIT
 
   forAll(
     Table(
-      ("joinType", "result"),
-      (JoinQuery.InnerJoin, 0),
-      (JoinQuery.LeftOuterJoin, 0),
-      (JoinQuery.RightOuterJoin, 0),
-      (JoinQuery.FullOuterJoin, 0),
-      (JoinQuery.AnyInnerJoin, 0),
-      (JoinQuery.AnyLeftJoin, 0),
-      (JoinQuery.AnyRightJoin, 0),
-      (JoinQuery.AntiLeftJoin, 0),
-      (JoinQuery.AntiRightJoin, 0),
-      (JoinQuery.SemiLeftJoin, 0),
-      (JoinQuery.SemiRightJoin, 0),
+      ("joinType", "result", "min clickhouse version"),
+      (JoinQuery.InnerJoin, 0, 19),
+      (JoinQuery.LeftOuterJoin, 0, 19),
+      (JoinQuery.RightOuterJoin, 0, 19),
+      (JoinQuery.FullOuterJoin, 0, 19),
+      (JoinQuery.AnyInnerJoin, 0, 19),
+      (JoinQuery.AnyLeftJoin, 0, 19),
+      (JoinQuery.AnyRightJoin, 0, 19),
+      (JoinQuery.AntiLeftJoin, 0, 20),
+      (JoinQuery.AntiRightJoin, 0, 20),
+      (JoinQuery.SemiLeftJoin, 0, 20),
+      (JoinQuery.SemiRightJoin, 0, 20),
     )
-  ) { (joinType, result) =>
+  ) { (joinType, result, minClickhouseVersion) =>
     it should s"join correctly on: $joinType" in {
+      assumeMinimalClickhouseVersion(minClickhouseVersion)
+
       // TABLE -- TABLE
       var query: OperationalQuery =
       select(shieldId as itemId)
