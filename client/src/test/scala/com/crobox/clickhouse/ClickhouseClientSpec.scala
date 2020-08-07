@@ -63,6 +63,8 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
   def matchSQL(expected: String): Matcher[String] = new Matcher[String] {
 
     def apply(left: String): MatchResult =
-      MatchResult(clean(left) == clean(expected), "SQL messages don't match", "SQL messages are equal")
+      MatchResult(clean(left) == clean(expected),
+                  s"SQL messages don't match. Input: ${clean(left)}",
+                  "SQL messages are equal")
   }
 }
