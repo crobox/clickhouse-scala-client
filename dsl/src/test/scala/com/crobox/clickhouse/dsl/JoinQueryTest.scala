@@ -12,9 +12,9 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
   it should s"join correctly on: ${JoinQuery.CrossJoin}" in {
     val query: OperationalQuery =
       select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
-    val sql = clickhouseTokenizer.toSql(query.internalQuery)
-    sql should be(
-      s"SELECT item_id FROM (SELECT item_id FROM sc.twoTestTable AS l1 CROSS JOIN (SELECT * FROM sc.threeTestTable) AS r1) FORMAT JSON"
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT item_id FROM (SELECT item_id FROM sc.twoTestTable AS l1 " +
+        s"CROSS JOIN (SELECT * FROM sc.threeTestTable) AS r1) FORMAT JSON"
     )
   }
 
@@ -24,9 +24,9 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
       .from(OneTestTable)
       .where(notEmpty(itemId))
       .join(InnerJoin, TwoTestTable) using itemId
-    val sql = clickhouseTokenizer.toSql(query.internalQuery)
-    sql should be(
-      s"SELECT shield_id AS item_id FROM sc.captainAmerica AS l1 INNER JOIN (SELECT * FROM sc.twoTestTable) AS r1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT shield_id AS item_id FROM sc.captainAmerica AS l1 " +
+        s"INNER JOIN (SELECT * FROM sc.twoTestTable) AS r1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
 
@@ -36,9 +36,10 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
       .from(OneTestTable)
       .where(notEmpty(itemId))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
-    val sql = clickhouseTokenizer.toSql(query.internalQuery)
-    sql should be(
-      s"SELECT shield_id AS item_id FROM sc.captainAmerica AS l1 INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable WHERE notEmpty(item_id)) AS r1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT shield_id AS item_id FROM sc.captainAmerica AS l1 " +
+        s"INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable " +
+        s"WHERE notEmpty(item_id)) AS r1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
 
@@ -50,9 +51,10 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
       )
       .join(InnerJoin, TwoTestTable)
       .where(notEmpty(itemId)) using itemId
-    val sql = clickhouseTokenizer.toSql(query.internalQuery)
-    sql should be(
-      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT * FROM sc.twoTestTable) AS r1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica " +
+        s"WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT * FROM sc.twoTestTable) AS r1 " +
+        s"USING item_id WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
 
@@ -61,9 +63,10 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
     select(dsl.all())
       .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
-    val sql = clickhouseTokenizer.toSql(query.internalQuery)
-    sql should be(
-      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable WHERE notEmpty(item_id)) AS r1 USING item_id FORMAT JSON"
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica " +
+        s"WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable " +
+        s"WHERE notEmpty(item_id)) AS r1 USING item_id FORMAT JSON"
     )
   }
 
@@ -73,9 +76,10 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
     select(dsl.all())
       .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
-    val sql = clickhouseTokenizer.toSql(query.internalQuery)
-    sql should be(
-      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable WHERE notEmpty(item_id)) AS r1 ON l1.item_id = r1.item_id FORMAT JSON"
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica " +
+        s"WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable " +
+        s"WHERE notEmpty(item_id)) AS r1 ON l1.item_id = r1.item_id FORMAT JSON"
     )
   }
 
@@ -85,9 +89,10 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
     select(dsl.all())
       .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on ((itemId, "<=", itemId))
-    val sql = clickhouseTokenizer.toSql(query.internalQuery)
-    sql should be(
-      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable WHERE notEmpty(item_id)) AS r1 ON l1.item_id <= r1.item_id FORMAT JSON"
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica " +
+        s"WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable " +
+        s"WHERE notEmpty(item_id)) AS r1 ON l1.item_id <= r1.item_id FORMAT JSON"
     )
   }
 
