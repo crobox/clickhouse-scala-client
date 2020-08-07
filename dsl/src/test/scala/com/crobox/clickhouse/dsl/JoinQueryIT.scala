@@ -104,43 +104,46 @@ class JoinQueryIT
     it should s"join correctly on: $joinType" in {
       assumeMinimalClickhouseVersion(20)
 
+//      val query: OperationalQuery =
+//        select(itemId).from(
+//          select(itemId)
+//            .from(TwoTestTable)
+//            .asOfJoin(joinType, ThreeTestTable, Option("TTT"), (col2, "<="))
+//            .using(itemId)
+//        )
+
       var query: OperationalQuery =
-      select(shieldId as itemId)
-        .from(OneTestTable)
-        .where(notEmpty(itemId))
-        .join(joinType, TwoTestTable) on ((itemId, "=", itemId), (col2, "<=", col2))
+        select(itemId)
+          .from(TwoTestTable)
+          .where(notEmpty(itemId))
+          .join(joinType, ThreeTestTable)
+          .on((col2, "<=", col2))
       var resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
       // TABLE -- QUERY
-      query =
-      select(shieldId as itemId)
-        .from(OneTestTable)
+      query = select(itemId)
+        .from(TwoTestTable)
         .where(notEmpty(itemId))
-        .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on ((itemId, "=", itemId), (col2,
-                                                                                                                     "<=",
-                                                                                                                     col2))
+        .join(joinType, select(itemId, col2).from(ThreeTestTable).where(notEmpty(itemId)))
+        .on((col2, "<=", col2))
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- TABLE
-      query =
-      select(dsl.all())
-        .from(
-          select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
-        )
-        .join(joinType, TwoTestTable)
-        .where(notEmpty(itemId)) on ((itemId, "=", itemId), (col2, "<=", col2))
+      query = select(dsl.all())
+        .from(select(itemId).from(TwoTestTable).where(notEmpty(itemId)))
+        .join(joinType, ThreeTestTable)
+        .where(notEmpty(itemId))
+        .on((col2, "<=", col2))
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- QUERY
-      query =
-      select(dsl.all())
-        .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
-        .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on ((itemId, "=", itemId), (col2,
-                                                                                                                     "<=",
-                                                                                                                     col2))
+      query = select(dsl.all())
+        .from(select(itemId).from(TwoTestTable).where(notEmpty(itemId)))
+        .join(joinType, select(itemId, col2).from(ThreeTestTable).where(notEmpty(itemId)))
+        .on((col2, "<=", col2))
 
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
