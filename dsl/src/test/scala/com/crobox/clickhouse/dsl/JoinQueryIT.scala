@@ -104,46 +104,38 @@ class JoinQueryIT
     it should s"join correctly on: $joinType" in {
       assumeMinimalClickhouseVersion(20)
 
-//      val query: OperationalQuery =
-//        select(itemId).from(
-//          select(itemId)
-//            .from(TwoTestTable)
-//            .asOfJoin(joinType, ThreeTestTable, Option("TTT"), (col2, "<="))
-//            .using(itemId)
-//        )
-
       var query: OperationalQuery =
-        select(itemId)
+        select(itemId, col2)
           .from(TwoTestTable)
           .where(notEmpty(itemId))
           .join(joinType, ThreeTestTable)
-          .on((col2, "<=", col2))
+          .on((itemId, "=", itemId), (col2, "<=", col2))
       var resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
       // TABLE -- QUERY
-      query = select(itemId)
+      query = select(itemId, col2)
         .from(TwoTestTable)
         .where(notEmpty(itemId))
         .join(joinType, select(itemId, col2).from(ThreeTestTable).where(notEmpty(itemId)))
-        .on((col2, "<=", col2))
+        .on((itemId, "=", itemId), (col2, "<=", col2))
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- TABLE
       query = select(dsl.all())
-        .from(select(itemId).from(TwoTestTable).where(notEmpty(itemId)))
+        .from(select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId)))
         .join(joinType, ThreeTestTable)
         .where(notEmpty(itemId))
-        .on((col2, "<=", col2))
+        .on((itemId, "=", itemId), (col2, "<=", col2))
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- QUERY
       query = select(dsl.all())
-        .from(select(itemId).from(TwoTestTable).where(notEmpty(itemId)))
+        .from(select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId)))
         .join(joinType, select(itemId, col2).from(ThreeTestTable).where(notEmpty(itemId)))
-        .on((col2, "<=", col2))
+        .on((itemId, "=", itemId), (col2, "<=", col2))
 
       resultRows = chExecutor.execute[Result](query).futureValue.rows
       resultRows.length shouldBe result
@@ -155,58 +147,6 @@ class JoinQueryIT
     val query: OperationalQuery =
       select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
     println(clickhouseTokenizer.toSql(query.internalQuery))
-    val resultRows = chExecutor.execute[Result](query).futureValue.rows
-    resultRows.length shouldBe 0
-  }
-
-  //
-  // NOW TEST FOR ALL COMBINATIONS OF JOIN
-  //
-  val t1 = s"captainAmerica"
-  val t2 = s"twoTestTable"
-  val t3 = s"threeTestTable"
-  val q1 = s"$database.$t1"
-  val q2 = s"$database.$t2"
-  val q3 = s"$database.$t3"
-
-  it should "TABLE using alias" in {
-    val query = select(shieldId as itemId)
-      .from(OneTestTable)
-      .join(InnerJoin, TwoTestTable) using itemId
-    clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT shield_id AS item_id FROM $q1 INNER JOIN (SELECT * FROM $q2) AS TTT ON item_id = TTT.item_id FORMAT JSON"
-    )
-    val resultRows = chExecutor.execute[Result](query).futureValue.rows
-    resultRows.length shouldBe 0
-  }
-
-  it should "TABLE normal" in {
-    val query = select(itemId).from(TwoTestTable).join(InnerJoin, ThreeTestTable) using itemId
-    clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT item_id FROM $q2 INNER JOIN (SELECT * FROM $q3) AS TTT ON $t2.item_id = TTT.item_id FORMAT JSON"
-    )
-    val resultRows = chExecutor.execute[Result](query).futureValue.rows
-    resultRows.length shouldBe 0
-  }
-
-  it should "OPERATIONAL using alias" in {
-    val query = select(shieldId as itemId)
-      .from(OneTestTable)
-      .join(InnerJoin, select(itemId).from(TwoTestTable)) using itemId
-    clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT shield_id AS item_id FROM $q1 INNER JOIN (SELECT item_id FROM $q2) AS TTT ON item_id = TTT.item_id FORMAT JSON"
-    )
-    val resultRows = chExecutor.execute[Result](query).futureValue.rows
-    resultRows.length shouldBe 0
-  }
-
-  it should "OPERATIONAL normal" in {
-    val query = select(itemId)
-      .from(TwoTestTable)
-      .join(InnerJoin, select(itemId).from(ThreeTestTable)) using itemId
-    clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT item_id FROM $q2 INNER JOIN (SELECT item_id FROM $q3) AS TTT ON $t2.item_id = TTT.item_id FORMAT JSON"
-    )
     val resultRows = chExecutor.execute[Result](query).futureValue.rows
     resultRows.length shouldBe 0
   }
