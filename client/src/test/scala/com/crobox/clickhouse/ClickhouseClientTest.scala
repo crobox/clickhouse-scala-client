@@ -58,7 +58,7 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
   }
 
   // This test is failing using new clickhouse server; apparently too fast?
-  ignore should "send full progress messages" in {
+  it should "send full progress messages" in {
     client
       .queryWithProgress("select sum(number) FROM (select number from system.numbers limit 100000000)")
       .runWith(Sink.seq[QueryProgress])
