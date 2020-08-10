@@ -1,7 +1,6 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery._
-import com.crobox.clickhouse.dsl.misc.RandomStringGenerator
 
 /**
  * See https://clickhouse.tech/docs/en/sql-reference/statements/select/join/
@@ -51,15 +50,26 @@ object JoinQuery {
 /**
  * @param joinType
  * @param other
- * @param joinKeys
+ * @param on Expressions. Column Operator Column, where operator must be one of the following: =, >, >=, <, <=.
+ *           Default set to '='
+ * @param using Columns
  * @param global
- * @param alias
- * @param matchConditions Are used by AsOfJoin queries. Must be provided as tuples of (Column, Operator), where operator
- *                        must be one of the following: >, >=, <, <=
  */
 case class JoinQuery(joinType: JoinType,
                      other: FromQuery,
-                     joinKeys: Seq[Column] = Seq.empty[Column],
-                     global: Boolean = false,
-                     alias: String = RandomStringGenerator.random(),
-                     matchConditions: Seq[(Column, String)] = Seq.empty)
+                     on: Seq[JoinCondition] = Seq.empty,
+                     using: Seq[Column] = Seq.empty,
+                     global: Boolean = false)
+
+case class JoinCondition(left: Column, operator: String, right: Column) {
+
+  require(JoinCondition.SupportedOperators.contains(operator),
+         s"Operator[$operator] must be one of: ${JoinCondition.SupportedOperators}")
+}
+
+object JoinCondition {
+  val SupportedOperators = Set(">", ">=", "<", "<=", "=")
+
+  def apply(column: Column): JoinCondition                   = JoinCondition(column, "=", column)
+  def apply(triple: (Column, String, Column)): JoinCondition = JoinCondition(triple._1, triple._2, triple._3)
+}

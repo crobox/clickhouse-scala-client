@@ -2,13 +2,14 @@ package com.crobox.clickhouse.dsl
 
 import java.util.UUID
 
-import com.crobox.clickhouse.dsl.column._
-import com.crobox.clickhouse.dsl.JoinQuery.{InnerJoin}
+import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
+import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
+import com.crobox.clickhouse.{dsl, ClickhouseClientSpec}
 import org.joda.time.{DateTime, LocalDate}
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 class QueryTest extends ClickhouseClientSpec with TestSchema {
@@ -17,15 +18,16 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
 
   "querying using the typed query" should "perform simple select" in {
     val query = select(shieldId) from OneTestTable
-    clickhouseTokenizer.toSql(query.internalQuery) should be(
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
       s"SELECT shield_id FROM $database.captainAmerica FORMAT JSON"
     )
   }
 
   it should "generate for join between tables" in {
-    val query = select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable, Option("TTT")) using shieldId
-    clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT column_1, shield_id FROM $database.captainAmerica INNER JOIN (SELECT * FROM $database.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id FORMAT JSON"
+    val query = select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT column_1, shield_id FROM $database.captainAmerica AS l1 INNER JOIN (SELECT * " +
+      s"FROM $database.twoTestTable) AS r1 USING shield_id FORMAT JSON"
     )
   }
 
@@ -33,15 +35,17 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val expectedUUID                     = UUID.randomUUID()
     val innerQuery: OperationalQuery     = select(shieldId as itemId) from OneTestTable where shieldId.isEq(expectedUUID)
     val joinInnerQuery: OperationalQuery = select(itemId) from TwoTestTable where (col3 isEq "wompalama")
-    val query                            = select(col1, shieldId) from innerQuery join (InnerJoin, joinInnerQuery, Option("TTT")) using itemId
-    clickhouseTokenizer.toSql(query.internalQuery) should be(
-      s"SELECT column_1, shield_id FROM (SELECT shield_id AS item_id FROM $database.captainAmerica WHERE shield_id = '$expectedUUID') INNER JOIN (SELECT item_id FROM $database.twoTestTable WHERE column_3 = 'wompalama') AS TTT ON item_id = TTT.item_id FORMAT JSON"
+    val query                            = select(col1, shieldId) from innerQuery join (InnerJoin, joinInnerQuery) using itemId
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT column_1, shield_id FROM (SELECT shield_id AS item_id FROM $database.captainAmerica " +
+      s"WHERE shield_id = '$expectedUUID') AS l1 INNER JOIN (SELECT item_id FROM $database.twoTestTable " +
+      s"WHERE column_3 = 'wompalama') AS r1 USING item_id FORMAT JSON"
     )
   }
 
   it should "escape from evil" in {
     val query = select(shieldId) from OneTestTable where col3.isEq("use ' evil")
-    clickhouseTokenizer.toSql(query.internalQuery) should be(
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
       s"SELECT shield_id FROM $database.captainAmerica WHERE column_3 = 'use \\' evil' FORMAT JSON"
     )
   }
@@ -50,7 +54,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query    = select(shieldId) from OneTestTable
     val query2   = select(itemId) from OneTestTable where col2 >= 2
     val composed = query :+> query2
-    clickhouseTokenizer.toSql(composed.internalQuery) should be(
+    clickhouseTokenizer.toSql(composed.internalQuery) should matchSQL(
       s"SELECT shield_id FROM $database.captainAmerica WHERE column_2 >= 2 FORMAT JSON"
     )
   }
@@ -70,7 +74,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val nested = NativeColumn("props", ColumnType.Nested(NativeColumn("key"), NativeColumn("value")))
     clickhouseTokenizer.toSql(
       select(lookupNestedValue(nested, "cate'gory")).internalQuery
-    ) should be(
+    ) should matchSQL(
       "SELECT `props.value`[indexOf(`props.key`,'cate\\'gory')] FORMAT JSON"
     )
 
@@ -80,7 +84,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query    = select(shieldId) from OneTestTable
     val query2   = select(itemId) from OneTestTable where col2 >= 2
     val composed = query <+: query2
-    clickhouseTokenizer.toSql(composed.internalQuery) should be(
+    clickhouseTokenizer.toSql(composed.internalQuery) should matchSQL(
       s"SELECT item_id FROM $database.captainAmerica WHERE column_2 >= 2 FORMAT JSON"
     )
   }
@@ -96,9 +100,7 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
 
   it should "parse datefunction" in {
     val query = select(toYear(NativeColumn[DateTime]("dateTime"))) from OneTestTable
-    val s     = clickhouseTokenizer.toSql(query.internalQuery)
-
-    s.nonEmpty shouldBe true
+    clickhouseTokenizer.toSql(query.internalQuery).nonEmpty shouldBe true
   }
 
   it should "parse column function in filter" in {
@@ -106,15 +108,16 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query = select(minus(NativeColumn[LocalDate]("date"), NativeColumn[Double]("double"))) from OneTestTable where (sum(
       col2
     ) > 0)
-    val s = clickhouseTokenizer.toSql(query.internalQuery)
-
-    s shouldBe s"SELECT date - double FROM $database.captainAmerica WHERE sum(column_2) > 0 FORMAT JSON"
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT date - double FROM $database.captainAmerica WHERE sum(column_2) > 0 FORMAT JSON"
+    )
   }
 
   it should "parse const as column for magnets" in {
     val query = select(col2 - 1, intDiv(2, 3)) from OneTestTable
-    val s     = clickhouseTokenizer.toSql(query.internalQuery)
-    s shouldBe s"SELECT column_2 - 1, intDiv(2, 3) FROM $database.captainAmerica FORMAT JSON"
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"SELECT column_2 - 1, intDiv(2, 3) FROM $database.captainAmerica FORMAT JSON"
+    )
   }
 
   it should "succeed on safe override of non-conflicting multi part queries" in {
@@ -129,14 +132,14 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
       case t: Success[_] =>
     }
 
-    clickhouseTokenizer.toSql(composed.get.internalQuery) should be(
+    clickhouseTokenizer.toSql(composed.get.internalQuery) should matchSQL(
       s"SELECT shield_id FROM $database.captainAmerica FORMAT JSON"
     )
 
     composed2 should matchPattern {
       case t: Success[_] =>
     }
-    clickhouseTokenizer.toSql(composed2.get.internalQuery) should be(
+    clickhouseTokenizer.toSql(composed2.get.internalQuery) should matchSQL(
       s"SELECT shield_id FROM $database.captainAmerica WHERE column_2 >= 4 FORMAT JSON"
     )
   }
@@ -151,14 +154,16 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
   }
 
   it should "perform the union of multiple tables" in {
-    val query        = select(shieldId) from OneTestTable
-    val query2       = select(itemId) from TwoTestTable
-    val query3       = select(itemId) from ThreeTestTable
-    val union        = query.unionAll(query2).unionAll(query3)
-    val generatedSql = clickhouseTokenizer.toSql(union.internalQuery)
-
-    generatedSql should be(
-      s"SELECT shield_id FROM $database.captainAmerica UNION ALL SELECT item_id FROM $database.twoTestTable UNION ALL SELECT item_id FROM $database.threeTestTable FORMAT JSON"
+    val query  = select(shieldId) from OneTestTable
+    val query2 = select(itemId) from TwoTestTable
+    val query3 = select(itemId) from ThreeTestTable
+    val union  = query.unionAll(query2).unionAll(query3)
+    clickhouseTokenizer.toSql(union.internalQuery) should matchSQL(
+      s"""
+         |SELECT shield_id FROM $database.captainAmerica
+         |UNION ALL SELECT item_id FROM $database.twoTestTable
+         |UNION ALL SELECT item_id FROM $database.threeTestTable
+         |FORMAT JSON""".stripMargin
     )
   }
 
@@ -167,10 +172,43 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query3 = select(itemId) from ThreeTestTable
     val query  = select(itemId) from query2.unionAll(query3)
 
-    val generatedSql = clickhouseTokenizer.toSql(query.internalQuery)
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"""
+         |SELECT item_id FROM (SELECT item_id FROM $database.twoTestTable
+         |UNION ALL SELECT item_id FROM $database.threeTestTable)
+         |FORMAT JSON""".stripMargin
+    )
+  }
 
-    generatedSql should be(
-      s"SELECT item_id FROM (SELECT item_id FROM $database.twoTestTable UNION ALL SELECT item_id FROM $database.threeTestTable) FORMAT JSON"
+  it should "use alias in subselect" in {
+    val query =
+      select(dsl.all()).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"""
+         |SELECT * FROM
+         |(SELECT column_1, shield_id FROM $database.captainAmerica AS l1
+         |  INNER JOIN (SELECT * FROM $database.twoTestTable) AS r1
+         |  USING shield_id)
+         |FORMAT JSON""".stripMargin)
+  }
+
+  it should "select from using ALIAS and final" in {
+    var query = select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable as "3sf" asFinal
+
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"""
+         |SELECT shield_id AS item_id, column_1, notEmpty(column_1) AS empty
+         |FROM query_test.captainAmerica AS `3sf` FINAL
+         |FORMAT JSON""".stripMargin
+    )
+
+    query = select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable as "3sf"
+
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"""
+         |SELECT shield_id AS item_id, column_1, notEmpty(column_1) AS empty
+         |FROM query_test.captainAmerica AS `3sf`
+         |FORMAT JSON""".stripMargin
     )
   }
 }

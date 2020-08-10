@@ -3,12 +3,13 @@ package com.crobox.clickhouse.dsl.language
 import com.crobox.clickhouse.dsl._
 
 trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
-  protected def tokenizeArrayFunction(col: ArrayFunction): String = col match {
+
+  protected def tokenizeArrayFunction(col: ArrayFunction)(implicit ctx: TokenizeContext): String = col match {
     case col: ArrayFunctionOp[_]    => tokenizeArrayFunctionOp(col)
     case col: ArrayFunctionConst[_] => tokenizeArrayFunctionConst(col)
   }
 
-  protected def tokenizeArrayFunctionOp(col: ArrayFunctionOp[_]): String = col match {
+  protected def tokenizeArrayFunctionOp(col: ArrayFunctionOp[_])(implicit ctx: TokenizeContext): String = col match {
     case EmptyArrayToSingle(col: ArrayColMagnet[_]) =>
       s"emptyArrayToSingle(${tokenizeColumn(col.column)})"
     case Array(columns @ _*) =>
@@ -48,20 +49,21 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
     case ArrayJoin(col: ArrayColMagnet[_]) => s"arrayJoin(${tokenizeColumn(col.column)})"
   }
 
-  protected def tokenizeArrayFunctionConst(col: ArrayFunctionConst[_]): String = col match {
-    case _: EmptyArrayUInt8      => "emptyArrayUInt8()"
-    case _: EmptyArrayUInt16     => "emptyArrayUInt16()"
-    case _: EmptyArrayUInt32     => "emptyArrayUInt32()"
-    case _: EmptyArrayUInt64     => "emptyArrayUInt64()"
-    case _: EmptyArrayInt8       => "emptyArrayInt8()"
-    case _: EmptyArrayInt16      => "emptyArrayInt16()"
-    case _: EmptyArrayInt32      => "emptyArrayInt32()"
-    case _: EmptyArrayInt64      => "emptyArrayInt64()"
-    case _: EmptyArrayFloat32    => "emptyArrayFloat32()"
-    case _: EmptyArrayFloat64    => "emptyArrayFloat64()"
-    case _: EmptyArrayDate       => "emptyArrayDate()"
-    case _: EmptyArrayDateTime   => "emptyArrayDateTime()"
-    case _: EmptyArrayString     => "emptyArrayString()"
-    case Range(n: NumericCol[_]) => s"range(${tokenizeColumn(n.column)})"
-  }
+  protected def tokenizeArrayFunctionConst(col: ArrayFunctionConst[_])(implicit ctx: TokenizeContext): String =
+    col match {
+      case _: EmptyArrayUInt8      => "emptyArrayUInt8()"
+      case _: EmptyArrayUInt16     => "emptyArrayUInt16()"
+      case _: EmptyArrayUInt32     => "emptyArrayUInt32()"
+      case _: EmptyArrayUInt64     => "emptyArrayUInt64()"
+      case _: EmptyArrayInt8       => "emptyArrayInt8()"
+      case _: EmptyArrayInt16      => "emptyArrayInt16()"
+      case _: EmptyArrayInt32      => "emptyArrayInt32()"
+      case _: EmptyArrayInt64      => "emptyArrayInt64()"
+      case _: EmptyArrayFloat32    => "emptyArrayFloat32()"
+      case _: EmptyArrayFloat64    => "emptyArrayFloat64()"
+      case _: EmptyArrayDate       => "emptyArrayDate()"
+      case _: EmptyArrayDateTime   => "emptyArrayDateTime()"
+      case _: EmptyArrayString     => "emptyArrayString()"
+      case Range(n: NumericCol[_]) => s"range(${tokenizeColumn(n.column)})"
+    }
 }

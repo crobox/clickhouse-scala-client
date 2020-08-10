@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl._
 trait StringFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  protected def tokenizeStringCol(col: StringFunctionCol[_]): String =
+  protected def tokenizeStringCol(col: StringFunctionCol[_])(implicit ctx: TokenizeContext): String =
     col match {
       case Empty(c) =>
         s"empty(${tokenizeColumn(c.column)})"

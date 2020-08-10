@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS sc.twoTestTable (
 
 CREATE TABLE IF NOT EXISTS sc.threeTestTable (
   item_id String,
+  column_2 UInt32,
   column_4 String,
   column_5 String,
   column_6 String
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS sc.twoTestTable (
 
 CREATE TABLE IF NOT EXISTS sc.threeTestTable (
   item_id String,
+  column_2 UInt32,
   column_4 String,
   column_5 String,
   column_6 String

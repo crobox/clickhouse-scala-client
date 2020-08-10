@@ -10,6 +10,15 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 //import scala.jdk.CollectionConverters._
 
+case class TokenizeContext(var joinNr: Int = 0) {
+
+  def incrementJoinNumber(): Unit =
+    joinNr = joinNr + 1
+
+  def leftAlias(alias: Option[String]): String  = ClickhouseStatement.quoteIdentifier(alias.getOrElse("l" + joinNr))
+  def rightAlias(alias: Option[String]): String = ClickhouseStatement.quoteIdentifier(alias.getOrElse("r" + joinNr))
+}
+
 trait ClickhouseTokenizerModule
     extends TokenizerModule
     with AggregationFunctionTokenizer
@@ -38,68 +47,62 @@ trait ClickhouseTokenizerModule
 
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
-  protected def tokenizeSeqCol(col1: Column, columns: Column*): String = {
+  protected def tokenizeSeqCol(col1: Column, columns: Column*)(implicit ctx: TokenizeContext): String = {
     val prefix = if (columns.isEmpty) "" else ", "
     tokenizeColumn(col1) + prefix + tokenizeSeqCol(columns: _*)
   }
 
-  protected def tokenizeSeqCol(columns: Column*): String =
+  protected def tokenizeSeqCol(columns: Column*)(implicit ctx: TokenizeContext): String =
     columns.map(tokenizeColumn).mkString(", ")
 
   override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON")): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = (toRawSql(query) + formatSql).trim().replaceAll(" +", " ")
+    val sql       = (toRawSql(query)(TokenizeContext()) + formatSql).trim().replaceAll("\\s+", " ")
     logger.debug(s"Generated sql [$sql]")
     sql
   }
 
-  private[language] def toRawSql(query: InternalQuery): String =
-    //    require(query != null) because parallel query is null
+  private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
     query match {
-      case InternalQuery(select, from, asFinal, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
+      case InternalQuery(select, from, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
         s"""
            |${tokenizeSelect(select)}
            | ${tokenizeFrom(from)}
-           | ${tokenizeFinal(asFinal)}
-           | ${tokenizeJoin(from, join)}
+           | ${tokenizeJoin(select, from, join)}
            | ${tokenizeFiltering(prewhere, "PREWHERE")}
            | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
            | ${tokenizeLimit(limit)}
-           | ${tokenizeUnionAll(union)}""".trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
+           | ${tokenizeUnionAll(union)}""".stripMargin
     }
 
-  private def tokenizeUnionAll(unions: Seq[OperationalQuery]) =
-    if (unions.nonEmpty) {
-      unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString
-    } else {
-      ""
-    }
+  private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
+    if (unions.nonEmpty) unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString else ""
 
-  private def tokenizeSelect(select: Option[SelectQuery]) =
+  private def tokenizeSelect(select: Option[SelectQuery])(implicit ctx: TokenizeContext): String =
     select match {
       case Some(s) => s"SELECT ${s.modifier} ${tokenizeColumns(s.columns)}"
       case _       => ""
     }
 
-  private def tokenizeFrom(from: Option[FromQuery], withPrefix: Boolean = true) = {
+  private def tokenizeFrom(from: Option[FromQuery],
+                           withPrefix: Boolean = true)(implicit ctx: TokenizeContext): String = {
     require(from != null)
+    val fromClause = from match {
+      case Some(query: InnerFromQuery)    => s"(${toRawSql(query.innerQuery.internalQuery).trim})"
+      case Some(table: TableFromQuery[_]) => table.table.quoted
+      case _                              => return ""
+    }
 
     val prefix = if (withPrefix) "FROM" else ""
-    from match {
-      case Some(fromClause: InnerFromQuery) =>
-        s"$prefix (${toRawSql(fromClause.innerQuery.internalQuery).trim})"
-      case Some(TableFromQuery(table: Table)) =>
-        s"$prefix ${table.quoted}"
-      case _ => ""
-    }
+    val alias  = from.flatMap(_.alias.map(s => " AS " + ClickhouseStatement.quoteIdentifier(s))).getOrElse("")
+    val asF    = if (from.exists(_.finalized)) " FINAL" else ""
+    s"$prefix $fromClause $alias $asF".trim
   }
 
-  private def tokenizeFinal(asFinal: Boolean): String = if (asFinal) "FINAL" else ""
-
-  protected def tokenizeColumn(column: Column): String = {
+  protected def tokenizeColumn(column: Column)(implicit ctx: TokenizeContext): String = {
     require(column != null)
     column match {
       case EmptyColumn => ""
@@ -112,7 +115,7 @@ trait ClickhouseTokenizerModule
     }
   }
 
-  private def tokenizeExpressionColumn(inCol: ExpressionColumn[_]): String =
+  private def tokenizeExpressionColumn(inCol: ExpressionColumn[_])(implicit ctx: TokenizeContext): String =
     inCol match {
       case agg: AggregateFunction[_]         => tokenizeAggregateFunction(agg)
       case col: ArithmeticFunctionCol[_]     => tokenizeArithmeticFunctionColumn(col)
@@ -152,7 +155,7 @@ trait ClickhouseTokenizerModule
         )
     }
 
-  private[language] def tokenizeTimeSeries(timeSeries: TimeSeries): String = {
+  private[language] def tokenizeTimeSeries(timeSeries: TimeSeries)(implicit ctx: TokenizeContext): String = {
     val column = tokenizeColumn(timeSeries.tableColumn)
     tokenizeDuration(timeSeries, column)
   }
@@ -194,7 +197,9 @@ trait ClickhouseTokenizerModule
     }
   }
 
-  //TODO this is a fallback to find a similar timezone when the provided interval does not have a set timezone id. We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries (probably default to failing)
+  // TODO this is a fallback to find a similar timezone when the provided interval does not have a set timezone id.
+  // We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries
+  // (probably default to failing)
   private def determineZoneId(start: DateTime) = {
     val provider = DateTimeZone.getProvider
     val zones    = provider.getAvailableIDs.asScala.map(provider.getZone)
@@ -214,70 +219,83 @@ trait ClickhouseTokenizerModule
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
-  private def tokenizeJoin(from: Option[FromQuery], join: Option[JoinQuery]): String =
+  private def tokenizeJoin(select: Option[SelectQuery], from: Option[FromQuery], join: Option[JoinQuery])(
+      implicit ctx: TokenizeContext
+  ): String =
     join match {
       case Some(query) =>
-        val other = query.other match {
-          case tableJoin: TableFromQuery[_] => s"(SELECT * ${tokenizeFrom(Some(tableJoin))})"
-          case innerJoin: InnerFromQuery    => tokenizeFrom(Some(innerJoin), withPrefix = false)
+        ctx.incrementJoinNumber()
+
+        // we always need to provide an alias to the RIGHT side
+        val right = query.other match {
+          case table: TableFromQuery[_] => s"(SELECT * ${tokenizeFrom(Some(table))})"
+          case query: InnerFromQuery    => tokenizeFrom(Some(query), withPrefix = false)
         }
-        s"""${if (query.global) "GLOBAL " else ""}
+
+        val leftAlias = if (from.flatMap(_.alias).isEmpty) s"AS ${ctx.leftAlias(from.flatMap(_.alias))}" else ""
+//        val rightAlias = if (query.other.alias.isEmpty) s"AS ${ctx.rightAlias(query.other.alias)}" else ""
+        val rightAlias = s"AS ${ctx.rightAlias(query.other.alias)}"
+
+        s""" $leftAlias
+           | ${if (query.global) "GLOBAL " else ""}
            | ${tokenizeJoinType(query.joinType)}
-           | $other AS ${query.alias}
-           | ${tokenizeJoinKeys(from.get, query)}""".trim.stripMargin
+           | $right $rightAlias
+           | ${tokenizeJoinKeys(select, from.get, query)}""".trim.stripMargin
           .replaceAll("\n", "")
           .replaceAll("\r", "")
       case None => ""
     }
 
-  private def tokenizeJoinKeys(from: FromQuery, query: JoinQuery): String = {
-    val joinKeys = query.joinKeys.filterNot {
+  private def tokenizeJoinKeys(select: Option[SelectQuery], from: FromQuery, query: JoinQuery)(
+      implicit ctx: TokenizeContext
+  ): String = {
+
+    val using = query.using.filterNot {
       case EmptyColumn => true
       case _           => false
     }
     query.joinType match {
       case CrossJoin =>
-        assert(joinKeys.isEmpty, "When using CrossJoin, no joinKeys should be provided")
+        assert(using.isEmpty, "When using CrossJoin, no using columns should be provided")
+        assert(query.on.isEmpty, "When using CrossJoin, no on conditions should be provided")
         ""
       case _ =>
-        assert(joinKeys.nonEmpty, s"No joinKeys provided for joinType: ${query.joinType}")
+        assert(using.nonEmpty || query.on.nonEmpty, s"No USING or ON provided for joinType: ${query.joinType}")
+        assert(!(using.nonEmpty && query.on.nonEmpty), s"Both USING and ON provided for joinType: ${query.joinType}")
 
-        val (aliasFrom, columns) = from match {
-          case tableJoin: TableFromQuery[_] => (tableJoin.table.name, tableJoin.table.columns)
-          case innerJoin: InnerFromQuery    => ("", Seq.empty)
-        }
-
-        val clause = "ON " + joinKeys.map(c => tokenizeJoinKey(c, columns, aliasFrom, query.alias)).mkString(" AND ")
-
-        // check for match conditions (ASOF)
-        query.joinType match {
-          case AsOfJoin | AsOfLeftJoin =>
-            assert(query.matchConditions.nonEmpty, s"No matchConditions provided for joinType: ${query.joinType}")
-            clause + " AND " + query.matchConditions
-              .map(tuple => tokenizeJoinKey(tuple._1, columns, aliasFrom, query.alias, tuple._2))
-              .mkString(" AND ")
-          case _ =>
-            // fallthrough
-            clause
-        }
+        if (using.nonEmpty) {
+          // TOKENIZE USING
+          if (using.size == 1) s"USING ${using.head.name}"
+          else s"USING (${using.map(_.name).mkString(",")})"
+        } else if (query.on.nonEmpty) {
+          // TOKENIZE ON. If the fromClause is a TABLE, we need to check on aliases!
+          "ON " + query.on
+            .map(cond => {
+              val left = verifyOnCondition(select, from, cond.left)
+              s"${ctx.leftAlias(from.alias)}.$left ${cond.operator} ${ctx.rightAlias(query.other.alias)}.${cond.right.name}"
+            })
+            .mkString(" AND ")
+        } else ""
     }
   }
 
-  private def tokenizeJoinKey(c: Column,
-                              columns: Seq[NativeColumn[_]],
-                              aliasFrom: String,
-                              aliasOther: String,
-                              operator: String = "="): String =
-    // we need to check if the joinKey is an actual EXISTING column on aliasFrom
-    // SELECT shield_id AS item_id FROM db.fromTable ANY INNER JOIN (SELECT * FROM db.joinTable) AS TTT ON fromTable.item_id = TTT.item_id
-    if (columns.exists(_.name == c.name)) {
-      s"$aliasFrom.${c.name} $operator ${aliasOther}.${c.name}"
-    } else {
-      // Apparently an ALIAS is used as joinKey. Skip the aliasFrom
-      s"${c.name} $operator ${aliasOther}.${c.name}"
+  private def verifyOnCondition(select: Option[SelectQuery], from: FromQuery, joinKey: Column): String =
+    from match {
+      case _: TableFromQuery[_] =>
+        // check if joinKey is an existing DB field or an alias!
+        select
+          .map(_.columns)
+          .getOrElse(Seq.empty)
+          .flatMap {
+            case x: AliasedColumn[_] => if (x.alias == joinKey.name) Option(x.original.name) else None
+            case _                   => None
+          }
+          .headOption
+          .getOrElse(joinKey.name)
+      case _ => joinKey.name
     }
 
-  private[language] def tokenizeColumns(columns: Seq[Column]): String =
+  private[language] def tokenizeColumns(columns: Seq[Column])(implicit ctx: TokenizeContext): String =
     columns
       .filterNot {
         case EmptyColumn => true
@@ -313,7 +331,8 @@ trait ClickhouseTokenizerModule
       case SemiRightJoin => "SEMI RIGHT JOIN"
     }
 
-  private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]], keyword: String): String =
+  private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]],
+                                keyword: String)(implicit ctx: TokenizeContext): String =
     maybeCondition match {
       case None            => ""
       case Some(condition) => s"$keyword ${tokenizeColumn(condition)}"
@@ -359,8 +378,7 @@ trait ClickhouseTokenizerModule
   private def tokenizeTuplesAliased(columns: Seq[(Column, OrderingDirection)]): String =
     columns
       .map {
-        case (column, dir) =>
-          aliasOrName(column) + " " + direction(dir)
+        case (column, dir) => aliasOrName(column) + " " + direction(dir)
       }
       .mkString(", ")
 
@@ -376,5 +394,4 @@ trait ClickhouseTokenizerModule
       case ASC  => "ASC"
       case DESC => "DESC"
     }
-
 }

@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl._
 trait JsonFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeJsonFunction(col: JsonFunction[_]): String = {
+  def tokenizeJsonFunction(col: JsonFunction[_])(implicit ctx: TokenizeContext): String = {
     val command = col match {
       case VisitParamHas(_, _)           => "visitParamHas"
       case VisitParamExtractUInt(_, _)   => "visitParamExtractUInt"

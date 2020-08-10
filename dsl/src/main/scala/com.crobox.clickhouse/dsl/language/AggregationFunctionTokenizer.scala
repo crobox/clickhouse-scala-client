@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl._
 
 trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
-  def tokenizeAggregateFunction(agg: AggregateFunction[_]): String =
+  def tokenizeAggregateFunction(agg: AggregateFunction[_])(implicit ctx: TokenizeContext): String =
     agg match {
       case nested: CombinedAggregatedFunction[_, _] =>
         val tokenizedCombinators = collectCombinators(nested).map(tokenizeCombinator)
@@ -31,7 +31,9 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case value                                     => value
     }
 
-  private def tokenizeInnerAggregatedFunction(agg: AggregateFunction[_]): (String, String) =
+  private def tokenizeInnerAggregatedFunction(
+      agg: AggregateFunction[_]
+  )(implicit ctx: TokenizeContext): (String, String) =
     agg match {
       case Avg(column)   => ("avg", tokenizeColumn(column))
       case Count(column) => ("count", tokenizeColumn(column.getOrElse(EmptyColumn)))
@@ -40,12 +42,11 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
         (s"median$modifierName", s"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
       case Quantile(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
-        (s"quantile$modifierName",
-          s"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")})")
+        (s"quantile$modifierName", s"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")})")
       case Quantiles(column, levels, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (s"quantiles$modifierName",
-          s"${levels.mkString(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
+         s"${levels.mkString(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
       case Uniq(column, modifier)      => (s"uniq${tokenizeUniqModifier(modifier)}", tokenizeColumn(column))
       case Sum(column, modifier)       => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
       case SumMap(key, value)          => (s"sumMap", tokenizeColumns(Seq(key, value)))
@@ -59,7 +60,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
         throw new IllegalArgumentException(s"Cannot use $f aggregated function with combinator")
     }
 
-  def tokenizeLevelModifier(level: LevelModifier): (String, Option[String]) =
+  def tokenizeLevelModifier(level: LevelModifier)(implicit ctx: TokenizeContext): (String, Option[String]) =
     level match {
       case LevelModifier.Simple                      => ("", None)
       case LevelModifier.Deterministic(determinator) => ("Deterministic", Some(tokenizeColumn(determinator)))
@@ -93,7 +94,9 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case AnyModifier.Last   => "Last"
     }
 
-  private def tokenizeCombinator(combinator: Combinator[_, _]): (String, Option[String]) =
+  private def tokenizeCombinator(
+      combinator: Combinator[_, _]
+  )(implicit ctx: TokenizeContext): (String, Option[String]) =
     combinator match {
       case Combinator.If(condition)     => ("If", Some(tokenizeColumn(condition)))
       case Combinator.CombinatorArray() => ("Array", None)

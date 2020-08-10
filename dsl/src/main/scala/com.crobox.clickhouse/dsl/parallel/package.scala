@@ -9,8 +9,8 @@ package object parallel {
     /**
      * Merging 2 queries will retaining all grouping and selection of both queries and join them using the grouped columns
      */
-    def merge(query: OperationalQuery, alias: Option[String]): MergingQueries =
-      MergingQueries(operationalQuery, query, AllLeftJoin, alias)
+    def merge(query: OperationalQuery): MergingQueries =
+      MergingQueries(operationalQuery, query, AllLeftJoin)
   }
 
   /**
@@ -18,11 +18,10 @@ package object parallel {
    */
   case class MergingQueries(rightTableQry: OperationalQuery,
                             leftTableQry: OperationalQuery,
-                            joinType: JoinQuery.JoinType = AllLeftJoin,
-                            alias: Option[String])
+                            joinType: JoinQuery.JoinType = AllLeftJoin)
       extends QueryFactory {
 
-    def on(columns: Column*): OperationalQuery = {
+    override def on(columns: Column*): OperationalQuery = {
       val rightTableQryGrouped = rightTableQry.groupBy(columns: _*).orderBy(columns: _*)
       val leftTableQryGrouped  = leftTableQry.groupBy(columns: _*).orderBy(columns: _*)
 
@@ -56,7 +55,7 @@ package object parallel {
         val newCols = (cols ++ maybeFromCols ++ uQry.select.toSeq.flatMap(_.columns)).distinct
 
         uQry.join match {
-          case Some(JoinQuery(_, q, _, _, _, _)) if selectAll => recursiveCollectCols(q.internalQuery, newCols)
+          case Some(JoinQuery(_, q, _, _, _)) if selectAll => recursiveCollectCols(q.internalQuery, newCols)
           case _                                           => newCols
         }
       }
@@ -74,7 +73,7 @@ package object parallel {
 
       select(joinCols: _*)
         .from(leftTableQry)
-        .join(joinType, rightTableQry, alias)
+        .join(joinType, rightTableQry)
         .using(joinKeys.head, joinKeys.tail: _*)
     }
 

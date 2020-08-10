@@ -4,7 +4,6 @@ import java.util.UUID
 
 import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.misc.RandomStringGenerator
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
 
@@ -44,9 +43,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                     Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    false,
-                    None,
-                    Some(shieldId < itemId))
+                    where = Some(shieldId < itemId))
     )
     query should be("SELECT shield_id FROM default.captainAmerica WHERE shield_id < item_id FORMAT JSON")
   }
@@ -58,9 +55,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       testSubject.toSql(
         InternalQuery(Some(select),
                       Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      false,
-                      None,
-                      Some(shieldId < uuid))
+                      where = Some(shieldId < uuid))
       )
     query should be(s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -71,9 +66,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
     val query = testSubject.toSql(
       InternalQuery(Some(select),
                     Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    false,
-                    None,
-                    Some(shieldId < uuid and shieldId < itemId))
+                    where = Some(shieldId < uuid and shieldId < itemId))
     )
     query should be(
       s"SELECT shield_id FROM default.captainAmerica WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
@@ -122,11 +115,16 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-        join = Some(JoinQuery(JoinQuery.InnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), Seq(shieldId), alias = "TTT"))
+        join = Some(
+          JoinQuery(JoinQuery.InnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), using = Seq(shieldId))
+        )
       )
     )
-    query should be(
-      "SELECT shield_id FROM default.captainAmerica INNER JOIN (SELECT * FROM default.captainAmerica) AS TTT ON captainAmerica.shield_id = TTT.shield_id FORMAT JSON"
+    query should matchSQL(
+      s"""
+         | SELECT shield_id FROM default.captainAmerica AS l1
+         | INNER JOIN (SELECT * FROM default.captainAmerica) AS r1 USING shield_id FORMAT JSON
+         | """.stripMargin
     )
   }
 
@@ -143,25 +141,27 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
             InnerFromQuery(
               OperationalQuery(InternalQuery(Some(joinSelect), Some(TableFromQuery[TwoTestTable.type](TwoTestTable))))
             ),
-            Seq(shieldId),
-            true,
-            "TTT"
+            using = Seq(shieldId),
+            global = true
           )
         )
       )
     )
-    query should be(
-      "SELECT shield_id FROM default.captainAmerica GLOBAL ANY LEFT JOIN (SELECT item_id AS shield_id FROM default.twoTestTable) AS TTT ON captainAmerica.shield_id = TTT.shield_id FORMAT JSON"
+    query should matchSQL(
+      s"""
+         | SELECT shield_id FROM default.captainAmerica AS l1 GLOBAL
+         | ANY LEFT JOIN (SELECT item_id AS shield_id FROM default.twoTestTable) AS r1 USING shield_id
+         | FORMAT JSON""".stripMargin
     )
   }
 
   it should "generate cases" in {
-    this.tokenizeColumn(switch(const(3))) shouldBe "3"
-    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
+    this.tokenizeColumn(switch(const(3)))(TokenizeContext()) shouldBe "3"
+    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId)))(TokenizeContext()) shouldBe s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
   }
 
   it should "use constant" in {
-    this.tokenizeColumn(const(3).as(col2)) shouldBe s"3 AS ${col2.name}"
+    this.tokenizeColumn(const(3).as(col2))(TokenizeContext()) shouldBe s"3 AS ${col2.name}"
   }
 
   "raw()" should "allow to behave like little bobby tables" in {
@@ -179,6 +179,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
   }
 
   "Aggregated functions" should "build with combinators" in {
+    implicit val ctx = TokenizeContext()
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1))) shouldBe s"uniqIf(${col1.name},${col1.name} = 'test')"
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1, UniqModifier.HLL12))) shouldBe s"uniqHLL12If(${col1.name},${col1.name} = 'test')"
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1, UniqModifier.Combined))) shouldBe s"uniqCombinedIf(${col1.name},${col1.name} = 'test')"
@@ -197,7 +198,7 @@ class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with 
                       DateTime.now(DateTimeZone.forOffsetHours(2)),
                       MultiDuration(TimeUnit.Month))
       )
-    ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
+    )(TokenizeContext()) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
   }
 
   "build custom refs" should "quote them correctly" in {

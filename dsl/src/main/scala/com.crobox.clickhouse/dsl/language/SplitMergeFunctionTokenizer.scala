@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl._
 trait SplitMergeFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
-  def tokenizeSplitMergeFunction(col: SplitMergeFunction[_]): String = col match {
+  def tokenizeSplitMergeFunction(col: SplitMergeFunction[_])(implicit ctx: TokenizeContext): String = col match {
     case SplitByChar(sep: StringColMagnet[_], col: StringColMagnet[_]) =>
       s"splitByChar(${tokenizeColumn(sep.column)},${tokenizeColumn(col.column)})"
     case SplitByString(sep: StringColMagnet[_], col: StringColMagnet[_]) =>
