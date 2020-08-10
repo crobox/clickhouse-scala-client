@@ -150,6 +150,7 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
             .from(select(shieldId as itemId).from(OneTestTable).as("ott_alias").where(notEmpty(itemId))).as("1_lEfT")
             .join(InnerJoin, select(itemId, col2).from(TwoTestTable).as("ttt.alias").where(notEmpty(itemId))) on itemId
         )
+        .as("2_leFT")
         .join(AllLeftJoin, ThreeTestTable)
         .on(itemId)
     clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
@@ -165,10 +166,10 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
          |     (SELECT item_id,
          |             column_2
          |      FROM sc.twoTestTable AS `ttt.alias`
-         |      WHERE notEmpty(item_id)) AS r1 ON `1_lEfT`.item_id = r1.item_id) AS l2 ALL
+         |      WHERE notEmpty(item_id)) AS r1 ON `1_lEfT`.item_id = r1.item_id) AS `2_leFT` ALL
          |LEFT JOIN
          |  (SELECT *
-         |   FROM sc.threeTestTable) AS r2 ON l2.item_id = r2.item_id
+         |   FROM sc.threeTestTable) AS r2 ON `2_leFT`.item_id = r2.item_id
          |FORMAT JSON""".stripMargin
     )
   }
