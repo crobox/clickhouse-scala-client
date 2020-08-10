@@ -58,6 +58,19 @@ object JoinQuery {
 case class JoinQuery(joinType: JoinType,
                      other: FromQuery,
                      //on: Seq[ExpressionColumn[_]] = Seq.empty,
-                     on: Seq[(Column, String, Column)] = Seq.empty,
+                     on: Seq[JoinCondition] = Seq.empty,
                      using: Seq[Column] = Seq.empty,
                      global: Boolean = false)
+
+case class JoinCondition(left: Column, operator: String, right: Column) {
+
+  assert(JoinCondition.SupportedOperators.contains(operator),
+         s"Operator[$operator] must be one of: ${JoinCondition.SupportedOperators}")
+}
+
+object JoinCondition {
+  val SupportedOperators = Set(">", ">=", "<", "<=", "=")
+
+  def apply(column: Column): JoinCondition                   = JoinCondition(column, "=", column)
+  def apply(triple: (Column, String, Column)): JoinCondition = JoinCondition(triple._1, triple._2, triple._3)
+}

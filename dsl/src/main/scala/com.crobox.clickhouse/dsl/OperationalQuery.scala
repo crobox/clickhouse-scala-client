@@ -219,14 +219,22 @@ trait OperationalQuery extends Query {
   def on(columns: Column*): OperationalQuery = {
     require(internalQuery.join.isDefined)
     OperationalQuery(
-      internalQuery.copy(join = Some(this.internalQuery.join.get.copy(on = columns.map(c => (c, "=", c)))))
+      internalQuery.copy(join = Some(this.internalQuery.join.get.copy(on = columns.map(JoinCondition(_)))))
     )
+  }
+
+  def on(condition: JoinCondition, conditions: JoinCondition*): OperationalQuery = {
+    require(internalQuery.join.isDefined)
+    OperationalQuery(internalQuery.copy(join = Some(this.internalQuery.join.get.copy(on = condition +: conditions))))
   }
 
   def on(condition: (Column, String, Column), conditions: (Column, String, Column)*): OperationalQuery = {
     require(internalQuery.join.isDefined)
-    val newJoin = this.internalQuery.join.get.copy(on = condition +: conditions)
-    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
+    OperationalQuery(
+      internalQuery.copy(
+        join = Some(this.internalQuery.join.get.copy(on = JoinCondition(condition) +: conditions.map(JoinCondition(_))))
+      )
+    )
   }
 
   /**

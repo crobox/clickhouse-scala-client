@@ -270,8 +270,8 @@ trait ClickhouseTokenizerModule
           // TOKENIZE ON. If the fromClause is a TABLE, we need to check on aliases!
           "ON " + query.on
             .map(cond => {
-              val left = verifyOnCondition(select, from, cond._1)
-              s"${ctx.leftAlias}.$left ${cond._2} ${ctx.rightAlias}.${cond._3.name}"
+              val left = verifyOnCondition(select, from, cond.left)
+              s"${ctx.leftAlias}.$left ${cond.operator} ${ctx.rightAlias}.${cond.right.name}"
             })
             .mkString(" AND ")
         } else ""
