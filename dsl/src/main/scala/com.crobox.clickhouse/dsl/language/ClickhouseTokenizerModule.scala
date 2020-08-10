@@ -57,7 +57,11 @@ trait ClickhouseTokenizerModule
 
   override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON")): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = (toRawSql(query)(TokenizeContext()) + formatSql).trim().replaceAll(" +", " ")
+    val sql = (toRawSql(query)(TokenizeContext()) + formatSql)
+      .trim()
+      .replaceAll("\n", "")
+      .replaceAll("\r", "")
+      .replaceAll(" +", " ") // replace double (or more) subsequent spaces by one
     logger.debug(s"Generated sql [$sql]")
     sql
   }
@@ -75,10 +79,7 @@ trait ClickhouseTokenizerModule
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
            | ${tokenizeLimit(limit)}
-           | ${tokenizeUnionAll(union)}""".trim.stripMargin
-          .replaceAll("\n", "")
-          .replaceAll("\r", "")
-//          .replaceAll(" +", " ") // replace double (or more) subsequent spaces by one
+           | ${tokenizeUnionAll(union)}""".stripMargin
     }
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
@@ -102,7 +103,7 @@ trait ClickhouseTokenizerModule
     val prefix = if (withPrefix) "FROM" else ""
     val alias  = from.flatMap(_.alias.map(s => " AS " + ClickhouseStatement.quoteIdentifier(s))).getOrElse("")
     val asF    = if (from.exists(_.finalized)) " FINAL" else ""
-    s"$prefix $fromClause $alias $asF".replaceAll(" +", " ").trim
+    s"$prefix $fromClause $alias $asF".trim
   }
 
   protected def tokenizeColumn(column: Column)(implicit ctx: TokenizeContext): String = {
