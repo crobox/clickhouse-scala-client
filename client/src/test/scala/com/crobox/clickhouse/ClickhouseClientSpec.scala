@@ -58,7 +58,7 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
       cancel()
     }
 
-  private def clean(value: String) = value.replaceAll("[\\s\\n]", " ").replaceAll(" +", " ").trim
+  private def clean(value: String) = value.replaceAll("\\s+", " ").trim
 
   def matchSQL(expected: String): Matcher[String] = new Matcher[String] {
     def apply(left: String): MatchResult =
