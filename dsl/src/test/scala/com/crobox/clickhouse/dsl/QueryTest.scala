@@ -182,12 +182,21 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
   }
 
   it should "select from using ALIAS and final" in {
-    val query = select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable as "3sf" asFinal
+    var query = select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable as "3sf" asFinal
 
     clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
       s"""
          |SELECT shield_id AS item_id, column_1, notEmpty(column_1) AS empty
          |FROM query_test.captainAmerica AS `3sf` FINAL
+         |FORMAT JSON""".stripMargin
+    )
+
+    query = select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable as "3sf"
+
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"""
+         |SELECT shield_id AS item_id, column_1, notEmpty(column_1) AS empty
+         |FROM query_test.captainAmerica AS `3sf`
          |FORMAT JSON""".stripMargin
     )
   }
