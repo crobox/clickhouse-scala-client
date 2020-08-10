@@ -3,11 +3,13 @@ package com.crobox.clickhouse.dsl
 import java.util.UUID
 
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
+import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import com.crobox.clickhouse.{dsl, ClickhouseClientSpec}
 import org.joda.time.{DateTime, LocalDate}
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 class QueryTest extends ClickhouseClientSpec with TestSchema {
@@ -173,9 +175,20 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
 
   it should "use alias in subselect" in {
     val query =
-      select(dsl.all).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
+      select(dsl.all()).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
     clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
       s"SELECT * FROM (SELECT column_1, shield_id FROM $database.captainAmerica AS l1 INNER JOIN (SELECT * FROM $database.twoTestTable) AS r1 USING shield_id) FORMAT JSON"
+    )
+  }
+
+  it should "select from using ALIAS and final" in {
+    val query = select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable as "3sf" asFinal
+
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"""
+         |SELECT shield_id AS item_id, column_1, notEmpty(column_1) AS empty
+         |FROM query_test.captainAmerica AS `3sf` FINAL
+         |FORMAT JSON""".stripMargin
     )
   }
 }

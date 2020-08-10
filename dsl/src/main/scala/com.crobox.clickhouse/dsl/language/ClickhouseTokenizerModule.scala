@@ -101,7 +101,7 @@ trait ClickhouseTokenizerModule
 
     val prefix = if (withPrefix) "FROM" else ""
     val alias  = from.flatMap(_.alias.map(s => " AS " + ClickhouseStatement.quoteIdentifier(s))).getOrElse("")
-    val asF    = if (from.exists(_.asFinal)) " FINAL" else ""
+    val asF    = if (from.exists(_.`final`)) " FINAL" else ""
     s"$prefix $fromClause $alias $asF".replaceAll(" +", " ").trim
   }
 
