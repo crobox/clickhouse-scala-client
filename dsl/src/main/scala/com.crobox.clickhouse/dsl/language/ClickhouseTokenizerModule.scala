@@ -78,7 +78,7 @@ trait ClickhouseTokenizerModule
            | ${tokenizeUnionAll(union)}""".trim.stripMargin
           .replaceAll("\n", "")
           .replaceAll("\r", "")
-          .replaceAll(" +", " ") // replace double (or more) subsequent spaces by one
+//          .replaceAll(" +", " ") // replace double (or more) subsequent spaces by one
     }
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
@@ -101,7 +101,7 @@ trait ClickhouseTokenizerModule
 
     val prefix = if (withPrefix) "FROM" else ""
     val alias  = from.flatMap(_.alias.map(s => " AS " + ClickhouseStatement.quoteIdentifier(s))).getOrElse("")
-    val asF    = if (from.exists(_.`final`)) " FINAL" else ""
+    val asF    = if (from.exists(_.finalized)) " FINAL" else ""
     s"$prefix $fromClause $alias $asF".replaceAll(" +", " ").trim
   }
 

@@ -54,14 +54,16 @@ trait OperationalQuery extends Query {
   def from(query: OperationalQuery, alias: String): OperationalQuery =
     OperationalQuery(internalQuery.copy(from = Some(InnerFromQuery(query, alias = Option(alias)))))
 
+  def `final`: OperationalQuery = asFinal
+
   def asFinal: OperationalQuery =
     OperationalQuery(
       internalQuery.from
         .map {
           case _: InnerFromQuery =>
-            throw new AssertionError("It's ILLEGAL to set FINAL on a (sub)query FROM query")
+            throw new IllegalArgumentException("It's ILLEGAL to set FINAL on a (sub)query FROM query")
           case table: TableFromQuery[_] =>
-            internalQuery.copy(from = Option(table.copy(`final` = true)))
+            internalQuery.copy(from = Option(table.copy(finalized = true)))
         }
         .getOrElse(internalQuery)
     )

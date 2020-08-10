@@ -63,7 +63,7 @@ case class JoinQuery(joinType: JoinType,
 
 case class JoinCondition(left: Column, operator: String, right: Column) {
 
-  assert(JoinCondition.SupportedOperators.contains(operator),
+  require(JoinCondition.SupportedOperators.contains(operator),
          s"Operator[$operator] must be one of: ${JoinCondition.SupportedOperators}")
 }
 
