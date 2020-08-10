@@ -57,11 +57,7 @@ trait ClickhouseTokenizerModule
 
   override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON")): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql = (toRawSql(query)(TokenizeContext()) + formatSql)
-      .trim()
-      .replaceAll("\n", "")
-      .replaceAll("\r", "")
-      .replaceAll(" +", " ") // replace double (or more) subsequent spaces by one
+    val sql       = (toRawSql(query)(TokenizeContext()) + formatSql).trim().replaceAll("\\s+", " ")
     logger.debug(s"Generated sql [$sql]")
     sql
   }
