@@ -159,7 +159,11 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query3 = select(itemId) from ThreeTestTable
     val union  = query.unionAll(query2).unionAll(query3)
     clickhouseTokenizer.toSql(union.internalQuery) should matchSQL(
-      s"SELECT shield_id FROM $database.captainAmerica UNION ALL SELECT item_id FROM $database.twoTestTable UNION ALL SELECT item_id FROM $database.threeTestTable FORMAT JSON"
+      s"""
+         |SELECT shield_id FROM $database.captainAmerica
+         |UNION ALL SELECT item_id FROM $database.twoTestTable
+         |UNION ALL SELECT item_id FROM $database.threeTestTable
+         |FORMAT JSON""".stripMargin
     )
   }
 
@@ -169,7 +173,10 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query  = select(itemId) from query2.unionAll(query3)
 
     clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"SELECT item_id FROM (SELECT item_id FROM $database.twoTestTable UNION ALL SELECT item_id FROM $database.threeTestTable) FORMAT JSON"
+      s"""
+         |SELECT item_id FROM (SELECT item_id FROM $database.twoTestTable
+         |UNION ALL SELECT item_id FROM $database.threeTestTable)
+         |FORMAT JSON""".stripMargin
     )
   }
 
@@ -177,8 +184,12 @@ class QueryTest extends ClickhouseClientSpec with TestSchema {
     val query =
       select(dsl.all()).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
     clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"SELECT * FROM (SELECT column_1, shield_id FROM $database.captainAmerica AS l1 INNER JOIN (SELECT * FROM $database.twoTestTable) AS r1 USING shield_id) FORMAT JSON"
-    )
+      s"""
+         |SELECT * FROM
+         |(SELECT column_1, shield_id FROM $database.captainAmerica AS l1
+         |  INNER JOIN (SELECT * FROM $database.twoTestTable) AS r1
+         |  USING shield_id)
+         |FORMAT JSON""".stripMargin)
   }
 
   it should "select from using ALIAS and final" in {
