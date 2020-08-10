@@ -15,8 +15,8 @@ case class TokenizeContext(var joinNr: Int = 0) {
   def incrementJoinNumber(): Unit =
     joinNr = joinNr + 1
 
-  def leftAlias: String  = "l" + joinNr
-  def rightAlias: String = "r" + joinNr
+  def leftAlias(alias: Option[String]): String  = ClickhouseStatement.quoteIdentifier(alias.getOrElse("l" + joinNr))
+  def rightAlias(alias: Option[String]): String = ClickhouseStatement.quoteIdentifier(alias.getOrElse("r" + joinNr))
 }
 
 trait ClickhouseTokenizerModule
@@ -235,10 +235,14 @@ trait ClickhouseTokenizerModule
           case query: InnerFromQuery    => tokenizeFrom(Some(query), withPrefix = false)
         }
 
-        s""" AS ${ctx.leftAlias}
+        val leftAlias = if (from.flatMap(_.alias).isEmpty) s"AS ${ctx.leftAlias(from.flatMap(_.alias))}" else ""
+//        val rightAlias = if (query.other.alias.isEmpty) s"AS ${ctx.rightAlias(query.other.alias)}" else ""
+        val rightAlias = s"AS ${ctx.rightAlias(query.other.alias)}"
+
+        s""" $leftAlias
            | ${if (query.global) "GLOBAL " else ""}
            | ${tokenizeJoinType(query.joinType)}
-           | $right AS ${ctx.rightAlias}
+           | $right $rightAlias
            | ${tokenizeJoinKeys(select, from.get, query)}""".trim.stripMargin
           .replaceAll("\n", "")
           .replaceAll("\r", "")
@@ -271,7 +275,7 @@ trait ClickhouseTokenizerModule
           "ON " + query.on
             .map(cond => {
               val left = verifyOnCondition(select, from, cond.left)
-              s"${ctx.leftAlias}.$left ${cond.operator} ${ctx.rightAlias}.${cond.right.name}"
+              s"${ctx.leftAlias(from.alias)}.$left ${cond.operator} ${ctx.rightAlias(query.other.alias)}.${cond.right.name}"
             })
             .mkString(" AND ")
         } else ""

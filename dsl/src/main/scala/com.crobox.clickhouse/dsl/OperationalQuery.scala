@@ -45,8 +45,14 @@ trait OperationalQuery extends Query {
   def from[T <: Table](table: T): OperationalQuery =
     OperationalQuery(internalQuery.copy(from = Some(TableFromQuery(table))))
 
+  def from[T <: Table](table: T, alias: String): OperationalQuery =
+    OperationalQuery(internalQuery.copy(from = Some(TableFromQuery(table, alias = Option(alias)))))
+
   def from(query: OperationalQuery): OperationalQuery =
     OperationalQuery(internalQuery.copy(from = Some(InnerFromQuery(query))))
+
+  def from(query: OperationalQuery, alias: String): OperationalQuery =
+    OperationalQuery(internalQuery.copy(from = Some(InnerFromQuery(query, alias = Option(alias)))))
 
   def asFinal: OperationalQuery =
     OperationalQuery(

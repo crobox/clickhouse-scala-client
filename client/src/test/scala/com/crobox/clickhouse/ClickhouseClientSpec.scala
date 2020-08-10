@@ -61,10 +61,9 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
   private def clean(value: String) = value.replaceAll("[\\s\\n]", " ").replaceAll(" +", " ").trim
 
   def matchSQL(expected: String): Matcher[String] = new Matcher[String] {
-
     def apply(left: String): MatchResult =
       MatchResult(clean(left) == clean(expected),
-                  s"SQL messages don't match. Input: ${clean(left)}",
+                  s"SQL messages don't match. \nInput:     ${clean(left)}\n!= \nExpected:  ${clean(expected)}",
                   "SQL messages are equal")
   }
 }

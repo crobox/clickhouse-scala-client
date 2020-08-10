@@ -141,4 +141,35 @@ class JoinQueryTest extends ClickhouseClientSpec with TableDrivenPropertyChecks 
          |FORMAT JSON""".stripMargin
     )
   }
+
+  it should s"triple complex join query with custom aliases" in {
+    val query =
+      select(dsl.all())
+        .from(
+          select(dsl.all())
+            .from(select(shieldId as itemId).from(OneTestTable).as("ott_alias").where(notEmpty(itemId))).as("1_lEfT")
+            .join(InnerJoin, select(itemId, col2).from(TwoTestTable).as("ttt.alias").where(notEmpty(itemId))) on itemId
+        )
+        .join(AllLeftJoin, ThreeTestTable)
+        .on(itemId)
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+      s"""
+         |SELECT *
+         |FROM
+         |  (SELECT *
+         |   FROM
+         |     (SELECT shield_id AS item_id
+         |      FROM sc.captainAmerica AS ott_alias
+         |      WHERE notEmpty(item_id)) AS `1_lEfT`
+         |   INNER JOIN
+         |     (SELECT item_id,
+         |             column_2
+         |      FROM sc.twoTestTable AS `ttt.alias`
+         |      WHERE notEmpty(item_id)) AS r1 ON `1_lEfT`.item_id = r1.item_id) AS l2 ALL
+         |LEFT JOIN
+         |  (SELECT *
+         |   FROM sc.threeTestTable) AS r2 ON l2.item_id = r2.item_id
+         |FORMAT JSON""".stripMargin
+    )
+  }
 }

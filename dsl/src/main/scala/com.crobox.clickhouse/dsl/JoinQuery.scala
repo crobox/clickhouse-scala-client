@@ -57,7 +57,6 @@ object JoinQuery {
  */
 case class JoinQuery(joinType: JoinType,
                      other: FromQuery,
-                     //on: Seq[ExpressionColumn[_]] = Seq.empty,
                      on: Seq[JoinCondition] = Seq.empty,
                      using: Seq[Column] = Seq.empty,
                      global: Boolean = false)
