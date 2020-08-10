@@ -24,7 +24,6 @@ case object DESC extends OrderingDirection
 
 sealed case class InternalQuery(select: Option[SelectQuery] = None,
                                 from: Option[FromQuery] = None,
-                                as: Option[String] = None,
                                 prewhere: Option[TableColumn[Boolean]] = None,
                                 where: Option[TableColumn[Boolean]] = None,
                                 groupBy: Option[GroupByQuery] = None,
@@ -53,7 +52,6 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
     InternalQuery(
       select.orElse(other.select),
       from.orElse(other.from),
-      as.orElse(other.as),
       prewhere.orElse(other.prewhere),
       where.orElse(other.where),
       groupBy.orElse(other.groupBy),

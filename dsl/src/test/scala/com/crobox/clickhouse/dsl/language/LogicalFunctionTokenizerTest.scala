@@ -127,7 +127,7 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
 
   def testQuery(where: Option[TableColumn[Boolean]], expected: String): Assertion = {
     val select = SelectQuery(Seq(shieldId))
-    val iQuery = InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), None, None, where)
+    val iQuery = InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), None, where)
     var generated = testSubject.toSql(iQuery)
     generated = generated.substring(generated.indexOf("WHERE "))
     generated = generated.substring(0, generated.indexOf(" FORMAT"))

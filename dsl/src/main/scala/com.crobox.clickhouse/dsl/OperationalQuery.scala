@@ -33,7 +33,14 @@ trait OperationalQuery extends Query {
   }
 
   def as(alias: String): OperationalQuery =
-    OperationalQuery(internalQuery.copy(as = Some(alias)))
+    OperationalQuery(
+      internalQuery.from
+        .map {
+          case query: InnerFromQuery    => internalQuery.copy(from = Some(query.copy(alias = Option(alias))))
+          case table: TableFromQuery[_] => internalQuery.copy(from = Some(table.copy(alias = Option(alias))))
+        }
+        .getOrElse(internalQuery)
+    )
 
   def from[T <: Table](table: T): OperationalQuery =
     OperationalQuery(internalQuery.copy(from = Some(TableFromQuery(table))))
@@ -41,8 +48,20 @@ trait OperationalQuery extends Query {
   def from(query: OperationalQuery): OperationalQuery =
     OperationalQuery(internalQuery.copy(from = Some(InnerFromQuery(query))))
 
-  def asFinal: OperationalQuery =
-    OperationalQuery(internalQuery.copy(as = Option("FINAL")))
+//  def asFinal: OperationalQuery =
+//    OperationalQuery(internalQuery.copy(asFinal = true))
+
+  def `final`: OperationalQuery =
+    OperationalQuery(
+      internalQuery.from
+        .map {
+          case _: InnerFromQuery =>
+            throw new AssertionError("It's ILLEGAL to set FINAL on a (sub)query FROM query")
+          case table: TableFromQuery[_] =>
+            internalQuery.copy(from = Option(table.copy(asFinal = true)))
+        }
+        .getOrElse(internalQuery)
+    )
 
   def groupBy(columns: Column*): OperationalQuery = {
     val internalGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery())

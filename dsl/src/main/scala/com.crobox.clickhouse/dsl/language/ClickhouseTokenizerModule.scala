@@ -64,11 +64,10 @@ trait ClickhouseTokenizerModule
 
   private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
     query match {
-      case InternalQuery(select, from, as, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
+      case InternalQuery(select, from, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
         s"""
            |${tokenizeSelect(select)}
            | ${tokenizeFrom(from)}
-           | ${tokenizeAs(as)}
            | ${tokenizeJoin(select, from, join)}
            | ${tokenizeFiltering(prewhere, "PREWHERE")}
            | ${tokenizeFiltering(where, "WHERE")}
@@ -76,7 +75,10 @@ trait ClickhouseTokenizerModule
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
            | ${tokenizeLimit(limit)}
-           | ${tokenizeUnionAll(union)}""".trim.stripMargin.replaceAll("\n", "").replaceAll("\r", "")
+           | ${tokenizeUnionAll(union)}""".trim.stripMargin
+          .replaceAll("\n", "")
+          .replaceAll("\r", "")
+          .replaceAll(" +", " ") // replace double (or more) subsequent spaces by one
     }
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
@@ -91,23 +93,17 @@ trait ClickhouseTokenizerModule
   private def tokenizeFrom(from: Option[FromQuery],
                            withPrefix: Boolean = true)(implicit ctx: TokenizeContext): String = {
     require(from != null)
+    val fromClause = from match {
+      case Some(query: InnerFromQuery)    => s"(${toRawSql(query.innerQuery.internalQuery).trim})"
+      case Some(table: TableFromQuery[_]) => table.table.quoted
+      case _                              => return ""
+    }
 
     val prefix = if (withPrefix) "FROM" else ""
-    from match {
-      case Some(fromClause: InnerFromQuery) =>
-        s"$prefix (${toRawSql(fromClause.innerQuery.internalQuery).trim})"
-      case Some(TableFromQuery(table: Table)) =>
-        s"$prefix ${table.quoted}"
-      case _ => ""
-    }
+    val alias  = from.flatMap(_.alias.map(s => " AS " + ClickhouseStatement.quoteIdentifier(s))).getOrElse("")
+    val asF    = if (from.exists(_.asFinal)) " FINAL" else ""
+    s"$prefix $fromClause $alias $asF".replaceAll(" +", " ").trim
   }
-
-  private def tokenizeAs(as: Option[String]): String =
-    as.map {
-        case "FINAL" => "FINAL"
-        case other   => s"AS $other"
-      }
-      .getOrElse("")
 
   protected def tokenizeColumn(column: Column)(implicit ctx: TokenizeContext): String = {
     require(column != null)
@@ -381,8 +377,7 @@ trait ClickhouseTokenizerModule
   private def tokenizeTuplesAliased(columns: Seq[(Column, OrderingDirection)]): String =
     columns
       .map {
-        case (column, dir) =>
-          aliasOrName(column) + " " + direction(dir)
+        case (column, dir) => aliasOrName(column) + " " + direction(dir)
       }
       .mkString(", ")
 
