@@ -14,10 +14,10 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
   val config: Config
 
   val clickhouseSpecTimeout: FiniteDuration = 10.seconds
-  val database                              = s"crobox_clickhouse_client_${Random.nextInt(1000000)}"
+  lazy val database                         = s"crobox_clickhouse_client_${Random.nextInt(1000000)}"
 
   /** Explicitly add this sequence that can be overwritten in order to create multiple databases for a test */
-  val databases = Seq(database)
+  lazy val databases = Seq(database)
 
   def clickClient: ClickhouseClient = internalClient
 
@@ -36,7 +36,7 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
       .trim()
   }
 
-  def dropAllTables(db:String = database): Int = {
+  def dropAllTables(db: String = database): Int = {
     val rawTables = sql(s"SHOW TABLES FROM $db")
     if (rawTables.isEmpty) {
       0
