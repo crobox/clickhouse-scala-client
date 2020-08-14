@@ -16,7 +16,7 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
 
   implicit class QueryExecution(query: Query) {
 
-    def as[V: JsonReader](
+    def execute[V: JsonReader](
         implicit executionContext: ExecutionContext,
         clickhouseExecutor: ClickhouseQueryExecutor
     ): Future[QueryResult[V]] = clickhouseExecutor.execute(query)
