@@ -83,6 +83,10 @@ object ColumnType {
   case class LowCardinality(columnType: ColumnType) extends ColumnType {
     override def toString: String = s"LowCardinality(${columnType.toString})"
   }
+
+  case class Nullable(columnType: ColumnType) extends ColumnType {
+    override def toString: String = s"Nullable(${columnType.toString})"
+  }
 }
 
 sealed trait DefaultValue
