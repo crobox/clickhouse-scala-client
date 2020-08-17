@@ -35,4 +35,8 @@ class ColumnTypeTest extends AnyFlatSpecLike with Matchers {
   it should "support LowCardinality column type" in {
     ColumnType.LowCardinality(ColumnType.String).toString should be("LowCardinality(String)")
   }
+
+  it should "support Nullable column type" in {
+    ColumnType.Nullable(ColumnType.String).toString should be("Nullable(String)")
+  }
 }
