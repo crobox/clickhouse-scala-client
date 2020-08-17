@@ -4,10 +4,15 @@ import java.util.UUID
 
 import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.testkit.ClickhouseMatchers
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
 import org.joda.time.{DateTime, DateTimeZone}
 
-class ClickhouseTokenizerTest extends ClickhouseClientSpec with TestSchema with ClickhouseTokenizerModule {
+class ClickhouseTokenizerTest
+    extends ClickhouseClientSpec
+    with TestSchema
+    with ClickhouseTokenizerModule
+    with ClickhouseMatchers {
   val testSubject = this
   val database    = "default"
 

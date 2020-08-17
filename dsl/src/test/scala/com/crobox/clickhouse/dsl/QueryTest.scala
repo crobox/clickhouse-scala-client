@@ -3,16 +3,15 @@ package com.crobox.clickhouse.dsl
 import java.util.UUID
 
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
-import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
-import com.crobox.clickhouse.{dsl, ClickhouseClientSpec}
+import com.crobox.clickhouse.testkit.ClickhouseMatchers
+import com.crobox.clickhouse.{ClickhouseClientSpec, dsl}
 import org.joda.time.{DateTime, LocalDate}
 
-import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-class QueryTest extends ClickhouseClientSpec with TestSchema {
+class QueryTest extends ClickhouseClientSpec with TestSchema with ClickhouseMatchers {
   val clickhouseTokenizer       = new ClickhouseTokenizerModule {}
   override val database: String = "query_test"
 

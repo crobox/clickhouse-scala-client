@@ -9,7 +9,6 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatest.{Assertion, BeforeAndAfterAll}
 
 import scala.concurrent.duration._
@@ -57,13 +56,4 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
       // abort test
       cancel()
     }
-
-  private def clean(value: String) = value.replaceAll("\\s+", " ").trim
-
-  def matchSQL(expected: String): Matcher[String] = new Matcher[String] {
-    def apply(left: String): MatchResult =
-      MatchResult(clean(left) == clean(expected),
-                  s"SQL messages don't match. \nInput:     ${clean(left)}\n!= \nExpected:  ${clean(expected)}",
-                  "SQL messages are equal")
-  }
 }

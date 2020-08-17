@@ -4,9 +4,10 @@ import java.util.UUID
 
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.parallel._
+import com.crobox.clickhouse.testkit.ClickhouseMatchers
 import com.crobox.clickhouse.{ClickhouseClientSpec, dsl => CHDsl}
 
-class QueryMergeTest extends ClickhouseClientSpec with TestSchema {
+class QueryMergeTest extends ClickhouseClientSpec with TestSchema with ClickhouseMatchers {
   val clickhouseTokenizer = new ClickhouseTokenizerModule {}
   val database            = "query_merge"
 

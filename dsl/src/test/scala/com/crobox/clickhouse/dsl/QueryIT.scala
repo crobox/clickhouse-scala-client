@@ -5,6 +5,7 @@ import java.util.UUID
 import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.execution.{DefaultClickhouseQueryExecutor, QueryResult}
+import com.crobox.clickhouse.testkit.ClickhouseMatchers
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import spray.json.DefaultJsonProtocol._
@@ -13,7 +14,11 @@ import spray.json.RootJsonFormat
 import scala.concurrent.Future
 import scala.util.Random
 
-class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec with ScalaFutures {
+class QueryIT
+    extends ClickhouseClientSpec
+    with TestSchemaClickhouseQuerySpec
+    with ScalaFutures
+    with ClickhouseMatchers {
 
   override implicit def patienceConfig =
     PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
@@ -22,7 +27,7 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
   private val oneId             = UUID.randomUUID()
   override val table1Entries =
     Seq(Table1Entry(oneId), Table1Entry(randomUUID), Table1Entry(randomUUID), Table1Entry(randomUUID))
-  override val table2Entries = Seq(Table2Entry(oneId, randomString, Random.nextInt(1000)+1, randomString, None))
+  override val table2Entries = Seq(Table2Entry(oneId, randomString, Random.nextInt(1000) + 1, randomString, None))
 
   it should "map as result" in {
 
@@ -30,7 +35,7 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
     implicit val resultFormat: RootJsonFormat[Result] =
       jsonFormat[String, Int, Result](Result.apply, "column_1", "empty")
     val results: Future[QueryResult[Result]] = chExecutor.execute[Result](
-      select  (shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable join (InnerJoin, TwoTestTable) using itemId
+      select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable join (InnerJoin, TwoTestTable) using itemId
     )
     results.futureValue.rows.map(_.columnResult) should be(table2Entries.map(_.firstColumn))
     results.futureValue.rows.map(_.empty).head should be(1)
@@ -38,7 +43,9 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
 
   it should "perform typecasts" in {
 
-    type TakeIntGiveIntTypes = Column => (TypeCastColumn[_$1] with Reinterpretable) forSome {type _$1 >: Long with String with Float with Serializable}
+    type TakeIntGiveIntTypes = Column => (TypeCastColumn[_$1] with Reinterpretable) forSome {
+      type _$1 >: Long with String with Float with Serializable
+    }
 
     val takeIntGiveIntCast = Set(
       toUInt8 _,
@@ -76,7 +83,7 @@ class QueryIT extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec wi
       toInt64OrZero _,
       toFloat32OrZero _,
       toFloat64OrZero _,
-      (col: TableColumn[_]) => toFixedString(col,10),
+      (col: TableColumn[_]) => toFixedString(col, 10),
       toStringCutToZero _
     )
   }
