@@ -8,7 +8,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Random, Try}
 
-trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterAll {
+trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterAll with ClickhouseMatchers {
   this: Suite =>
 
   val config: Config
