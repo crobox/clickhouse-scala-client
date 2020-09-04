@@ -4,7 +4,12 @@ import org.scalatest.matchers.{MatchResult, Matcher}
 
 trait ClickhouseMatchers {
 
-  private def clean(value: String) = value.replaceAll("\\s+", " ").trim
+  private def clean(value: String): String =
+    value
+      .replaceAll("\\s+", " ")
+      .replace(" ( ", " (")
+      .replace(" )", ")")
+      .trim
 
   def matchSQL(expected: String): Matcher[String] = new Matcher[String] {
 
