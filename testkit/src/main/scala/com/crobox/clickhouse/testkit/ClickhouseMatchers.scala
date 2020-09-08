@@ -19,8 +19,13 @@ trait ClickhouseMatchers {
     def apply(left: String): MatchResult =
       MatchResult(
         clean(left) == clean(expected),
-        s"SQL messages don't match. \nInput:     ${clean(left)}\n!= \nExpected:  ${clean(expected)}" +
-          s"\nDIFF       ${diff(clean(left), clean(expected))}",
+        s"""
+           |SQL messages don't match.
+           |Input:     ${clean(left)}
+           |!=
+           |Expected:  ${clean(expected)}
+           |DIFF       ${diff(clean(left), clean(expected))}
+           |""".stripMargin,
         "SQL messages are equal"
       )
   }
