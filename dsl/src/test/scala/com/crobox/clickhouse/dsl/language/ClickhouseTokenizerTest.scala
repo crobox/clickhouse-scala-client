@@ -133,6 +133,18 @@ class ClickhouseTokenizerTest
     )
   }
 
+  it should "use functions in group by method" in {
+    val select = SelectQuery(Seq(shieldId))
+    val query = testSubject.toSql(
+      InternalQuery(
+        Some(select),
+        Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+        orderBy = Seq((lower(shieldId), ASC))
+      )
+    )
+    query should matchSQL(s"SELECT shield_id FROM default.captainAmerica ORDER BY lower(shield_id) ASC FORMAT JSON")
+  }
+
   it should "use inner query as join" in {
     val select     = SelectQuery(Seq(shieldId))
     val joinSelect = SelectQuery(Seq(itemId as "shield_id"))

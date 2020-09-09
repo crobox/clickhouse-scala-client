@@ -360,7 +360,7 @@ trait ClickhouseTokenizerModule
     (groupByColumns ++ groupByMode ++ groupByWithTotals).mkString(" ")
   }
 
-  private def tokenizeOrderBy(orderBy: Seq[(Column, OrderingDirection)]): String =
+  private def tokenizeOrderBy(orderBy: Seq[(Column, OrderingDirection)])(implicit ctx: TokenizeContext): String =
     orderBy.toList match {
       case Nil | null => ""
       case _          => s"ORDER BY ${tokenizeTuplesAliased(orderBy)}"
@@ -375,10 +375,10 @@ trait ClickhouseTokenizerModule
   private def tokenizeColumnsAliased(columns: Seq[Column]): String =
     columns.map(aliasOrName).mkString(", ")
 
-  private def tokenizeTuplesAliased(columns: Seq[(Column, OrderingDirection)]): String =
+  private def tokenizeTuplesAliased(columns: Seq[(Column, OrderingDirection)])(implicit ctx: TokenizeContext): String =
     columns
       .map {
-        case (column, dir) => aliasOrName(column) + " " + direction(dir)
+        case (column, dir) => tokenizeColumn(column) + " " + direction(dir)
       }
       .mkString(", ")
 
