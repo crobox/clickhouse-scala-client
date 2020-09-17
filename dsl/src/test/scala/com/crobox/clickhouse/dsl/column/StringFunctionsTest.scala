@@ -60,4 +60,23 @@ class StringFunctionsTest extends ColumnFunctionTest {
     r(replaceRegexpOne(someStr,someNeedle,replace)) shouldBe "helio world"
     r(replaceRegexpAll(someStr,someNeedle,replace)) shouldBe "helio world"
   }
+
+  it should "keep empty as empty" in {
+    var query = select(All()).from(TwoTestTable).where(col1.empty())
+    toSql(query.internalQuery, None) should matchSQL(
+      s"SELECT * FROM $database.twoTestTable WHERE empty(column_1)"
+    )
+  }
+
+  it should "keep notEmpty as notEmtpy" in {
+    var query = select(All()).from(TwoTestTable).where(col1.notEmpty())
+    toSql(query.internalQuery, None) should matchSQL(
+      s"SELECT * FROM $database.twoTestTable WHERE notEmpty(column_1)"
+    )
+
+    query = select(All()).from(TwoTestTable).where(notEmpty(col1))
+    toSql(query.internalQuery, None) should matchSQL(
+      s"SELECT * FROM $database.twoTestTable WHERE notEmpty(column_1)"
+    )
+  }
 }

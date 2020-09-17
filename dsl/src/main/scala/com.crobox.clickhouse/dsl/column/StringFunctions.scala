@@ -6,8 +6,6 @@ trait StringFunctions { self: Magnets =>
 
   abstract class StringFunctionCol[+V](val innerCol: Column) extends ExpressionColumn[V](innerCol)
 
-  case class Empty(col: EmptyNonEmptyCol[_])      extends StringFunctionCol[Boolean](col.column)
-  case class NotEmpty(col: EmptyNonEmptyCol[_])   extends StringFunctionCol[Boolean](col.column)
   case class Length(col: EmptyNonEmptyCol[_])     extends StringFunctionCol[Int](col.column)
   case class LengthUTF8(col: EmptyNonEmptyCol[_]) extends StringFunctionCol[String](col.column)
   case class Lower(col: StringColMagnet[_])       extends StringFunctionCol[String](col.column)
@@ -22,7 +20,8 @@ trait StringFunctions { self: Magnets =>
       extends StringFunctionCol[String](col.column)
   case class SubstringUTF8(col: StringColMagnet[_], offset: NumericCol[_], length: NumericCol[_])
       extends StringFunctionCol[String](col.column)
-  case class AppendTrailingCharIfAbsent(col: StringColMagnet[_], c: StringColMagnet[_]) extends StringFunctionCol[String](col.column)
+  case class AppendTrailingCharIfAbsent(col: StringColMagnet[_], c: StringColMagnet[_])
+      extends StringFunctionCol[String](col.column)
   case class ConvertCharset(col: StringColMagnet[_], from: StringColMagnet[_], to: StringColMagnet[_])
       extends StringFunctionCol[String](col.column)
 
@@ -30,10 +29,8 @@ trait StringFunctions { self: Magnets =>
 
   trait StringOps { self: StringColMagnet[_] with EmptyNonEmptyCol[_] =>
 
-    def empty()      = Empty(self)
-    def notEmpty()   = NotEmpty(self)
-    def length()     = Length(self)
-    def lengthUTF8() = LengthUTF8(self)
+    def length()      = Length(self)
+    def lengthUTF8()  = LengthUTF8(self)
     def lower()       = Lower(self)
     def upper()       = Upper(self)
     def lowerUTF8()   = LowerUTF8(self)
@@ -41,7 +38,7 @@ trait StringFunctions { self: Magnets =>
     def reverse()     = Reverse(self)
     def reverseUTF8() = ReverseUTF8(self)
 
-    def ||(col2: StringColMagnet[_]) = Concat(self,col2)
+    def ||(col2: StringColMagnet[_]) = Concat(self, col2)
 
     def concat(col2: StringColMagnet[_], coln: StringColMagnet[_]*) =
       Concat(self, col2: StringColMagnet[_], coln: _*)
@@ -59,8 +56,6 @@ trait StringFunctions { self: Magnets =>
       ConvertCharset(self, from: StringColMagnet[_], to: StringColMagnet[_])
   }
 
-  def empty(col: EmptyNonEmptyCol[_])      = Empty(col: EmptyNonEmptyCol[_])
-  def notEmpty(col: EmptyNonEmptyCol[_])   = NotEmpty(col: EmptyNonEmptyCol[_])
   def length(col: EmptyNonEmptyCol[_])     = Length(col: EmptyNonEmptyCol[_])
   def lengthUTF8(col: EmptyNonEmptyCol[_]) = LengthUTF8(col: EmptyNonEmptyCol[_])
   def lower(col: StringColMagnet[_])       = Lower(col: StringColMagnet[_])

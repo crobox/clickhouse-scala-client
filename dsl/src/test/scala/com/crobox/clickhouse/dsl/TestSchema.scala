@@ -31,19 +31,19 @@ trait TestSchema {
 
   private lazy val _db = database
   case object OneTestTable extends Table {
-    override lazy val database: String = _db
+    override lazy val database: String          = _db
     override val name: String                   = "captainAmerica"
     override val columns: List[NativeColumn[_]] = List(shieldId, timestampColumn, numbers)
   }
 
   case object TwoTestTable extends Table {
-    override lazy val database: String = _db
+    override lazy val database: String          = _db
     override val name: String                   = "twoTestTable"
-    override val columns: List[NativeColumn[_]] = List(itemId, col1, col2, col3, col4)
+    override val columns: List[NativeColumn[_]] = List(itemId, col1, col2, col3, col4, nativeUUID)
   }
 
   case object ThreeTestTable extends Table {
-    override lazy val database: String = _db
+    override lazy val database: String          = _db
     override val name: String                   = "threeTestTable"
     override val columns: List[NativeColumn[_]] = List(itemId, col2, col4, col5, col6)
   }
@@ -58,6 +58,7 @@ trait TestSchema {
   val col5            = NativeColumn[String]("column_5")
   val col6            = NativeColumn[String]("column_6")
   val timestampColumn = NativeColumn[Long]("ts", ColumnType.UInt64)
+  val nativeUUID      = NativeColumn[UUID]("uuid", ColumnType.UUID)
 
   case class Table1Entry(shieldId: UUID, date: DateTime = DateTime.now(), numbers: Seq[Int] = Seq())
 

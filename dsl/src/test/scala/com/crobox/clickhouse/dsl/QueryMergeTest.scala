@@ -58,6 +58,7 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema with Clickhous
          |       column_2,
          |       column_3,
          |       column_4,
+         |       uuid,
          |       column_5,
          |       column_6,
          |       *
