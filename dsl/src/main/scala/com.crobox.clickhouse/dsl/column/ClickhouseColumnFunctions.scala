@@ -33,6 +33,5 @@ trait ClickhouseColumnFunctions
     with StringSearchFunctions
     with TypeCastFunctions
     with URLFunctions
-    with UUIDFunctions
 
 object ClickhouseColumnFunctions extends ClickhouseColumnFunctions {}

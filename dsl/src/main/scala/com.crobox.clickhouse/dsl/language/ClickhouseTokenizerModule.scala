@@ -44,8 +44,7 @@ trait ClickhouseTokenizerModule
     with StringSearchFunctionTokenizer
     with TypeCastFunctionTokenizer
     with URLFunctionTokenizer
-    with EmptyFunctionTokenizer
-    with UUIDFunctionTokenizer {
+    with EmptyFunctionTokenizer {
 
   private lazy val logger = Logger(LoggerFactory.getLogger(getClass.getName))
 
@@ -145,7 +144,6 @@ trait ClickhouseTokenizerModule
       case col: StringSearchFunc[_]          => tokenizeStringSearchFunction(col)
       case col: TypeCastColumn[_]            => tokenizeTypeCastColumn(col)
       case col: URLFunction[_]               => tokenizeURLFunction(col)
-      case col: UUIDFunction[_]              => tokenizeUUIDCol(col)
       case All()                             => "*"
       case RawColumn(rawSql)                 => rawSql
       case Conditional(cases, default) =>
