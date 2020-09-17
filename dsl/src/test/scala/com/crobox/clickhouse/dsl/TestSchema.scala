@@ -48,8 +48,8 @@ trait TestSchema {
     override val columns: List[NativeColumn[_]] = List(itemId, col2, col4, col5, col6)
   }
 
-  val shieldId        = NativeColumn[UUID]("shield_id")
-  val itemId          = NativeColumn[UUID]("item_id")
+  val shieldId        = NativeColumn[UUID]("shield_id", ColumnType.UUID)
+  val itemId          = NativeColumn[UUID]("item_id", ColumnType.UUID)
   val numbers         = NativeColumn[Seq[Int]]("numbers", ColumnType.Array(ColumnType.UInt32))
   val col1            = NativeColumn[String]("column_1")
   val col2            = NativeColumn[Int]("column_2", ColumnType.UInt32)
