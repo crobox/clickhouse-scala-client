@@ -1,5 +1,7 @@
 package com.crobox.clickhouse.dsl.language
 
+import java.util.UUID
+
 import com.crobox.clickhouse.dsl._
 
 trait StringFunctionTokenizer {
@@ -10,7 +12,10 @@ trait StringFunctionTokenizer {
       case Empty(c) =>
         s"empty(${tokenizeColumn(c.column)})"
       case NotEmpty(c) =>
-        s"notEmpty(${tokenizeColumn(c.column)})"
+        c.column match {
+          case _: TableColumn[UUID] => s"${tokenizeColumn(c.column)} != '0'"
+          case _                    => s"notEmpty(${tokenizeColumn(c.column)})"
+        }
       case Length(c) =>
         s"length(${tokenizeColumn(c.column)})"
       case LengthUTF8(c) =>
