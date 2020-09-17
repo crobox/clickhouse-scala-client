@@ -13,7 +13,7 @@ trait StringFunctionTokenizer {
         s"empty(${tokenizeColumn(c.column)})"
       case NotEmpty(c) =>
         c.column match {
-          case _: TableColumn[UUID] => s"${tokenizeColumn(c.column)} != '0'"
+          case _: TableColumn[UUID] => s"${tokenizeColumn(c.column)} != 0"
           case _                    => s"notEmpty(${tokenizeColumn(c.column)})"
         }
       case Length(c) =>
