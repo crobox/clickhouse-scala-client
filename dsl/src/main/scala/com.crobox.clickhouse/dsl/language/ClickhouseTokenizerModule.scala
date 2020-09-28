@@ -56,9 +56,16 @@ trait ClickhouseTokenizerModule
   protected def tokenizeSeqCol(columns: Column*)(implicit ctx: TokenizeContext): String =
     columns.map(tokenizeColumn).mkString(", ")
 
+  def removeRedundantWhitespaces(value: String): String =
+    value
+      .replaceAll("\\s+", " ")
+      .replace(" ( ", " (")
+      .replace(" )", ")")
+      .trim
+
   override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON")): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = (toRawSql(query)(TokenizeContext()) + formatSql).trim().replaceAll("\\s+", " ")
+    val sql       = removeRedundantWhitespaces(toRawSql(query)(TokenizeContext()) + formatSql)
     logger.debug(s"Generated sql [$sql]")
     sql
   }
