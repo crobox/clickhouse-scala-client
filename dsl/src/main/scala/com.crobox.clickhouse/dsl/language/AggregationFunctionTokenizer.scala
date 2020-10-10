@@ -47,7 +47,8 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (s"quantiles$modifierName",
          s"${levels.mkString(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
-      case Uniq(column, modifier)      => (s"uniq${tokenizeUniqModifier(modifier)}", tokenizeColumn(column))
+      case Uniq(columns, modifier) =>
+        (s"uniq${tokenizeUniqModifier(modifier)}", columns.map(tokenizeColumn).mkString(","))
       case Sum(column, modifier)       => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
       case SumMap(key, value)          => (s"sumMap", tokenizeColumns(Seq(key, value)))
       case AnyResult(column, modifier) => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
@@ -77,7 +78,6 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case UniqModifier.Combined => "Combined"
       case UniqModifier.Exact    => "Exact"
       case UniqModifier.HLL12    => "HLL12"
-
     }
 
   def tokenizeSumModifier(modifier: SumModifier): String =

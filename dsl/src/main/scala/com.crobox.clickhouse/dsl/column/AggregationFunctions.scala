@@ -122,8 +122,8 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
 trait UniqFunctions { self: Magnets with AggregationFunctions =>
   sealed trait UniqModifier
 
-  case class Uniq(tableColumn: Column, modifier: UniqModifier = UniqModifier.Simple)
-      extends AggregateFunction[Long](tableColumn)
+  case class Uniq(tableColumns: Seq[Column], modifier: UniqModifier = UniqModifier.Simple)
+      extends AggregateFunction[Long](tableColumns.head)
 
   object UniqModifier {
     case object Simple   extends UniqModifier
@@ -132,11 +132,25 @@ trait UniqFunctions { self: Magnets with AggregationFunctions =>
     case object Exact    extends UniqModifier
   }
 
-  def uniq(tableColumn: Column): Uniq         = Uniq(tableColumn)
-  def uniqCombined(tableColumn: Column): Uniq = Uniq(tableColumn, UniqModifier.Combined)
-  def uniqExact(tableColumn: Column): Uniq    = Uniq(tableColumn, UniqModifier.Exact)
-  def uniqHLL12(tableColumn: Column): Uniq    = Uniq(tableColumn, UniqModifier.HLL12)
+  def uniq(tableColumns: Column*): Uniq = {
+    require(tableColumns.nonEmpty, "At least one column should be provided for Uniq")
+    Uniq(tableColumns)
+  }
 
+  def uniqCombined(tableColumns: Column*): Uniq = {
+    require(tableColumns.nonEmpty, "At least one column should be provided for Uniq")
+    Uniq(tableColumns, UniqModifier.Combined)
+  }
+
+  def uniqExact(tableColumns: Column*): Uniq = {
+    require(tableColumns.nonEmpty, "At least one column should be provided for Uniq")
+    Uniq(tableColumns, UniqModifier.Exact)
+  }
+
+  def uniqHLL12(tableColumns: Column*): Uniq = {
+    require(tableColumns.nonEmpty, "At least one column should be provided for Uniq")
+    Uniq(tableColumns, UniqModifier.HLL12)
+  }
 }
 
 trait AnyResultFunctions { self: Magnets with AggregationFunctions =>

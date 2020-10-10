@@ -197,14 +197,22 @@ class ClickhouseTokenizerTest
 
   "Aggregated functions" should "build with combinators" in {
     implicit val ctx = TokenizeContext()
-    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1))) shouldBe s"uniqIf(${col1.name},${col1.name} = 'test')"
-    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1, UniqModifier.HLL12))) shouldBe s"uniqHLL12If(${col1.name},${col1.name} = 'test')"
-    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), Uniq(col1, UniqModifier.Combined))) shouldBe s"uniqCombinedIf(${col1.name},${col1.name} = 'test')"
+    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniq(col1))) shouldBe s"uniqIf(${col1.name},${col1.name} = 'test')"
+    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqHLL12(col1))) shouldBe s"uniqHLL12If(${col1.name},${col1.name} = 'test')"
+    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqCombined(col1))) shouldBe s"uniqCombinedIf(${col1.name},${col1.name} = 'test')"
     this.tokenizeColumn(
       CombinedAggregatedFunction(Combinator.If(col1.isEq("test")),
-                                 CombinedAggregatedFunction(Combinator.If(col2.isEq(3)),
-                                                            Uniq(col1, UniqModifier.Exact)))
+                                 CombinedAggregatedFunction(Combinator.If(col2.isEq(3)), uniqExact(col1)))
     ) shouldBe s"uniqExactIfIf(${col1.name},${col2.name} = 3,${col1.name} = 'test')"
+  }
+
+  "Aggregated functions" should "uniq for multiple columns" in {
+    implicit val ctx = TokenizeContext()
+    this.tokenizeColumn(uniq(col1, col2)) shouldBe s"uniq(${col1.name},${col2.name})"
+    this.tokenizeColumn(uniqHLL12(col1, col2)) shouldBe s"uniqHLL12(${col1.name},${col2.name})"
+    this.tokenizeColumn(uniqExact(col1, col2)) shouldBe s"uniqExact(${col1.name},${col2.name})"
+    this.tokenizeColumn(uniqCombined(col1, col2)) shouldBe s"uniqCombined(${col1.name},${col2.name})"
+
   }
 
   "build time series" should "use zone name for monthly" in {
