@@ -1,5 +1,5 @@
 import Build._
-import com.typesafe.sbt.pgp.PgpKeys
+//import com.typesafe.sbt.pgp.PgpKeys
 import xerial.sbt.Sonatype._
 
 //scalafmt settings

@@ -9,6 +9,14 @@ credentials += Credentials("Sonatype Nexus Repository Manager",
                            "<your password>")
 ```
 
+Make sure to install SBT PGP from https://github.com/sbt/sbt-pgp
+First generate a key, then upload it to a keyserver.
+```
+$ gpg --gen-key
+$ gpg --list-secret-keys
+$ gpg --keyserver keyserver.ubuntu.com --send-keys 2BE67AC00D699E04E840B7FE29967E804D85663F
+```
+
 To release and publish a version to oss.sonatype for both scala 2.11 and scala 2.12 run:
 
 ```
