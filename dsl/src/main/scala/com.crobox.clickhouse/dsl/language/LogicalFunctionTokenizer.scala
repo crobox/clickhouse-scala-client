@@ -13,7 +13,6 @@ trait LogicalFunctionTokenizer {
       case (Some(left), Some(right)) =>
         col.operator match {
           case And =>
-            //s"${tokenize(left, col.operator)} AND ${tokenize(right, col.operator)}"
             (tokenize(left, col.operator), tokenize(right, col.operator)) match {
               case ("1", "1")                => "1" // LEFT & RIGHT are true, AND succeeds
               case ("1", rightClause)        => removeBrackets(rightClause) // LEFT is true, only tokenize RIGHT
@@ -23,7 +22,6 @@ trait LogicalFunctionTokenizer {
               case (leftClause, rightClause) => s"$leftClause AND $rightClause"
             }
           case Or =>
-            //s"${tokenize(left, col.operator)} OR ${tokenize(right, col.operator)}"
             (tokenize(left, col.operator), tokenize(right, col.operator)) match {
               case ("0", "0")                => "0" // LEFT & RIGHT are false, OR fails
               case ("0", rightClause)        => removeBrackets(rightClause) // LEFT is false, only tokenize RIGHT
