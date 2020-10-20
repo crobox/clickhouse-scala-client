@@ -34,3 +34,6 @@ To close and release the staging repository on Sonatype you can either go to the
 ```
 sbt sonatypeRelease
 ```
+
+You can verify if all has been published correctly by visiting the following url:<br> 
+https://oss.sonatype.org/#nexus-search;quick~clickhouse%20crobox
