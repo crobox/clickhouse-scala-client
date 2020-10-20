@@ -125,12 +125,48 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
     )
   }
 
+  def condition(nr: Seq[Int]): Option[TableColumn[Boolean]] = Option(nr.map(x => col2 === x).reduce((a, b) => a or b))
+
   it should "tokenize numbers OR with NONE" in {
-    def condition(nr: Seq[Int]): Option[TableColumn[Boolean]] = Option(nr.map(x => col2 === x).reduce((a, b) => a or b))
     testQuery(
       Some(None and condition(Seq(1, 3)) and None and condition(Seq(3, 4)) and None),
       s"WHERE (column_2 = 1 OR column_2 = 3) AND (column_2 = 3 OR column_2 = 4)"
     )
+  }
+
+  it should "true using Multiple values and/None/and" in {
+    testQuery(
+      Some((1 == 1) and None and condition(Seq(2, 3))),
+      "WHERE 1 AND (column_2 = 2 OR column_2 = 3)"
+    )
+  }
+
+  it should "true using Multiple values or/None/or" in {
+    testQuery(Some((1 == 1) or None or condition(Seq(2, 3))), "WHERE 1")
+  }
+
+  it should "true using Multiple values or/None/and" in {
+    testQuery(Some((1 == 1) or None and condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3")
+  }
+
+  it should "true using Multiple values and/None/or" in {
+    testQuery(Some((1 == 1) and None or condition(Seq(2, 3))), "WHERE 1 OR column_2 = 2 OR column_2 = 3")
+  }
+
+  it should "false using Multiple values and/None/and" in {
+    testQuery(Some((1 == 2) and None and condition(Seq(2, 3))), "WHERE 0")
+  }
+
+  it should "false using Multiple values or/None/or" in {
+    testQuery(Some((1 == 2) or None or condition(Seq(2, 3))), "WHERE 0 OR column_2 = 2 OR column_2 = 3")
+  }
+
+  it should "false using Multiple values or/None/and" in {
+    testQuery(Some((1 == 2) or None and condition(Seq(2, 3))), "WHERE 0 AND (column_2 = 2 OR column_2 = 3)")
+  }
+
+  it should "false using Multiple values and/None/or" in {
+    testQuery(Some((1 == 2) and None or condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3")
   }
 
   def testQuery(where: Option[TableColumn[Boolean]], expected: String): Assertion = {
