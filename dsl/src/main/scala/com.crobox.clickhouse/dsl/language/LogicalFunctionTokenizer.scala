@@ -42,7 +42,6 @@ trait LogicalFunctionTokenizer {
               case (leftClause, rightClause) => s"xor($leftClause, $rightClause)"
 
             }
-          case Xor => s"xor(${tokenize(left, col.operator)}, ${tokenize(right, col.operator)})"
           case Not => s"not(${tokenize(left, col.operator)})"
         }
     }
