@@ -7,39 +7,37 @@ trait LogicalFunctionTokenizer {
 
   def tokenizeLogicalFunction(col: LogicalFunction)(implicit ctx: TokenizeContext): String =
     (col.left.asOption, col.right.asOption) match {
-      case (None, None)        => "1"
-      case (Some(left), None)  => tokenizeColumn(left)
-      case (None, Some(right)) => tokenizeColumn(right)
+      case (None, None)       => "1"
+      case (Some(left), None) => tokenizeColumn(left)
+      case (None, Some(right)) =>
+        if (right.isConstTrue) tokenizeColumn(right)
+        else tokenize(right, col.operator)
       case (Some(left), Some(right)) =>
         col.operator match {
           case And =>
-            if (left.isConstTrue)
-              tokenizeColumn(right)
-            else if (right.isConstTrue)
-              tokenizeColumn(left)
+            if (left.isConstTrue) tokenizeColumn(right)
+            else if (right.isConstTrue) tokenizeColumn(left)
             else {
               // Depending on the number of clauses (to the right or left) we should add parentheses/brackets or not
               s"${tokenize(left, And)} AND ${tokenize(right, And)}"
             }
           case Or =>
-            if (left.isConstFalse)
-              tokenizeColumn(right)
-            else if (right.isConstFalse)
-              tokenizeColumn(left)
+            if (left.isConstFalse) tokenizeColumn(right)
+            else if (right.isConstFalse) tokenizeColumn(left)
             else {
               // Depending on the number of clauses (to the right or left) we should add parentheses/brackets or not
               s"${tokenize(left, Or)} OR ${tokenize(right, Or)}"
             }
-          case Xor =>
-            s"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
-          case Not =>
-            s"not(${tokenizeColumn(left)})"
+          case Xor => s"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
+          case Not => s"not(${tokenizeColumn(left)})"
+//          case Xor => s"xor(${tokenize(left, Xor)}, ${tokenize(right, Xor)})"
+//          case Not => s"not(${tokenize(left, Not)})"
         }
     }
 
   private def tokenize(col: TableColumn[Boolean], operator: LogicalOperator)(implicit ctx: TokenizeContext): String =
     col match {
-      case c: LogicalFunction if c.operator == operator => s"${tokenizeColumn(c)}"
+      case c: LogicalFunction if c.operator == operator => tokenizeColumn(c)
       case c: LogicalFunction if c.operator != Not      => s"(${tokenizeColumn(c)})"
       case c                                            => tokenizeColumn(c)
     }
