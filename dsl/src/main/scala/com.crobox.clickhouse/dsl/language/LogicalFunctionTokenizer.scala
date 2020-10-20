@@ -7,9 +7,11 @@ trait LogicalFunctionTokenizer {
 
   def tokenizeLogicalFunction(col: LogicalFunction)(implicit ctx: TokenizeContext): String =
     (col.left.asOption, col.right.asOption) match {
-      case (None, None)        => "1"
-      case (Some(left), None)  => tokenize(left, col.operator)
-      case (None, Some(right)) => tokenize(right, col.operator)
+      case (None, None)       => "1"
+      case (Some(left), None) => tokenizeColumn(left)
+      case (None, Some(right)) =>
+        if (right.isConstTrue) tokenizeColumn(right)
+        else tokenize(right, col.operator)
       case (Some(left), Some(right)) =>
         col.operator match {
           case And =>
@@ -28,12 +30,14 @@ trait LogicalFunctionTokenizer {
             }
           case Xor => s"xor(${tokenizeColumn(left)}, ${tokenizeColumn(right)})"
           case Not => s"not(${tokenizeColumn(left)})"
+//          case Xor => s"xor(${tokenize(left, Xor)}, ${tokenize(right, Xor)})"
+//          case Not => s"not(${tokenize(left, Not)})"
         }
     }
 
   private def tokenize(col: TableColumn[Boolean], operator: LogicalOperator)(implicit ctx: TokenizeContext): String =
     col match {
-      case c: LogicalFunction if c.operator == operator => s"${tokenizeColumn(c)}"
+      case c: LogicalFunction if c.operator == operator => tokenizeColumn(c)
       case c: LogicalFunction if c.operator != Not      => s"(${tokenizeColumn(c)})"
       case c                                            => tokenizeColumn(c)
     }
