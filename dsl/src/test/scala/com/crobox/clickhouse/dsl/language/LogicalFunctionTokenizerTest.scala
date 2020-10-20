@@ -125,49 +125,94 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
     )
   }
 
-  def condition(nr: Seq[Int]): Option[TableColumn[Boolean]] = Option(nr.map(x => col2 === x).reduce((a, b) => a or b))
+  def conditionOr(nr: Seq[Int]): Option[TableColumn[Boolean]] = Option(nr.map(x => col2 === x).reduce((a, b) => a or b))
+  def conditionAnd(nr: Seq[Int]): Option[TableColumn[Boolean]] = Option(nr.map(x => col2 === x).reduce((a, b) => a and b))
 
   it should "tokenize numbers OR with NONE" in {
     testQuery(
-      Some(None and condition(Seq(1, 3)) and None and condition(Seq(3, 4)) and None),
+      Some(None and conditionOr(Seq(1, 3)) and None and conditionOr(Seq(3, 4)) and None),
       s"WHERE (column_2 = 1 OR column_2 = 3) AND (column_2 = 3 OR column_2 = 4)"
     )
   }
 
-  it should "true using Multiple values and/None/and" in {
-    testQuery(Some((1 == 1) and None and condition(Seq(2, 3))), "WHERE 1 AND (column_2 = 2 OR column_2 = 3)") // APPROVED
-    //testQuery(Some((1 == 1) and None and condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3") // CORRECT
+  //
+  // OR
+  //
+
+  it should "true using Multiple values and/None/and OR" in {
+    testQuery(Some((1 == 1) and None and conditionOr(Seq(2, 3))), "WHERE 1 AND (column_2 = 2 OR column_2 = 3)") // APPROVED
+    //testQuery(Some((1 == 1) and None and condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3") // OPTIMAL
   }
 
-  it should "true using Multiple values and/None/or" in {
-    testQuery(Some((1 == 1) and None or condition(Seq(2, 3))), "WHERE 1 OR column_2 = 2 OR column_2 = 3") // APPROVED
-    //testQuery(Some((1 == 1) and None or condition(Seq(2, 3))), "WHERE 1") // CORRECT
+  it should "true using Multiple values and/None/or OR" in {
+    testQuery(Some((1 == 1) and None or conditionOr(Seq(2, 3))), "WHERE 1 OR column_2 = 2 OR column_2 = 3") // APPROVED
+    //testQuery(Some((1 == 1) and None or condition(Seq(2, 3))), "WHERE 1") // OPTIMAL
   }
 
-  it should "true using Multiple values or/None/or" in {
-    testQuery(Some((1 == 1) or None or condition(Seq(2, 3))), "WHERE 1") // CORRECT
+  it should "true using Multiple values or/None/or OR" in {
+    testQuery(Some((1 == 1) or None or conditionOr(Seq(2, 3))), "WHERE 1") // CORRECT
   }
 
-  it should "true using Multiple values or/None/and" in {
-    testQuery(Some((1 == 1) or None and condition(Seq(2, 3))), "WHERE (column_2 = 2 OR column_2 = 3)") // CORRECT
+  it should "true using Multiple values or/None/and OR" in {
+    testQuery(Some((1 == 1) or None and conditionOr(Seq(2, 3))), "WHERE (column_2 = 2 OR column_2 = 3)") // CORRECT
   }
 
-  it should "false using Multiple values and/None/and" in {
-    testQuery(Some((1 == 2) and None and condition(Seq(2, 3))), "WHERE 0") // CORRECT
+  it should "false using Multiple values and/None/and OR" in {
+    testQuery(Some((1 == 2) and None and conditionOr(Seq(2, 3))), "WHERE 0") // CORRECT
   }
 
-  it should "false using Multiple values and/None/or" in {
-    testQuery(Some((1 == 2) and None or condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3") // CORRECT
+  it should "false using Multiple values and/None/or OR" in {
+    testQuery(Some((1 == 2) and None or conditionOr(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3") // CORRECT
   }
 
-  it should "false using Multiple values or/None/or" in {
-    testQuery(Some((1 == 2) or None or condition(Seq(2, 3))), "WHERE 0 OR column_2 = 2 OR column_2 = 3") // APPROVED
-    //testQuery(Some((1 == 2) or None or condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3") // CORRECT
+  it should "false using Multiple values or/None/or OR" in {
+    testQuery(Some((1 == 2) or None or conditionOr(Seq(2, 3))), "WHERE 0 OR column_2 = 2 OR column_2 = 3") // APPROVED
+    //testQuery(Some((1 == 2) or None or condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3") // OPTIMAL
   }
 
-  it should "false using Multiple values or/None/and" in {
-    testQuery(Some((1 == 2) or None and condition(Seq(2, 3))), "WHERE 0 AND (column_2 = 2 OR column_2 = 3)") // APPROVED
-    //testQuery(Some((1 == 2) or None and condition(Seq(2, 3))), "WHERE 0") // CORRECT
+  it should "false using Multiple values or/None/and OR" in {
+    testQuery(Some((1 == 2) or None and conditionOr(Seq(2, 3))), "WHERE 0 AND (column_2 = 2 OR column_2 = 3)") // APPROVED
+    //testQuery(Some((1 == 2) or None and condition(Seq(2, 3))), "WHERE 0") // OPTIMAL
+  }
+
+  //
+  // AND
+  //
+
+  it should "true using Multiple values and/None/and AND" in {
+    testQuery(Some((1 == 1) and None and conditionAnd(Seq(2, 3))), "WHERE 1 AND column_2 = 2 AND column_2 = 3") // APPROVED
+    //testQuery(Some((1 == 1) and None and condition(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3") // OPTIMAL
+  }
+
+  it should "true using Multiple values and/None/or AND" in {
+    testQuery(Some((1 == 1) and None or conditionAnd(Seq(2, 3))), "WHERE 1 OR (column_2 = 2 AND column_2 = 3)") // APPROVED
+    //testQuery(Some((1 == 1) and None or condition(Seq(2, 3))), "WHERE (column_2 = 2 AND column_2 = 3)") // OPTIMAL
+  }
+
+  it should "true using Multiple values or/None/or AND" in {
+    testQuery(Some((1 == 1) or None or conditionAnd(Seq(2, 3))), "WHERE 1") // CORRECT
+  }
+
+  it should "true using Multiple values or/None/and AND" in {
+    testQuery(Some((1 == 1) or None and conditionAnd(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3") // CORRECT
+  }
+
+  it should "false using Multiple values and/None/and AND" in {
+    testQuery(Some((1 == 2) and None and conditionAnd(Seq(2, 3))), "WHERE 0") // CORRECT
+  }
+
+  it should "false using Multiple values and/None/or AND" in {
+    testQuery(Some((1 == 2) and None or conditionAnd(Seq(2, 3))), "WHERE (column_2 = 2 AND column_2 = 3)") // CORRECT
+  }
+
+  it should "false using Multiple values or/None/or AND" in {
+    testQuery(Some((1 == 2) or None or conditionAnd(Seq(2, 3))), "WHERE 0 OR (column_2 = 2 AND column_2 = 3)") // APPROVED
+    //testQuery(Some((1 == 2) or None or condition(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3") // OPTIMAL
+  }
+
+  it should "false using Multiple values or/None/and AND" in {
+    testQuery(Some((1 == 2) or None and conditionAnd(Seq(2, 3))), "WHERE 0 AND column_2 = 2 AND column_2 = 3") // APPROVED
+    //testQuery(Some((1 == 2) or None and condition(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3") // OPTIMAL
   }
 
   def testQuery(where: Option[TableColumn[Boolean]], expected: String): Assertion = {
