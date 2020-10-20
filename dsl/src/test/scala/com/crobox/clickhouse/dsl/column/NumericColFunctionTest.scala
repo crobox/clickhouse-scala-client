@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.{dsl => CHDsl}
 
 class NumericColFunctionTest extends ColumnFunctionTest {
-  "Tokenisations of functions working with numbers" should "succeed for ArithmeticFunctions" in {
+  it should "succeed for ArithmeticFunctions" in {
     r(plus(3, 3)) shouldBe "6"
     r(minus(3, 2)) shouldBe "1"
     r(multiply(3, 5)) shouldBe "15"
