@@ -13,14 +13,35 @@ trait LogicalFunctionTokenizer {
       case (Some(left), Some(right)) =>
         col.operator match {
           case And =>
-            if (left.isConstTrue) tokenize(right, col.operator)
-            else if (right.isConstTrue) tokenize(left, col.operator)
-            else s"${tokenize(left, col.operator)} AND ${tokenize(right, col.operator)}"
+            (tokenize(left, col.operator), tokenize(right, col.operator)) match {
+              case ("1", "1")                => "1" // LEFT & RIGHT are true, AND succeeds
+              case ("1", rightClause)        => removeBrackets(rightClause) // LEFT is true, only tokenize RIGHT
+              case ("0", _)                  => "0" // LEFT is false, AND fails
+              case (leftClause, "1")         => removeBrackets(leftClause) // RIGHT is true, only tokenize LEFT
+              case (_, "0")                  => "0" // RIGHT is false, AND fails
+              case (leftClause, rightClause) => s"$leftClause AND $rightClause"
+            }
           case Or =>
-            if (left.isConstFalse) tokenize(right, col.operator)
-            else if (right.isConstFalse) tokenize(left, col.operator)
-            else s"${tokenize(left, col.operator)} OR ${tokenize(right, col.operator)}"
-          case Xor => s"xor(${tokenize(left, col.operator)}, ${tokenize(right, col.operator)})"
+            (tokenize(left, col.operator), tokenize(right, col.operator)) match {
+              case ("0", "0")                => "0" // LEFT & RIGHT are false, OR fails
+              case ("0", rightClause)        => removeBrackets(rightClause) // LEFT is false, only tokenize RIGHT
+              case ("1", _)                  => "1" // LEFT is true, OR succeeds
+              case (leftClause, "0")         => removeBrackets(leftClause) // RIGHT is false, only tokenize LEFT
+              case (_, "1")                  => "1" // RIGHT is true, OR succeeds
+              case (leftClause, rightClause) => s"$leftClause OR $rightClause"
+
+            }
+          case Xor =>
+            (tokenize(left, col.operator), tokenize(right, col.operator)) match {
+              case ("0", "0")                => "0" // LEFT & RIGHT are false, XOR fails
+              case ("1", "1")                => "0" // LEFT & RIGHT are true, XOR fails
+              case ("0", rightClause)        => removeBrackets(rightClause) // LEFT is false, only tokenize RIGHT
+              case (leftClause, "0")         => removeBrackets(leftClause) // RIGHT is false, only tokenize LEFT
+              case ("1", rightClause)        => s"not(${removeBrackets(rightClause)})" // LEFT is true, RIGHT MUST BE FALSE
+              case (leftClause, "1")         => s"not(${removeBrackets(leftClause)})" // RIGHT is true, LEFT MUST BE FALSE
+              case (leftClause, rightClause) => s"xor($leftClause, $rightClause)"
+
+            }
           case Not => s"not(${tokenize(left, col.operator)})"
         }
     }
@@ -46,4 +67,7 @@ trait LogicalFunctionTokenizer {
       s"($evaluated)"
     }
   }
+
+  private def removeBrackets(clause: String): String =
+    if (clause.startsWith("(")) clause.substring(1, clause.length - 1) else clause
 }
