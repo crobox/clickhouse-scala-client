@@ -190,9 +190,7 @@ class ClickhouseTokenizerTest
         where = Some(col)
       )
     )
-    query should be(
-      s"SELECT ${col.rawSql} WHERE ${col.rawSql} FORMAT JSON"
-    )
+    query should be(s"SELECT ${col.rawSql} WHERE ${col.rawSql} FORMAT JSON")
   }
 
   "Aggregated functions" should "build with combinators" in {
