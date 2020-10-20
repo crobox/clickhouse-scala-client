@@ -135,38 +135,39 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
   }
 
   it should "true using Multiple values and/None/and" in {
-    testQuery(
-      Some((1 == 1) and None and condition(Seq(2, 3))),
-      "WHERE 1 AND (column_2 = 2 OR column_2 = 3)"
-    )
-  }
-
-  it should "true using Multiple values or/None/or" in {
-    testQuery(Some((1 == 1) or None or condition(Seq(2, 3))), "WHERE 1")
-  }
-
-  it should "true using Multiple values or/None/and" in {
-    testQuery(Some((1 == 1) or None and condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3")
+    testQuery(Some((1 == 1) and None and condition(Seq(2, 3))), "WHERE 1 AND (column_2 = 2 OR column_2 = 3)") // APPROVED
+    //testQuery(Some((1 == 1) and None and condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3") // CORRECT
   }
 
   it should "true using Multiple values and/None/or" in {
-    testQuery(Some((1 == 1) and None or condition(Seq(2, 3))), "WHERE 1 OR column_2 = 2 OR column_2 = 3")
+    testQuery(Some((1 == 1) and None or condition(Seq(2, 3))), "WHERE 1 OR column_2 = 2 OR column_2 = 3") // APPROVED
+    //testQuery(Some((1 == 1) and None or condition(Seq(2, 3))), "WHERE 1") // CORRECT
+  }
+
+  it should "true using Multiple values or/None/or" in {
+    testQuery(Some((1 == 1) or None or condition(Seq(2, 3))), "WHERE 1") // CORRECT
+  }
+
+  it should "true using Multiple values or/None/and" in {
+    testQuery(Some((1 == 1) or None and condition(Seq(2, 3))), "WHERE (column_2 = 2 OR column_2 = 3)") // CORRECT
   }
 
   it should "false using Multiple values and/None/and" in {
-    testQuery(Some((1 == 2) and None and condition(Seq(2, 3))), "WHERE 0")
-  }
-
-  it should "false using Multiple values or/None/or" in {
-    testQuery(Some((1 == 2) or None or condition(Seq(2, 3))), "WHERE 0 OR column_2 = 2 OR column_2 = 3")
-  }
-
-  it should "false using Multiple values or/None/and" in {
-    testQuery(Some((1 == 2) or None and condition(Seq(2, 3))), "WHERE 0 AND (column_2 = 2 OR column_2 = 3)")
+    testQuery(Some((1 == 2) and None and condition(Seq(2, 3))), "WHERE 0") // CORRECT
   }
 
   it should "false using Multiple values and/None/or" in {
-    testQuery(Some((1 == 2) and None or condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3")
+    testQuery(Some((1 == 2) and None or condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3") // CORRECT
+  }
+
+  it should "false using Multiple values or/None/or" in {
+    testQuery(Some((1 == 2) or None or condition(Seq(2, 3))), "WHERE 0 OR column_2 = 2 OR column_2 = 3") // APPROVED
+    //testQuery(Some((1 == 2) or None or condition(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3") // CORRECT
+  }
+
+  it should "false using Multiple values or/None/and" in {
+    testQuery(Some((1 == 2) or None and condition(Seq(2, 3))), "WHERE 0 AND (column_2 = 2 OR column_2 = 3)") // APPROVED
+    //testQuery(Some((1 == 2) or None and condition(Seq(2, 3))), "WHERE 0") // CORRECT
   }
 
   def testQuery(where: Option[TableColumn[Boolean]], expected: String): Assertion = {
