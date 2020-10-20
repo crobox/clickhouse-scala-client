@@ -125,9 +125,17 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
     )
   }
 
+  it should "tokenize numbers OR with NONE" in {
+    def condition(nr: Seq[Int]): Option[TableColumn[Boolean]] = Option(nr.map(x => col2 === x).reduce((a, b) => a or b))
+    testQuery(
+      Some(None and condition(Seq(1, 3)) and None and condition(Seq(3, 4)) and None),
+      s"WHERE (column_2 = 1 OR column_2 = 3) AND (column_2 = 3 OR column_2 = 4)"
+    )
+  }
+
   def testQuery(where: Option[TableColumn[Boolean]], expected: String): Assertion = {
-    val select = SelectQuery(Seq(shieldId))
-    val iQuery = InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), None, where)
+    val select    = SelectQuery(Seq(shieldId))
+    val iQuery    = InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), None, where)
     var generated = testSubject.toSql(iQuery)
     generated = generated.substring(generated.indexOf("WHERE "))
     generated = generated.substring(0, generated.indexOf(" FORMAT"))
