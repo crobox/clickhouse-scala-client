@@ -37,8 +37,8 @@ trait LogicalFunctionTokenizer {
               case ("1", "1")                => "0" // LEFT & RIGHT are true, XOR fails
               case ("0", rightClause)        => removeBrackets(rightClause) // LEFT is false, only tokenize RIGHT
               case (leftClause, "0")         => removeBrackets(leftClause) // RIGHT is false, only tokenize LEFT
-              case ("1", _)                  => "1" // LEFT is true, XOR succeeds
-              case (_, "1")                  => "1" // RIGHT is true, XOR succeeds
+              case ("1", rightClause)        => s"not(${removeBrackets(rightClause)})" // LEFT is true, RIGHT MUST BE FALSE
+              case (leftClause, "1")         => s"not(${removeBrackets(leftClause)})" // RIGHT is true, LEFT MUST BE FALSE
               case (leftClause, rightClause) => s"xor($leftClause, $rightClause)"
 
             }

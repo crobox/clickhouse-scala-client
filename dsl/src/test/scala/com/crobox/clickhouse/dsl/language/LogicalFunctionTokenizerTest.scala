@@ -149,12 +149,20 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
     testQuery(Some((1 == 1) and None or conditionOr(Seq(2, 3))), "WHERE 1")
   }
 
+  it should "true using Multiple values and/None/xor OR" in {
+    testQuery(Some((1 == 1) and None xor conditionOr(Seq(2, 3))), "WHERE not(column_2 = 2 OR column_2 = 3)")
+  }
+
   it should "true using Multiple values or/None/or OR" in {
     testQuery(Some((1 == 1) or None or conditionOr(Seq(2, 3))), "WHERE 1")
   }
 
   it should "true using Multiple values or/None/and OR" in {
     testQuery(Some((1 == 1) or None and conditionOr(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3")
+  }
+
+  it should "true using Multiple values or/None/xor OR" in {
+    testQuery(Some((1 == 1) or None xor conditionOr(Seq(2, 3))), "WHERE not(column_2 = 2 OR column_2 = 3)")
   }
 
   it should "false using Multiple values and/None/and OR" in {
@@ -165,12 +173,20 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
     testQuery(Some((1 == 2) and None or conditionOr(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3")
   }
 
+  it should "false using Multiple values and/None/xor OR" in {
+    testQuery(Some((1 == 2) and None xor conditionOr(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3")
+  }
+
   it should "false using Multiple values or/None/or OR" in {
     testQuery(Some((1 == 2) or None or conditionOr(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3")
   }
 
   it should "false using Multiple values or/None/and OR" in {
     testQuery(Some((1 == 2) or None and conditionOr(Seq(2, 3))), "WHERE 0")
+  }
+
+  it should "false using Multiple values or/None/xor OR" in {
+    testQuery(Some((1 == 2) or None xor conditionOr(Seq(2, 3))), "WHERE column_2 = 2 OR column_2 = 3")
   }
 
   //
@@ -185,12 +201,20 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
     testQuery(Some((1 == 1) and None or conditionAnd(Seq(2, 3))), "WHERE 1")
   }
 
+  it should "true using Multiple values and/None/xor AND" in {
+    testQuery(Some((1 == 1) and None xor conditionAnd(Seq(2, 3))), "WHERE not(column_2 = 2 AND column_2 = 3)")
+  }
+
   it should "true using Multiple values or/None/or AND" in {
     testQuery(Some((1 == 1) or None or conditionAnd(Seq(2, 3))), "WHERE 1")
   }
 
   it should "true using Multiple values or/None/and AND" in {
     testQuery(Some((1 == 1) or None and conditionAnd(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3")
+  }
+
+  it should "true using Multiple values or/None/xor AND" in {
+    testQuery(Some((1 == 1) or None xor conditionAnd(Seq(2, 3))), "WHERE not(column_2 = 2 AND column_2 = 3)")
   }
 
   it should "false using Multiple values and/None/and AND" in {
@@ -201,12 +225,20 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
     testQuery(Some((1 == 2) and None or conditionAnd(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3")
   }
 
+  it should "false using Multiple values and/None/xor AND" in {
+    testQuery(Some((1 == 2) and None xor conditionAnd(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3")
+  }
+
   it should "false using Multiple values or/None/or AND" in {
-    testQuery(Some((1 == 2) or None or conditionAnd(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3") 
+    testQuery(Some((1 == 2) or None or conditionAnd(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3")
   }
 
   it should "false using Multiple values or/None/and AND" in {
     testQuery(Some((1 == 2) or None and conditionAnd(Seq(2, 3))), "WHERE 0")
+  }
+
+  it should "false using Multiple values or/None/xor AND" in {
+    testQuery(Some((1 == 2) or None xor conditionAnd(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3")
   }
 
   def testQuery(where: Option[TableColumn[Boolean]], expected: String): Assertion = {
