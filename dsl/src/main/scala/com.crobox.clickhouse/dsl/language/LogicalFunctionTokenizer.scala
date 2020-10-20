@@ -7,28 +7,18 @@ trait LogicalFunctionTokenizer {
 
   def tokenizeLogicalFunction(col: LogicalFunction)(implicit ctx: TokenizeContext): String =
     (col.left.asOption, col.right.asOption) match {
-      case (None, None) => "1"
-      case (Some(left), None) =>
-        if (left.isConstFalse) "0"
-        else if (left.isConstTrue) "1"
-        else tokenize(left, col.operator)
-      case (None, Some(right)) =>
-        if (right.isConstFalse) "0"
-        else if (right.isConstTrue) "1"
-        else tokenize(right, col.operator)
+      case (None, None)        => "1"
+      case (Some(left), None)  => tokenize(left, col.operator)
+      case (None, Some(right)) => tokenize(right, col.operator)
       case (Some(left), Some(right)) =>
         col.operator match {
           case And =>
-            if (left.isConstFalse) "0" // LEFT is false, no need to process RIGHT
-            else if (left.isConstTrue) tokenizeColumn(right) // LEFT is true, only tokenize RIGHT
-            else if (right.isConstFalse) "0" // RIGHT is false, no need to process LEFT
-            else if (right.isConstTrue) tokenizeColumn(left) // RIGHT is true, only tokenize LEFT
+            if (left.isConstTrue) tokenizeColumn(right) // LEFT is true, only tokenizer RIGHT
+            else if (right.isConstTrue) tokenizeColumn(left) // RIGHT is true, only tokenizer LEFT
             else s"${tokenize(left, col.operator)} AND ${tokenize(right, col.operator)}"
           case Or =>
-            if (left.isConstFalse) tokenizeColumn(right) // LEFT is false, only tokenize RIGHT
-            else if (left.isConstTrue) "1" // LEFT is true, skip RIGHT
-            else if (right.isConstFalse) tokenizeColumn(left) // RIGHT is false, only tokenize LEFT
-            else if (right.isConstTrue) "1" // RIGHT is true, skip LEFT
+            if (left.isConstFalse) tokenizeColumn(right) // LEFT is false, only tokenize right
+            else if (right.isConstFalse) tokenizeColumn(left) // RIGHT is false, only tokenize left
             else s"${tokenize(left, col.operator)} OR ${tokenize(right, col.operator)}"
           case Xor => s"xor(${tokenize(left, col.operator)}, ${tokenize(right, col.operator)})"
           case Not => s"not(${tokenize(left, col.operator)})"
