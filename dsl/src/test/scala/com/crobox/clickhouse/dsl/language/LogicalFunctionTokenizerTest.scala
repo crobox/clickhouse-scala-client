@@ -186,7 +186,7 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
 
   it should "true using Multiple values and/None/or AND" in {
     testQuery(Some((1 == 1) and None or conditionAnd(Seq(2, 3))), "WHERE 1 OR (column_2 = 2 AND column_2 = 3)") // APPROVED
-    //testQuery(Some((1 == 1) and None or condition(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3") // OPTIMAL
+    //testQuery(Some((1 == 1) and None or condition(Seq(2, 3))), "WHERE 1") // OPTIMAL
   }
 
   it should "true using Multiple values or/None/or AND" in {
