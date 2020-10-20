@@ -16,9 +16,9 @@ trait LogicalFunctionTokenizer {
             //s"${tokenize(left, col.operator)} AND ${tokenize(right, col.operator)}"
             (tokenize(left, col.operator), tokenize(right, col.operator)) match {
               case ("1", "1")                => "1" // LEFT & RIGHT are true, AND succeeds
-              case ("1", rightClause)        => tokenizeColumn(right) // LEFT is true, only tokenize RIGHT
+              case ("1", rightClause)        => removeBrackets(rightClause) // LEFT is true, only tokenize RIGHT
               case ("0", _)                  => "0" // LEFT is false, AND fails
-              case (leftClause, "1")         => tokenizeColumn(left) // RIGHT is true, only tokenize LEFT
+              case (leftClause, "1")         => removeBrackets(leftClause) // RIGHT is true, only tokenize LEFT
               case (_, "0")                  => "0" // RIGHT is false, AND fails
               case (leftClause, rightClause) => s"$leftClause AND $rightClause"
             }
@@ -26,9 +26,9 @@ trait LogicalFunctionTokenizer {
             //s"${tokenize(left, col.operator)} OR ${tokenize(right, col.operator)}"
             (tokenize(left, col.operator), tokenize(right, col.operator)) match {
               case ("0", "0")                => "0" // LEFT & RIGHT are false, OR fails
-              case ("0", rightClause)        => tokenizeColumn(right) // LEFT is false, only tokenize RIGHT
+              case ("0", rightClause)        => removeBrackets(rightClause) // LEFT is false, only tokenize RIGHT
               case ("1", _)                  => "1" // LEFT is true, OR succeeds
-              case (leftClause, "0")         => tokenizeColumn(left) // RIGHT is false, only tokenize LEFT
+              case (leftClause, "0")         => removeBrackets(leftClause) // RIGHT is false, only tokenize LEFT
               case (_, "1")                  => "1" // RIGHT is true, OR succeeds
               case (leftClause, rightClause) => s"$leftClause OR $rightClause"
 
@@ -59,4 +59,7 @@ trait LogicalFunctionTokenizer {
       s"($evaluated)"
     }
   }
+
+  private def removeBrackets(clause: String): String =
+    if (clause.startsWith("(")) clause.substring(1, clause.length - 1) else clause
 }
