@@ -13,12 +13,12 @@ trait LogicalFunctionTokenizer {
       case (Some(left), Some(right)) =>
         col.operator match {
           case And =>
-            if (left.isConstTrue) tokenize(right, col.operator)
-            else if (right.isConstTrue) tokenize(left, col.operator)
+            if (left.isConstTrue) tokenizeColumn(right) // LEFT IS OMITTED, we can safely discard
+            else if (right.isConstTrue) tokenizeColumn(left) // RIGHT IS OMITTED, we can safely discard
             else s"${tokenize(left, col.operator)} AND ${tokenize(right, col.operator)}"
           case Or =>
-            if (left.isConstFalse) tokenize(right, col.operator)
-            else if (right.isConstFalse) tokenize(left, col.operator)
+            if (left.isConstFalse) tokenizeColumn(right) // LEFT IS OMITTED, we can safely discard
+            else if (right.isConstFalse) tokenizeColumn(left) // RIGHT IS OMITTED, we can safely discard
             else s"${tokenize(left, col.operator)} OR ${tokenize(right, col.operator)}"
           case Xor => s"xor(${tokenize(left, col.operator)}, ${tokenize(right, col.operator)})"
           case Not => s"not(${tokenize(left, col.operator)})"
