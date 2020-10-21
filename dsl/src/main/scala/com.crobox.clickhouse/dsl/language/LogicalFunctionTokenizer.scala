@@ -69,5 +69,5 @@ trait LogicalFunctionTokenizer {
   }
 
   private def removeBrackets(clause: String): String =
-    if (clause.startsWith("(")) clause.substring(1, clause.length - 1) else clause
+    if (clause.startsWith("(") && clause.endsWith(")")) clause.substring(1, clause.length - 1) else clause
 }
