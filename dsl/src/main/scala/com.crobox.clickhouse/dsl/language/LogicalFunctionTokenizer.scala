@@ -70,11 +70,7 @@ trait LogicalFunctionTokenizer {
 
   private def removeBrackets(clause: String): String =
     // remove brackets if found at start...
-    if (clause.charAt(0) == '(') {
-      // strip off any possible white spaces / new lines
-      clause.lastIndexOf(')') match {
-        case -1  => clause
-        case idx => clause.substring(1, idx)
-      }
+    if (clause.startsWith("(") && clause.endsWith(")")) {
+      clause.substring(1, clause.length - 1)
     } else clause
 }
