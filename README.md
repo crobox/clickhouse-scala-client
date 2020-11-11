@@ -303,7 +303,7 @@ By using the `ClickhouseSink` you can also retry inserts by setting the `idempot
 
 # DSL
 
-The dsl is experimental and only available for scala 2.12.
+Typed/composable DSL that is interpreted and parsed into queries, with ofcourse full seamless integration into the driver.
 
 For more information see [the wiki](https://github.com/crobox/clickhouse-scala-client/wiki)
 
