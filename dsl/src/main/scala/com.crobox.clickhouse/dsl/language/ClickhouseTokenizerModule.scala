@@ -241,8 +241,7 @@ trait ClickhouseTokenizerModule
           case query: InnerFromQuery    => tokenizeFrom(Some(query), withPrefix = false)
         }
 
-        val leftAlias = if (from.flatMap(_.alias).isEmpty) s"AS ${ctx.leftAlias(from.flatMap(_.alias))}" else ""
-//        val rightAlias = if (query.other.alias.isEmpty) s"AS ${ctx.rightAlias(query.other.alias)}" else ""
+        val leftAlias  = if (from.flatMap(_.alias).isEmpty) s"AS ${ctx.leftAlias(from.flatMap(_.alias))}" else ""
         val rightAlias = s"AS ${ctx.rightAlias(query.other.alias)}"
 
         s""" $leftAlias
