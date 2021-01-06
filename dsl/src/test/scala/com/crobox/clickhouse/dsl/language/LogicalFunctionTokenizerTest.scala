@@ -241,11 +241,17 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
     testQuery(Some((1 == 2) or None xor conditionAnd(Seq(2, 3))), "WHERE column_2 = 2 AND column_2 = 3")
   }
 
-  it should "maintain brackets in" in {
+  it should "maintain brackets 1" in {
     testQuery(
-//      Option(shieldId.isEq("a") and None.and(None).and(shieldId.isEq("b") or shieldId.isEq("c"))), // FAILS
-      Option(shieldId.isEq("a") and None and None.and(shieldId.isEq("b") or shieldId.isEq("c"))), // SUCCEEDS
+      Option(shieldId.isEq("a") and None.and(None).and(shieldId.isEq("b") or shieldId.isEq("c"))),
       "WHERE shield_id = 'a' AND (shield_id = 'b' OR shield_id = 'c')"
+    )
+  }
+
+  it should "maintain brackets 2" in {
+    testQuery(
+      Option(None.and(None).and(shieldId.isEq("b") or shieldId.isEq("c"))),
+      "WHERE shield_id = 'b' OR shield_id = 'c'"
     )
   }
 

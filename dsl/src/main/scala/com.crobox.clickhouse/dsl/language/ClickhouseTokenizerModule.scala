@@ -2,6 +2,7 @@ package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.misc.StringUtils
 import com.crobox.clickhouse.time.{MultiDuration, TimeUnit, TotalDuration}
 import com.typesafe.scalalogging.Logger
 import org.joda.time.{DateTime, DateTimeZone}
@@ -344,7 +345,9 @@ trait ClickhouseTokenizerModule
                                 keyword: String)(implicit ctx: TokenizeContext): String =
     maybeCondition match {
       case None            => ""
-      case Some(condition) => s"$keyword ${tokenizeColumn(condition)}"
+      case Some(condition) =>
+        //s"$keyword ${tokenizeColumn(condition)}"
+        s"$keyword ${StringUtils.removeSurroundingBrackets(tokenizeColumn(condition).trim)}"
     }
 
   private def tokenizeGroupBy(groupBy: Option[GroupByQuery]): String = {
