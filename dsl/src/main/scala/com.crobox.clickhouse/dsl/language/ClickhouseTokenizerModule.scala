@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 //import scala.jdk.CollectionConverters._
 
-case class TokenizeContext(var joinNr: Int = 0) {
+case class TokenizeContext(var joinNr: Int = 0, removeRedundantBrackets: Boolean = true) {
 
   def incrementJoinNumber(): Unit =
     joinNr = joinNr + 1
@@ -63,9 +63,10 @@ trait ClickhouseTokenizerModule
       .replace(" )", ")")
       .trim
 
-  override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON")): String = {
+  override def toSql(query: InternalQuery,
+                     formatting: Option[String] = Some("JSON"))(implicit ctx: TokenizeContext): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = removeRedundantWhitespaces(toRawSql(query)(TokenizeContext()) + formatSql)
+    val sql       = removeRedundantWhitespaces(toRawSql(query) + formatSql)
     logger.debug(s"Generated sql [$sql]")
     sql
   }
