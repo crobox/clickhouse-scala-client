@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 //import scala.jdk.CollectionConverters._
 
-case class TokenizeContext(var joinNr: Int = 0, removeRedundantBrackets: Boolean = true) {
+case class TokenizeContext(var joinNr: Int = 0) {
 
   def incrementJoinNumber(): Unit =
     joinNr = joinNr + 1
