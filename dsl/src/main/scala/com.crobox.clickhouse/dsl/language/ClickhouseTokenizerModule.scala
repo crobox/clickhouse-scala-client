@@ -2,6 +2,7 @@ package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.misc.StringUtils
 import com.crobox.clickhouse.time.{MultiDuration, TimeUnit, TotalDuration}
 import com.typesafe.scalalogging.Logger
 import org.joda.time.{DateTime, DateTimeZone}
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 //import scala.jdk.CollectionConverters._
 
-case class TokenizeContext(var joinNr: Int = 0, removeRedundantBrackets: Boolean = true) {
+case class TokenizeContext(var joinNr: Int = 0) {
 
   def incrementJoinNumber(): Unit =
     joinNr = joinNr + 1
@@ -56,17 +57,10 @@ trait ClickhouseTokenizerModule
   protected def tokenizeSeqCol(columns: Column*)(implicit ctx: TokenizeContext): String =
     columns.map(tokenizeColumn).mkString(", ")
 
-  def removeRedundantWhitespaces(value: String): String =
-    value
-      .replaceAll("\\s+", " ")
-      .replace(" ( ", " (")
-      .replace(" )", ")")
-      .trim
-
   override def toSql(query: InternalQuery,
                      formatting: Option[String] = Some("JSON"))(implicit ctx: TokenizeContext): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = removeRedundantWhitespaces(toRawSql(query) + formatSql)
+    val sql       = StringUtils.removeRedundantWhitespaces(toRawSql(query) + formatSql)
     logger.debug(s"Generated sql [$sql]")
     sql
   }
@@ -210,7 +204,7 @@ trait ClickhouseTokenizerModule
   // TODO this is a fallback to find a similar timezone when the provided interval does not have a set timezone id.
   // We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries
   // (probably default to failing)
-  private def determineZoneId(start: DateTime) = {
+  private def determineZoneId(start: DateTime): String = {
     val provider = DateTimeZone.getProvider
     val zones    = provider.getAvailableIDs.asScala.map(provider.getZone)
     val zone     = start.getZone
@@ -344,7 +338,9 @@ trait ClickhouseTokenizerModule
                                 keyword: String)(implicit ctx: TokenizeContext): String =
     maybeCondition match {
       case None            => ""
-      case Some(condition) => s"$keyword ${tokenizeColumn(condition)}"
+      case Some(condition) =>
+        //s"$keyword ${tokenizeColumn(condition)}"
+        s"$keyword ${StringUtils.removeSurroundingBrackets(tokenizeColumn(condition).trim)}"
     }
 
   private def tokenizeGroupBy(groupBy: Option[GroupByQuery]): String = {
