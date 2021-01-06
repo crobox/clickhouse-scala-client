@@ -1,15 +1,7 @@
-package com.crobox.clickhouse.dsl.column
+package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.column.ColumnFunctionTest
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
-import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
-import org.scalatest.Assertion
-import org.scalatest.concurrent.ScalaFutures
-
-import scala.concurrent.Future
 
 class TableColumnImprovementsTest extends ColumnFunctionTest with ClickhouseTokenizerModule {
   val source: TableColumn[Boolean]    = shieldId.isEq("a")

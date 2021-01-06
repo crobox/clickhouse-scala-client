@@ -1,6 +1,4 @@
-package com.crobox.clickhouse.dsl.column
-
-import com.crobox.clickhouse.dsl._
+package com.crobox.clickhouse.dsl
 
 object TableColumnImprovements {
   implicit class EnhancedTableColumn(source: TableColumn[Boolean]) {
