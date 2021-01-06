@@ -55,7 +55,7 @@ trait LogicalFunctionTokenizer {
       case _                                                         => tokenizeColumn(col)
     }
 
-  private def surroundWithBrackets(evaluated: String)(implicit ctx: TokenizeContext): String =
+  private def surroundWithBrackets(evaluated: String): String =
     // the underlying column c might be a complex logical function that first needs to be evaluated.
     // e.g. or(1 or true or not(a)) ==> not(a)
     // We need to detect if this is a single clause OR a multiple clauses
