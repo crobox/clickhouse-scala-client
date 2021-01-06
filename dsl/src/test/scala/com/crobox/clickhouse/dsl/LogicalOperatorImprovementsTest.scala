@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.dsl.column.ColumnFunctionTest
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 
-class TableColumnImprovementsTest extends ColumnFunctionTest with ClickhouseTokenizerModule {
+class LogicalOperatorImprovementsTest extends ColumnFunctionTest with ClickhouseTokenizerModule {
   val source: TableColumn[Boolean]    = shieldId.isEq("a")
   val condition: TableColumn[Boolean] = shieldId.isEq("b")
 
