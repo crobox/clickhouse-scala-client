@@ -1,9 +1,9 @@
-package com.crobox.clickhouse.dsl
+package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.column.ColumnFunctionTest
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 
-class LogicalOperatorImprovementsTest extends ColumnFunctionTest with ClickhouseTokenizerModule {
+class LogicalFunctionsTest extends ColumnFunctionTest with ClickhouseTokenizerModule {
   val source: TableColumn[Boolean]    = shieldId.isEq("a")
   val condition: TableColumn[Boolean] = shieldId.isEq("b")
 
