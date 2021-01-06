@@ -25,21 +25,19 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   protected val config: Config
 
   lazy val (progressQueue, progressSource) = {
-    val builtSource = QueryProgress.queryProgressStream
-      .run()
+    val builtSource = QueryProgress.queryProgressStream.run()
     builtSource._2.runWith(Sink.ignore) //ensure we have one sink draining the progress
     builtSource
   }
 
   lazy val superPoolSettings: ConnectionPoolSettings = ConnectionPoolSettings(system)
     .withConnectionSettings(
-      ClientConnectionSettings(system)
-        .withTransport(new StreamingProgressClickhouseTransport(progressQueue))
+      ClientConnectionSettings(system).withTransport(new StreamingProgressClickhouseTransport(progressQueue))
     )
-  private lazy val http = Http()
-  private lazy val pool = http.superPool[Promise[HttpResponse]](settings = superPoolSettings)
-  protected lazy val bufferSize: Int =
-    config.getInt("buffer-size")
+  private lazy val http              = Http()
+  private lazy val pool              = http.superPool[Promise[HttpResponse]](settings = superPoolSettings)
+  protected lazy val bufferSize: Int = config.getInt("buffer-size")
+  private lazy val queryRetries: Int = config.getInt("retries")
 
   private lazy val (queue, completion) = Source
     .queue[(HttpRequest, Promise[HttpResponse])](bufferSize, OverflowStrategy.dropNew)
@@ -49,8 +47,6 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       case (Failure(e), p)    => p.failure(e)
     })(Keep.both)
     .run()
-
-  private lazy val queryRetries: Int = config.getInt("retries")
 
   def executeRequest(query: String,
                      settings: QuerySettings,
@@ -78,7 +74,8 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
 
   def shutdown(): Future[Terminated] = {
     queue.complete()
-    queue.watchCompletion()
+    queue
+      .watchCompletion()
       .flatMap(_ => completion)
       .flatMap(_ => http.shutdownAllConnectionPools())
       .flatMap(_ => system.terminate())

@@ -48,7 +48,6 @@ case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
   }
 
   private def path(setting: String) = s"settings.$setting"
-
 }
 
 object QuerySettings {

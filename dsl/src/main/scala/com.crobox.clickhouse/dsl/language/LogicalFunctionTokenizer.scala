@@ -68,9 +68,9 @@ trait LogicalFunctionTokenizer {
     }
   }
 
-  private def removeBrackets(clause: String): String =
+  private def removeBrackets(clause: String)(implicit ctx: TokenizeContext): String =
     // remove brackets if found at start...
-    if (clause.startsWith("(") && clause.endsWith(")")) {
+    if (ctx.removeRedundantBrackets && clause.startsWith("(") && clause.endsWith(")")) {
       clause.substring(1, clause.length - 1)
     } else clause
 }
