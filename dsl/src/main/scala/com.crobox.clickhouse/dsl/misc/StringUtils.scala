@@ -9,4 +9,11 @@ object StringUtils {
     if (value.startsWith("(") && value.endsWith(")") && value.count(_ == '(') == 1 && value.count(_ == ')') == 1) {
       value.substring(1, value.length - 1)
     } else value
+
+  def removeRedundantWhitespaces(value: String): String =
+    value
+      .replaceAll("\\s+", " ")
+      .replace(" ( ", " (")
+      .replace(" )", ")")
+      .trim
 }

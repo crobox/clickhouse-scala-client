@@ -57,17 +57,10 @@ trait ClickhouseTokenizerModule
   protected def tokenizeSeqCol(columns: Column*)(implicit ctx: TokenizeContext): String =
     columns.map(tokenizeColumn).mkString(", ")
 
-  def removeRedundantWhitespaces(value: String): String =
-    value
-      .replaceAll("\\s+", " ")
-      .replace(" ( ", " (")
-      .replace(" )", ")")
-      .trim
-
   override def toSql(query: InternalQuery,
                      formatting: Option[String] = Some("JSON"))(implicit ctx: TokenizeContext): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = removeRedundantWhitespaces(toRawSql(query) + formatSql)
+    val sql       = StringUtils.removeRedundantWhitespaces(toRawSql(query) + formatSql)
     logger.debug(s"Generated sql [$sql]")
     sql
   }
@@ -211,7 +204,7 @@ trait ClickhouseTokenizerModule
   // TODO this is a fallback to find a similar timezone when the provided interval does not have a set timezone id.
   // We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries
   // (probably default to failing)
-  private def determineZoneId(start: DateTime) = {
+  private def determineZoneId(start: DateTime): String = {
     val provider = DateTimeZone.getProvider
     val zones    = provider.getAvailableIDs.asScala.map(provider.getZone)
     val zone     = start.getZone
