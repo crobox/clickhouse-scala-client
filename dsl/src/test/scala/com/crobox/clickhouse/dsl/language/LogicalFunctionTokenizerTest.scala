@@ -257,5 +257,4 @@ class LogicalFunctionTokenizerTest extends ClickhouseClientSpec with TestSchema 
 
     generated should be(expected)
   }
-
 }
