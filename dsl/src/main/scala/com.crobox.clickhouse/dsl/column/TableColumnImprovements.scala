@@ -37,8 +37,8 @@ object TableColumnImprovements {
     }
 
     def and(condition: TableColumn[Boolean]): TableColumn[Boolean] = source match {
-      case Some(condition) => LogicalFunction(source, And, condition)
-      case _               => condition
+      case Some(s) => LogicalFunction(s, And, condition)
+      case _       => condition
     }
 
     def or(condition: Option[TableColumn[Boolean]]): Option[TableColumn[Boolean]] = (source, condition) match {
@@ -49,8 +49,8 @@ object TableColumnImprovements {
     }
 
     def or(condition: TableColumn[Boolean]): TableColumn[Boolean] = source match {
-      case Some(condition) => LogicalFunction(source, Or, condition)
-      case _               => condition
+      case Some(s) => LogicalFunction(s, Or, condition)
+      case _       => condition
     }
 
     def xor(condition: Option[TableColumn[Boolean]]): Option[TableColumn[Boolean]] = (source, condition) match {
@@ -61,8 +61,8 @@ object TableColumnImprovements {
     }
 
     def xor(condition: TableColumn[Boolean]): TableColumn[Boolean] = source match {
-      case Some(condition) => LogicalFunction(source, Xor, condition)
-      case _               => condition
+      case Some(s) => LogicalFunction(s, Xor, condition)
+      case _       => condition
     }
   }
 }
