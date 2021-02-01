@@ -172,6 +172,8 @@ trait ClickhouseTokenizerModule
 
     def toDateTime(inner: String): String = s"toDateTime($inner, '$dateZone')"
 
+    def toUnixTimestamp(inner: String): String = s"toUnixTimestamp($inner, '$dateZone')"
+
     interval.duration match {
       case TotalDuration                      => s"${interval.getStartMillis}"
       case MultiDuration(1, TimeUnit.Year)    => toDateTime(convert("toStartOfYear"))
