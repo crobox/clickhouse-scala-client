@@ -13,6 +13,7 @@ class AggregationFunctionsIT
     with TestSchemaClickhouseQuerySpec {
 
   private val entries = 200145
+  private val delta = 3
   override val table1Entries: Seq[Table1Entry] =
     Seq.fill(entries)(Table1Entry(UUID.randomUUID(), numbers = Seq(1, 2, 3)))
   override val table2Entries: Seq[Table2Entry] =
@@ -32,7 +33,7 @@ class AggregationFunctionsIT
     val resultExact = chExecutor
       .execute[Result](select(uniqExact(shieldId) as "result") from OneTestTable)
       .futureValue
-    resultSimple.rows.head.result shouldBe (entries +- entries / 100)
+    resultSimple.rows.head.result shouldBe (entries ~% delta)
     resultSimple.rows.head.result should not be entries
     resultExact.rows.head.result shouldBe entries
   }

@@ -1,16 +1,16 @@
 package com.crobox.clickhouse
 
-import java.util.UUID
-
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKit
 import com.typesafe.config.{Config, ConfigFactory}
+import org.scalactic.{Tolerance, TripleEqualsSupport}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Assertion, BeforeAndAfterAll}
 
+import java.util.UUID
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.Random
@@ -56,4 +56,15 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
       // abort test
       cancel()
     }
+
+  implicit class PercentageDelta[T: Numeric](value: T) extends Tolerance {
+    type Base = T
+
+    private val numeric: Numeric[T] = implicitly[Numeric[T]]
+
+    def ~%(percent: Int, base: Base = numeric.fromInt(5)): TripleEqualsSupport.Spread[T] = {
+      import numeric._
+      value +- numeric.plus(base, numeric.fromInt(((value.toDouble / 100D) * percent).toInt))
+    }
+  }
 }
