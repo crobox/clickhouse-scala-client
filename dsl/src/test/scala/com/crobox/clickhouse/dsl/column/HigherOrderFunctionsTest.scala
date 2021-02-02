@@ -18,6 +18,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
   it should "HigherOrderFunctions: arrayCumSum" in {
     r(arrayCumSum[Long, Long](Some(_ * 2L), arr1)) shouldBe "[2,6,12]"
     r(arrayCumSum[Long, Long](None, arr1)) shouldBe "[1,3,6]"
+    r(arrayCumSum2[Long, Long]((x, y) => x * y, arr1, arr1)) shouldBe "[1,5,14]"
   }
 
   it should "HigherOrderFunctions: arrayExists" in {
