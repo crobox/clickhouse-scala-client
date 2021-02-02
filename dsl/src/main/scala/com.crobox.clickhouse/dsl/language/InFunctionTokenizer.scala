@@ -28,5 +28,4 @@ trait InFunctionTokenizer {
     case col: InFuncRHMagnet if col.tableRef.isDefined => col.tableRef.get.quoted
     case col: InFuncRHMagnet                           => tokenizeColumn(col.column)
   }
-
 }
