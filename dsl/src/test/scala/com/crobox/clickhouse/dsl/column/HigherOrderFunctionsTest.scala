@@ -19,5 +19,8 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayCumSum[Long, Long](Some(_ * 2L), arr1)) shouldBe "[2,6,12]"
     r(arraySort[Long, Double](Some(_     % 3.0), arr1)) shouldBe "[3,1,2]"
     r(arrayReverseSort[Long, Int](Some(_ % 3), arr1)) shouldBe "[2,1,3]"
+
+    // Second Order higher order
+    r(arrayMap[Long, Long]((x, y) => x * y, arr1, arr1)) shouldBe "[2,4,6]"
   }
 }
