@@ -48,7 +48,7 @@ trait HigherOrderFunctions { self: Magnets =>
                      array: ArrayColMagnet[_ <: Iterable[I]]): ArrayMap[I, O] =
     ArrayMap(Option(func), None, array)
 
-  def arrayMap2[I, O](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[O],
+  def arrayMap[I, O](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[O],
                      array1: ArrayColMagnet[_ <: Iterable[I]],
                      array2: ArrayColMagnet[_ <: Iterable[I]]): ArrayMap[I, O] =
     ArrayMap(None, Option(func), array1, array2)

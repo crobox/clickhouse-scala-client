@@ -7,7 +7,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
   "Tokenization" should "succeed for HigherOrderFunctions" in {
     val arr1 = Seq(1L, 2L, 3L)
 
-    r(arrayMap[Long, Long](_ * 2L, arr1)) shouldBe "[2,4,6]"
+    r(arrayMap[Long, Long](x => x * 2L, arr1)) shouldBe "[2,4,6]"
     r(arrayFilter[Long](_ <> 2L, arr1)) shouldBe "[1,3]"
     r(arrayExists[Long](_.isEq(2L), arr1)) shouldBe "1"
     r(arrayAll[Long](_ <= 3, arr1)) shouldBe "1"
@@ -21,6 +21,6 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayReverseSort[Long, Int](Some(_ % 3), arr1)) shouldBe "[2,1,3]"
 
     // Second Order higher order
-    r(arrayMap2[Long, Long]((x, y) => x * y, arr1, arr1)) shouldBe "[1,4,9]"
+    r(arrayMap[Long, Long]((x, y) => x * y, arr1, arr1)) shouldBe "[1,4,9]"
   }
 }
