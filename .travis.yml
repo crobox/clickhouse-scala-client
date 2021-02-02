@@ -6,15 +6,15 @@ scala:
   - 2.13.3
 jdk: openjdk11
 env:
-  - CLICKHOUSE_VERSION=19.13.1.11
   - CLICKHOUSE_VERSION=20.3.12.112
-  - CLICKHOUSE_VERSION=20.9.2.20
+  - CLICKHOUSE_VERSION=20.8.7.15
+  - CLICKHOUSE_VERSION=20.11.4.13
 
 sbt_args: "'set resolvers += \"Sonatype OSS Snapshots\" at \"https://oss.sonatype.org/content/repositories/snapshots\"'"
 
 after_success:
   - >
-      test "${TRAVIS_PULL_REQUEST}" = 'false' && test "${TRAVIS_BRANCH}" = 'master' && test "${CLICKHOUSE_VERSION}" = '20.3.12.112' &&
+      test "${TRAVIS_PULL_REQUEST}" = 'false' && test "${TRAVIS_BRANCH}" = 'master' && test "${CLICKHOUSE_VERSION}" = '20.11.4.13' &&
       sbt 'set resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"'
       'set credentials += Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", System.getenv("SONATYPE_USER"), System.getenv("SONATYPE_PASS"))'
       ++${TRAVIS_SCALA_VERSION} publish

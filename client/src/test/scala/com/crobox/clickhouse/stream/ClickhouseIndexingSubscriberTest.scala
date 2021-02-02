@@ -14,7 +14,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
 
   val client: ClickhouseClient = new ClickhouseClient(Some(config))
 
-  var subscriberCompletes: Promise[Unit] = Promise[Unit]
+  var subscriberCompletes: Promise[Unit] = Promise[Unit]()
 
   val createDb    = "CREATE DATABASE IF NOT EXISTS test"
   val dropDb      = "DROP DATABASE IF EXISTS test"
@@ -33,7 +33,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
       create <- client.execute(createTable)
     } yield create, timeout.duration)
 
-    subscriberCompletes = Promise[Unit]
+    subscriberCompletes = Promise[Unit]()
   }
 
   override protected def afterEach(): Unit = {
@@ -52,7 +52,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
   )
 
   def parsedInserts(key: String) = unparsedInserts(key).map(
-    _.mapValues({
+    _.mapValues({  // do NOT change to .view.mapValues given compilation errors for scala 2.12.+
       case value: Int           => value.toString
       case value: String        => "\"" + value + "\""
       case value: IndexedSeq[_] => "[" + value.mkString(", ") + "]"
@@ -63,7 +63,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
   it should "index items" in {
     val inserts = parsedInserts("two")
     val res = Source
-      .fromIterator(() => inserts.toIterator)
+      .fromIterator(() => inserts.toIterator) // do NOT change to .iterator given compilation errors for scala 2.12.+
       .map(data => Insert("test.insert", "{" + data + "}"))
       .runWith(ClickhouseSink.insertSink(config, client, Some("no-overrides")))
     Await.ready(res, 5.seconds)

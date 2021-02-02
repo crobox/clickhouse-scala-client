@@ -11,6 +11,7 @@ trait ComparisonFunctions { self: Magnets =>
     def >(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, ">", other)
     def <>(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "!=", other)
     def isEq(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "=", other)
+    def notEq(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "!=", other)
     def ===(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "=", other)
     def !==(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "!=", other)
     def <=(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "<=", other)
