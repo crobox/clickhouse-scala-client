@@ -13,7 +13,7 @@ class AggregationFunctionsIT
     with TestSchemaClickhouseQuerySpec {
 
   private val entries = 200145
-  private val delta = 3
+  private val delta = 2
   override val table1Entries: Seq[Table1Entry] =
     Seq.fill(entries)(Table1Entry(UUID.randomUUID(), numbers = Seq(1, 2, 3)))
   override val table2Entries: Seq[Table2Entry] =
