@@ -17,13 +17,19 @@ $ gpg --list-secret-keys
 $ gpg --keyserver keyserver.ubuntu.com --send-keys 2BE67AC00D699E04E840B7FE29967E804D85663F
 ```
 
+The single command that does it all:
+```
+sbt release publishSigned sonatypeRelease
+
+```
+
 To release and publish a version to oss.sonatype for both scala 2.11 and scala 2.12 run:
 
 ```
 sbt release 
 ```
 
-To only publish a certain version after f.e. the tags has been build but your PGP was not correctly unlocked you can run
+To only publish a certain version after f.e. the tags has been build, but your PGP was not correctly unlocked you can run
 
 ```
 sbt ++2.11.12 publishSigned
