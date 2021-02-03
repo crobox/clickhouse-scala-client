@@ -23,6 +23,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
 
   it should "HigherOrderFunctions: arrayExists" in {
     r(arrayExists[Long](_.isEq(2L), arr1)) shouldBe "1"
+    r(arrayExists[Long](_.isEq(-1L), arr1)) shouldBe "0"
   }
 
   it should "HigherOrderFunctions: arrayFilter" in {
