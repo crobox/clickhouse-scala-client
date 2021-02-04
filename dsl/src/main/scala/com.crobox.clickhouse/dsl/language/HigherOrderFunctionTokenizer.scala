@@ -7,11 +7,11 @@ trait HigherOrderFunctionTokenizer {
 
   private def tokenizeHOFunc[I, O, R](col: HigherOrderFunction[I, O, R])(implicit ctx: TokenizeContext): String =
     if (col.func1.isDefined) {
-      "x -> " + tokenizeColumn(col.func1.get(RefColumn[I]("x"))) + ","
+      "x -> " + tokenizeColumn(col.func1.get(RefColumn[I]("x"))) + ", "
     } else if (col.func2.isDefined) {
-      "(x,y) -> " + tokenizeColumn(col.func2.get(RefColumn[I]("x"), RefColumn[I]("y"))) + ","
+      "(x,y) -> " + tokenizeColumn(col.func2.get(RefColumn[I]("x"), RefColumn[I]("y"))) + ", "
     } else if (col.func3.isDefined) {
-      "(x,y,z) -> " + tokenizeColumn(col.func3.get(RefColumn[I]("x"), RefColumn[I]("y"), RefColumn[I]("z"))) + ","
+      "(x,y,z) -> " + tokenizeColumn(col.func3.get(RefColumn[I]("x"), RefColumn[I]("y"), RefColumn[I]("z"))) + ", "
     } else ""
 
   private def tokenizeHOParams[I, O, R](col: HigherOrderFunction[I, O, R])(implicit ctx: TokenizeContext): String =
