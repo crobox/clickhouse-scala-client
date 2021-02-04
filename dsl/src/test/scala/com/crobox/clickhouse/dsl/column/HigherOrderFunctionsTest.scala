@@ -26,6 +26,10 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayExists[Long](_.isEq(-1L), arr1)) shouldBe "0"
   }
 
+  it should "HigherOrderFunctions: arrayFill" in {
+    r(arrayFill[Long](_.isEq(2L), arr1)) shouldBe "[1,2,2]"
+  }
+
   it should "HigherOrderFunctions: arrayFilter" in {
     r(arrayFilter[Long](_ <> 2L, arr1)) shouldBe "[1,3]"
     r(arrayFilter[Long](_ < 0L, arr1)) shouldBe "[]"

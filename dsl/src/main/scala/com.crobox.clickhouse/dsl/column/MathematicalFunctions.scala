@@ -53,29 +53,4 @@ trait MathematicalFunctions { self: Magnets =>
   def acos(col: NumericCol[_])             = Acos(col)
   def atan(col: NumericCol[_])             = Atan(col)
   def pow(x: NumericCol[_], y: NumericCol[_]) = Pow(x, y)
-
-  /*
-e()
-pi()
-exp(x)
-log(x)
-exp2(x)
-log2(x)
-exp10(x)
-log10(x)
-sqrt(x)
-cbrt(x)
-erf(x)
-erfc(x)
-lgamma(x)
-tgamma(x)
-sin(x)
-cos(x)
-tan(x)
-asin(x)
-acos(x)
-atan(x)
-pow(x, y)
- */
-
 }
