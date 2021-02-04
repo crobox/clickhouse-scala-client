@@ -16,7 +16,7 @@ trait TypeCastFunctions { self: Magnets =>
   sealed trait Reinterpretable
 
   case class UInt8(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
-      extends TypeCastColumn[Short](tableColumn)
+      extends TypeCastColumn[Byte](tableColumn)
       with Reinterpretable
   case class UInt16(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
       extends TypeCastColumn[Short](tableColumn)
@@ -29,7 +29,7 @@ trait TypeCastFunctions { self: Magnets =>
       with Reinterpretable
 
   case class Int8(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
-      extends TypeCastColumn[Short](tableColumn)
+      extends TypeCastColumn[Byte](tableColumn)
       with Reinterpretable
   case class Int16(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
       extends TypeCastColumn[Short](tableColumn)
@@ -68,11 +68,11 @@ trait TypeCastFunctions { self: Magnets =>
   }
 
   sealed trait CastOutBind[I, O]
-  implicit object UInt8CastOutBind       extends CastOutBind[ColumnType.UInt8.type, Short]
+  implicit object UInt8CastOutBind       extends CastOutBind[ColumnType.UInt8.type, Byte]
   implicit object UInt16CastOutBind      extends CastOutBind[ColumnType.UInt16.type, Short]
   implicit object UInt32CastOutBind      extends CastOutBind[ColumnType.UInt32.type, Int]
   implicit object UInt64CastOutBind      extends CastOutBind[ColumnType.UInt64.type, Long]
-  implicit object Int8CastOutBind        extends CastOutBind[ColumnType.Int8.type, Short]
+  implicit object Int8CastOutBind        extends CastOutBind[ColumnType.Int8.type, Byte]
   implicit object Int16CastOutBind       extends CastOutBind[ColumnType.Int16.type, Short]
   implicit object Int32CastOutBind       extends CastOutBind[ColumnType.Int32.type, Int]
   implicit object Int64CastOutBind       extends CastOutBind[ColumnType.Int64.type, Long]
