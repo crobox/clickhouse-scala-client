@@ -54,5 +54,3 @@ case class RawColumn(rawSql: String) extends ExpressionColumn[Boolean](EmptyColu
 case class Const[V: QueryValue](const: V) extends ExpressionColumn[V](EmptyColumn) {
   val parsed = implicitly[QueryValue[V]].apply(const)
 }
-
-
