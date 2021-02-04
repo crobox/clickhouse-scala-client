@@ -67,7 +67,7 @@ trait HigherOrderFunctions { self: Magnets =>
       _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean]],
       _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean]],
       _arrays: ArrayColMagnet[_ <: Iterable[I]]*
-  ) extends HigherOrderFunction[I, Boolean, Iterable[I]](_func1, _func2, _func3, _arrays: _*)
+  ) extends HigherOrderFunction[I, Boolean, I](_func1, _func2, _func3, _arrays: _*)
   case class ArrayFirstIndex[I](
       _func1: Option[TableColumn[I] => ExpressionColumn[Boolean]],
       _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean]],
@@ -136,33 +136,33 @@ trait HigherOrderFunctions { self: Magnets =>
     ArrayExists(None, None, Option(func), array1, array2, array3)
 
   def arrayFilter[I](func: TableColumn[I] => ExpressionColumn[Boolean],
-                     array: ArrayColMagnet[_ <: Iterable[I]]): ArrayFilter[I] =
+                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArrayFilter(Option(func), None, None, array)
 
   def arrayFilter2[I](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
                       array1: ArrayColMagnet[_ <: Iterable[I]],
-                      array2: ArrayColMagnet[_ <: Iterable[I]]): ArrayFilter[I] =
+                      array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArrayFilter(None, Option(func), None, array1, array2)
 
   def arrayFilter3[I](func: (TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
                       array1: ArrayColMagnet[_ <: Iterable[I]],
                       array2: ArrayColMagnet[_ <: Iterable[I]],
-                      array3: ArrayColMagnet[_ <: Iterable[I]]): ArrayFilter[I] =
+                      array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArrayFilter(None, None, Option(func), array1, array2, array3)
 
   def arrayFirst[I](func: TableColumn[I] => ExpressionColumn[Boolean],
-                    array: ArrayColMagnet[_ <: Iterable[I]]): ArrayFirst[I] =
+                    array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
     ArrayFirst(Option(func), None, None, array)
 
   def arrayFirst2[I](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
                      array1: ArrayColMagnet[_ <: Iterable[I]],
-                     array2: ArrayColMagnet[_ <: Iterable[I]]): ArrayFirst[I] =
+                     array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
     ArrayFirst(None, Option(func), None, array1, array2)
 
   def arrayFirst3[I](func: (TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
                      array1: ArrayColMagnet[_ <: Iterable[I]],
                      array2: ArrayColMagnet[_ <: Iterable[I]],
-                     array3: ArrayColMagnet[_ <: Iterable[I]]): ArrayFirst[I] =
+                     array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
     ArrayFirst(None, None, Option(func), array1, array2, array3)
 
   def arrayFirstIndex[I](func: TableColumn[I] => ExpressionColumn[Boolean],

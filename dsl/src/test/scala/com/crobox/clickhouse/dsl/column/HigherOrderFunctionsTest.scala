@@ -32,6 +32,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
 
   it should "HigherOrderFunctions: arrayFirst" in {
     r(arrayFirst[Long](modulo(_, 2L).isEq(0), arr1)) shouldBe "2"
+    r(arrayFirst[Long](_ < 0, arr1)) shouldBe "0"
   }
 
   it should "HigherOrderFunctions: arrayFirstIndex" in {
