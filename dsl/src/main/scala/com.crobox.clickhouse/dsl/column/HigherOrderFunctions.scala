@@ -26,6 +26,12 @@ trait HigherOrderFunctions { self: Magnets =>
                             _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
                             _arrays: ArrayColMagnet[_ <: Iterable[I]]*)
       extends HigherOrderFunction[I, O, Iterable[I]](_func1, _func2, _func3, _arrays: _*)
+  case class ArrayMax[I, O](_func1: Option[TableColumn[I] => ExpressionColumn[O]],
+                            _arrays: ArrayColMagnet[_ <: Iterable[I]]*)
+      extends HigherOrderFunction[I, O, I](_func1, None, None, _arrays: _*)
+  case class ArrayMin[I, O](_func1: Option[TableColumn[I] => ExpressionColumn[O]],
+                            _arrays: ArrayColMagnet[_ <: Iterable[I]]*)
+      extends HigherOrderFunction[I, O, I](_func1, None, None, _arrays: _*)
   case class ArrayReverseSort[I, O](
       _func1: Option[TableColumn[I] => ExpressionColumn[O]],
       _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
@@ -229,6 +235,14 @@ trait HigherOrderFunctions { self: Magnets =>
                       array2: ArrayColMagnet[_ <: Iterable[I]],
                       array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArrayMap(None, None, Option(func), array1, array2, array3)
+
+//  def arrayMax[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
+//                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
+//    ArrayMax(func, array)
+//
+//  def arrayMin[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
+//                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
+//    ArrayMin(func, array)
 
   def arrayReverseFill[I](func: TableColumn[I] => ExpressionColumn[Boolean],
                           array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =

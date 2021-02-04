@@ -51,6 +51,16 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayMap3[Long, Long]((x, y, z) => x * y * z, arr1, arr1, arr1)) shouldBe "[1,8,27]"
   }
 
+  it should "HigherOrderFunctions: arrayMax" in {
+    r(arrayMax[Long, Long](None, arr1)) shouldBe "3"
+    r(arrayMax[Long, Long](Option(x => x * -1L), arr1)) shouldBe "1"
+  }
+
+  it should "HigherOrderFunctions: arrayMin" in {
+    r(arrayMin[Long, Long](None, arr1)) shouldBe "1"
+    r(arrayMin[Long, Long](Option(x => x * -1L), arr1)) shouldBe "-3"
+  }
+
   it should "HigherOrderFunctions: arrayReverseFill" in {
     r(arrayReverseFill[Long](_.isEq(2L), arr1)) shouldBe "[2,2,3]"
   }
