@@ -28,6 +28,7 @@ trait HigherOrderFunctionTokenizer {
       case col: ArrayFirst[_]          => s"arrayFirst(${tokenizeHOParams(col)})"
       case col: ArrayFirstIndex[_]     => s"arrayFirstIndex(${tokenizeHOParams(col)})"
       case col: ArrayMap[_, _]         => s"arrayMap(${tokenizeHOParams(col)})"
+      case col: ArrayReverseFill[_]    => s"arrayReverseFill(${tokenizeHOParams(col)})"
       case col: ArrayReverseSort[_, _] => s"arrayReverseSort(${tokenizeHOParams(col)})"
       case col: ArraySort[_, _]        => s"arraySort(${tokenizeHOParams(col)})"
       case col: ArraySum[_, _]         => s"arraySum(${tokenizeHOParams(col)})"

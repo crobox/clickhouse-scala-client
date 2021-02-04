@@ -80,6 +80,12 @@ trait HigherOrderFunctions { self: Magnets =>
       _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean]],
       _arrays: ArrayColMagnet[_ <: Iterable[I]]*
   ) extends HigherOrderFunction[I, Boolean, Int](_func1, _func2, _func3, _arrays: _*)
+  case class ArrayReverseFill[I](
+      _func1: Option[TableColumn[I] => ExpressionColumn[Boolean]],
+      _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean]],
+      _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean]],
+      _arrays: ArrayColMagnet[_ <: Iterable[I]]*
+  ) extends HigherOrderFunction[I, Boolean, Iterable[I]](_func1, _func2, _func3, _arrays: _*)
 
   def arrayAll[I](func: TableColumn[I] => ExpressionColumn[Boolean],
                   array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Boolean] =
@@ -146,14 +152,14 @@ trait HigherOrderFunctions { self: Magnets =>
     ArrayFill(Option(func), None, None, array)
 
   def arrayFill2[I](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
-                   array1: ArrayColMagnet[_ <: Iterable[I]],
-                   array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
+                    array1: ArrayColMagnet[_ <: Iterable[I]],
+                    array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArrayFill(None, Option(func), None, array1, array2)
 
   def arrayFill3[I](func: (TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
-                   array1: ArrayColMagnet[_ <: Iterable[I]],
-                   array2: ArrayColMagnet[_ <: Iterable[I]],
-                   array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
+                    array1: ArrayColMagnet[_ <: Iterable[I]],
+                    array2: ArrayColMagnet[_ <: Iterable[I]],
+                    array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArrayFill(None, None, Option(func), array1, array2, array3)
 
   def arrayFilter[I](func: TableColumn[I] => ExpressionColumn[Boolean],
@@ -215,6 +221,21 @@ trait HigherOrderFunctions { self: Magnets =>
                       array2: ArrayColMagnet[_ <: Iterable[I]],
                       array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArrayMap(None, None, Option(func), array1, array2, array3)
+
+  def arrayReverseFill[I](func: TableColumn[I] => ExpressionColumn[Boolean],
+                          array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
+    ArrayReverseFill(Option(func), None, None, array)
+
+  def arrayReverseFill2[I](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
+                           array1: ArrayColMagnet[_ <: Iterable[I]],
+                           array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
+    ArrayReverseFill(None, Option(func), None, array1, array2)
+
+  def arrayReverseFill3[I](func: (TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
+                           array1: ArrayColMagnet[_ <: Iterable[I]],
+                           array2: ArrayColMagnet[_ <: Iterable[I]],
+                           array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
+    ArrayReverseFill(None, None, Option(func), array1, array2, array3)
 
   def arrayReverseSort[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
                              array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =

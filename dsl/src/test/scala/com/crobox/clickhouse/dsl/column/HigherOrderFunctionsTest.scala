@@ -51,6 +51,10 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayMap3[Long, Long]((x, y, z) => x * y * z, arr1, arr1, arr1)) shouldBe "[1,8,27]"
   }
 
+  it should "HigherOrderFunctions: arrayReverseFill" in {
+    r(arrayReverseFill[Long](_.isEq(2L), arr1)) shouldBe "[2,2,3]"
+  }
+
   it should "HigherOrderFunctions: arrayReverseSort" in {
     r(arrayReverseSort[Long, Int](Some(_ % 3), arr1)) shouldBe "[2,1,3]"
     r(arrayReverseSort[Long, Int](None, arr1)) shouldBe "[3,2,1]"
