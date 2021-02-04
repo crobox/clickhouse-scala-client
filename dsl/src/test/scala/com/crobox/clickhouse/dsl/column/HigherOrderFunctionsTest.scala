@@ -28,6 +28,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
 
   it should "HigherOrderFunctions: arrayFilter" in {
     r(arrayFilter[Long](_ <> 2L, arr1)) shouldBe "[1,3]"
+    r(arrayFilter[Long](_ < 0L, arr1)) shouldBe "[]"
   }
 
   it should "HigherOrderFunctions: arrayFirst" in {
@@ -37,6 +38,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
 
   it should "HigherOrderFunctions: arrayFirstIndex" in {
     r(arrayFirstIndex[Long](modulo(_, 2L).isEq(0), arr1)) shouldBe "2"
+    r(arrayFirstIndex[Long](_ < 0, arr1)) shouldBe "0"
   }
 
   it should "HigherOrderFunctions: arrayMap" in {
