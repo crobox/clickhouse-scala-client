@@ -55,7 +55,7 @@ trait HigherOrderFunctions { self: Magnets =>
       _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean]],
       _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean]],
       _arrays: ArrayColMagnet[_ <: Iterable[I]]*
-  ) extends HigherOrderFunction[I, Boolean, Iterable[I]](_func1, _func2, _func3, _arrays: _*)
+  ) extends HigherOrderFunction[I, Boolean, Boolean](_func1, _func2, _func3, _arrays: _*)
   case class ArrayFilter[I](
       _func1: Option[TableColumn[I] => ExpressionColumn[Boolean]],
       _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean]],
@@ -121,18 +121,18 @@ trait HigherOrderFunctions { self: Magnets =>
     ArrayCumSum(None, None, Option(func), array1, array2, array3)
 
   def arrayExists[I](func: TableColumn[I] => ExpressionColumn[Boolean],
-                     array: ArrayColMagnet[_ <: Iterable[I]]): ArrayExists[I] =
+                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Boolean] =
     ArrayExists(Option(func), None, None, array)
 
   def arrayExists2[I](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
                       array1: ArrayColMagnet[_ <: Iterable[I]],
-                      array2: ArrayColMagnet[_ <: Iterable[I]]): ArrayExists[I] =
+                      array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Boolean] =
     ArrayExists(None, Option(func), None, array1, array2)
 
   def arrayExists3[I](func: (TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
                       array1: ArrayColMagnet[_ <: Iterable[I]],
                       array2: ArrayColMagnet[_ <: Iterable[I]],
-                      array3: ArrayColMagnet[_ <: Iterable[I]]): ArrayExists[I] =
+                      array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Boolean] =
     ArrayExists(None, None, Option(func), array1, array2, array3)
 
   def arrayFilter[I](func: TableColumn[I] => ExpressionColumn[Boolean],
