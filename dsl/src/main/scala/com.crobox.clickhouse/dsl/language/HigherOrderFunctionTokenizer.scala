@@ -20,6 +20,7 @@ trait HigherOrderFunctionTokenizer {
   def tokenizeHigherOrderFunction(col: HigherOrderFunction[_, _, _])(implicit ctx: TokenizeContext): String =
     col match {
       case col: ArrayAll[_, _]         => s"arrayAll(${tokenizeHOParams(col)})"
+      case col: ArrayAvg[_, _]         => s"arrayAvg(${tokenizeHOParams(col)})"
       case col: ArrayCount[_]          => s"arrayCount(${tokenizeHOParams(col)})"
       case col: ArrayCumSum[_, _]      => s"arrayCumSum(${tokenizeHOParams(col)})"
       case col: ArrayExists[_]         => s"arrayExists(${tokenizeHOParams(col)})"

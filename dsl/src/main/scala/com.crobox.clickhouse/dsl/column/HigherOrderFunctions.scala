@@ -16,6 +16,11 @@ trait HigherOrderFunctions { self: Magnets =>
                             _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
                             _arrays: ArrayColMagnet[_ <: Iterable[I]]*)
       extends HigherOrderFunction[I, O, Boolean](_func1, _func2, _func3, _arrays: _*)
+  case class ArrayAvg[I, O](_func1: Option[TableColumn[I] => ExpressionColumn[O]],
+                            _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
+                            _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
+                            _arrays: ArrayColMagnet[_ <: Iterable[I]]*)
+      extends HigherOrderFunction[I, O, I](_func1, _func2, _func3, _arrays: _*)
   case class ArrayCumSum[I, O](_func1: Option[TableColumn[I] => ExpressionColumn[O]],
                                _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
                                _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
@@ -115,6 +120,21 @@ trait HigherOrderFunctions { self: Magnets =>
                    array2: ArrayColMagnet[_ <: Iterable[I]],
                    array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Boolean] =
     ArrayAll(None, None, Option(func), array1, array2, array3)
+
+  def arrayAvg[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
+                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
+    ArrayAvg(func, None, None, array)
+
+  def arrayAvg2[I, O](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[O],
+                      array1: ArrayColMagnet[_ <: Iterable[I]],
+                      array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
+    ArrayAvg(None, Option(func), None, array1, array2)
+
+  def arrayAvg3[I, O](func: (TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[O],
+                      array1: ArrayColMagnet[_ <: Iterable[I]],
+                      array2: ArrayColMagnet[_ <: Iterable[I]],
+                      array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
+    ArrayAvg(None, None, Option(func), array1, array2, array3)
 
   def arrayCount[I](func: Option[TableColumn[I] => ExpressionColumn[Boolean]],
                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Int] =
@@ -236,13 +256,13 @@ trait HigherOrderFunctions { self: Magnets =>
                       array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArrayMap(None, None, Option(func), array1, array2, array3)
 
-//  def arrayMax[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
-//                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
-//    ArrayMax(func, array)
-//
-//  def arrayMin[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
-//                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
-//    ArrayMin(func, array)
+  def arrayMax[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
+                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
+    ArrayMax(func, array)
+
+  def arrayMin[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
+                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
+    ArrayMin(func, array)
 
   def arrayReverseFill[I](func: TableColumn[I] => ExpressionColumn[Boolean],
                           array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
