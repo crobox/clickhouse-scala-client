@@ -15,6 +15,7 @@ trait TypeCastFunctions { self: Magnets =>
   //Tagging of compatible
   sealed trait Reinterpretable
 
+  // @todo Unsigned types are basically not supported. For now keep the same as signed types
   case class UInt8(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
       extends TypeCastColumn[Byte](tableColumn)
       with Reinterpretable
