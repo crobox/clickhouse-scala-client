@@ -60,9 +60,17 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayReverseSort[Long, Int](None, arr1)) shouldBe "[3,2,1]"
   }
 
+  it should "HigherOrderFunctions: arrayReverseSplit" in {
+    r(arrayReverseSplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3, 4, 5), Iterable(1, 0, 0, 1, 0))) shouldBe "[[1],[2,3,4],[5]]"
+  }
+
   it should "HigherOrderFunctions: arraySort" in {
     r(arraySort[Long, Double](Some(_ % 3.0), arr1)) shouldBe "[3,1,2]"
     r(arraySort[Long, Double](None, arr1)) shouldBe "[1,2,3]"
+  }
+
+  it should "HigherOrderFunctions: arraySplit" in {
+    r(arraySplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3, 4, 5), Iterable(1, 0, 0, 1, 0))) shouldBe "[[1,2,3],[4,5]]"
   }
 
   it should "HigherOrderFunctions: arraySum" in {

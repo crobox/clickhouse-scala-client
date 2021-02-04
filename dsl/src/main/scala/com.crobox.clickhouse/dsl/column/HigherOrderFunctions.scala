@@ -86,6 +86,14 @@ trait HigherOrderFunctions { self: Magnets =>
       _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean]],
       _arrays: ArrayColMagnet[_ <: Iterable[I]]*
   ) extends HigherOrderFunction[I, Boolean, Iterable[I]](_func1, _func2, _func3, _arrays: _*)
+  case class ArrayReverseSplit[I](
+      _func2: (TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
+      _arrays: ArrayColMagnet[_ <: Iterable[I]]*
+  ) extends HigherOrderFunction[I, Boolean, Iterable[Iterable[I]]](None, Option(_func2), None, _arrays: _*)
+  case class ArraySplit[I](
+      _func2: (TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
+      _arrays: ArrayColMagnet[_ <: Iterable[I]]*
+  ) extends HigherOrderFunction[I, Boolean, Iterable[Iterable[I]]](None, Option(_func2), None, _arrays: _*)
 
   def arrayAll[I](func: TableColumn[I] => ExpressionColumn[Boolean],
                   array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Boolean] =
@@ -252,6 +260,11 @@ trait HigherOrderFunctions { self: Magnets =>
                               array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArrayReverseSort(None, None, Option(func), array1, array2, array3)
 
+  def arrayReverseSplit[I](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
+                           array1: ArrayColMagnet[_ <: Iterable[I]],
+                           array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[Iterable[I]]] =
+    ArrayReverseSplit(func, array1, array2)
+
   def arraySort[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
                       array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArraySort(func, None, None, array)
@@ -266,6 +279,11 @@ trait HigherOrderFunctions { self: Magnets =>
                        array2: ArrayColMagnet[_ <: Iterable[I]],
                        array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
     ArraySort(None, None, Option(func), array1, array2, array3)
+
+  def arraySplit[I](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[Boolean],
+                    array1: ArrayColMagnet[_ <: Iterable[I]],
+                    array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[Iterable[I]]] =
+    ArraySplit(func, array1, array2)
 
   def arraySum[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
                      array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
