@@ -14,6 +14,8 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
   }
 
   it should "HigherOrderFunctions: arrayAvg" in {
+    assumeMinimalClickhouseVersion(21)
+
     r(arrayAvg[Long, Long](None, arr1)) shouldBe "2"
     r(arrayAvg[Long, Double](Option(x => x * 333d), arr1)) shouldBe "666"
 
@@ -76,6 +78,8 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
   }
 
   it should "HigherOrderFunctions: arrayMax" in {
+    assumeMinimalClickhouseVersion(21)
+
     r(arrayMax[Long, Long](None, arr1)) shouldBe "3"
     r(arrayMax[Long, Long](Option(x => x * -1L), arr1)) shouldBe "-1"
 
@@ -83,6 +87,8 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
   }
 
   it should "HigherOrderFunctions: arrayMin" in {
+    assumeMinimalClickhouseVersion(21)
+
     r(arrayMin[Long, Long](None, arr1)) shouldBe "1"
     r(arrayMin[Long, Long](Option(x => x * -1L), arr1)) shouldBe "-3"
 

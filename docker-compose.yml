@@ -2,6 +2,7 @@ version: '3'
 services:
   clickhouse:
       # https://docs.docker.com/compose/compose-file/#variable-substitution
+      #image: "yandex/clickhouse-server:${CLICKHOUSE_VERSION:-20.8.11.17}"
       image: "yandex/clickhouse-server:${CLICKHOUSE_VERSION:-21.1.3.32}"
       expose:
         - "8123"
