@@ -3,6 +3,7 @@
 # sbt specific
 .cache
 .lib/
+.bsp/
 dist/*
 target/
 lib_managed/
