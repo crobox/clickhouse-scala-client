@@ -30,7 +30,7 @@ trait HigherOrderFunctions { self: Magnets =>
                             _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
                             _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
                             _arrays: ArrayColMagnet[_ <: Iterable[I]]*)
-      extends HigherOrderFunction[I, O, Iterable[I]](_func1, _func2, _func3, _arrays: _*)
+      extends HigherOrderFunction[I, O, Iterable[O]](_func1, _func2, _func3, _arrays: _*)
   case class ArrayMax[I, O](_func1: Option[TableColumn[I] => ExpressionColumn[O]],
                             _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
                             _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
@@ -248,18 +248,18 @@ trait HigherOrderFunctions { self: Magnets =>
     ArrayFirstIndex(None, None, Option(func), array1, array2, array3)
 
   def arrayMap[I, O](func: TableColumn[I] => ExpressionColumn[O],
-                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
+                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[O]] =
     ArrayMap(Option(func), None, None, array)
 
   def arrayMap2[I, O](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[O],
                       array1: ArrayColMagnet[_ <: Iterable[I]],
-                      array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
+                      array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[O]] =
     ArrayMap(None, Option(func), None, array1, array2)
 
   def arrayMap3[I, O](func: (TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[O],
                       array1: ArrayColMagnet[_ <: Iterable[I]],
                       array2: ArrayColMagnet[_ <: Iterable[I]],
-                      array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[I]] =
+                      array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[Iterable[O]] =
     ArrayMap(None, None, Option(func), array1, array2, array3)
 
   def arrayMax[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
