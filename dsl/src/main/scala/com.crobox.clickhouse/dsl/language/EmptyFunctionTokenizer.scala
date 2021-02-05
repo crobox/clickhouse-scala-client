@@ -18,5 +18,10 @@ trait EmptyFunctionTokenizer {
           case NativeColumn(_, ColumnType.UUID, _) => s"${tokenizeColumn(c.column)} != 0"
           case _                                   => s"notEmpty(${tokenizeColumn(c.column)})"
         }
+      case IsNull(c) =>
+        c.column match {
+          case NativeColumn(_, ColumnType.UUID, _) => s"${tokenizeColumn(c.column)} != 0"
+          case _                                   => s"isNull(${tokenizeColumn(c.column)})"
+        }
     }
 }
