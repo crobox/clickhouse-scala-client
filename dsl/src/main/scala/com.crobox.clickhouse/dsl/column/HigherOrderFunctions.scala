@@ -56,7 +56,7 @@ trait HigherOrderFunctions { self: Magnets =>
                             _func2: Option[(TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
                             _func3: Option[(TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[O]],
                             _arrays: ArrayColMagnet[_ <: Iterable[I]]*)
-      extends HigherOrderFunction[I, O, I](_func1, _func2, _func3, _arrays: _*)
+      extends HigherOrderFunction[I, O, O](_func1, _func2, _func3, _arrays: _*)
 
   // single type casts
   case class ArrayCount[I](
@@ -348,17 +348,17 @@ trait HigherOrderFunctions { self: Magnets =>
     ArraySplit(func, array1, array2)
 
   def arraySum[I, O](func: Option[TableColumn[I] => ExpressionColumn[O]],
-                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
+                     array: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[O] =
     ArraySum(func, None, None, array)
 
   def arraySum2[I, O](func: (TableColumn[I], TableColumn[I]) => ExpressionColumn[O],
                       array1: ArrayColMagnet[_ <: Iterable[I]],
-                      array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
+                      array2: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[O] =
     ArraySum(None, Option(func), None, array1, array2)
 
   def arraySum3[I, O](func: (TableColumn[I], TableColumn[I], TableColumn[I]) => ExpressionColumn[O],
                       array1: ArrayColMagnet[_ <: Iterable[I]],
                       array2: ArrayColMagnet[_ <: Iterable[I]],
-                      array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[I] =
+                      array3: ArrayColMagnet[_ <: Iterable[I]]): ExpressionColumn[O] =
     ArraySum(None, None, Option(func), array1, array2, array3)
 }
