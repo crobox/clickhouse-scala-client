@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl._
 
 class HigherOrderFunctionsTest extends ColumnFunctionTest {
   val arr1 = Seq(1L, 2L, 3L)
-  
+
   it should "HigherOrderFunctions: arrayAll" in {
     r(arrayAll[Long](_ <= 3, arr1)) shouldBe "1"
     r(arrayAll[Long](_.isEq(2L), arr1)) shouldBe "0"
