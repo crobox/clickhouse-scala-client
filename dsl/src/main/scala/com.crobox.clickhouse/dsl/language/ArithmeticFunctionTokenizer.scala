@@ -19,15 +19,16 @@ trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
       col: ArithmeticFunctionOp[_]
   )(implicit ctx: TokenizeContext): String =
     col match {
-      case s: Plus[_]         => tokenizeWithOperator(s, "+")
-      case s: Minus[_]        => tokenizeWithOperator(s, "-")
-      case s: Multiply[_]     => tokenizeWithOperator(s, "*")
       case s: Divide[_]       => tokenizeWithOperator(s, "/")
-      case s: Modulo[_]       => tokenizeWithOperator(s, "%")
+      case s: Gcd[_]          => tokenizeAsFunction(s, "gcd")
       case s: IntDiv[_]       => tokenizeAsFunction(s, "intDiv")
       case s: IntDivOrZero[_] => tokenizeAsFunction(s, "intDivOrZero")
-      case s: Gcd[_]          => tokenizeAsFunction(s, "gcd")
       case s: Lcm[_]          => tokenizeAsFunction(s, "lcm")
+      case s: Modulo[_]       => tokenizeWithOperator(s, "%")
+      case s: Minus[_]        => tokenizeWithOperator(s, "-")
+      case s: Multiply[_]     => tokenizeWithOperator(s, "*")
+      case s: Power[_]        => tokenizeWithOperator(s, "^")
+      case s: Plus[_]         => tokenizeWithOperator(s, "+")
     }
 
   private def tokenizeWithOperator(col: ArithmeticFunctionOp[_],
