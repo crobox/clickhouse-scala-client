@@ -10,7 +10,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayAll[Long](_.isEq(2L), arr1)) shouldBe "0"
 
     r(arrayAll2[Int]((x, y) => x < y, Seq(1, 2, 3), Seq(1, 2, 3))) shouldBe "0"
-    r(arrayAll2[Int]((x, y) => x < y, Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "0"
+    r(arrayAll2[Int]((x, y) => x < y, Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "1"
   }
 
   it should "HigherOrderFunctions: arrayAvg" in {
@@ -24,8 +24,8 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayCount[Long](Some(_.isEq(2L)), arr1)) shouldBe "1"
     r(arrayCount[Long](None, arr1)) shouldBe "3"
 
-    r(arrayCount2[Int]((x, y) => x.notEq(y), Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "4.5"
-    r(arrayCount2[Int]((x, y) => x.isEq(y), Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "4.5"
+    r(arrayCount2[Int]((x, y) => x.notEq(y), Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "3"
+    r(arrayCount2[Int]((x, y) => x.isEq(y), Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "1"
   }
 
   it should "HigherOrderFunctions: arrayCumSum" in {
@@ -40,7 +40,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayExists[Long](_.isEq(-1L), arr1)) shouldBe "0"
 
     r(arrayExists2[Int]((x, y) => x.isEq(y), Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "0"
-    r(arrayExists2[Int]((x, y) => x.notEq(y), Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "0"
+    r(arrayExists2[Int]((x, y) => x.notEq(y), Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "1"
   }
 
   it should "HigherOrderFunctions: arrayFill" in {
@@ -51,7 +51,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayFilter[Long](_ <> 2L, arr1)) shouldBe "[1,3]"
     r(arrayFilter[Long](_ < 0L, arr1)) shouldBe "[]"
 
-    r(arrayFilter[String](_.like("%World%"), Seq("Hello", "World"))) shouldBe "[]"
+    r(arrayFilter[String](_.like("%World%"), Seq("Hello", "World"))) shouldBe "['World']"
     r(arrayFilter2[String]((x, y) => x.concat(y).like("%World"), Seq("Hello", "World"), Seq("Sjoerd", "Leonard"))) shouldBe "[]"
   }
 
@@ -59,14 +59,14 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayFirst[Long](modulo(_, 2L).isEq(0), arr1)) shouldBe "2"
     r(arrayFirst[Long](_ < 0, arr1)) shouldBe "0"
 
-    r(arrayFirst2[Int]((x, y) => x < y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "3"
+    r(arrayFirst2[Int]((x, y) => x > y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "3"
   }
 
   it should "HigherOrderFunctions: arrayFirstIndex" in {
     r(arrayFirstIndex[Long](modulo(_, 2L).isEq(0), arr1)) shouldBe "2"
     r(arrayFirstIndex[Long](_ < 0, arr1)) shouldBe "0"
 
-    r(arrayFirstIndex2[Int]((x, y) => x < y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "3"
+    r(arrayFirstIndex2[Int]((x, y) => x > y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "3"
   }
 
   it should "HigherOrderFunctions: arrayMap" in {
@@ -86,7 +86,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayMin[Long, Long](None, arr1)) shouldBe "1"
     r(arrayMin[Long, Long](Option(x => x * -1L), arr1)) shouldBe "-3"
 
-    r(arrayMin2[Int, Int]((x, y) => x ^ y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "9"
+    r(arrayMin2[Int, Int]((x, y) => x ^ y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "1"
   }
 
   it should "HigherOrderFunctions: arrayReverseFill" in {
@@ -97,7 +97,7 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arrayReverseSort[Long, Int](Some(_ % 3), arr1)) shouldBe "[2,1,3]"
     r(arrayReverseSort[Long, Int](None, arr1)) shouldBe "[3,2,1]"
 
-    r(arrayReverseSort2[Int, Int]((x, y) => x * y, Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "[0,1,3,3]"
+    r(arrayReverseSort2[Int, Int]((x, y) => x * y, Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "[3,3,1,0]"
   }
 
   it should "HigherOrderFunctions: arrayReverseSplit" in {
@@ -118,6 +118,6 @@ class HigherOrderFunctionsTest extends ColumnFunctionTest {
     r(arraySum[Long, Long](Some(_ * 2L), arr1)) shouldBe "12"
     r(arraySum[Long, Long](None, arr1)) shouldBe "6"
 
-    r(arraySum2[Int, Int]((x, y) => x ^ y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "9"
+    r(arraySum2[Int, Int]((x, y) => x ^ y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "14"
   }
 }

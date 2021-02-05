@@ -27,7 +27,7 @@ trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case s: Modulo[_]       => tokenizeWithOperator(s, "%")
       case s: Minus[_]        => tokenizeWithOperator(s, "-")
       case s: Multiply[_]     => tokenizeWithOperator(s, "*")
-      case s: Power[_]        => tokenizeWithOperator(s, "^")
+      case s: Power[_]        => tokenizeAsFunction(s, "pow")
       case s: Plus[_]         => tokenizeWithOperator(s, "+")
     }
 

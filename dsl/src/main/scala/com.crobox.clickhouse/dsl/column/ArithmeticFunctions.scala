@@ -106,17 +106,13 @@ trait ArithmeticFunctions { self: Magnets =>
   implicit object DateTimeBigDecimalBinding extends AritRetType[DateTime, BigDecimal, DateTime]
   implicit object DateTimeBigIntBinding     extends AritRetType[DateTime, BigInt, DateTime]
 
-  def plus[L, R, O](left: AddSubtractable[L], right: AddSubtractable[R])(implicit ev: AritRetType[L, R, O]): Plus[O] =
-    Plus[O](left, right)
-
-  def minus[L, R, O](left: AddSubtractable[L], right: AddSubtractable[R])(implicit ev: AritRetType[L, R, O]): Minus[O] =
-    Minus[O](left, right)
-
-  def multiply[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): Multiply[O] =
-    Multiply[O](left, right)
+  def abs[T](targetColumn: NumericCol[T]): Abs[T] = Abs[T](targetColumn)
 
   def divide[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): Divide[O] =
     Divide[O](left, right)
+
+  def gcd[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): Gcd[O] =
+    Gcd[O](left, right)
 
   def intDiv[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): IntDiv[O] =
     IntDiv[O](left, right)
@@ -125,15 +121,23 @@ trait ArithmeticFunctions { self: Magnets =>
       implicit ev: AritRetType[L, R, O]
   ): IntDivOrZero[O] = IntDivOrZero[O](left, right)
 
+  def lcm[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): Lcm[O] =
+    Lcm[O](left, right)
+
+  def minus[L, R, O](left: AddSubtractable[L], right: AddSubtractable[R])(implicit ev: AritRetType[L, R, O]): Minus[O] =
+    Minus[O](left, right)
+
   def modulo[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): Modulo[O] =
     Modulo[O](left, right)
 
-  def gcd[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): Gcd[O] =
-    Gcd[O](left, right)
+  def multiply[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): Multiply[O] =
+    Multiply[O](left, right)
 
-  def lcm[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): Lcm[O] =
-    Lcm[O](left, right)
   def negate[T](targetColumn: NumericCol[T]): Negate[T] = Negate[T](targetColumn)
-  def abs[T](targetColumn: NumericCol[T]): Abs[T]       = Abs[T](targetColumn)
 
+  def plus[L, R, O](left: AddSubtractable[L], right: AddSubtractable[R])(implicit ev: AritRetType[L, R, O]): Plus[O] =
+    Plus[O](left, right)
+
+  def power[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): Power[O] =
+    Power[O](left, right)
 }
