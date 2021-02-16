@@ -12,7 +12,8 @@ import com.typesafe.config.Config
 import scala.collection.mutable
 import scala.concurrent.duration._
 
-class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, Cancellable], optionalConfig: Option[Config])(
+class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, Cancellable],
+                             optionalConfig: Option[Config])(
     implicit materializer: Materializer
 ) extends Actor
     with ActorLogging
@@ -20,15 +21,15 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
 
   import ConnectionManagerActor._
 
-  private val config = optionalConfig.getOrElse(context.system.settings.config).getConfig("connection")
+  private val config                      = optionalConfig.getOrElse(context.system.settings.config).getConfig("connection")
   private val fallbackToConfigurationHost = config.getBoolean("fallback-to-config-host-during-initialization")
 
   //  state
   val connectionIterator: CircularIteratorSet[Uri] = new CircularIteratorSet[Uri]()
-  val hostsStatus                      = mutable.Map.empty[Uri, ClickhouseHostStatus]
-  val hostHealthScheduler              = mutable.Map.empty[Uri, Cancellable]
-  var currentConfiguredHosts: Set[Uri] = Set.empty
-  var initialized                      = false
+  val hostsStatus                                  = mutable.Map.empty[Uri, ClickhouseHostStatus]
+  val hostHealthScheduler                          = mutable.Map.empty[Uri, Cancellable]
+  var currentConfiguredHosts: Set[Uri]             = Set.empty
+  var initialized                                  = false
 
   context.system.scheduler.schedule(30.seconds, 30.seconds, self, LogDeadConnections)(context.system.dispatcher)
 
@@ -39,9 +40,7 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
           if (!currentConfiguredHosts.contains(host)) {
             log.info(s"Setting up host health checks for host $host")
             hostHealthScheduler.put(host,
-                                    healthSource(host)
-                                      .toMat(Sink.actorRef(self, LogDeadConnections))(Keep.left)
-                                      .run())
+                                    healthSource(host).toMat(Sink.actorRef(self, LogDeadConnections))(Keep.left).run())
           }
         })
       currentConfiguredHosts = hosts
@@ -125,8 +124,9 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
 
 object ConnectionManagerActor {
 
-  def props(healthProvider: Uri => Source[ClickhouseHostStatus, Cancellable], optionalConfig: Option[Config] = None)
-           (implicit materializer: Materializer): Props = Props(new ConnectionManagerActor(healthProvider, optionalConfig))
+  def props(healthProvider: Uri => Source[ClickhouseHostStatus, Cancellable], optionalConfig: Option[Config] = None)(
+      implicit materializer: Materializer
+  ): Props = Props(new ConnectionManagerActor(healthProvider, optionalConfig))
 
   def healthCheckActorName(host: Uri) =
     s"${host.authority.host.address()}:${host.authority.port}"
