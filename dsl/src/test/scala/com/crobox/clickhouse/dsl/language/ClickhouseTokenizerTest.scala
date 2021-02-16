@@ -178,9 +178,19 @@ class ClickhouseTokenizerTest
   }
 
   it should "generate CONDITIONAL multiIf" in {
+
+    // test no cases
     this.tokenizeColumn(multiIf(const(3)))(TokenizeContext()) shouldBe "3"
+
+    // test single case
     this.tokenizeColumn(multiIf(shieldId, columnCase(col1.isEq("test"), itemId)))(TokenizeContext()) shouldBe
-    (s"multiIf(${col1.name} = 'test', ${itemId.name}, ${shieldId.name})")
+    (s"if(${col1.name} = 'test', ${itemId.name}, ${shieldId.name})")
+
+    // test multi cases
+    this.tokenizeColumn(
+      multiIf(shieldId, columnCase(col1.isEq("test"), itemId), columnCase(col1.isEq("test"), itemId))
+    )(TokenizeContext()) shouldBe
+    (s"multiIf(${col1.name} = 'test', ${itemId.name}, ${col1.name} = 'test', ${itemId.name}, ${shieldId.name})")
   }
 
   it should "use constant" in {

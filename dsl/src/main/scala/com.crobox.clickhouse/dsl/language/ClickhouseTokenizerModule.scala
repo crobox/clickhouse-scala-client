@@ -150,7 +150,7 @@ trait ClickhouseTokenizerModule
       case RawColumn(rawSql)                 => rawSql
       case Conditional(cases, default, multiIf) =>
         if (multiIf) {
-          s"multiIf(${cases
+          s"${if (cases.size > 1) "multiIf" else "if"}(${cases
             .map(`case` => s"${tokenizeColumn(`case`.condition)}, ${tokenizeColumn(`case`.result)}")
             .mkString(", ")}, ${tokenizeColumn(default)})"
         } else {
