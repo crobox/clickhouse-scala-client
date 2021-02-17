@@ -148,10 +148,16 @@ trait ClickhouseTokenizerModule
       case col: URLFunction[_]               => tokenizeURLFunction(col)
       case All()                             => "*"
       case RawColumn(rawSql)                 => rawSql
-      case Conditional(cases, default) =>
-        s"CASE ${cases
-          .map(`case` => s"WHEN ${tokenizeColumn(`case`.condition)} THEN ${tokenizeColumn(`case`.result)}")
-          .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
+      case Conditional(cases, default, multiIf) =>
+        if (multiIf) {
+          s"${if (cases.size > 1) "multiIf" else "if"}(${cases
+            .map(`case` => s"${tokenizeColumn(`case`.condition)}, ${tokenizeColumn(`case`.result)}")
+            .mkString(", ")}, ${tokenizeColumn(default)})"
+        } else {
+          s"CASE ${cases
+            .map(`case` => s"WHEN ${tokenizeColumn(`case`.condition)} THEN ${tokenizeColumn(`case`.result)}")
+            .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
+        }
       case c: Const[_] => c.parsed
       case a @ _ =>
         throw new NotImplementedError(

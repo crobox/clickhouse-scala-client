@@ -73,7 +73,7 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
     override def compare(x: Boolean, y: Boolean): Int = (x, y) match {
       case (false, true) => -1
       case (true, false) => 1
-      case _ => 0
+      case _             => 0
     }
 
   }
@@ -93,8 +93,11 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
 
   def switch[V](defaultValue: TableColumn[V], cases: Case[V]*): TableColumn[V] = cases match {
     case Nil => defaultValue
-    case _ => Conditional(cases, defaultValue)
+    case _   => Conditional(cases, defaultValue, multiIf = false)
   }
 
+  def multiIf[V](defaultValue: TableColumn[V], cases: Case[V]*): TableColumn[V] = cases match {
+    case Nil => defaultValue
+    case _   => Conditional(cases, defaultValue, multiIf = true)
+  }
 }
-

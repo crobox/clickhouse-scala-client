@@ -111,7 +111,6 @@ class ClickhouseTokenizerTest
                     groupBy = Some(GroupByQuery(mode = Some(GroupByQuery.WithCube))))
     )
     query should be("SELECT shield_id FROM default.captainAmerica WITH CUBE FORMAT JSON")
-
   }
 
   it should "build table join using select all style" in {
@@ -172,9 +171,26 @@ class ClickhouseTokenizerTest
     )
   }
 
-  it should "generate cases" in {
+  it should "generate CONDITIONAL cases" in {
     this.tokenizeColumn(switch(const(3)))(TokenizeContext()) shouldBe "3"
-    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId)))(TokenizeContext()) shouldBe s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
+    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId)))(TokenizeContext()) shouldBe
+    (s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END")
+  }
+
+  it should "generate CONDITIONAL multiIf" in {
+
+    // test no cases
+    this.tokenizeColumn(multiIf(const(3)))(TokenizeContext()) shouldBe "3"
+
+    // test single case
+    this.tokenizeColumn(multiIf(shieldId, columnCase(col1.isEq("test"), itemId)))(TokenizeContext()) shouldBe
+    (s"if(${col1.name} = 'test', ${itemId.name}, ${shieldId.name})")
+
+    // test multi cases
+    this.tokenizeColumn(
+      multiIf(shieldId, columnCase(col1.isEq("test"), itemId), columnCase(col1.isEq("test"), itemId))
+    )(TokenizeContext()) shouldBe
+    (s"multiIf(${col1.name} = 'test', ${itemId.name}, ${col1.name} = 'test', ${itemId.name}, ${shieldId.name})")
   }
 
   it should "use constant" in {
