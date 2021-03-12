@@ -15,9 +15,10 @@ Features:
 * load balancing with internal health checks (multi host and cluster aware host balancer)
 * ability to retry queries
 
-*Current implementation should be considered WIP with no guarantees on API back-compatibility*  
+*We do not guarantee api-backwards compatibility, although the API has been very stable over the last years.*  
 
 Scala version: 
+- 2.13
 - 2.12
 
 Artifacts:
