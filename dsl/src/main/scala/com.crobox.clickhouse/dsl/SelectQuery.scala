@@ -4,7 +4,7 @@ case class SelectQuery(columns: Seq[Column], modifier: String = "") extends Quer
   override val internalQuery = InternalQuery(Some(this))
 
   def addColumn(column: Column): SelectQuery =
-    if (columns.exists(_.name == column.name)) copy(columns = columns ++ Seq(column)) else this
+    if (columns.exists(_.name == column.name)) this else copy(columns = columns ++ Seq(column))
 
   def removeColumn(column: Column): SelectQuery =
     copy(columns = columns.filter(_.name != column.name))
