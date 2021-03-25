@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.misc
 
 import com.crobox.clickhouse.ClickhouseClientSpec
-import com.crobox.clickhouse.dsl.misc.ColumnImprovements.ColumnsImprv
+import com.crobox.clickhouse.dsl.misc.ColumnImprovements.ColumnsImpr
 import com.crobox.clickhouse.dsl.{Column, NativeColumn}
 
 class ColumnImprovementsTest extends ClickhouseClientSpec {

@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.Column
 
 object ColumnImprovements {
 
-  implicit class ColumnsImprv[T <: Column](columns: Iterable[T]) {
+  implicit class ColumnsImpr[T <: Column](columns: Iterable[T]) {
 
     def addColumn(column: T): Iterable[T] =
       if (columns.exists(_.name == column.name)) columns else columns ++ Seq(column)
