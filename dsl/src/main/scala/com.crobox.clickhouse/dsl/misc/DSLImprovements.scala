@@ -4,18 +4,21 @@ import com.crobox.clickhouse.dsl.{Column, OperationalQuery}
 
 object DSLImprovements {
 
-  implicit class ColumnsImprv[T <: Column](columns: Iterable[T]) {
+  implicit class ColumnsImprv[T <: Column](columns: Seq[T]) {
 
-    def addColumn(column: T): Iterable[T] =
+    def addColumn(column: T): Seq[T] =
       if (columns.exists(_.name == column.name)) columns else columns ++ Seq(column)
 
-    def removeColumn(column: T): Iterable[T] = columns.filter(_.name != column.name)
+    def removeColumn(column: T): Seq[T] = columns.filter(_.name != column.name)
 
-    def removeColumn(column: String): Iterable[T] = columns.filter(_.name != column)
+    def removeColumn(column: String): Seq[T] = columns.filter(_.name != column)
   }
 
   implicit class OperationalQueryImpr(query: OperationalQuery) {
 
     def selectColumns(): Seq[Column] = query.internalQuery.select.map(_.columns).getOrElse(Seq.empty)
+
+    def addSelectColumn[T <: Column](column: T): OperationalQuery =
+      query.select(selectColumns().addColumn(column): _*)
   }
 }
