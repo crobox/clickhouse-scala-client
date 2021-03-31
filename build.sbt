@@ -18,8 +18,8 @@ lazy val root = (project in file("."))
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
-        scalaVersion := "2.13.4",
-        crossScalaVersions := List("2.12.13", "2.13.4"),
+        scalaVersion := "2.13.5",
+        crossScalaVersions := List("2.12.13", "2.13.5"),
         scalacOptions ++= List(
           "-unchecked",
           "-deprecation",
@@ -66,12 +66,12 @@ lazy val client: Project = (project in file("client"))
     name := "client",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
-      "io.spray"                   %% "spray-json" % "1.3.5",
+      "io.spray"                   %% "spray-json" % "1.3.6",
       "com.typesafe.akka"          %% "akka-actor" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-stream" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-http" % AkkaHttpVersion,
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
-      "joda-time"                  % "joda-time" % "2.10.6"
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
+      "joda-time"                  % "joda-time" % "2.10.10"
     ) ++ testDependencies.map(_    % Test)
   )
 
