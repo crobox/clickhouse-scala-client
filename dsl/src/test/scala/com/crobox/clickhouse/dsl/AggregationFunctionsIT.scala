@@ -39,11 +39,11 @@ class AggregationFunctionsIT
   }
 
   it should "run quantiles" in {
-    case class Result(result: Seq[Int])
-    implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[Int], Result](Result.apply, "result")
+    case class Result(result: Seq[Float])
+    implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[Float], Result](Result.apply, "result")
     val result = chExecutor
       .execute[Result](
-        select(quantiles(col2, 0.1F, 0.2F, 0.3F, 0.4F, 0.5F, 0.99F) as ref[Seq[Int]]("result")) from TwoTestTable
+        select(quantiles(col2, 0.1F, 0.2F, 0.3F, 0.4F, 0.5F, 0.99F) as ref[Seq[Float]]("result")) from TwoTestTable
       )
       .futureValue
     result.rows.head.result should have length 6
