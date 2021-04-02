@@ -47,6 +47,8 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
     case ArrayUniq(col1: ArrayColMagnet[_], columns @ _*) =>
       s"arrayUniq(${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
     case ArrayJoin(col: ArrayColMagnet[_]) => s"arrayJoin(${tokenizeColumn(col.column)})"
+    case ArrayDifference(col: ArrayColMagnet[_]) => s"arrayDifference(${tokenizeColumn(col.column)})"
+    case ArrayDistinct(col: ArrayColMagnet[_]) => s"arrayDistinct(${tokenizeColumn(col.column)})"
   }
 
   protected def tokenizeArrayFunctionConst(col: ArrayFunctionConst[_])(implicit ctx: TokenizeContext): String =

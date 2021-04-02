@@ -51,6 +51,16 @@ trait ArrayFunctions { this: Magnets =>
   case class ArrayUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]], columns: ArrayColMagnet[_ <: Iterable[V]]*)
       extends ArrayFunctionOp[Long]
   case class ArrayJoin[V](col: ArrayColMagnet[_ <: Iterable[V]]) extends ArrayFunctionOp[V]
+  // new 21-04-02
+  case class ArrayDifference[V](col: ArrayColMagnet[_ <: Iterable[V]]) extends ArrayFunctionOp[Iterable[V]]
+  case class ArrayDistinct[V](col: ArrayColMagnet[_ <: Iterable[V]])   extends ArrayFunctionOp[Iterable[V]]
+  case class ArrayIntersect[V](col: ArrayColMagnet[_ <: Iterable[V]], columns: ArrayColMagnet[_ <: Iterable[V]]*)
+      extends ArrayFunctionOp[Long]
+  case class ArrayReduce[V](function: StringColMagnet[_],
+                            col: ArrayColMagnet[_ <: Iterable[V]],
+                            columns: ArrayColMagnet[_ <: Iterable[V]]*)
+      extends ArrayFunctionOp[V]
+  case class ArrayReverse[V](col: ArrayColMagnet[_ <: Iterable[V]]) extends ArrayFunctionOp[V]
 
   def emptyArrayUInt8: EmptyArrayUInt8                                     = EmptyArrayUInt8()
   def emptyArrayUInt16: EmptyArrayUInt16                                   = EmptyArrayUInt16()
@@ -105,4 +115,8 @@ trait ArrayFunctions { this: Magnets =>
   def arrayUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]], coln: ArrayColMagnet[_ <: Iterable[V]]*): ArrayUniq[V] =
     ArrayUniq[V](col1, coln: _*)
   def arrayJoin[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayJoin[V] = ArrayJoin[V](col)
+
+  // new 21-04-02
+  def arrayDifference[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayDifference[V] = ArrayDifference[V](col)
+  def arrayDistinct[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayDistinct[V] = ArrayDistinct[V](col)
 }
