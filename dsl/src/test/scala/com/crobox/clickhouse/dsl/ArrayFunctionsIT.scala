@@ -59,4 +59,9 @@ class ArrayFunctionsIT extends ClickhouseClientSpec with ClickhouseSpec {
     execute(select(arrayDistinct(Array(0.1, 0.2, 0.1, 0.1, 0.3)))).futureValue should be("[0.1,0.2,0.3]")
     execute(select(arrayDistinct(Array("a", "b", "c", "d")))).futureValue should be("['a','b','c','d']")
   }
+
+  it should "arrayFunction: intersect" in {
+    execute(select(arrayIntersect(Array(1, 2), Array(1, 3), Array(2, 3)))).futureValue should be("[]")
+    execute(select(arrayIntersect(Array(1, 2), Array(1, 3), Array(1, 4)))).futureValue should be("[1]")
+  }
 }

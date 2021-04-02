@@ -118,5 +118,9 @@ trait ArrayFunctions { this: Magnets =>
 
   // new 21-04-02
   def arrayDifference[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayDifference[V] = ArrayDifference[V](col)
-  def arrayDistinct[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayDistinct[V] = ArrayDistinct[V](col)
+  def arrayDistinct[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayDistinct[V]     = ArrayDistinct[V](col)
+
+  def arrayIntersect[V](col: ArrayColMagnet[_ <: Iterable[V]],
+                        columns: ArrayColMagnet[_ <: Iterable[V]]*): ArrayIntersect[V] =
+    ArrayIntersect[V](col, columns: _*)
 }
