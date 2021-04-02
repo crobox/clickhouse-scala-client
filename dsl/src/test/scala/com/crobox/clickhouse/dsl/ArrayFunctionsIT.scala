@@ -63,5 +63,11 @@ class ArrayFunctionsIT extends ClickhouseClientSpec with ClickhouseSpec {
   it should "arrayFunction: intersect" in {
     execute(select(arrayIntersect(Array(1, 2), Array(1, 3), Array(2, 3)))).futureValue should be("[]")
     execute(select(arrayIntersect(Array(1, 2), Array(1, 3), Array(1, 4)))).futureValue should be("[1]")
+    execute(select(arrayIntersect(Array(1, 2, 3), Array(1, 3, 4), Array(1, 3, 5)))).futureValue should be("[3,1]")
+  }
+
+  it should "arrayFunction: reduce" in {
+    execute(select(arrayReduce("max", Array(1, 2, 3)))).futureValue should be("3")
+    execute(select(arrayReduce("min", Array(1, 2, 3)))).futureValue should be("1")
   }
 }

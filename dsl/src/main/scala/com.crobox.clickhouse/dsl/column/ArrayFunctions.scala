@@ -55,8 +55,8 @@ trait ArrayFunctions { this: Magnets =>
   case class ArrayDifference[V](col: ArrayColMagnet[_ <: Iterable[V]]) extends ArrayFunctionOp[Iterable[V]]
   case class ArrayDistinct[V](col: ArrayColMagnet[_ <: Iterable[V]])   extends ArrayFunctionOp[Iterable[V]]
   case class ArrayIntersect[V](col: ArrayColMagnet[_ <: Iterable[V]], columns: ArrayColMagnet[_ <: Iterable[V]]*)
-      extends ArrayFunctionOp[Long]
-  case class ArrayReduce[V](function: StringColMagnet[_],
+      extends ArrayFunctionOp[Iterable[V]]
+  case class ArrayReduce[V](function: String,
                             col: ArrayColMagnet[_ <: Iterable[V]],
                             columns: ArrayColMagnet[_ <: Iterable[V]]*)
       extends ArrayFunctionOp[V]
@@ -123,4 +123,9 @@ trait ArrayFunctions { this: Magnets =>
   def arrayIntersect[V](col: ArrayColMagnet[_ <: Iterable[V]],
                         columns: ArrayColMagnet[_ <: Iterable[V]]*): ArrayIntersect[V] =
     ArrayIntersect[V](col, columns: _*)
+
+  def arrayReduce[V](function: String,
+                     col: ArrayColMagnet[_ <: Iterable[V]],
+                     columns: ArrayColMagnet[_ <: Iterable[V]]*): ArrayReduce[V] =
+    ArrayReduce[V](function, col, columns: _*)
 }
