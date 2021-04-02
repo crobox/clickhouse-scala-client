@@ -70,4 +70,9 @@ class ArrayFunctionsIT extends ClickhouseClientSpec with ClickhouseSpec {
     execute(select(arrayReduce("max", Array(1, 2, 3)))).futureValue should be("3")
     execute(select(arrayReduce("min", Array(1, 2, 3)))).futureValue should be("1")
   }
+
+  it should "arrayFunction: reverse" in {
+    execute(select(arrayReverse(Array(1, 2, 3)))).futureValue should be("[3,2,1]")
+    execute(select(arrayReverse(Array("a", "b", "c", "d")))).futureValue should be("['d','c','b','a']")
+  }
 }

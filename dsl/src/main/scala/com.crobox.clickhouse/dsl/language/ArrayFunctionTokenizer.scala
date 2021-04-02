@@ -53,6 +53,7 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
       s"arrayIntersect(${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
     case ArrayReduce(function: String, col1: ArrayColMagnet[_], columns @ _*) =>
       s"arrayReduce('$function', ${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
+    case ArrayReverse(col: ArrayColMagnet[_]) => s"arrayReverse(${tokenizeColumn(col.column)})"
   }
 
   protected def tokenizeArrayFunctionConst(col: ArrayFunctionConst[_])(implicit ctx: TokenizeContext): String =

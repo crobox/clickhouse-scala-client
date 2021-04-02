@@ -60,7 +60,7 @@ trait ArrayFunctions { this: Magnets =>
                             col: ArrayColMagnet[_ <: Iterable[V]],
                             columns: ArrayColMagnet[_ <: Iterable[V]]*)
       extends ArrayFunctionOp[V]
-  case class ArrayReverse[V](col: ArrayColMagnet[_ <: Iterable[V]]) extends ArrayFunctionOp[V]
+  case class ArrayReverse[V](col: ArrayColMagnet[_ <: Iterable[V]]) extends ArrayFunctionOp[Iterable[V]]
 
   def emptyArrayUInt8: EmptyArrayUInt8                                     = EmptyArrayUInt8()
   def emptyArrayUInt16: EmptyArrayUInt16                                   = EmptyArrayUInt16()
@@ -128,4 +128,5 @@ trait ArrayFunctions { this: Magnets =>
                      col: ArrayColMagnet[_ <: Iterable[V]],
                      columns: ArrayColMagnet[_ <: Iterable[V]]*): ArrayReduce[V] =
     ArrayReduce[V](function, col, columns: _*)
+  def arrayReverse[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayReverse[V] = ArrayReverse[V](col)
 }
