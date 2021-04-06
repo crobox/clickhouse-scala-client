@@ -75,4 +75,10 @@ class ArrayFunctionsIT extends ClickhouseClientSpec with ClickhouseSpec {
     execute(select(arrayReverse(Array(1, 2, 3)))).futureValue should be("[3,2,1]")
     execute(select(arrayReverse(Array("a", "b", "c", "d")))).futureValue should be("['d','c','b','a']")
   }
+
+  it should "arrayFunction: match" in {
+    execute(select(arrayMatch(Array(1, 2, 3), Array(4,5,6)))).futureValue should be("0")
+    execute(select(arrayMatch(Array(1, 2, 3), Array(3,4,5)))).futureValue should be("1")
+    execute(select(arrayMatch(Array(1, 2, 3), Array(1,2,3)))).futureValue should be("1")
+  }
 }

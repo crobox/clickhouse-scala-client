@@ -120,13 +120,29 @@ trait ArrayFunctions { this: Magnets =>
   def arrayDifference[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayDifference[V] = ArrayDifference[V](col)
   def arrayDistinct[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayDistinct[V]     = ArrayDistinct[V](col)
 
-  def arrayIntersect[V](col: ArrayColMagnet[_ <: Iterable[V]],
+  def arrayIntersect[V](col1: ArrayColMagnet[_ <: Iterable[V]],
+                        col2: ArrayColMagnet[_ <: Iterable[V]],
                         columns: ArrayColMagnet[_ <: Iterable[V]]*): ArrayIntersect[V] =
-    ArrayIntersect[V](col, columns: _*)
+    ArrayIntersect[V](col1, Seq(col2) ++ columns: _*)
 
   def arrayReduce[V](function: String,
                      col: ArrayColMagnet[_ <: Iterable[V]],
                      columns: ArrayColMagnet[_ <: Iterable[V]]*): ArrayReduce[V] =
     ArrayReduce[V](function, col, columns: _*)
   def arrayReverse[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayReverse[V] = ArrayReverse[V](col)
+
+  /**
+   * Special function that checks if given arrays 'share' at least one element.
+   * Basically it's a wrapper around arrayIntersect (by using notEmpty)
+
+   * @param col1
+   * @param col2
+   * @param columns
+   * @tparam V
+   * @return
+   */
+  def arrayMatch[V](col1: ArrayColMagnet[_ <: Iterable[V]],
+                    col2: ArrayColMagnet[_ <: Iterable[V]],
+                    columns: ArrayColMagnet[_ <: Iterable[V]]*): ExpressionColumn[Boolean] =
+    notEmpty(arrayIntersect(col1, col2, columns: _*))
 }
