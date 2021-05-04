@@ -6,6 +6,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import spray.json.{JsNumber, JsString, JsValue, JsonFormat, deserializationError, _}
 
 import scala.util.Try
+import scala.util.matching.Regex
 
 trait ClickhouseJsonSupport {
 
@@ -16,11 +17,11 @@ trait ClickhouseJsonSupport {
 
     override def write(obj: IntervalStart): JsValue = JsNumber(obj.getMillis)
 
-    val month                        = """(\d+)_(.*)""".r
-    val date                         = """(.+)_(.*)""".r
-    val nanoTimestamp                = """^(\d{16})$""".r
-    val msTimestamp                  = """^(\d{13})$""".r
-    val timestamp                    = """^(\d{10})$""".r
+    val month: Regex                 = """(\d+)_(.*)""".r
+    val date: Regex                  = """(.+)_(.*)""".r
+    val nanoTimestamp: Regex         = """^(\d{16})$""".r
+    val msTimestamp: Regex           = """^(\d{13})$""".r
+    val timestamp: Regex             = """^(\d{10})$""".r
     val RelativeMonthsSinceUnixStart = 23641
 
     val UnixStartTimeWithoutTimeZone            = "1970-01-01T00:00:00.000"
