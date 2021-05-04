@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl.marshalling
 
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport.ClickhouseIntervalStartFormat
+import com.crobox.clickhouse.time.IntervalStart
 import org.joda.time.{DateTime, DateTimeZone}
 import spray.json.{JsNumber, JsString}
 import org.scalatest.flatspec.AnyFlatSpec
@@ -40,4 +41,8 @@ class ClickhouseIntervalStartFormatTest extends AnyFlatSpec with Matchers {
     ClickhouseIntervalStartFormat.read(JsNumber(date.getMillis)) should be(date)
   }
 
+  it should "convert to correct year" in {
+    // JsString("1618876800000000").convertTo[IntervalStart] should be ("53270-03-01T00:00:00.000Z")
+    JsString("1618876800000000").convertTo[IntervalStart].getMillis should be (1618876800000L)
+  }
 }

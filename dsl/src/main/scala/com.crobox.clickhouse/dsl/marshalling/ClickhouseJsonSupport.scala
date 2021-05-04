@@ -18,6 +18,7 @@ trait ClickhouseJsonSupport {
 
     val month                        = """(\d+)_(.*)""".r
     val date                         = """(.+)_(.*)""".r
+    val nanoTimestamp                = """^(\d{16})$""".r
     val msTimestamp                  = """^(\d{13})$""".r
     val timestamp                    = """^(\d{10})$""".r
     val RelativeMonthsSinceUnixStart = 23641
@@ -51,9 +52,10 @@ trait ClickhouseJsonSupport {
                 .parseDateTime(dateOnly)
                 .withZoneRetainFields(DateTimeZone.forID(timezoneId))
                 .withZone(DateTimeZone.UTC)
-            case msTimestamp(millis) => new DateTime(millis.toLong, DateTimeZone.UTC)
-            case timestamp(secs)     => new DateTime(secs.toLong * 1000, DateTimeZone.UTC)
-            case _                   =>
+            case nanoTimestamp(millis) => new DateTime(millis.toLong / 1000, DateTimeZone.UTC)
+            case msTimestamp(millis)   => new DateTime(millis.toLong, DateTimeZone.UTC)
+            case timestamp(secs)       => new DateTime(secs.toLong * 1000, DateTimeZone.UTC)
+            case _                     =>
               // sometimes clickhouse mistakenly returns a long / int value as JsString. Therefor, first try to
               // parse it as a long...
               val dateTime = Try {
