@@ -10,7 +10,6 @@ import com.crobox.clickhouse.internal.progress.QueryProgress.{QueryProgress, _}
 import com.crobox.clickhouse.{ClickhouseChunkedException, ClickhouseException}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 
 private[clickhouse] trait ClickhouseResponseParser {
 
@@ -24,42 +23,43 @@ private[clickhouse] trait ClickhouseResponseParser {
     responseFuture.flatMap { response =>
       decodeResponse(response) match {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
-          Unmarshaller.stringUnmarshaller(entity).map(content => {
-            if (content.contains("DB::Exception")) { //FIXME this is quite a fragile way to detect failures, hopefully nobody will have a valid exception string in the result. Check https://github.com/yandex/ClickHouse/issues/2999
-              throw ClickhouseException("Found exception in the query return body",
-                                        query,
-                                        ClickhouseChunkedException(content),
-                                        StatusCodes.OK)
-            }
-            content
-          })
-          .andThen {
-            case Success(_) =>
-              progressQueue.foreach(queue => {
-                queue.offer(QueryFinished)
-              })
-            case Failure(exception) =>
-              progressQueue.foreach(queue => {
-                queue.offer(QueryFailed(exception))
-              })
+          progressQueue match {
+            case Some(queue) =>
+              queue.offer(QueryFinished(entity))
+              Future.successful("Result is in the QueryProgress stream")
+            case None =>
+              Unmarshaller
+                .stringUnmarshaller(entity)
+                .map(content => {
+                  //FIXME this is quite a fragile way to detect failures, hopefully nobody will have a
+                  // valid exception string in the result. Check https://github.com/yandex/ClickHouse/issues/2999
+                  if (content.contains("DB::Exception")) {
+                    throw ClickhouseException("Found exception in the query return body",
+                                              query,
+                                              ClickhouseChunkedException(content),
+                                              StatusCodes.OK)
+                  }
+                  content
+                })
           }
         case HttpResponse(code, _, entity, _) =>
-          progressQueue.foreach(_.offer(QueryRejected))
-          Unmarshaller.stringUnmarshaller(entity).flatMap(
-            response =>
-              Future.failed(
-                  ClickhouseException(s"Server [$host] returned code $code; $response", query, statusCode = code)
-              )
-          )
+          Unmarshaller
+            .stringUnmarshaller(entity)
+            .flatMap(response => {
+              val exception =
+                ClickhouseException(s"Server [$host] returned code $code; $response", query, statusCode = code)
+              progressQueue.foreach(_.offer(QueryFailed(exception)))
+              Future.failed(exception)
+            })
       }
     }
 
   protected def decodeResponse(response: HttpResponse): HttpResponse = {
     val decoder = response.encoding match {
-      case HttpEncodings.gzip => Gzip
-      case HttpEncodings.deflate => Deflate
+      case HttpEncodings.gzip     => Gzip
+      case HttpEncodings.deflate  => Deflate
       case HttpEncodings.identity => NoCoding
-      case HttpEncoding(enc) => throw new IllegalArgumentException(s"Unsupported response encoding: $enc")
+      case HttpEncoding(enc)      => throw new IllegalArgumentException(s"Unsupported response encoding: $enc")
     }
     decoder.decodeMessage(response)
   }

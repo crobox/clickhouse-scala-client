@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.internal
 
+import akka.Done
 import akka.actor.{ActorSystem, Terminated}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -48,15 +49,13 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     })(Keep.both)
     .run()
 
-  def executeRequest(query: String,
+  protected def executeRequest(query: String,
                      settings: QuerySettings,
                      entity: Option[RequestEntity] = None,
                      progressQueue: Option[SourceQueueWithComplete[QueryProgress]] = None): Future[String] = {
     val internalQueryIdentifier = queryIdentifier
     executeWithRetries(queryRetries, progressQueue, settings) { () =>
       executeRequestInternal(hostBalancer.nextHost, query, internalQueryIdentifier, settings, entity, progressQueue)
-    }.andThen {
-      case _ => progressQueue.foreach(_.complete())
     }
   }
 
@@ -65,11 +64,14 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
 
   def executeRequestWithProgress(query: String,
                                  settings: QuerySettings,
-                                 entity: Option[RequestEntity] = None): Source[QueryProgress, Future[String]] =
+                                 entity: Option[RequestEntity] = None): Source[QueryProgress, Future[Done]] =
     Source
       .queue[QueryProgress](10, OverflowStrategy.dropHead)
       .mapMaterializedValue(queue => {
-        executeRequest(query, settings, entity, Some(queue))
+        executeRequest(query, settings, entity, Some(queue)).andThen {
+          case _ => queue.complete()
+        }
+        queue.watchCompletion()
       })
 
   def shutdown(): Future[Terminated] = {

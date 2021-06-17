@@ -1,5 +1,7 @@
 package com.crobox.clickhouse
 
+import akka.Done
+import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.scaladsl.{Keep, Sink}
 import com.crobox.clickhouse.internal.progress.QueryProgress.{Progress, QueryAccepted, QueryFinished, QueryProgress}
 import com.typesafe.config.ConfigFactory
@@ -46,7 +48,15 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
     client
       .queryWithProgress("select 1 + 2")
       .runWith(Sink.seq[QueryProgress])
-      .map(progress => progress should contain theSameElementsAs Seq(QueryAccepted, QueryFinished))
+      .flatMap(progress => {
+        progress.size should be(2)
+        progress.head should be(QueryAccepted)
+        Unmarshaller
+          .stringUnmarshaller(progress(1).asInstanceOf[QueryFinished].entity)
+          .map(result => {
+            result should be("3\n")
+          })
+      })
   }
 
   it should "materialize progress source with the query result" in {
@@ -54,7 +64,7 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
       .queryWithProgress("select 1 + 2")
       .toMat(Sink.ignore)(Keep.left)
       .run()
-      .map(result => result.shouldBe("3\n"))
+      .map(result => result.shouldBe(Done))
   }
 
   // This test is failing using new clickhouse server; apparently too fast?

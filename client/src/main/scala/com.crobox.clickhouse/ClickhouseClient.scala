@@ -1,6 +1,6 @@
 package com.crobox.clickhouse
 
-import akka.NotUsed
+import akka.{Done, NotUsed}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Framing, Source}
@@ -55,7 +55,7 @@ class ClickhouseClient(configuration: Option[Config] = None)
     */
   def queryWithProgress(sql: String)(
     implicit settings: QuerySettings = QuerySettings(ReadQueries)
-  ): Source[QueryProgress, Future[String]] =
+  ): Source[QueryProgress, Future[Done]] =
     executeRequestWithProgress(sql,
       settings.copy(readOnly = ReadQueries, idempotent = settings.idempotent.orElse(Some(true))))
 
