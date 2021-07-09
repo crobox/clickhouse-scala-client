@@ -9,9 +9,13 @@ object DSLImprovements {
     def addColumn(column: T): Seq[T] =
       if (columns.exists(_.name == column.name)) columns else columns ++ Seq(column)
 
+    def +++(column: T): Seq[T] = addColumn(column)
+
     def removeColumn(column: T): Seq[T] = columns.filter(_.name != column.name)
 
     def removeColumn(column: String): Seq[T] = columns.filter(_.name != column)
+
+    def ---(column: String): Seq[T] = removeColumn(column)
   }
 
   implicit class OperationalQueryImpr(query: OperationalQuery) {
@@ -20,5 +24,8 @@ object DSLImprovements {
 
     def addSelectColumn[T <: Column](column: T): OperationalQuery =
       query.select(selectColumns().addColumn(column): _*)
+
+    def removeSelectColumn[T <: Column](column: T): OperationalQuery =
+      query.select(selectColumns().removeColumn(column): _*)
   }
 }
