@@ -1,11 +1,10 @@
 import Build._
 //import com.typesafe.sbt.pgp.PgpKeys
-import xerial.sbt.Sonatype._
 
 //scalafmt settings
-scalafmtVersion in ThisBuild := "1.5.1"
-scalafmtOnCompile in ThisBuild := false     // all projects
-scalafmtTestOnCompile in ThisBuild := false // all projects
+ThisBuild / scalafmtVersion := "1.5.1"
+ThisBuild / scalafmtOnCompile := false     // all projects
+ThisBuild / scalafmtTestOnCompile := false // all projects
 
 releaseCrossBuild := true
 
@@ -18,7 +17,7 @@ lazy val root = (project in file("."))
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
-        scalaVersion := "2.13.5",
+        scalaVersion := "2.13.6",
         crossScalaVersions := List("2.12.13", "2.13.5"),
         scalacOptions ++= List(
           "-unchecked",
@@ -70,7 +69,7 @@ lazy val client: Project = (project in file("client"))
       "com.typesafe.akka"          %% "akka-actor" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-stream" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-http" % AkkaHttpVersion,
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
       "joda-time"                  % "joda-time" % "2.10.10"
     ) ++ testDependencies.map(_    % Test)
   )
