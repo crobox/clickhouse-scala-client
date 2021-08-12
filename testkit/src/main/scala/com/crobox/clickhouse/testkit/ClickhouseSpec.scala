@@ -19,6 +19,9 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
   /** Explicitly add this sequence that can be overwritten in order to create multiple databases for a test */
   lazy val databases = Seq(database)
 
+  /* When true, databases will be dropped when finished (e.g. AfterAll). Can be overwritten to disable */
+  val dropDatabasesAfterTest = true
+
   def clickClient: ClickhouseClient = internalClient
 
   private lazy val internalClient: ClickhouseClient = new ClickhouseClient(Some(config))
@@ -99,7 +102,9 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
   override protected def afterAll(): Unit =
     try super.afterAll() // To be stackable, must call super.afterAll
     finally {
-      databases.foreach(db => sql(s"DROP DATABASE IF EXISTS $db"))
+      if (dropDatabasesAfterTest) {
+        databases.foreach(db => sql(s"DROP DATABASE IF EXISTS $db"))
+      }
       Await.result(internalClient.shutdown(), clickhouseSpecTimeout)
     }
 }
