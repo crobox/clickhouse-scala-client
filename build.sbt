@@ -2,9 +2,9 @@ import Build._
 //import com.typesafe.sbt.pgp.PgpKeys
 
 //scalafmt settings
-scalafmtVersion in ThisBuild := "1.5.1"
-scalafmtOnCompile in ThisBuild := false     // all projects
-scalafmtTestOnCompile in ThisBuild := false // all projects
+ThisBuild / scalafmtVersion := "1.5.1"
+ThisBuild / scalafmtOnCompile := false     // all projects
+ThisBuild / scalafmtTestOnCompile := false // all projects
 
 releaseCrossBuild := true
 
