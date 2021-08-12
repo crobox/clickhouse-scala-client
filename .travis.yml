@@ -14,7 +14,7 @@ sbt_args: "'set resolvers += \"Sonatype OSS Snapshots\" at \"https://oss.sonatyp
 
 after_success:
   - >
-      test "${TRAVIS_PULL_REQUEST}" = 'false' && test "${TRAVIS_BRANCH}" = 'master' && test "${CLICKHOUSE_VERSION}" = '21.1.3.32' &&
+      test "${TRAVIS_PULL_REQUEST}" = 'false' && test "${TRAVIS_BRANCH}" = 'master' && test "${CLICKHOUSE_VERSION}" = '21.1.7.1' &&
       sbt 'set resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"'
       'set credentials += Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", System.getenv("SONATYPE_USER"), System.getenv("SONATYPE_PASS"))'
       ++${TRAVIS_SCALA_VERSION} publish
