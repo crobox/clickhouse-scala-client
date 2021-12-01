@@ -1,16 +1,16 @@
 package com.crobox.clickhouse.dsl.language
 
-import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.testkit.ClickhouseMatchers
+import com.crobox.clickhouse.{ClickhouseClientSpec, ClickhouseSQLSupport}
 
 class LogicalFunctionTokenizerTest
     extends ClickhouseClientSpec
     with TestSchema
     with ClickhouseTokenizerModule
+    with ClickhouseSQLSupport
     with ClickhouseMatchers {
-  val testSubject = this
-  val database    = "default"
+  val database = "default"
 
   def noto(other: LogicalOpsMagnet): ExpressionColumn[Boolean] = LogicalFunction(other, Not, other)
 
@@ -238,10 +238,5 @@ class LogicalFunctionTokenizerTest
     toSQL(None.and(None).and(shieldId.isEq("b") or shieldId.isEq("c"))) should matchSQL(
       "shield_id = 'b' OR shield_id = 'c'"
     )
-  }
-
-  def toSQL(where: TableColumn[Boolean]): String = {
-    val s = toSql(InternalQuery(where = Option(where)))
-    s.substring("WHERE".length, s.indexOf("FORMAT")).trim
   }
 }

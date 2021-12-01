@@ -1,9 +1,10 @@
 package com.crobox.clickhouse.dsl.column
 
+import com.crobox.clickhouse.ClickhouseSQLSupport
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 
-class LogicalFunctionsTest extends ColumnFunctionTest with ClickhouseTokenizerModule {
+class LogicalFunctionsTest extends ColumnFunctionTest with ClickhouseTokenizerModule with ClickhouseSQLSupport {
   val source: TableColumn[Boolean]    = shieldId.isEq("a")
   val condition: TableColumn[Boolean] = shieldId.isEq("b")
 
@@ -35,12 +36,5 @@ class LogicalFunctionsTest extends ColumnFunctionTest with ClickhouseTokenizerMo
     toSQL(Option(source).xor(None)) should matchSQL("shield_id = 'a'")
     toSQL(None.xor(None)) should matchSQL("1")
     toSQL(None.xor(Option(condition))) should matchSQL("shield_id = 'b'")
-  }
-
-  def toSQL(condition: TableColumn[Boolean]): String = toSQL(Option(condition))
-
-  def toSQL(condition: Option[TableColumn[Boolean]]): String = {
-    val s = toSql(InternalQuery(where = condition))
-    s.substring("WHERE ".length, s.indexOf("FORMAT"))
   }
 }

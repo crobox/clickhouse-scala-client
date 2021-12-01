@@ -60,6 +60,8 @@ trait AggregationFunctions {
   def groupUniqArray[V](tableColumn: TableColumn[V]): GroupUniqArray[V] =
     GroupUniqArray(tableColumn)
 
+  def groupArray[V](tableColumn: TableColumn[V], maxValues: Option[Long] = None): GroupArray[V] =
+    GroupArray(tableColumn, maxValues)
 }
 
 trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
