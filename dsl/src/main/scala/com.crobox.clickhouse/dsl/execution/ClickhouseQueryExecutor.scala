@@ -11,7 +11,7 @@ import spray.json.{JsonReader, _}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait ClickhouseQueryExecutor extends QueryExecutor with LazyLogging {
+trait ClickhouseQueryExecutor extends QueryExecutor {
   self: TokenizerModule =>
   implicit val client: ClickhouseClient
 
@@ -19,16 +19,6 @@ trait ClickhouseQueryExecutor extends QueryExecutor with LazyLogging {
                                            settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] = {
     import QueryResult._
     val queryResult = client.query(toSql(query.internalQuery))
-    queryResult.map(_.parseJson.convertTo[QueryResult[V]])
-  }
-
-  def executeWithLogging[V: JsonReader](
-      query: Query
-  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] = {
-    import QueryResult._
-    val sql = toSql(query.internalQuery)
-    logger.info(s"SQL: $sql")
-    val queryResult = client.query(sql)
     queryResult.map(_.parseJson.convertTo[QueryResult[V]])
   }
 
