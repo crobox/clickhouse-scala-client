@@ -154,17 +154,25 @@ trait OperationalQuery extends Query {
     newSelect
   }
 
+  def join[TargetTable <: Table](joinType: JoinQuery.JoinType,
+                                 query: OperationalQuery,
+                                 global: Boolean): OperationalQuery =
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, InnerFromQuery(query), global = global))))
+
+  def join[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable, global: Boolean): OperationalQuery =
+    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table), global = global))))
+
   def join[TargetTable <: Table](joinType: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, InnerFromQuery(query)))))
+    join(joinType = joinType, query = query, global = false)
 
   def join[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table)))))
+    join(joinType = joinType, table = table, global = false)
 
   def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, InnerFromQuery(query), global = true))))
+    join(joinType = joinType, query = query, global = true)
 
   def globalJoin[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table), global = true))))
+    join(joinType = joinType, table = table, global = true)
 
   @deprecated("Please use join(JoinQuery.AllInnerJoin)")
   def allInnerJoin(query: OperationalQuery): OperationalQuery =
