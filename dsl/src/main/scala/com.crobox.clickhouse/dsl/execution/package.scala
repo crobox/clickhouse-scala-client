@@ -17,7 +17,7 @@ package object execution {
 
   object QueryResult {
 
-    implicit def format[V: JsonReader] = new JsonReader[QueryResult[V]] {
+    implicit def format[V: JsonReader]: JsonReader[QueryResult[V]] = new JsonReader[QueryResult[V]] {
 
       override def read(json: JsValue): QueryResult[V] = {
         val jsObject = json.asJsObject
@@ -38,5 +38,4 @@ package object execution {
       }
     }
   }
-
 }
