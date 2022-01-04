@@ -8,7 +8,12 @@ import akka.util.ByteString
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.QuerySettings._
 import com.crobox.clickhouse.internal.progress.QueryProgress.QueryProgress
-import com.crobox.clickhouse.internal.{ClickHouseExecutor, ClickhouseQueryBuilder, ClickhouseResponseParser, QuerySettings}
+import com.crobox.clickhouse.internal.{
+  ClickHouseExecutor,
+  ClickhouseQueryBuilder,
+  ClickhouseResponseParser,
+  QuerySettings
+}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,7 +35,7 @@ class ClickhouseClient(configuration: Option[Config] = None)
   override protected implicit val system: ActorSystem                = ActorSystem("clickhouse-client", config)
   override protected implicit val executionContext: ExecutionContext = system.dispatcher
 
-  override protected val hostBalancer = HostBalancer()
+  override protected val hostBalancer: HostBalancer = HostBalancer()
 
   private val MaximumFrameLength: Int = config.getInt("maximum-frame-length")
 
@@ -73,9 +78,7 @@ class ClickhouseClient(configuration: Option[Config] = None)
         !(sql.toUpperCase.startsWith("SELECT") || sql.toUpperCase.startsWith("SHOW")),
         ".execute() is not allowed for SELECT or SHOW statements, use .query() instead"
       )
-    }.flatMap(
-      _ => executeRequest(sql, settings)
-    )
+    }.flatMap(_ => executeRequest(sql, settings))
 
   def execute(sql: String, entity: String)(implicit settings: QuerySettings): Future[String] =
     executeRequest(sql, settings, Option(entity))
@@ -86,9 +89,7 @@ class ClickhouseClient(configuration: Option[Config] = None)
    * @param sql a valid Clickhouse SQL string
    */
   def source(sql: String)(implicit settings: QuerySettings = QuerySettings(ReadQueries)): Source[String, NotUsed] =
-    sourceByteString(sql)
-      .via(Framing.delimiter(ByteString("\n"), MaximumFrameLength))
-      .map(_.utf8String)
+    sourceByteString(sql).via(Framing.delimiter(ByteString("\n"), MaximumFrameLength)).map(_.utf8String)
 
   /**
    * Creates a stream of the SQL query that will emit every result as a ByteString
@@ -120,5 +121,4 @@ class ClickhouseClient(configuration: Option[Config] = None)
     val entity = HttpEntity.apply(ContentTypes.`text/plain(UTF-8)`, source)
     executeRequestInternal(hostBalancer.nextHost, sql, queryIdentifier, settings, Option(entity), None)
   }
-
 }
