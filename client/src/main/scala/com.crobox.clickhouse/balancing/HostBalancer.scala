@@ -10,15 +10,13 @@ import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.collection.JavaConverters._
 //import scala.jdk.CollectionConverters._
 
 trait HostBalancer extends LazyLogging {
-
   def nextHost: Future[Uri]
-
 }
 
 object HostBalancer extends ClickhouseHostBuilder {
