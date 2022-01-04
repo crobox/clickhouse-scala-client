@@ -68,9 +68,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
                                  entity: Option[RequestEntity] = None): Source[QueryProgress, Future[String]] =
     Source
       .queue[QueryProgress](10, OverflowStrategy.dropHead)
-      .mapMaterializedValue(queue => {
-        executeRequest(query, settings, entity, Some(queue))
-      })
+      .mapMaterializedValue(queue => executeRequest(query, settings, entity, Some(queue)))
 
   def shutdown(): Future[Terminated] = {
     queue.complete()
@@ -85,14 +83,10 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     val promise = Promise[HttpResponse]()
 
     queue.offer(request -> promise).flatMap {
-      case QueueOfferResult.Enqueued =>
-        promise.future
-      case QueueOfferResult.Dropped =>
-        Future.failed(TooManyQueriesException())
-      case QueueOfferResult.QueueClosed =>
-        Future.failed(new RuntimeException(s"Queue is closed"))
-      case QueueOfferResult.Failure(e) =>
-        Future.failed(e)
+      case QueueOfferResult.Enqueued    => promise.future
+      case QueueOfferResult.Dropped     => Future.failed(TooManyQueriesException())
+      case QueueOfferResult.QueueClosed => Future.failed(new RuntimeException(s"Queue is closed"))
+      case QueueOfferResult.Failure(e)  => Future.failed(e)
     }
   }
 
