@@ -4,17 +4,11 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.{Framing, Source}
-import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.ByteString
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.QuerySettings._
 import com.crobox.clickhouse.internal.progress.QueryProgress.QueryProgress
-import com.crobox.clickhouse.internal.{
-  ClickHouseExecutor,
-  ClickhouseQueryBuilder,
-  ClickhouseResponseParser,
-  QuerySettings
-}
+import com.crobox.clickhouse.internal.{ClickHouseExecutor, ClickhouseQueryBuilder, ClickhouseResponseParser, QuerySettings}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,7 +28,6 @@ class ClickhouseClient(configuration: Option[Config] = None)
     .getOrElse(ConfigFactory.load())
     .getConfig("crobox.clickhouse.client")
   override protected implicit val system: ActorSystem                = ActorSystem("clickhouse-client", config)
-  override protected implicit val materializer: Materializer         = ActorMaterializer()
   override protected implicit val executionContext: ExecutionContext = system.dispatcher
 
   override protected val hostBalancer = HostBalancer()

@@ -19,27 +19,26 @@ class ClickhouseExecutorTest extends ClickhouseClientAsyncSpec {
   private var response: Uri => Future[String] = _
   private lazy val executor = {
     new ClickHouseExecutor with ClickhouseResponseParser with ClickhouseQueryBuilder {
-      override protected implicit val system: ActorSystem = self.system
-      override protected implicit val materializer: Materializer = self.materializer
+      override protected implicit val system: ActorSystem                = self.system
       override protected implicit val executionContext: ExecutionContext = system.dispatcher
-      override protected val config: Config = self.config.getConfig("crobox.clickhouse.client")
+      override protected val config: Config                              = self.config.getConfig("crobox.clickhouse.client")
       override protected val hostBalancer: HostBalancer = new HostBalancer {
         override def nextHost: Future[Uri] = Future.successful(hosts.next())
       }
 
       override protected def processClickhouseResponse(
-                                                        responseFuture: Future[HttpResponse],
-                                                        query: String,
-                                                        host: Uri,
-                                                        progressQueue: Option[
-                                                          SourceQueue[
-                                                            QueryProgress
-                                                          ]
-                                                        ]
-                                                      )(
-                                                        implicit materializer: Materializer,
-                                                        executionContext: ExecutionContext
-                                                      ): Future[String] =
+          responseFuture: Future[HttpResponse],
+          query: String,
+          host: Uri,
+          progressQueue: Option[
+            SourceQueue[
+              QueryProgress
+            ]
+          ]
+      )(
+          implicit materializer: Materializer,
+          executionContext: ExecutionContext
+      ): Future[String] =
         response(host)
     }
   }

@@ -1,6 +1,5 @@
 package com.crobox.clickhouse.balancing
 
-import akka.stream.{ActorMaterializer, Materializer}
 import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 import com.typesafe.config.ConfigFactory

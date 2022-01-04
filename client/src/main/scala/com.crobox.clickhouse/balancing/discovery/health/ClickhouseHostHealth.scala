@@ -31,20 +31,21 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
    * the provided actor system and assumes there is no other user of such a pool, so it will not be shared.
    * This ensures the health checks will not affect the clients `superPool`  in any way, and it will not fill the queue if one hosts hangs when returning the response.
    * We also set the connection idle timeout to `health-check.timeout + health-check.interval` to ensure that the pool will be blocked with on hanging request.
-    * */
+   * */
   def healthFlow(host: Uri)(
       implicit system: ActorSystem,
-      materializer: Materializer,
       executionContext: ExecutionContext
   ): Source[ClickhouseHostStatus, Cancellable] = {
     val healthCheckInterval: FiniteDuration =
       system.settings.config
         .getDuration("connection.health-check.interval")
-        .getSeconds.seconds
+        .getSeconds
+        .seconds
     val healthCheckTimeout: FiniteDuration =
       system.settings.config
         .getDuration("connection.health-check.timeout")
-        .getSeconds.seconds
+        .getSeconds
+        .seconds
 
     val healthCachedPool = Http(system).cachedHostConnectionPool[Int](
       host.authority.host.address(),
@@ -72,7 +73,8 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
   )(implicit ec: ExecutionContext, mat: Materializer): Flow[(Try[HttpResponse], T), ClickhouseHostStatus, NotUsed] =
     Flow[(Try[HttpResponse], T)].mapAsync(1) {
       case (Success(response @ akka.http.scaladsl.model.HttpResponse(StatusCodes.OK, _, _, _)), _) =>
-        Unmarshaller.stringUnmarshaller(decodeResponse(response).entity)
+        Unmarshaller
+          .stringUnmarshaller(decodeResponse(response).entity)
           .map(splitResponse)
           .map(
             stringResponse =>

@@ -20,7 +20,6 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   this: ClickhouseResponseParser with ClickhouseQueryBuilder =>
 
   protected implicit val system: ActorSystem
-  protected implicit val materializer: Materializer
   protected implicit val executionContext: ExecutionContext
   protected val hostBalancer: HostBalancer
   protected val config: Config

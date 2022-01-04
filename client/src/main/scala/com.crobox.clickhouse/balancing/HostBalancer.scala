@@ -2,7 +2,6 @@ package com.crobox.clickhouse.balancing
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
-import akka.stream.Materializer
 import com.crobox.clickhouse.balancing.Connection.{BalancingHosts, ClusterAware, ConnectionType, SingleHost}
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
 import com.crobox.clickhouse.balancing.discovery.health.ClickhouseHostHealth
@@ -23,7 +22,7 @@ object HostBalancer extends ClickhouseHostBuilder {
 
   def apply(
       optionalConfig: Option[Config] = None
-  )(implicit system: ActorSystem, materializer: Materializer, ec: ExecutionContext): HostBalancer = {
+  )(implicit system: ActorSystem, ec: ExecutionContext): HostBalancer = {
     val config                   = optionalConfig.getOrElse(system.settings.config)
     val connectionConfig         = config.getConfig("connection")
     val connectionType           = ConnectionType(connectionConfig.getString("type"))
@@ -50,7 +49,7 @@ object HostBalancer extends ClickhouseHostBuilder {
           connectionConfig.getString("cluster"),
           manager,
           connectionConfig.getDuration("scanning-interval").getSeconds.seconds
-        )(system, config.getDuration("host-retrieval-timeout").getSeconds.seconds, ec, materializer)
+        )(system, config.getDuration("host-retrieval-timeout").getSeconds.seconds, ec)
     }
   }
 
