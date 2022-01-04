@@ -1,5 +1,4 @@
 import Build._
-//import com.typesafe.sbt.pgp.PgpKeys
 
 //scalafmt settings
 ThisBuild / scalafmtVersion := "1.5.1"
