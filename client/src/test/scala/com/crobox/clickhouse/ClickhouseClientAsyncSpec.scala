@@ -25,10 +25,9 @@ abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load
 
   implicit val timeout: Timeout = 5.second
 
-  override protected def afterAll(): Unit = {
+  override protected def afterAll(): Unit =
     try super.afterAll()
     finally Await.result(system.terminate(), 10.seconds)
-  }
 
   def requestParallelHosts(balancer: HostBalancer, connections: Int = 10): Future[Seq[Uri]] =
     Future.sequence(
@@ -59,5 +58,4 @@ abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load
         succeed
       })
   }
-
 }
