@@ -8,12 +8,7 @@ import akka.util.ByteString
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.QuerySettings._
 import com.crobox.clickhouse.internal.progress.QueryProgress.QueryProgress
-import com.crobox.clickhouse.internal.{
-  ClickHouseExecutor,
-  ClickhouseQueryBuilder,
-  ClickhouseResponseParser,
-  QuerySettings
-}
+import com.crobox.clickhouse.internal._
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.{ExecutionContext, Future}
