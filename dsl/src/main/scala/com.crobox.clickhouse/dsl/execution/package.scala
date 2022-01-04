@@ -17,25 +17,22 @@ package object execution {
 
   object QueryResult {
 
-    implicit def format[V: JsonReader]: JsonReader[QueryResult[V]] = new JsonReader[QueryResult[V]] {
-
-      override def read(json: JsValue): QueryResult[V] = {
-        val jsObject = json.asJsObject
-        val rows = jsObject.getFields("data") match {
-          case Seq(JsArray(results)) => results.map(_.convertTo[V])
-        }
-        val meta = jsObject.fields.get("meta").map {
-          case JsArray(columnDefinitions) =>
-            ResultMeta(columnDefinitions.map(_.asJsObject.getFields("name", "type") match {
-              case Seq(JsString(name), JsString(colType)) => ResultColumnType(name, colType)
-            }))
-        }
-        val statistic = jsObject.getFields("rows_before_limit_at_least", "rows") match {
-          case Seq(JsNumber(limit), JsNumber(rowsRead)) => Some(Statistic(rowsRead.longValue, limit.longValue))
-          case _                                        => None
-        }
-        QueryResult(rows, meta, statistic)
+    implicit def format[V: JsonReader]: JsonReader[QueryResult[V]] = (json: JsValue) => {
+      val jsObject = json.asJsObject
+      val rows = jsObject.getFields("data") match {
+        case Seq(JsArray(results)) => results.map(_.convertTo[V])
       }
+      val meta = jsObject.fields.get("meta").map {
+        case JsArray(columnDefinitions) =>
+          ResultMeta(columnDefinitions.map(_.asJsObject.getFields("name", "type") match {
+            case Seq(JsString(name), JsString(colType)) => ResultColumnType(name, colType)
+          }))
+      }
+      val statistic = jsObject.getFields("rows_before_limit_at_least", "rows") match {
+        case Seq(JsNumber(limit), JsNumber(rowsRead)) => Some(Statistic(rowsRead.longValue, limit.longValue))
+        case _                                        => None
+      }
+      QueryResult(rows, meta, statistic)
     }
   }
 }
