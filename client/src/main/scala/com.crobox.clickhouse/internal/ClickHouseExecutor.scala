@@ -15,6 +15,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Random, Success}
+
 private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   this: ClickhouseResponseParser with ClickhouseQueryBuilder =>
 
