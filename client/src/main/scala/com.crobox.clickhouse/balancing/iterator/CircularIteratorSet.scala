@@ -7,17 +7,17 @@ class CircularIteratorSet[T](seed: Seq[T] = Seq.empty) extends AbstractIterator[
   private var internalIterator         = Iterator.continually(seed).flatten
   private val elements: mutable.Set[T] = mutable.HashSet(seed: _*)
 
-  def add(element: T) = {
+  def add(element: T): Unit = {
     elements += element
     internalIterator = Iterator.continually(elements).flatten
   }
 
-  def remove(element: T) = {
+  def remove(element: T): Unit = {
     elements -= element
     internalIterator = Iterator.continually(elements).flatten
   }
 
-  override def hasNext = elements.nonEmpty
+  override def hasNext: Boolean = elements.nonEmpty
 
-  override def next() = internalIterator.next()
+  override def next(): T = internalIterator.next()
 }

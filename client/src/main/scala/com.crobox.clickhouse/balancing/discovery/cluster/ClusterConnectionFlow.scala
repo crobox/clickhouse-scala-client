@@ -34,9 +34,7 @@ private[clickhouse] object ClusterConnectionFlow
       .withMinConnections(1)
       .withMaxOpenRequests(2)
       .withMaxRetries(3)
-      .withUpdatedConnectionSettings(
-        _.withIdleTimeout(scanningInterval.plus(1.second))
-      )
+      .withUpdatedConnectionSettings(_.withIdleTimeout(scanningInterval.plus(1.second)))
     Source
       .tick(0.millis, scanningInterval, {})
       .mapAsync(1)(_ => targetHost)

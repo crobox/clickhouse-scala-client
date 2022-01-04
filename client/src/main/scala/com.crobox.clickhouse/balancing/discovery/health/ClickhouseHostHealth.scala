@@ -61,9 +61,7 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
     )
     Source
       .tick(0.milliseconds, healthCheckInterval, 0)
-      .map(tick => {
-        (HttpRequest(method = HttpMethods.GET, uri = host), tick)
-      })
+      .map(tick => (HttpRequest(method = HttpMethods.GET, uri = host), tick))
       .via(healthCachedPool)
       .via(parsingFlow(host))
   }
@@ -89,5 +87,4 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
       case (Failure(ex), _) =>
         Future.successful(Dead(host, ex))
     }
-
 }
