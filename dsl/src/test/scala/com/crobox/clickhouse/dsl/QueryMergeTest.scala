@@ -1,17 +1,13 @@
 package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.parallel._
-import com.crobox.clickhouse.testkit.ClickhouseMatchers
-import com.crobox.clickhouse.{ClickhouseClientSpec, dsl => CHDsl}
+import com.crobox.clickhouse.{DslTestSpec, dsl => CHDsl}
 
 import java.util.UUID
 
-class QueryMergeTest extends ClickhouseClientSpec with TestSchema with ClickhouseMatchers {
-  val clickhouseTokenizer = new ClickhouseTokenizerModule {}
-  val database            = "query_merge"
+class QueryMergeTest extends DslTestSpec {
 
-  "query merge operators" should "collect columns from a right hand query" in {
+  it should "collect columns from a right hand query" in {
     val expectedUUID = UUID.randomUUID()
 
     val left: OperationalQuery  = select(itemId) from TwoTestTable where (col3 isEq "wompalama")
@@ -20,7 +16,7 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema with Clickhous
 
     // PURE SPECULATIVE / SQL ONLY
     // THE REASON WHY IT'S NOT --> ON twoTestTable.ts is that twoTestTable DOESN'T have a ts column.
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+    toSql(query.internalQuery) should matchSQL(
       s"""
          |SELECT shield_id,
          |       numbers,
@@ -28,13 +24,13 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema with Clickhous
          |FROM
          |  (SELECT item_id,
          |          ts
-         |   FROM query_merge.twoTestTable
+         |   FROM ${TwoTestTable.quoted}
          |   WHERE column_3 = 'wompalama'
          |   GROUP BY ts
          |   ORDER BY ts ASC) AS L1 ALL
          |LEFT JOIN
          |  (SELECT *
-         |   FROM query_merge.captainAmerica
+         |   FROM ${OneTestTable.quoted}
          |   WHERE shield_id = '$expectedUUID'
          |   GROUP BY ts
          |   ORDER BY ts ASC) AS R1 USING ts
@@ -51,7 +47,7 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema with Clickhous
 
     // PURE SPECULATIVE / SQL ONLY
     // THE REASON WHY IT'S NOT --> ON twoTestTable.ts is that twoTestTable DOESN'T have a ts column.
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+    toSql(query.internalQuery) should matchSQL(
       s"""
          |SELECT item_id,
          |       column_1,
@@ -64,7 +60,7 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema with Clickhous
          |       *
          |FROM
          |  (SELECT *
-         |   FROM query_merge.captainAmerica
+         |   FROM ${OneTestTable.quoted}
          |   WHERE shield_id = '$expectedUUID'
          |   GROUP BY ts
          |   ORDER BY ts ASC) AS L2 ALL
@@ -77,13 +73,13 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema with Clickhous
          |          *
          |   FROM
          |     (SELECT *
-         |      FROM query_merge.twoTestTable
+         |      FROM ${TwoTestTable.quoted}
          |      WHERE column_3 = 'wompalama'
          |      GROUP BY ts
          |      ORDER BY ts ASC) AS L2 ALL
          |   LEFT JOIN
          |     (SELECT *
-         |      FROM query_merge.threeTestTable
+         |      FROM ${ThreeTestTable.quoted}
          |      WHERE shield_id = '$expectedUUID'
          |      GROUP BY ts
          |      ORDER BY ts ASC) AS R2 USING ts

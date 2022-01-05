@@ -1,14 +1,14 @@
 package com.crobox.clickhouse.dsl.language
+import com.crobox.clickhouse.DslIntegrationSpec
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.column.ColumnFunctionTest
 
-class CollectionFunctionTest extends ColumnFunctionTest {
+class CollectionFunctionTest extends DslIntegrationSpec {
 
   it should "succeed for IN functions" in {
-    val someCollection = Seq(1,4,6,9)
-    val someTuple = tuple(1,4,6,9)
-    val inNum = 4
-    val notInNum = 3
+    val someCollection = Seq(1, 4, 6, 9)
+    val someTuple      = tuple(1, 4, 6, 9)
+    val inNum          = 4
+    val notInNum       = 3
 
     r(const(inNum).in(someCollection)) shouldBe "1"
     r(const(inNum).notIn(someTuple)) shouldBe "0"

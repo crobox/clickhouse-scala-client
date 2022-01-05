@@ -1,10 +1,12 @@
 package com.crobox.clickhouse.dsl.column
 
+import com.crobox.clickhouse.DslIntegrationSpec
+import com.crobox.clickhouse.TestUtils.DDTStringify
 import com.crobox.clickhouse.dsl._
 import org.joda.time._
 
-class DateTimeFunctionsTest extends ColumnFunctionTest {
-  "Tokenization" should "succeed for DateTimeFunctions" in {
+class DateTimeFunctionsTest extends DslIntegrationSpec {
+  it should "succeed for DateTimeFunctions" in {
     val now         = new DateTime().withZone(DateTimeZone.UTC)
     val epoch       = new DateTime(0).withZone(DateTimeZone.UTC)
     val August_8_19 = new DateTime().withZone(DateTimeZone.UTC).withYear(2019).withMonthOfYear(8).withDayOfMonth(8)

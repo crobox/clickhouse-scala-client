@@ -15,5 +15,4 @@ class ClickhouseStatementTest extends AnyFlatSpecLike with Matchers {
       "\\\\-\\n-\\t-\\b-\\f-\\r-\\0-\\'-\\`-foo"
     )
   }
-
 }

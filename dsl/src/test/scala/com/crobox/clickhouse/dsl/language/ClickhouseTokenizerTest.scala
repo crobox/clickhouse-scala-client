@@ -1,8 +1,7 @@
 package com.crobox.clickhouse.dsl.language
 
 import java.util.UUID
-
-import com.crobox.clickhouse.ClickhouseClientSpec
+import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchema}
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.testkit.ClickhouseMatchers
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}

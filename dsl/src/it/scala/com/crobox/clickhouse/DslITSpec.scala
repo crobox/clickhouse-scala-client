@@ -3,23 +3,17 @@ package com.crobox.clickhouse
 import com.crobox.clickhouse.dsl.execution.ClickhouseQueryExecutor
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.schemabuilder.{CreateTable, Engine}
-import com.crobox.clickhouse.dsl.{Query, TestSchema}
+import com.crobox.clickhouse.dsl.{Query, ValueInsertion}
 import com.crobox.clickhouse.internal.QuerySettings
 import com.crobox.clickhouse.testkit.ClickhouseSpec
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.Suite
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.{BeforeAndAfterAll, Suite}
-import spray.json.DefaultJsonProtocol.{StringJsonFormat, jsonFormat}
+import spray.json.DefaultJsonProtocol.{jsonFormat, StringJsonFormat}
 import spray.json.RootJsonFormat
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait DslITSpec
-    extends ClickhouseClientSpec
-    with ClickhouseSpec
-    with BeforeAndAfterAll
-    with TestSchema
-    with ScalaFutures {
+trait DslITSpec extends ClickhouseClientSpec with ClickhouseSpec with TestSchema {
   this: Suite =>
   val table1Entries: Seq[Table1Entry] = Seq()
   val table2Entries: Seq[Table2Entry] = Seq()

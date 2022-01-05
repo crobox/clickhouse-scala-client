@@ -1,11 +1,14 @@
-package com.crobox.clickhouse.dsl
+package com.crobox.clickhouse
+
+import com.crobox.clickhouse.dsl.{NativeColumn, Table}
 
 import java.util.UUID
-
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import org.joda.time.DateTime
 import spray.json._
+
+import java.util.UUID
 
 trait TestSchema {
 

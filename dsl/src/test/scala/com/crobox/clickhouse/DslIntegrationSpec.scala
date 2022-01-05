@@ -1,16 +1,27 @@
 package com.crobox.clickhouse
 
-import com.crobox.clickhouse.dsl.TestSchema
+import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.execution.ClickhouseQueryExecutor
+import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.schemabuilder.{CreateTable, Engine}
 import com.crobox.clickhouse.testkit.ClickhouseSpec
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterAll, Suite}
+import org.scalatest.Suite
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
-trait TestSchemaClickhouseQuerySpec extends ClickhouseSpec with BeforeAndAfterAll with TestSchema with ScalaFutures {
+trait DslIntegrationSpec
+    extends ClickhouseClientSpec
+    with ClickhouseSpec
+    with TestSchema
+    with ClickhouseTokenizerModule {
   this: Suite =>
+
+  protected def r(query: Column): String =
+    runSql(select(query)).futureValue.trim
+
+  protected def runSql(query: OperationalQuery): Future[String] =
+    clickClient.query(toSql(query.internalQuery, None))
+
   val table1Entries: Seq[Table1Entry] = Seq()
   val table2Entries: Seq[Table2Entry] = Seq()
   val table3Entries: Seq[Table2Entry] = Seq()

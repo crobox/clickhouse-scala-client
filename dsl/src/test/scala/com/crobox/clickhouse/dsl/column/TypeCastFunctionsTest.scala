@@ -1,12 +1,14 @@
 package com.crobox.clickhouse.dsl.column
 
+import com.crobox.clickhouse.DslIntegrationSpec
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 
-class TypeCastFunctionsTest extends ColumnFunctionTest {
-  "Tokenization" should "succeed for TypeCastFunctions" in {
-    val someStringNum = const("123")
-    val someDateStr = const("2018-01-01")
+class TypeCastFunctionsTest extends DslIntegrationSpec {
+
+  it should "succeed for TypeCastFunctions" in {
+    val someStringNum   = const("123")
+    val someDateStr     = const("2018-01-01")
     val someDateTimeStr = const("2018-01-01 12:00:00")
 
     r(toTypeName(toUInt8(someStringNum))) shouldBe "UInt8"
@@ -32,10 +34,9 @@ class TypeCastFunctionsTest extends ColumnFunctionTest {
     r(toTypeName(toDate(someDateStr))) shouldBe "Date"
     r(toTypeName(toDateTime(someDateTimeStr))) shouldBe "DateTime"
     r(toTypeName(toStringRep(someStringNum))) shouldBe "String"
-    r(toTypeName(toFixedString(someStringNum,10))) shouldBe "FixedString(10)"
+    r(toTypeName(toFixedString(someStringNum, 10))) shouldBe "FixedString(10)"
     r(toTypeName(toStringCutToZero(someStringNum))) shouldBe "String"
     r(reinterpret(toStringRep(65))) shouldBe "A"
-    r(toTypeName(cast(someStringNum,ColumnType.Int32))) shouldBe "Int32"
+    r(toTypeName(cast(someStringNum, ColumnType.Int32))) shouldBe "Int32"
   }
-
 }

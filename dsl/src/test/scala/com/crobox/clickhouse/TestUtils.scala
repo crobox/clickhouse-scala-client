@@ -1,26 +1,9 @@
-package com.crobox.clickhouse.dsl.column
+package com.crobox.clickhouse
 
-import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.scalatest.concurrent.ScalaFutures
 
-import scala.concurrent.Future
-
-trait ColumnFunctionTest
-    extends ClickhouseClientSpec
-    with TestSchemaClickhouseQuerySpec
-    with ScalaFutures
-    with ClickhouseTokenizerModule {
-  implicit val clickhouseClient = clickClient
-
-  protected def r(query: Column): String =
-    runSql(select(query)).futureValue.trim
-
-  protected def runSql(query: OperationalQuery): Future[String] =
-    clickhouseClient.query(toSql(query.internalQuery, None))
+object TestUtils {
 
   implicit class DDTStringify(ddt: DateTime) {
     def printAsDate: String = DateTimeFormat.forPattern("yyyy-MM-dd").print(ddt)
