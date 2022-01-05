@@ -1,10 +1,10 @@
 package com.crobox.clickhouse.dsl.misc
 
-import com.crobox.clickhouse.ClickhouseClientSpec
+import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.misc.DSLImprovements.ColumnsImprv
 import com.crobox.clickhouse.dsl.{Column, NativeColumn}
 
-class DSLImprovementsTest extends ClickhouseClientSpec {
+class DSLImprovementsTest extends DslTestSpec {
   val c1: NativeColumn[String]      = NativeColumn[String]("c1")
   val c2: NativeColumn[String]      = NativeColumn[String]("c2")
   val c3: NativeColumn[Int]         = NativeColumn[Int]("c3")

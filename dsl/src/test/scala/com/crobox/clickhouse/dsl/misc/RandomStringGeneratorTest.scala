@@ -1,8 +1,8 @@
 package com.crobox.clickhouse.dsl.misc
 
-import com.crobox.clickhouse.ClickhouseClientSpec
+import com.crobox.clickhouse.DslTestSpec
 
-class RandomStringGeneratorTest extends ClickhouseClientSpec {
+class RandomStringGeneratorTest extends DslTestSpec {
 
   it should "generate of specific length" in {
 

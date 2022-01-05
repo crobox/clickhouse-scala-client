@@ -1,16 +1,9 @@
 package com.crobox.clickhouse.dsl.language
 
+import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.testkit.ClickhouseMatchers
-import com.crobox.clickhouse.{ClickhouseClientSpec, ClickhouseSQLSupport, TestSchema}
 
-class LogicalFunctionTokenizerTest
-    extends ClickhouseClientSpec
-    with TestSchema
-    with ClickhouseTokenizerModule
-    with ClickhouseSQLSupport
-    with ClickhouseMatchers {
-  val database = "default"
+class LogicalFunctionTokenizerTest extends DslTestSpec {
 
   def noto(other: LogicalOpsMagnet): ExpressionColumn[Boolean] = LogicalFunction(other, Not, other)
 

@@ -1,14 +1,13 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
+import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.NativeColumn
-import org.scalatest.flatspec.AnyFlatSpecLike
-import org.scalatest.matchers.should.Matchers
 
 /**
  * @author Sjoerd Mulder
  * @since 30-12-16
  */
-class ColumnTypeTest extends AnyFlatSpecLike with Matchers {
+class ColumnTypeTest extends DslTestSpec {
 
   it should "allow Nested types" in {
     ColumnType.Nested(NativeColumn("a"), NativeColumn("b", ColumnType.Int8)).toString should be(
