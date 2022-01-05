@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl.language
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.column.ColumnFunctionTest
 
-class CollectionFunctions extends ColumnFunctionTest {
+class CollectionFunctionTest extends ColumnFunctionTest {
 
   it should "succeed for IN functions" in {
     val someCollection = Seq(1,4,6,9)

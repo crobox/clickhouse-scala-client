@@ -1,26 +1,20 @@
-package com.crobox.clickhouse.dsl
+package com.crobox.clickhouse.dsl.column
 
-import java.util.UUID
-
-import com.crobox.clickhouse.TestSchemaClickhouseQuerySpec
-import com.crobox.clickhouse.ClickhouseClientSpec
-import org.scalatest.time.{Millis, Seconds, Span}
+import com.crobox.clickhouse.dsl.{TableColumn, forEach, quantiles, ref, select, sum, uniq, uniqExact}
+import com.crobox.clickhouse.{ClickhouseClientSpec, DslITSpec}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
-class AggregationFunctionsIT
-    extends ClickhouseClientSpec
-    with TestSchemaClickhouseQuerySpec {
+import java.util.UUID
+
+class AggregationFunctionsIT extends DslITSpec {
 
   private val entries = 200145
-  private val delta = 2
+  private val delta   = 2
   override val table1Entries: Seq[Table1Entry] =
     Seq.fill(entries)(Table1Entry(UUID.randomUUID(), numbers = Seq(1, 2, 3)))
   override val table2Entries: Seq[Table2Entry] =
     Seq.fill(entries)(Table2Entry(UUID.randomUUID(), randomString, randomInt, randomString, None))
-
-  override implicit def patienceConfig =
-    PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
 
   "Combinators" should "apply for aggregations" in {
     case class Result(columnResult: String) {

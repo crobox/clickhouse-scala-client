@@ -1,25 +1,10 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery.{AllLeftJoin, InnerJoin}
-import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.{dsl, ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
-import org.scalatest.concurrent.ScalaFutures
+import com.crobox.clickhouse.{DslITSpec, dsl}
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.time.{Millis, Seconds, Span}
-import spray.json.DefaultJsonProtocol.{jsonFormat, _}
-import spray.json.RootJsonFormat
 
-class JoinQueryIT
-    extends ClickhouseClientSpec
-    with TableDrivenPropertyChecks
-    with TestSchemaClickhouseQuerySpec
-    with ScalaFutures {
-  val clickhouseTokenizer = new ClickhouseTokenizerModule {}
-  override implicit def patienceConfig =
-    PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
-
-  case class Result(result: String)
-  implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
+class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
 
   it should "correct on condition for alias field" in {
     var query = select(shieldId as itemId)
