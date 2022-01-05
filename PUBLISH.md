@@ -13,7 +13,7 @@ If not done already, generate a key and upload it to a keyserver.
 ```
 $ gpg --gen-key
 $ gpg --list-secret-keys
-$ gpg --keyserver keyserver.ubuntu.com --send-keys 2BE67AC00D699E04E840B7FE29967E804D85663F
+$ gpg --keyserver keyserver.ubuntu.com --send-keys 2BE.......E804D85663F
 ```
 
 The single command that does it all:
