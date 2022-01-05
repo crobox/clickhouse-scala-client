@@ -1,6 +1,7 @@
 from http://www.scala-sbt.org/release/docs/Using-Sonatype.html
 
-The credentials for your Sonatype OSSRH account need to be stored somewhere safe (e.g. NOT in the repository). Common convention is a ~/.sbt/1.0/sonatype.sbt file with the following:
+The credentials for your Sonatype OSSRH account need to be stored somewhere safe (e.g. NOT in the repository). 
+Common convention is a ~/.sbt/1.0/sonatype.sbt or (~/.sbt/.credentials) file with the following:
 
 ```
 credentials += Credentials("Sonatype Nexus Repository Manager",
