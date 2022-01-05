@@ -9,8 +9,7 @@ credentials += Credentials("Sonatype Nexus Repository Manager",
                            "<your password>")
 ```
 
-Make sure to install SBT PGP from https://github.com/sbt/sbt-pgp
-First generate a key, then upload it to a keyserver.
+If not done already, generate a key and upload it to a keyserver.
 ```
 $ gpg --gen-key
 $ gpg --list-secret-keys
