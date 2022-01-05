@@ -24,7 +24,7 @@ trait DslIntegrationSpec
 
   val table1Entries: Seq[Table1Entry] = Seq()
   val table2Entries: Seq[Table2Entry] = Seq()
-  val table3Entries: Seq[Table2Entry] = Seq()
+  val table3Entries: Seq[Table3Entry] = Seq()
 
   implicit val ec: ExecutionContext
 
