@@ -9,16 +9,18 @@ import org.scalatest.concurrent.ScalaFutures
 
 import scala.concurrent.Future
 
-trait ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQuerySpec with ScalaFutures with ClickhouseTokenizerModule{
+trait ColumnFunctionTest
+    extends ClickhouseClientSpec
+    with TestSchemaClickhouseQuerySpec
+    with ScalaFutures
+    with ClickhouseTokenizerModule {
   implicit val clickhouseClient = clickClient
 
-  protected def r(query: Column): String = {
+  protected def r(query: Column): String =
     runSql(select(query)).futureValue.trim
-  }
 
-  protected def runSql(query: OperationalQuery): Future[String] = {
-    clickhouseClient.query(toSql(query.internalQuery,None))
-  }
+  protected def runSql(query: OperationalQuery): Future[String] =
+    clickhouseClient.query(toSql(query.internalQuery, None))
 
   implicit class DDTStringify(ddt: DateTime) {
     def printAsDate: String = DateTimeFormat.forPattern("yyyy-MM-dd").print(ddt)
@@ -42,11 +44,10 @@ trait ColumnFunctionTest extends ClickhouseClientSpec with TestSchemaClickhouseQ
         .minusMinutes(remainder)
     }
 
-    def toStartOfHr: DateTime = {
+    def toStartOfHr: DateTime =
       ddt
         .withMinuteOfHour(0)
         .withSecondOfMinute(0)
         .withMillisOfSecond(0)
-    }
   }
 }
