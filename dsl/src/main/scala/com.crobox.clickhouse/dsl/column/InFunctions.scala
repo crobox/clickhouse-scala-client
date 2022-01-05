@@ -1,4 +1,5 @@
 package com.crobox.clickhouse.dsl.column
+
 import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn}
 
 trait InFunctions { self: Magnets =>
@@ -27,6 +28,11 @@ trait InFunctions { self: Magnets =>
     def notIn(other: InFuncRHMagnet): NotIn             = NotIn(self, other)
     def globalIn(other: InFuncRHMagnet): GlobalIn       = GlobalIn(self, other)
     def globalNotIn(other: InFuncRHMagnet): GlobalNotIn = GlobalNotIn(self, other)
+
+    def in(other: InFuncRHMagnet, global: Boolean): InFunctionCol[_] = if (global) globalIn(other) else in(other)
+
+    def notIn(other: InFuncRHMagnet, global: Boolean): InFunctionCol[_] =
+      if (global) globalNotIn(other) else notIn(other)
   }
 
   def in(l: ConstOrColMagnet[_], r: InFuncRHMagnet): ExpressionColumn[Boolean] =
