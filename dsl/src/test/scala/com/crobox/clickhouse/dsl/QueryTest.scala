@@ -1,19 +1,18 @@
 package com.crobox.clickhouse.dsl
 
-import java.util.UUID
-
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import com.crobox.clickhouse.testkit.ClickhouseMatchers
-import com.crobox.clickhouse.{ClickhouseClientSpec, dsl}
+import com.crobox.clickhouse.{dsl, ClickhouseClientSpec}
 import org.joda.time.{DateTime, LocalDate}
 
+import java.util.UUID
 import scala.util.{Failure, Success}
 
 class QueryTest extends ClickhouseClientSpec with TestSchema with ClickhouseMatchers {
-  val clickhouseTokenizer       = new ClickhouseTokenizerModule {}
-  override val database: String = "query_test"
+  val clickhouseTokenizer: ClickhouseTokenizerModule = new ClickhouseTokenizerModule {}
+  override val database: String                      = "query_test"
 
   "querying using the typed query" should "perform simple select" in {
     val query = select(shieldId) from OneTestTable
@@ -25,8 +24,8 @@ class QueryTest extends ClickhouseClientSpec with TestSchema with ClickhouseMatc
   it should "generate for join between tables" in {
     val query = select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId
     clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"SELECT column_1, shield_id FROM $database.captainAmerica AS l1 INNER JOIN (SELECT * " +
-      s"FROM $database.twoTestTable) AS r1 USING shield_id FORMAT JSON"
+      s"SELECT column_1, shield_id FROM $database.captainAmerica AS L1 INNER JOIN (SELECT * " +
+      s"FROM $database.twoTestTable) AS R1 USING shield_id FORMAT JSON"
     )
   }
 
@@ -37,8 +36,8 @@ class QueryTest extends ClickhouseClientSpec with TestSchema with ClickhouseMatc
     val query                            = select(col1, shieldId) from innerQuery join (InnerJoin, joinInnerQuery) using itemId
     clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
       s"SELECT column_1, shield_id FROM (SELECT shield_id AS item_id FROM $database.captainAmerica " +
-      s"WHERE shield_id = '$expectedUUID') AS l1 INNER JOIN (SELECT item_id FROM $database.twoTestTable " +
-      s"WHERE column_3 = 'wompalama') AS r1 USING item_id FORMAT JSON"
+      s"WHERE shield_id = '$expectedUUID') AS L1 INNER JOIN (SELECT item_id FROM $database.twoTestTable " +
+      s"WHERE column_3 = 'wompalama') AS R1 USING item_id FORMAT JSON"
     )
   }
 
@@ -182,11 +181,10 @@ class QueryTest extends ClickhouseClientSpec with TestSchema with ClickhouseMatc
   it should "use alias in subselect" in {
     val query =
       select(dsl.all()).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"""
+    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(s"""
          |SELECT * FROM
-         |(SELECT column_1, shield_id FROM $database.captainAmerica AS l1
-         |  INNER JOIN (SELECT * FROM $database.twoTestTable) AS r1
+         |(SELECT column_1, shield_id FROM $database.captainAmerica AS L1
+         |  INNER JOIN (SELECT * FROM $database.twoTestTable) AS R1
          |  USING shield_id)
          |FORMAT JSON""".stripMargin)
   }

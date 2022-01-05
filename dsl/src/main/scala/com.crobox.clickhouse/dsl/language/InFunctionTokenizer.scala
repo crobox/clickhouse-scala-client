@@ -24,8 +24,11 @@ trait InFunctionTokenizer {
   }
 
   private def tokenizeInFunRHCol(value: InFuncRHMagnet)(implicit ctx: TokenizeContext): String = value match {
-    case col: InFuncRHMagnet if col.query.isDefined    => s"(${toRawSql(col.query.get.internalQuery)(TokenizeContext())})"
-    case col: InFuncRHMagnet if col.tableRef.isDefined => col.tableRef.get.quoted
-    case col: InFuncRHMagnet                           => tokenizeColumn(col.column)
+    case col: InFuncRHMagnet if col.query.isDefined =>
+      // TODO: should we create a new context and simple 'reuse' the current?
+      s"(${toRawSql(col.query.get.internalQuery)(ctx.copy(useTableAlias = true))})"
+    case col: InFuncRHMagnet if col.tableRef.isDefined =>
+      col.tableRef.map(table => table.quoted + ctx.tableAlias(table)).get
+    case col: InFuncRHMagnet => tokenizeColumn(col.column)
   }
 }

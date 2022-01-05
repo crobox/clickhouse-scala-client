@@ -126,8 +126,8 @@ class ClickhouseTokenizerTest
     )
     query should matchSQL(
       s"""
-         | SELECT shield_id FROM default.captainAmerica AS l1
-         | INNER JOIN (SELECT * FROM default.captainAmerica) AS r1 USING shield_id FORMAT JSON
+         | SELECT shield_id FROM default.captainAmerica AS L1
+         | INNER JOIN (SELECT * FROM default.captainAmerica) AS R1 USING shield_id FORMAT JSON
          | """.stripMargin
     )
   }
@@ -165,8 +165,8 @@ class ClickhouseTokenizerTest
     )
     query should matchSQL(
       s"""
-         | SELECT shield_id FROM default.captainAmerica AS l1 GLOBAL
-         | ANY LEFT JOIN (SELECT item_id AS shield_id FROM default.twoTestTable) AS r1 USING shield_id
+         | SELECT shield_id FROM default.captainAmerica AS L1 GLOBAL
+         | ANY LEFT JOIN (SELECT item_id AS shield_id FROM default.twoTestTable) AS R1 USING shield_id
          | FORMAT JSON""".stripMargin
     )
   }

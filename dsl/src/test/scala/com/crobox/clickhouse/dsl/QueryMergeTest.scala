@@ -1,11 +1,11 @@
 package com.crobox.clickhouse.dsl
 
-import java.util.UUID
-
 import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.dsl.parallel._
 import com.crobox.clickhouse.testkit.ClickhouseMatchers
 import com.crobox.clickhouse.{ClickhouseClientSpec, dsl => CHDsl}
+
+import java.util.UUID
 
 class QueryMergeTest extends ClickhouseClientSpec with TestSchema with ClickhouseMatchers {
   val clickhouseTokenizer = new ClickhouseTokenizerModule {}
@@ -31,13 +31,13 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema with Clickhous
          |   FROM query_merge.twoTestTable
          |   WHERE column_3 = 'wompalama'
          |   GROUP BY ts
-         |   ORDER BY ts ASC) AS l1 ALL
+         |   ORDER BY ts ASC) AS L1 ALL
          |LEFT JOIN
          |  (SELECT *
          |   FROM query_merge.captainAmerica
          |   WHERE shield_id = '$expectedUUID'
          |   GROUP BY ts
-         |   ORDER BY ts ASC) AS r1 USING ts
+         |   ORDER BY ts ASC) AS R1 USING ts
          |FORMAT JSON""".stripMargin
     )
   }
@@ -67,7 +67,7 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema with Clickhous
          |   FROM query_merge.captainAmerica
          |   WHERE shield_id = '$expectedUUID'
          |   GROUP BY ts
-         |   ORDER BY ts ASC) AS l2 ALL
+         |   ORDER BY ts ASC) AS L2 ALL
          |LEFT JOIN
          |  (SELECT item_id,
          |          column_2,
@@ -80,15 +80,15 @@ class QueryMergeTest extends ClickhouseClientSpec with TestSchema with Clickhous
          |      FROM query_merge.twoTestTable
          |      WHERE column_3 = 'wompalama'
          |      GROUP BY ts
-         |      ORDER BY ts ASC) AS l2 ALL
+         |      ORDER BY ts ASC) AS L2 ALL
          |   LEFT JOIN
          |     (SELECT *
          |      FROM query_merge.threeTestTable
          |      WHERE shield_id = '$expectedUUID'
          |      GROUP BY ts
-         |      ORDER BY ts ASC) AS r2 USING ts
+         |      ORDER BY ts ASC) AS R2 USING ts
          |   GROUP BY ts
-         |   ORDER BY ts ASC) AS r2 USING ts
+         |   ORDER BY ts ASC) AS R2 USING ts
          |FORMAT JSON""".stripMargin
     )
   }
