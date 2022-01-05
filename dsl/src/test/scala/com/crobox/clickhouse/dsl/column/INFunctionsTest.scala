@@ -36,7 +36,9 @@ class INFunctionsTest extends ColumnFunctionTest with ClickhouseTokenizerModule 
       shieldId.in(select(itemId).from(OneTestTable).join(InnerJoin, select(itemId).from(TwoTestTable)).using(itemId))
     ) should matchSQL(
       s"""
-         |shield_id IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 AS L1 INNER JOIN (SELECT item_id FROM ${TwoTestTable.quoted} AS T2) AS R1 USING item_id)
+         |shield_id IN (
+         |    SELECT item_id FROM ${OneTestTable.quoted} AS L1
+         |    INNER JOIN (SELECT item_id FROM ${TwoTestTable.quoted}) AS R1 USING item_id)
          |""".stripMargin
     )
   }

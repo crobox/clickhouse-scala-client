@@ -26,6 +26,8 @@ case class TokenizeContext(var joinNr: Int = 0,
       })
     } else ""
 
+  def setTableAlias(value: Boolean): TokenizeContext = copy(useTableAlias = value)
+
   def leftAlias(alias: Option[String]): String  = ClickhouseStatement.quoteIdentifier(alias.getOrElse("L" + joinNr))
   def rightAlias(alias: Option[String]): String = ClickhouseStatement.quoteIdentifier(alias.getOrElse("R" + joinNr))
 }
