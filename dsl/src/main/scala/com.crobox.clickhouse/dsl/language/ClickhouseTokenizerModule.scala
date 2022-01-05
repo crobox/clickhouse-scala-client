@@ -20,7 +20,7 @@ case class TokenizeContext(var joinNr: Int = 0,
   def tableAlias(table: Table): String =
     if (useTableAlias) {
       tableAliases.getOrElse(table, {
-        val alias = ClickhouseStatement.quoteIdentifier(" AS T" + (tableAliases.size + 1))
+        val alias = " AS " + ClickhouseStatement.quoteIdentifier("T" + (tableAliases.size + 1))
         tableAliases += (table -> alias)
         alias
       })
