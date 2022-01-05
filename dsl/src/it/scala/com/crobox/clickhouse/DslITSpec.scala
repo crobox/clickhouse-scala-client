@@ -71,6 +71,7 @@ trait DslITSpec
 
   override def afterAll(): Unit = super.afterAll()
 
-  case class Result(result: String)
-  implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
+  case class StringResult(result: String)
+  implicit val stringResultFormat: RootJsonFormat[StringResult] =
+    jsonFormat[String, StringResult](StringResult.apply, "result")
 }

@@ -6,7 +6,6 @@ import com.crobox.clickhouse.dsl.{arrayJoin, arrayStringConcat, select, splitByC
 import java.util.UUID
 
 class StringFunctionsIT extends DslITSpec {
-
   private val columnString = "oneem,twoem,threeem"
   override val table2Entries: Seq[Table2Entry] =
     Seq(Table2Entry(UUID.randomUUID(), columnString, randomInt, randomString, None))
@@ -14,7 +13,7 @@ class StringFunctionsIT extends DslITSpec {
   it should "split by character" in {
     val resultRows =
       chExecutor
-        .execute[Result](select(arrayJoin(splitByChar(",", col1)) as "result") from TwoTestTable)
+        .execute[StringResult](select(arrayJoin(splitByChar(",", col1)) as "result") from TwoTestTable)
         .futureValue
         .rows
     resultRows.length shouldBe 3
@@ -24,7 +23,7 @@ class StringFunctionsIT extends DslITSpec {
   it should "split by string" in {
     val resultRows =
       chExecutor
-        .execute[Result](select(arrayJoin(splitByString("em,", col1)) as "result") from TwoTestTable)
+        .execute[StringResult](select(arrayJoin(splitByString("em,", col1)) as "result") from TwoTestTable)
         .futureValue
         .rows
     resultRows.length shouldBe 3
@@ -34,7 +33,7 @@ class StringFunctionsIT extends DslITSpec {
   it should "concatenate string back" in {
     val resultRows =
       chExecutor
-        .execute[Result](select(arrayStringConcat(splitByChar(",", col1), ",") as "result") from TwoTestTable)
+        .execute[StringResult](select(arrayStringConcat(splitByChar(",", col1), ",") as "result") from TwoTestTable)
         .futureValue
         .rows
     resultRows.length shouldBe 1

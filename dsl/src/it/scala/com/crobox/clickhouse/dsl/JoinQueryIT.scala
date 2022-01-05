@@ -11,7 +11,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
       .from(OneTestTable)
       .where(notEmpty(itemId))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
-    var resultRows = chExecutor.execute[Result](query).futureValue.rows
+    var resultRows = chExecutor.execute[StringResult](query).futureValue.rows
     resultRows.length shouldBe 0
 
     // reverse tables to check other side of ON condition
@@ -19,7 +19,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
       .from(TwoTestTable)
       .where(notEmpty(itemId))
       .join(InnerJoin, select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))) on itemId
-    resultRows = chExecutor.execute[Result](query).futureValue.rows
+    resultRows = chExecutor.execute[StringResult](query).futureValue.rows
     resultRows.length shouldBe 0
   }
 
@@ -48,7 +48,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
         .from(OneTestTable)
         .where(notEmpty(itemId))
         .join(joinType, TwoTestTable) using itemId
-      var resultRows = chExecutor.execute[Result](query).futureValue.rows
+      var resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // TABLE -- QUERY
@@ -57,7 +57,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
         .from(OneTestTable)
         .where(notEmpty(itemId))
         .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- TABLE
@@ -68,7 +68,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
         )
         .join(joinType, TwoTestTable)
         .where(notEmpty(itemId)) using itemId
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- QUERY
@@ -76,7 +76,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
       select(dsl.all())
         .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
         .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
     }
   }
@@ -97,7 +97,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
           .where(notEmpty(itemId))
           .join(joinType, ThreeTestTable)
           .on((itemId, "=", itemId), (col2, "<=", col2))
-      var resultRows = chExecutor.execute[Result](query).futureValue.rows
+      var resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // TABLE -- QUERY
@@ -106,7 +106,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
         .where(notEmpty(itemId))
         .join(joinType, select(itemId, col2).from(ThreeTestTable).where(notEmpty(itemId)))
         .on((itemId, "=", itemId), (col2, "<=", col2))
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- TABLE
@@ -115,7 +115,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
         .join(joinType, ThreeTestTable)
         .where(notEmpty(itemId))
         .on((itemId, "=", itemId), (col2, "<=", col2))
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- QUERY
@@ -124,7 +124,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
         .join(joinType, select(itemId, col2).from(ThreeTestTable).where(notEmpty(itemId)))
         .on((itemId, "=", itemId), (col2, "<=", col2))
 
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
     }
   }
@@ -133,7 +133,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
   it should "correctly handle cross join" in {
     val query: OperationalQuery =
       select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
-    val resultRows = chExecutor.execute[Result](query).futureValue.rows
+    val resultRows = chExecutor.execute[StringResult](query).futureValue.rows
     resultRows.length shouldBe 0
   }
 
@@ -147,7 +147,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
         )
         .join(AllLeftJoin, ThreeTestTable)
         .on(itemId)
-    val resultRows = chExecutor.execute[Result](query).futureValue.rows
+    val resultRows = chExecutor.execute[StringResult](query).futureValue.rows
     resultRows.length shouldBe 0
   }
 }
