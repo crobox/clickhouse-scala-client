@@ -1,5 +1,10 @@
 #!/bin/bash
 
+#
+# Test your docker locally by first running:
+# docker build -t test_build .
+#
+
 export REGISTRY_IMAGE="crobox/clickhouse-scala-client-build"
 export VERSION_ID="0.1"
 
