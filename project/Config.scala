@@ -4,11 +4,11 @@ import sbt._
 object Config {
   val CustomIntegrationTest = config("it") extend Test
 
-  private lazy val testAll  = TaskKey[Unit]("tests")
+  private lazy val testAll = TaskKey[Unit]("tests")
 
   private lazy val unitSettings = Seq(
-    fork in Test := true,
-    parallelExecution in Test := false
+    Test / fork := true,
+    Test / parallelExecution := false
   )
 
   private lazy val itSettings =
