@@ -1,30 +1,19 @@
 package com.crobox.clickhouse.dsl
 
-import java.util.UUID
-
-import com.crobox.clickhouse.{ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.execution.{DefaultClickhouseQueryExecutor, QueryResult}
-import com.crobox.clickhouse.testkit.ClickhouseMatchers
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
+import com.crobox.clickhouse.{ClickhouseClient, DslITSpec}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
+import java.util.UUID
 import scala.concurrent.Future
 import scala.util.Random
 
-class QueryIT
-    extends ClickhouseClientSpec
-    with TestSchemaClickhouseQuerySpec
-    with ScalaFutures
-    with ClickhouseMatchers {
+class QueryIT extends DslITSpec {
 
-  override implicit def patienceConfig =
-    PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
-
-  implicit val clickhouseClient = clickClient
-  private val oneId             = UUID.randomUUID()
+  implicit val clickhouseClient: ClickhouseClient = clickClient
+  private val oneId                               = UUID.randomUUID()
   override val table1Entries =
     Seq(Table1Entry(oneId), Table1Entry(randomUUID), Table1Entry(randomUUID), Table1Entry(randomUUID))
   override val table2Entries = Seq(Table2Entry(oneId, randomString, Random.nextInt(1000) + 1, randomString, None))

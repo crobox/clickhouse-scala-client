@@ -1,7 +1,6 @@
 package com.crobox.clickhouse
 
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKit
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalactic.{Tolerance, TripleEqualsSupport}
@@ -22,7 +21,6 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
     with BeforeAndAfterAll
     with ScalaFutures {
 
-  implicit val materializer: Materializer = ActorMaterializer()
   implicit val ec: ExecutionContext       = system.dispatcher
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(1.seconds, 50.millis)

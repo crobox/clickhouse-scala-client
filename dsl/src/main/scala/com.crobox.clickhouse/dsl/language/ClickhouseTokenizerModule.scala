@@ -11,13 +11,25 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 //import scala.jdk.CollectionConverters._
 
-case class TokenizeContext(var joinNr: Int = 0) {
+case class TokenizeContext(var joinNr: Int = 0,
+                           var tableAliases: Map[Table, String] = Map.empty,
+                           useTableAlias: Boolean = false) {
 
-  def incrementJoinNumber(): Unit =
-    joinNr = joinNr + 1
+  def incrementJoinNumber(): Unit = joinNr += 1
 
-  def leftAlias(alias: Option[String]): String  = ClickhouseStatement.quoteIdentifier(alias.getOrElse("l" + joinNr))
-  def rightAlias(alias: Option[String]): String = ClickhouseStatement.quoteIdentifier(alias.getOrElse("r" + joinNr))
+  def tableAlias(table: Table): String =
+    if (useTableAlias) {
+      tableAliases.getOrElse(table, {
+        val alias = " AS " + ClickhouseStatement.quoteIdentifier("T" + (tableAliases.size + 1))
+        tableAliases += (table -> alias)
+        alias
+      })
+    } else ""
+
+  def setTableAlias(value: Boolean): TokenizeContext = copy(useTableAlias = value)
+
+  def leftAlias(alias: Option[String]): String  = ClickhouseStatement.quoteIdentifier(alias.getOrElse("L" + joinNr))
+  def rightAlias(alias: Option[String]): String = ClickhouseStatement.quoteIdentifier(alias.getOrElse("R" + joinNr))
 }
 
 trait ClickhouseTokenizerModule
@@ -95,7 +107,7 @@ trait ClickhouseTokenizerModule
     require(from != null)
     val fromClause = from match {
       case Some(query: InnerFromQuery)    => s"(${toRawSql(query.innerQuery.internalQuery).trim})"
-      case Some(table: TableFromQuery[_]) => table.table.quoted
+      case Some(table: TableFromQuery[_]) => table.table.quoted + ctx.tableAlias(table.table)
       case _                              => return ""
     }
 

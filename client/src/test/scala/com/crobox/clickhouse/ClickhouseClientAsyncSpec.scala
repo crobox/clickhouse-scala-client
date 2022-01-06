@@ -3,7 +3,6 @@ package com.crobox.clickhouse
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.Uri
 import akka.pattern.ask
-import akka.stream.{ActorMaterializer, Materializer}
 import akka.testkit.TestKit
 import akka.util.Timeout
 import akka.util.Timeout.durationToTimeout
@@ -11,11 +10,11 @@ import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.GetConnection
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest._
-
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
 import org.scalatest.flatspec.AsyncFlatSpecLike
 import org.scalatest.matchers.should.Matchers
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load())
     extends TestKit(ActorSystem("clickhouseClientAsyncTestSystem", config.getConfig("crobox.clickhouse.client")))
@@ -25,12 +24,10 @@ abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load
     with BeforeAndAfterEach {
 
   implicit val timeout: Timeout = 5.second
-  implicit val materializer: Materializer = ActorMaterializer()
 
-  override protected def afterAll(): Unit = {
+  override protected def afterAll(): Unit =
     try super.afterAll()
     finally Await.result(system.terminate(), 10.seconds)
-  }
 
   def requestParallelHosts(balancer: HostBalancer, connections: Int = 10): Future[Seq[Uri]] =
     Future.sequence(
@@ -61,5 +58,4 @@ abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load
         succeed
       })
   }
-
 }

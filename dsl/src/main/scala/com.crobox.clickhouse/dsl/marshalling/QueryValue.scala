@@ -1,20 +1,21 @@
 package com.crobox.clickhouse.dsl.marshalling
 
-import java.util.UUID
-
 import com.crobox.clickhouse.dsl.ClickhouseStatement
 import com.crobox.clickhouse.partitioning.PartitionDateFormatter
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, LocalDate}
 
+import java.util.UUID
 import scala.annotation.implicitNotFound
 
 /**
-  * Parse a value into its Clickhouse SQL representation and vice - versa.
-  *
-  * @tparam V
-  */
-@implicitNotFound("No QueryVal for type ${V} in scope, import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._ or implement a QueryValue for ${V}")
+ * Parse a value into its Clickhouse SQL representation and vice - versa.
+ *
+ * @tparam V
+ */
+@implicitNotFound(
+  "No QueryVal for type ${V} in scope, import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._ or implement a QueryValue for ${V}"
+)
 trait QueryValue[V] {
 
   def apply(value: V): String
@@ -95,7 +96,7 @@ trait QueryValueFormats {
   }
 
   implicit object DateTimeQueryValue extends QueryValue[DateTime] {
-    private val formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+    private val formatter                   = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
     override def apply(v: DateTime): String = quote(formatter.print(v))
 
     override def unapply(v: String): DateTime = formatter.parseDateTime(unquote(v))
@@ -113,8 +114,7 @@ trait QueryValueFormats {
 
   class IterableQueryValue[V](ev: QueryValue[V]) extends QueryValue[scala.Iterable[V]] {
 
-    override def apply(value: scala.Iterable[V]): String =
-      s"[${value.map(ev.apply).mkString(",")}]".toString
+    override def apply(value: scala.Iterable[V]): String = s"[${value.map(ev.apply).mkString(",")}]"
 
     override def unapply(queryRep: String): scala.Iterable[V] =
       unquote(queryRep).split(",").toIterable.map(ev.unapply)
@@ -122,8 +122,7 @@ trait QueryValueFormats {
 
   private def unquote(v: String): String = v.substring(1, v.length - 2)
 
-  private def quote(v: String): String = s"'$v'".toString
-
+  private def quote(v: String): String = s"'$v'"
 }
 
 object QueryValueFormats extends QueryValueFormats

@@ -1,13 +1,12 @@
 package com.crobox.clickhouse.dsl.marshalling
 
+import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport.ClickhouseIntervalStartFormat
 import com.crobox.clickhouse.time.IntervalStart
 import org.joda.time.{DateTime, DateTimeZone}
 import spray.json.{JsNumber, JsString}
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 
-class ClickhouseIntervalStartFormatTest extends AnyFlatSpec with Matchers {
+class ClickhouseIntervalStartFormatTest extends DslTestSpec {
 
   val zone = DateTimeZone.forID("Europe/Bucharest")
 
@@ -43,6 +42,6 @@ class ClickhouseIntervalStartFormatTest extends AnyFlatSpec with Matchers {
 
   it should "convert to correct year" in {
     // JsString("1618876800000000").convertTo[IntervalStart] should be ("53270-03-01T00:00:00.000Z")
-    JsString("1618876800000000").convertTo[IntervalStart].getMillis should be (1618876800000L)
+    JsString("1618876800000000").convertTo[IntervalStart].getMillis should be(1618876800000L)
   }
 }

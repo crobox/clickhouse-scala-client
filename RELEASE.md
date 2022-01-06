@@ -1,6 +1,7 @@
 from http://www.scala-sbt.org/release/docs/Using-Sonatype.html
 
-The credentials for your Sonatype OSSRH account need to be stored somewhere safe (e.g. NOT in the repository). Common convention is a ~/.sbt/1.0/sonatype.sbt file with the following:
+The credentials for your Sonatype OSSRH account need to be stored somewhere safe (e.g. NOT in the repository). 
+Common convention is a ~/.sbt/1.0/sonatype.sbt or (~/.sbt/.credentials) file with the following:
 
 ```
 credentials += Credentials("Sonatype Nexus Repository Manager",
@@ -9,12 +10,11 @@ credentials += Credentials("Sonatype Nexus Repository Manager",
                            "<your password>")
 ```
 
-Make sure to install SBT PGP from https://github.com/sbt/sbt-pgp
-First generate a key, then upload it to a keyserver.
+If not done already, generate a key and upload it to a keyserver.
 ```
 $ gpg --gen-key
 $ gpg --list-secret-keys
-$ gpg --keyserver keyserver.ubuntu.com --send-keys 2BE67AC00D699E04E840B7FE29967E804D85663F
+$ gpg --keyserver keyserver.ubuntu.com --send-keys 2BE.......E804D85663F
 ```
 
 The single command that does it all:

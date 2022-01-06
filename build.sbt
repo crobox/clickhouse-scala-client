@@ -1,7 +1,6 @@
 import Build._
-//import com.typesafe.sbt.pgp.PgpKeys
 
-//scalafmt settings
+// Scala Formatting
 ThisBuild / scalafmtVersion := "1.5.1"
 ThisBuild / scalafmtOnCompile := false     // all projects
 ThisBuild / scalafmtTestOnCompile := false // all projects
@@ -61,6 +60,8 @@ lazy val root = (project in file("."))
   .aggregate(client, dsl, testkit)
 
 lazy val client: Project = (project in file("client"))
+  .configs(Config.CustomIntegrationTest)
+  .settings(Config.testSettings: _*)
   .settings(
     name := "client",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
@@ -74,16 +75,9 @@ lazy val client: Project = (project in file("client"))
     ) ++ testDependencies.map(_    % Test)
   )
 
-lazy val testkit = (project in file("testkit"))
-  .settings(
-    name := "testkit",
-    sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    libraryDependencies ++=
-      Build.testDependencies
-  )
-  .dependsOn(client)
-
 lazy val dsl = (project in file("dsl"))
+  .configs(Config.CustomIntegrationTest)
+  .settings(Config.testSettings: _*)
   .settings(
     name := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
@@ -92,3 +86,12 @@ lazy val dsl = (project in file("dsl"))
     )
   )
   .dependsOn(client, client % "test->test", testkit % Test)
+
+lazy val testkit = (project in file("testkit"))
+  .settings(
+    name := "testkit",
+    sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    libraryDependencies ++=
+      Build.testDependencies
+  )
+  .dependsOn(client)

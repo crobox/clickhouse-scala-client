@@ -1,8 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
+import com.crobox.clickhouse.DslIntegrationSpec
 import com.crobox.clickhouse.dsl._
 
-class ComparisonFunctionsTest extends ColumnFunctionTest {
+class ComparisonFunctionsTest extends DslIntegrationSpec {
   "Tokenization" should "succeed for ComparisonFunctions" in {
     val someNum = const(10L)
 
@@ -21,5 +22,4 @@ class ComparisonFunctionsTest extends ColumnFunctionTest {
     r(lessOrEquals(1,2)) shouldBe "1"
     r(greaterOrEquals(1,2)) shouldBe "0"
   }
-
 }

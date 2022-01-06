@@ -1,25 +1,17 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery.{AllLeftJoin, InnerJoin}
-import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.testkit.ClickhouseMatchers
-import com.crobox.clickhouse.{dsl, ClickhouseClientSpec}
+import com.crobox.clickhouse.{dsl, DslTestSpec}
 import org.scalatest.prop.TableDrivenPropertyChecks
 
-class JoinQueryTest
-    extends ClickhouseClientSpec
-    with TableDrivenPropertyChecks
-    with TestSchema
-    with ClickhouseMatchers {
-  val clickhouseTokenizer = new ClickhouseTokenizerModule {}
-  val database            = "sc"
+class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
 
   it should s"join correctly on: ${JoinQuery.CrossJoin}" in {
     val query: OperationalQuery =
       select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"SELECT item_id FROM (SELECT item_id FROM sc.twoTestTable AS l1 " +
-      s"CROSS JOIN (SELECT * FROM sc.threeTestTable) AS r1) FORMAT JSON"
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT item_id FROM (SELECT item_id FROM ${TwoTestTable.quoted} AS L1 " +
+      s"CROSS JOIN (SELECT * FROM ${ThreeTestTable.quoted}) AS R1) FORMAT JSON"
     )
   }
 
@@ -29,9 +21,9 @@ class JoinQueryTest
       .from(OneTestTable)
       .where(notEmpty(itemId))
       .join(InnerJoin, TwoTestTable) using itemId
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"SELECT shield_id AS item_id FROM sc.captainAmerica AS l1 " +
-      s"INNER JOIN (SELECT * FROM sc.twoTestTable) AS r1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT shield_id AS item_id FROM ${OneTestTable.quoted} AS L1 " +
+      s"INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
 
@@ -41,10 +33,10 @@ class JoinQueryTest
       .from(OneTestTable)
       .where(notEmpty(itemId))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"SELECT shield_id AS item_id FROM sc.captainAmerica AS l1 " +
-      s"INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable " +
-      s"WHERE notEmpty(item_id)) AS r1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT shield_id AS item_id FROM ${OneTestTable.quoted} AS L1 " +
+      s"INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
+      s"WHERE notEmpty(item_id)) AS R1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
 
@@ -56,9 +48,9 @@ class JoinQueryTest
       )
       .join(InnerJoin, TwoTestTable)
       .where(notEmpty(itemId)) using itemId
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica " +
-      s"WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT * FROM sc.twoTestTable) AS r1 " +
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM (SELECT shield_id AS item_id FROM ${OneTestTable.quoted} " +
+      s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 " +
       s"USING item_id WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
@@ -68,10 +60,10 @@ class JoinQueryTest
     select(dsl.all())
       .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica " +
-      s"WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable " +
-      s"WHERE notEmpty(item_id)) AS r1 USING item_id FORMAT JSON"
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM (SELECT shield_id AS item_id FROM ${OneTestTable.quoted} " +
+      s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
+      s"WHERE notEmpty(item_id)) AS R1 USING item_id FORMAT JSON"
     )
   }
 
@@ -81,10 +73,10 @@ class JoinQueryTest
     select(dsl.all())
       .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica " +
-      s"WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable " +
-      s"WHERE notEmpty(item_id)) AS r1 ON l1.item_id = r1.item_id FORMAT JSON"
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM (SELECT shield_id AS item_id FROM ${OneTestTable.quoted} " +
+      s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
+      s"WHERE notEmpty(item_id)) AS R1 ON L1.item_id = R1.item_id FORMAT JSON"
     )
   }
 
@@ -94,17 +86,17 @@ class JoinQueryTest
     select(dsl.all())
       .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on ((itemId, "<=", itemId))
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
-      s"SELECT * FROM (SELECT shield_id AS item_id FROM sc.captainAmerica " +
-      s"WHERE notEmpty(item_id)) AS l1 INNER JOIN (SELECT item_id, column_2 FROM sc.twoTestTable " +
-      s"WHERE notEmpty(item_id)) AS r1 ON l1.item_id <= r1.item_id FORMAT JSON"
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM (SELECT shield_id AS item_id FROM ${OneTestTable.quoted} " +
+      s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
+      s"WHERE notEmpty(item_id)) AS R1 ON L1.item_id <= R1.item_id FORMAT JSON"
     )
   }
 
   it should s"fail on empty on and using" in {
     val query: OperationalQuery =
       select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)).join(InnerJoin, TwoTestTable)
-    an[AssertionError] shouldBe thrownBy(clickhouseTokenizer.toSql(query.internalQuery))
+    an[AssertionError] shouldBe thrownBy(toSql(query.internalQuery))
   }
 
   it should s"fail on set on and using" in {
@@ -113,7 +105,7 @@ class JoinQueryTest
       .from(OneTestTable)
       .where(notEmpty(itemId))
       .join(InnerJoin, TwoTestTable) using itemId on itemId
-    an[AssertionError] shouldBe thrownBy(clickhouseTokenizer.toSql(query.internalQuery))
+    an[AssertionError] shouldBe thrownBy(toSql(query.internalQuery))
   }
 
   it should s"triple complex join query" in {
@@ -126,23 +118,23 @@ class JoinQueryTest
         )
         .join(AllLeftJoin, ThreeTestTable)
         .on(itemId)
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+    toSql(query.internalQuery) should matchSQL(
       s"""
          |SELECT *
          |FROM
          |  (SELECT *
          |   FROM
          |     (SELECT shield_id AS item_id
-         |      FROM sc.captainAmerica
-         |      WHERE notEmpty(item_id)) AS l1
+         |      FROM ${OneTestTable.quoted}
+         |      WHERE notEmpty(item_id)) AS L1
          |   INNER JOIN
          |     (SELECT item_id,
          |             column_2
-         |      FROM sc.twoTestTable
-         |      WHERE notEmpty(item_id)) AS r1 ON l1.item_id = r1.item_id) AS l2 ALL
+         |      FROM ${TwoTestTable.quoted}
+         |      WHERE notEmpty(item_id)) AS R1 ON L1.item_id = R1.item_id) AS L2 ALL
          |LEFT JOIN
          |  (SELECT *
-         |   FROM sc.threeTestTable) AS r2 ON l2.item_id = r2.item_id
+         |   FROM ${ThreeTestTable.quoted}) AS R2 ON L2.item_id = R2.item_id
          |FORMAT JSON""".stripMargin
     )
   }
@@ -159,23 +151,23 @@ class JoinQueryTest
         .as("2_leFT")
         .join(AllLeftJoin, ThreeTestTable)
         .on(itemId)
-    clickhouseTokenizer.toSql(query.internalQuery) should matchSQL(
+    toSql(query.internalQuery) should matchSQL(
       s"""
          |SELECT *
          |FROM
          |  (SELECT *
          |   FROM
          |     (SELECT shield_id AS item_id
-         |      FROM sc.captainAmerica AS ott_alias
+         |      FROM ${OneTestTable.quoted} AS ott_alias
          |      WHERE notEmpty(item_id)) AS `1_lEfT`
          |   INNER JOIN
          |     (SELECT item_id,
          |             column_2
-         |      FROM sc.twoTestTable AS `ttt.alias`
-         |      WHERE notEmpty(item_id)) AS r1 ON `1_lEfT`.item_id = r1.item_id) AS `2_leFT` ALL
+         |      FROM ${TwoTestTable.quoted} AS `ttt.alias`
+         |      WHERE notEmpty(item_id)) AS R1 ON `1_lEfT`.item_id = R1.item_id) AS `2_leFT` ALL
          |LEFT JOIN
          |  (SELECT *
-         |   FROM sc.threeTestTable) AS r2 ON `2_leFT`.item_id = r2.item_id
+         |   FROM ${ThreeTestTable.quoted}) AS R2 ON `2_leFT`.item_id = R2.item_id
          |FORMAT JSON""".stripMargin
     )
   }

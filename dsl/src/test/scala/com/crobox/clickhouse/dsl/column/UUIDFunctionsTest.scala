@@ -1,8 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
+import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl._
 
-class UUIDFunctionsTest extends ColumnFunctionTest {
+class UUIDFunctionsTest extends DslTestSpec {
 
   it should "rewrite empty to empty(0)" in {
     var query = select(All()).from(TwoTestTable).where(nativeUUID.empty())

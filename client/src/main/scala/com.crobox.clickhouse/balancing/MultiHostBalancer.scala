@@ -3,6 +3,7 @@ package com.crobox.clickhouse.balancing
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.Uri
 import akka.pattern.ask
+import akka.util.Timeout
 import akka.util.Timeout.durationToTimeout
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.GetConnection
@@ -15,7 +16,7 @@ case class MultiHostBalancer(hosts: Set[Uri], manager: ActorRef)(implicit system
     extends HostBalancer
     with ClickhouseHostBuilder {
 
-  private implicit val timeout = durationToTimeout(5 seconds)
+  private implicit val timeout: Timeout = durationToTimeout(5.seconds)
 
   manager ! ConnectionManagerActor.Connections(hosts)
 

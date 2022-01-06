@@ -1,0 +1,51 @@
+image: reg.xoborc.com/crobox/infra/gitlab-build:latest
+variables:
+  # Configure caching rules for gitlab
+#  SBT_OPTS: "-Dsbt.override.build.repos=true -Dsbt.ivy.home=/cache/.ivy2/ -Divy.home=/cache/.ivy2/ -Dfile.encoding=UTF8 -Djava.awt.headless=true"
+  SBT_OPTS: "'set resolvers += \"Sonatype OSS Snapshots\" at \"https://oss.sonatype.org/content/repositories/snapshots\"'"
+  CI_JOB: ""
+  SBT_PROJECT_NAME: "clickhouse-scala-client"
+  CLICKHOUSE_HOST: "clickhouse"
+
+stages:
+  - build
+
+before_script:
+#  - /scripts/prepare-nexus-access.sh nexus.xoborc.com
+#  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#  - docker login -u $CI_DEPENDENCY_PROXY_USER -p $CI_DEPENDENCY_PROXY_PASSWORD $CI_SERVER_HOST
+  - SERVICE_NAME_COMPOSE=`echo $SBT_PROJECT_NAME | tr '[:upper:]' '[:lower:]' | sed 's/[^a-zA-Z0-9]//g'`
+  - export COMPOSE_PROJECT_NAME="${SERVICE_NAME_COMPOSE}${CI_PIPELINE_ID}"
+  - NETWORK_NAME="${COMPOSE_PROJECT_NAME}_default"
+  - docker-compose up -d
+  - docker network connect $NETWORK_NAME ${GITLAB_CI_CONTAINER_ID}
+
+after_script:
+  - SERVICE_NAME_COMPOSE=`echo $SBT_PROJECT_NAME | tr '[:upper:]' '[:lower:]' | sed 's/[^a-zA-Z0-9]//g'`
+  - export COMPOSE_PROJECT_NAME="${SERVICE_NAME_COMPOSE}${CI_PIPELINE_ID}"
+  - NETWORK_NAME="${COMPOSE_PROJECT_NAME}_default"
+  - docker network disconnect $NETWORK_NAME ${GITLAB_CI_CONTAINER_ID}
+  - docker-compose down -v --remove-orphans
+
+unit:test:
+  stage: build
+  script:
+    - sbt clean coverage test coverageReport
+    - sbt coverageAggregate
+  artifacts:
+    when: always
+    reports:
+      cobertura: target/*/coverage-report/cobertura.xml
+      junit: ./**/target/test-reports/TEST-*.xml
+
+integration:test:
+  stage: build
+  script:
+    - export CONTAINER_HOSTNAME=`hostname -i | cut -d ' ' -f 1`
+    - sbt clean coverage dsl/it:test coverageReport
+    - sbt coverageAggregate
+  artifacts:
+    when: always
+    reports:
+      cobertura: target/*/coverage-report/cobertura.xml
+      junit: ./**/target/test-reports/TEST-*.xml

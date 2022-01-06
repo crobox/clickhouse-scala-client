@@ -1,32 +1,17 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.JoinQuery.{AllLeftJoin, InnerJoin}
-import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
-import com.crobox.clickhouse.{dsl, ClickhouseClientSpec, TestSchemaClickhouseQuerySpec}
-import org.scalatest.concurrent.ScalaFutures
+import com.crobox.clickhouse.{DslITSpec, dsl}
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.time.{Millis, Seconds, Span}
-import spray.json.DefaultJsonProtocol.{jsonFormat, _}
-import spray.json.RootJsonFormat
 
-class JoinQueryIT
-    extends ClickhouseClientSpec
-    with TableDrivenPropertyChecks
-    with TestSchemaClickhouseQuerySpec
-    with ScalaFutures {
-  val clickhouseTokenizer = new ClickhouseTokenizerModule {}
-  override implicit def patienceConfig =
-    PatienceConfig(timeout = scaled(Span(10, Seconds)), interval = scaled(Span(20, Millis)))
-
-  case class Result(result: String)
-  implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
+class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
 
   it should "correct on condition for alias field" in {
     var query = select(shieldId as itemId)
       .from(OneTestTable)
       .where(notEmpty(itemId))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
-    var resultRows = chExecutor.execute[Result](query).futureValue.rows
+    var resultRows = chExecutor.execute[StringResult](query).futureValue.rows
     resultRows.length shouldBe 0
 
     // reverse tables to check other side of ON condition
@@ -34,7 +19,7 @@ class JoinQueryIT
       .from(TwoTestTable)
       .where(notEmpty(itemId))
       .join(InnerJoin, select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))) on itemId
-    resultRows = chExecutor.execute[Result](query).futureValue.rows
+    resultRows = chExecutor.execute[StringResult](query).futureValue.rows
     resultRows.length shouldBe 0
   }
 
@@ -63,7 +48,7 @@ class JoinQueryIT
         .from(OneTestTable)
         .where(notEmpty(itemId))
         .join(joinType, TwoTestTable) using itemId
-      var resultRows = chExecutor.execute[Result](query).futureValue.rows
+      var resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // TABLE -- QUERY
@@ -72,7 +57,7 @@ class JoinQueryIT
         .from(OneTestTable)
         .where(notEmpty(itemId))
         .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- TABLE
@@ -83,7 +68,7 @@ class JoinQueryIT
         )
         .join(joinType, TwoTestTable)
         .where(notEmpty(itemId)) using itemId
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- QUERY
@@ -91,7 +76,7 @@ class JoinQueryIT
       select(dsl.all())
         .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
         .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
     }
   }
@@ -112,7 +97,7 @@ class JoinQueryIT
           .where(notEmpty(itemId))
           .join(joinType, ThreeTestTable)
           .on((itemId, "=", itemId), (col2, "<=", col2))
-      var resultRows = chExecutor.execute[Result](query).futureValue.rows
+      var resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // TABLE -- QUERY
@@ -121,7 +106,7 @@ class JoinQueryIT
         .where(notEmpty(itemId))
         .join(joinType, select(itemId, col2).from(ThreeTestTable).where(notEmpty(itemId)))
         .on((itemId, "=", itemId), (col2, "<=", col2))
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- TABLE
@@ -130,7 +115,7 @@ class JoinQueryIT
         .join(joinType, ThreeTestTable)
         .where(notEmpty(itemId))
         .on((itemId, "=", itemId), (col2, "<=", col2))
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // QUERY -- QUERY
@@ -139,7 +124,7 @@ class JoinQueryIT
         .join(joinType, select(itemId, col2).from(ThreeTestTable).where(notEmpty(itemId)))
         .on((itemId, "=", itemId), (col2, "<=", col2))
 
-      resultRows = chExecutor.execute[Result](query).futureValue.rows
+      resultRows = chExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
     }
   }
@@ -148,7 +133,7 @@ class JoinQueryIT
   it should "correctly handle cross join" in {
     val query: OperationalQuery =
       select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
-    val resultRows = chExecutor.execute[Result](query).futureValue.rows
+    val resultRows = chExecutor.execute[StringResult](query).futureValue.rows
     resultRows.length shouldBe 0
   }
 
@@ -162,7 +147,7 @@ class JoinQueryIT
         )
         .join(AllLeftJoin, ThreeTestTable)
         .on(itemId)
-    val resultRows = chExecutor.execute[Result](query).futureValue.rows
+    val resultRows = chExecutor.execute[StringResult](query).futureValue.rows
     resultRows.length shouldBe 0
   }
 }

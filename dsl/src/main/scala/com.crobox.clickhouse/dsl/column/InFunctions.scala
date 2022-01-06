@@ -1,4 +1,5 @@
 package com.crobox.clickhouse.dsl.column
+
 import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn}
 
 trait InFunctions { self: Magnets =>
@@ -27,19 +28,30 @@ trait InFunctions { self: Magnets =>
     def notIn(other: InFuncRHMagnet): NotIn             = NotIn(self, other)
     def globalIn(other: InFuncRHMagnet): GlobalIn       = GlobalIn(self, other)
     def globalNotIn(other: InFuncRHMagnet): GlobalNotIn = GlobalNotIn(self, other)
+
+    def in(other: InFuncRHMagnet, global: Boolean): InFunctionCol[_] = if (global) globalIn(other) else in(other)
+
+    def notIn(other: InFuncRHMagnet, global: Boolean): InFunctionCol[_] =
+      if (global) globalNotIn(other) else notIn(other)
   }
 
   def in(l: ConstOrColMagnet[_], r: InFuncRHMagnet): ExpressionColumn[Boolean] =
     if (r.isEmptyCollection) Const(false) else In(l, r)
 
   def notIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet): ExpressionColumn[Boolean] =
-    if (r.isEmptyCollection) Const(false) else NotIn(l, r)
+    if (r.isEmptyCollection) Const(true) else NotIn(l, r)
 
   def globalIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet): ExpressionColumn[Boolean] =
     if (r.isEmptyCollection) Const(false) else GlobalIn(l, r)
 
   def globalNotIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet): ExpressionColumn[Boolean] =
-    if (r.isEmptyCollection) Const(false) else GlobalNotIn(l, r)
+    if (r.isEmptyCollection) Const(true) else GlobalNotIn(l, r)
+
+  def in(l: ConstOrColMagnet[_], r: InFuncRHMagnet, global: Boolean): ExpressionColumn[Boolean] =
+    if (global) globalIn(l, r) else in(l, r)
+
+  def notIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet, global: Boolean): ExpressionColumn[Boolean] =
+    if (global) globalNotIn(l, r) else notIn(l, r)
 
   def tuple(coln: ConstOrColMagnet[_]*): Tuple                             = Tuple(coln)
   def tupleElement[T](tuple: Tuple, index: NumericCol[_]): TupleElement[T] = TupleElement[T](tuple, index)

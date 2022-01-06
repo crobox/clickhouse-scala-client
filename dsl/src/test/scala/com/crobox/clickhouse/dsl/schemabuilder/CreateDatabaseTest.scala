@@ -1,13 +1,12 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import org.scalatest.flatspec.AnyFlatSpecLike
-import org.scalatest.matchers.should.Matchers
+import com.crobox.clickhouse.DslTestSpec
 
 /**
  * @author Sjoerd Mulder
  * @since 2-1-17
  */
-class CreateDatabaseTest extends AnyFlatSpecLike with Matchers {
+class CreateDatabaseTest extends DslTestSpec {
 
   it should "deny creating invalid databases" in {
     intercept[IllegalArgumentException](
@@ -16,15 +15,19 @@ class CreateDatabaseTest extends AnyFlatSpecLike with Matchers {
   }
 
   it should "create a database with invalid name" in {
-    CreateDatabase(".Fool").toString should be ("CREATE DATABASE `.Fool`")
+    CreateDatabase(".Fool").toString should be("CREATE DATABASE `.Fool`")
   }
 
   it should "create a database with ON CLUSTER clause" in {
-    CreateDatabase("db", clusterName = Option("test_cluster")).toString should be ("CREATE DATABASE db ON CLUSTER test_cluster")
+    CreateDatabase("db", clusterName = Option("test_cluster")).toString should be(
+      "CREATE DATABASE db ON CLUSTER test_cluster"
+    )
   }
 
   it should "quote database creation with an invalid cluster name" in {
-    CreateDatabase("db", clusterName = Option(".Invalid")).toString should be ("CREATE DATABASE db ON CLUSTER `.Invalid`")
+    CreateDatabase("db", clusterName = Option(".Invalid")).toString should be(
+      "CREATE DATABASE db ON CLUSTER `.Invalid`"
+    )
   }
 
 }

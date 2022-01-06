@@ -4,11 +4,15 @@ import akka.actor.{ActorSystem, Cancellable}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.settings.ConnectionPoolSettings
-import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
 import com.crobox.clickhouse.internal.QuerySettings.ReadQueries
-import com.crobox.clickhouse.internal.{ClickhouseHostBuilder, ClickhouseQueryBuilder, ClickhouseResponseParser, QuerySettings}
+import com.crobox.clickhouse.internal.{
+  ClickhouseHostBuilder,
+  ClickhouseQueryBuilder,
+  ClickhouseResponseParser,
+  QuerySettings
+}
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.duration._
@@ -23,18 +27,14 @@ private[clickhouse] object ClusterConnectionFlow
       targetHost: => Future[Uri],
       scanningInterval: FiniteDuration,
       cluster: String
-  )(implicit system: ActorSystem,
-    materializer: Materializer,
-    ec: ExecutionContext): Source[Connections, Cancellable] = {
-    val http                   = Http(system)
+  )(implicit system: ActorSystem, ec: ExecutionContext): Source[Connections, Cancellable] = {
+    val http = Http(system)
     val settings = ConnectionPoolSettings(system)
       .withMaxConnections(1)
       .withMinConnections(1)
       .withMaxOpenRequests(2)
       .withMaxRetries(3)
-      .withUpdatedConnectionSettings(
-        _.withIdleTimeout(scanningInterval.plus(1.second))
-      )
+      .withUpdatedConnectionSettings(_.withIdleTimeout(scanningInterval.plus(1.second)))
     Source
       .tick(0.millis, scanningInterval, {})
       .mapAsync(1)(_ => targetHost)

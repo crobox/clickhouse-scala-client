@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.Uri
 import akka.pattern.ask
 import akka.stream.scaladsl.Sink
-import akka.stream.{ActorAttributes, Materializer, Supervision}
+import akka.stream.{ActorAttributes, Supervision}
 import akka.util.Timeout
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.{GetConnection, LogDeadConnections}
 import com.crobox.clickhouse.balancing.discovery.cluster.ClusterConnectionFlow
@@ -23,8 +23,7 @@ case class ClusterAwareHostBalancer(host: Uri,
                                     scanningInterval: FiniteDuration)(
     implicit system: ActorSystem,
     connectionRetrievalTimeout: Timeout,
-    ec: ExecutionContext,
-    materializer: Materializer
+    ec: ExecutionContext
 ) extends HostBalancer {
 
   ClusterConnectionFlow

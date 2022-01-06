@@ -31,7 +31,9 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
   var currentConfiguredHosts: Set[Uri]             = Set.empty
   var initialized                                  = false
 
-  context.system.scheduler.schedule(30.seconds, 30.seconds, self, LogDeadConnections)(context.system.dispatcher)
+  context.system.scheduler.scheduleWithFixedDelay(30.seconds, 30.seconds, self, LogDeadConnections)(
+    context.system.dispatcher
+  )
 
   override def receive: Receive = {
     case Connections(hosts) =>

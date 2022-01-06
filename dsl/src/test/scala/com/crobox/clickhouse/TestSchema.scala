@@ -1,11 +1,12 @@
-package com.crobox.clickhouse.dsl
-
-import java.util.UUID
+package com.crobox.clickhouse
 
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
+import com.crobox.clickhouse.dsl.{NativeColumn, Table}
 import org.joda.time.DateTime
 import spray.json._
+
+import java.util.UUID
 
 trait TestSchema {
 
@@ -62,30 +63,22 @@ trait TestSchema {
 
   case class Table1Entry(shieldId: UUID, date: DateTime = DateTime.now(), numbers: Seq[Int] = Seq())
 
-  object Table1Entry {
-
-    object Format extends JsonWriter[Table1Entry] {
-
-      override def write(obj: Table1Entry): JsValue =
-        JsObject(
-          "shield_id" -> JsString(obj.shieldId.toString),
-          "ts"        -> JsNumber(obj.date.getMillis),
-          "numbers"   -> JsArray(obj.numbers.map(JsNumber(_)).toVector)
-        )
-    }
-    val reader: RootJsonFormat[Table1Entry] = jsonFormat(Table1Entry.apply, "shield_id", "ts", "numbers")
-    implicit val format                     = jsonFormat(reader, Format)
-  }
-
   case class Table2Entry(itemId: UUID,
                          firstColumn: String,
                          secondColumn: Int,
                          thirdColumn: String,
                          forthColumn: Option[String])
 
-  object Table2Entry {
-    implicit val entry2Format =
-      jsonFormat(Table2Entry.apply, "item_id", "column_1", "column_2", "column_3", "column_4")
-  }
+  case class Table3Entry(itemId: UUID,
+                         secondColumn: Int,
+                         forthColumn: Option[String],
+                         fifthColumn: String,
+                         sixthColumn: String)
 
+  implicit val entry1Format =
+    jsonFormat(Table1Entry.apply, "shield_id", "ts", "numbers")
+  implicit val entry2Format =
+    jsonFormat(Table2Entry.apply, "item_id", "column_1", "column_2", "column_3", "column_4")
+  implicit val entry3Format =
+    jsonFormat(Table3Entry.apply, "item_id", "column_2", "column_4", "column_5", "column_6")
 }

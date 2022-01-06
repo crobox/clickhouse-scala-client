@@ -1,9 +1,11 @@
 package com.crobox.clickhouse.dsl.column
 
+import com.crobox.clickhouse.DslIntegrationSpec
 import com.crobox.clickhouse.dsl._
 
-class HashFunctionsTest extends ColumnFunctionTest{
-  "Tokenization" should "succeed for HashFunctions" in {
+class HashFunctionsTest extends DslIntegrationSpec {
+
+  it should "succeed for HashFunctions" in {
     val someStringData = "fooBarBaz"
 
     //TODO these also return the byte format, can we more properly test them?
@@ -18,6 +20,6 @@ class HashFunctionsTest extends ColumnFunctionTest{
     r(sHA224(someStringData)).nonEmpty shouldBe true
     r(sHA256(someStringData)).nonEmpty shouldBe true
 
-    r(uRLHash("http://www.google.nl/search",1))
+    r(uRLHash("http://www.google.nl/search", 1))
   }
 }

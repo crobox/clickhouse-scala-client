@@ -1,24 +1,24 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.{dsl => CHDsl}
+import com.crobox.clickhouse.{DslIntegrationSpec, dsl => CHDsl}
 
-class StringFunctionsTest extends ColumnFunctionTest {
+class StringFunctionsTest extends DslIntegrationSpec {
 
-  "Tokenization of functions working with strings" should "succeed for ScalaStringFunctions" in {
+  it should "succeed for ScalaStringFunctions" in {
     r(toStringRep(pi()).contains("159")) shouldBe "1"
   }
 
   it should "succeed for SplitMergeFunctions" in {
-    val theSeqOfStr = Seq("hey","ow","wo","di","ya!")
+    val theSeqOfStr = Seq("hey", "ow", "wo", "di", "ya!")
 
-    val someStr = theSeqOfStr.mkString(",")
-    val someSep = ","
+    val someStr        = theSeqOfStr.mkString(",")
+    val someSep        = ","
     val someStrAsArray = "['hey','ow','wo','di','ya!']"
 
-    r(splitByChar(someSep,someStr)) shouldBe someStrAsArray
-    r(splitByString(someSep,someStr)) shouldBe someStrAsArray
-    r(arrayStringConcat(theSeqOfStr,someSep)) shouldBe someStr
+    r(splitByChar(someSep, someStr)) shouldBe someStrAsArray
+    r(splitByString(someSep, someStr)) shouldBe someStrAsArray
+    r(arrayStringConcat(theSeqOfStr, someSep)) shouldBe someStr
     r(alphaTokens(someStr)) shouldBe someStrAsArray.filterNot(_.equals('!'))
   }
 
@@ -35,34 +35,34 @@ class StringFunctionsTest extends ColumnFunctionTest {
     r(upperUTF8(someStr)) shouldBe "HELLO WORLD"
     r(reverse(someStr)) shouldBe "dlrow olleh"
     r(reverseUTF8(someStr)) shouldBe "dlrow olleh"
-    r(concat(someStr,"!")) shouldBe "hello world!"
-    r(substring(someStr,2,3)) shouldBe "ell"
-    r(substringUTF8(someStr,2,4)) shouldBe "ello"
-    r(appendTrailingCharIfAbsent(someStr,"!")) shouldBe "hello world!"
+    r(concat(someStr, "!")) shouldBe "hello world!"
+    r(substring(someStr, 2, 3)) shouldBe "ell"
+    r(substringUTF8(someStr, 2, 4)) shouldBe "ello"
+    r(appendTrailingCharIfAbsent(someStr, "!")) shouldBe "hello world!"
     //    r(convertCharset(someStr,"UTF16","UTF8")) shouldBe "hello world"
   }
 
   it should "succeed for StringSearchFunctions" in {
-    val someStr = const("hello world")
+    val someStr    = const("hello world")
     val someNeedle = "lo"
-    val replace = "io"
-    r(position(someStr,someNeedle)) shouldBe "4"
-    r(positionCaseInsensitive(someStr,someNeedle)) shouldBe "4"
-    r(positionUTF8(someStr,someNeedle)) shouldBe "4"
-    r(positionUTF8CaseInsensitive(someStr,someNeedle)) shouldBe "4"
-    r(strMatch(someStr,someNeedle)) shouldBe "1"
-    r(extract(someStr,someNeedle)) shouldBe "lo"
-    r(extractAll(someStr,someNeedle)) shouldBe "['lo']"
-    r(like(someStr,someNeedle)) shouldBe "0"
-    r(notLike(someStr,someNeedle)) shouldBe "1"
-    r(replaceOne(someStr,someNeedle,replace)) shouldBe "helio world"
-    r(replaceAll(someStr,someNeedle,replace)) shouldBe "helio world"
-    r(replaceRegexpOne(someStr,someNeedle,replace)) shouldBe "helio world"
-    r(replaceRegexpAll(someStr,someNeedle,replace)) shouldBe "helio world"
+    val replace    = "io"
+    r(position(someStr, someNeedle)) shouldBe "4"
+    r(positionCaseInsensitive(someStr, someNeedle)) shouldBe "4"
+    r(positionUTF8(someStr, someNeedle)) shouldBe "4"
+    r(positionUTF8CaseInsensitive(someStr, someNeedle)) shouldBe "4"
+    r(strMatch(someStr, someNeedle)) shouldBe "1"
+    r(extract(someStr, someNeedle)) shouldBe "lo"
+    r(extractAll(someStr, someNeedle)) shouldBe "['lo']"
+    r(like(someStr, someNeedle)) shouldBe "0"
+    r(notLike(someStr, someNeedle)) shouldBe "1"
+    r(replaceOne(someStr, someNeedle, replace)) shouldBe "helio world"
+    r(replaceAll(someStr, someNeedle, replace)) shouldBe "helio world"
+    r(replaceRegexpOne(someStr, someNeedle, replace)) shouldBe "helio world"
+    r(replaceRegexpAll(someStr, someNeedle, replace)) shouldBe "helio world"
   }
 
   it should "keep empty as empty" in {
-    var query = select(All()).from(TwoTestTable).where(col1.empty())
+    val query = select(All()).from(TwoTestTable).where(col1.empty())
     toSql(query.internalQuery, None) should matchSQL(
       s"SELECT * FROM $database.twoTestTable WHERE empty(column_1)"
     )

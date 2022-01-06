@@ -1,13 +1,12 @@
 package com.crobox.clickhouse.dsl
 
-import org.scalatest.flatspec.AnyFlatSpecLike
-import org.scalatest.matchers.should.Matchers
+import com.crobox.clickhouse.DslTestSpec
 
 /**
  * @author Sjoerd Mulder
  * @since 11-1-17
  */
-class ClickhouseStatementTest extends AnyFlatSpecLike with Matchers {
+class ClickhouseStatementTest extends DslTestSpec {
 
   it should "escape values" in {
     ClickhouseStatement.escape(null) should be("NULL")
@@ -15,5 +14,4 @@ class ClickhouseStatementTest extends AnyFlatSpecLike with Matchers {
       "\\\\-\\n-\\t-\\b-\\f-\\r-\\0-\\'-\\`-foo"
     )
   }
-
 }

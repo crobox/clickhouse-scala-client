@@ -1,10 +1,11 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.{dsl => CHDsl}
+import com.crobox.clickhouse.{DslIntegrationSpec, dsl => CHDsl}
 
-class MiscellaneousFunctionsTest extends ColumnFunctionTest {
-  "Tokenization" should "succeed for MiscFunctions" in {
+class MiscellaneousFunctionsTest extends DslIntegrationSpec {
+
+  it should "succeed for MiscFunctions" in {
     val inf = const(1) / 0
 
     r(hostName()).length should be > 4
@@ -18,12 +19,12 @@ class MiscellaneousFunctionsTest extends ColumnFunctionTest {
     r(isFinite(inf)) shouldBe "0"
     r(isInfinite(inf)) shouldBe "1"
     r(isNaN(0)) shouldBe "0"
-    r(hasColumnInTable("system","one","dummy")) shouldBe "1"
-    r(bar(1,0,100,None)) shouldBe "▋"
-    r(transform[Int,String](1,Seq(3,2,1),Seq("do","re","mi"),"fa")) shouldBe "mi"
+    r(hasColumnInTable("system", "one", "dummy")) shouldBe "1"
+    r(bar(1, 0, 100, None)) shouldBe "▋"
+    r(transform[Int, String](1, Seq(3, 2, 1), Seq("do", "re", "mi"), "fa")) shouldBe "mi"
     r(formatReadableSize(1)) shouldBe "1.00 B"
-    r(least(3,2)) shouldBe "2"
-    r(greatest(3,2)) shouldBe "3"
+    r(least(3, 2)) shouldBe "2"
+    r(greatest(3, 2)) shouldBe "3"
     r(uptime()).length should be > 0
     r(version()).length should be > 4
     r(rowNumberInAllBlocks()) shouldBe "0"
@@ -32,5 +33,4 @@ class MiscellaneousFunctionsTest extends ColumnFunctionTest {
     r(mACStringToNum("00:00:00:00:00:7B")) shouldBe "123"
     r(mACStringToOUI("00:00:00:00:00:7B")) shouldBe "0"
   }
-
 }
