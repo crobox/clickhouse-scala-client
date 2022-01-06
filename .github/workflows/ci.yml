@@ -24,7 +24,7 @@ jobs:
         os: [ubuntu-latest]
         scala: [2.12.13, 2.13.7]
         java: [temurin@11]
-        CLICKHOUSE_VERSION: [20.3.19.4, 20.8.11.17, 21.1.7.1]
+        clickhouse: [20.3.19.4, 20.8.11.17, 21.1.7.1]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -34,6 +34,8 @@ jobs:
 
       - name: Docker Compose Action
         uses: isbang/compose-action@v1.0.0
+        env:
+          CLICKHOUSE_VERSION: ${{ matrix.clickhouse }}
         with:
           compose-file: './docker-compose.yml'
           down-flags: '--volumes'
