@@ -63,21 +63,6 @@ trait TestSchema {
 
   case class Table1Entry(shieldId: UUID, date: DateTime = DateTime.now(), numbers: Seq[Int] = Seq())
 
-  //  object Table1Entry {
-  //
-  //    object Format extends JsonWriter[Table1Entry] {
-  //
-  //      override def write(obj: Table1Entry): JsValue =
-  //        JsObject(
-  //          "shield_id" -> JsString(obj.shieldId.toString),
-  //          "ts"        -> JsNumber(obj.date.getMillis),
-  //          "numbers"   -> JsArray(obj.numbers.map(JsNumber(_)).toVector)
-  //        )
-  //    }
-  //    val reader: RootJsonFormat[Table1Entry] = jsonFormat(Table1Entry.apply, "shield_id", "ts", "numbers")
-  //    implicit val format                     = jsonFormat(reader, Format)
-  //  }
-
   case class Table2Entry(itemId: UUID,
                          firstColumn: String,
                          secondColumn: Int,

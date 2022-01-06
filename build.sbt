@@ -1,6 +1,6 @@
 import Build._
 
-//scalafmt settings
+// Scala Formatting
 ThisBuild / scalafmtVersion := "1.5.1"
 ThisBuild / scalafmtOnCompile := false     // all projects
 ThisBuild / scalafmtTestOnCompile := false // all projects
