@@ -2,7 +2,7 @@
 image: mozilla/docker-sbt:latest
 
 services:
-  - clickhouse/clickhouse-server:21.1.7.1
+  - clickhouse/clickhouse-server:21.11.9.1
 
 variables:
   # Configure caching rules for gitlab
