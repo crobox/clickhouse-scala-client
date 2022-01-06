@@ -1,5 +1,5 @@
 #image: crobox/clickhouse-scala-client-build:latest
-image: mozilla/docker-sbt:latest
+image: mozilla/docker-sbt:11.0.8_1.3.13
 
 services:
   - clickhouse/clickhouse-server:21.11.9.1
