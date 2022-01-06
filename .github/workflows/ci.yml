@@ -61,7 +61,7 @@ jobs:
 #        run: sbt ++${{ matrix.scala }} githubWorkflowCheck
 
       - name: Build project
-        run: sbt ++${{ matrix.scala }} test
+        run: sbt ++${{ matrix.scala }} test it:test
 
       - name: Compress target directories
         run: tar cf targets.tar target client/target dsl/target testkit/target project/target
