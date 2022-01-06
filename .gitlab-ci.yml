@@ -1,3 +1,4 @@
+image: hub.docker.com/mozilla/sbt:latest
 variables:
   # Configure caching rules for gitlab
 #  SBT_OPTS: "-Dsbt.override.build.repos=true -Dsbt.ivy.home=/cache/.ivy2/ -Divy.home=/cache/.ivy2/ -Dfile.encoding=UTF8 -Djava.awt.headless=true"
