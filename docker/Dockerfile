@@ -9,6 +9,7 @@ RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
 		curl unzip openjdk-11-jdk libsnappy-java libsnappy-dev \
         git ssh libssl-dev gpg gpg-agent zlib1g-dev liblzma-dev \
+        python3-dev python3-pip python3-setuptools python-dev python-setuptools \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install SBT
@@ -36,6 +37,10 @@ RUN set -x \
 # Add Docker User
 RUN groupadd docker && adduser --disabled-password --gecos "" gitlab \
 	&& usermod -a -G docker gitlab
+
+# Docker compose
+RUN pip3 install --upgrade wheel setuptools \
+    && pip3 install --upgrade docker-compose
 
 # Install Maven
 ENV MAVEN_VERSION 3.8.4
