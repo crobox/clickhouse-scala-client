@@ -28,14 +28,15 @@ class INFunctionsIT extends DslITSpec {
   }
 
   it should "use tableAlias for IN multiple tables" in {
+    // check if syntax is correct
     execute(
       select(col4)
         .from(TwoTestTable)
         .where(
           col4.in(select(col4).from(ThreeTestTable)) and
-          col2.in(select(col2).from(ThreeTestTable)) and
+          col2.in(select(col2).from(TwoTestTable)) and
           col2.in(select(col4).from(ThreeTestTable))
         )
-    ).futureValue should be("a\nb")
+    ).futureValue should be("")
   }
 }
