@@ -41,4 +41,24 @@ class INFunctionsTest extends DslTestSpec {
          |""".stripMargin
     )
   }
+
+  it should "use tableAlias for IN multiple tables" in {
+    toSQL(
+      (
+        select(col4)
+          .from(TwoTestTable)
+          .where(
+            col4.in(select(col4).from(ThreeTestTable)) and
+            col2.in(select(col2).from(TwoTestTable)) and
+            col2.in(select(col4).from(ThreeTestTable))
+          )
+        )
+    ) should matchSQL(
+      s"""
+         |WHERE column_4 IN (SELECT column_4 FROM ${ThreeTestTable.quoted} AS T1)
+         |  AND column_2 IN (SELECT column_2 FROM ${TwoTestTable.quoted} AS T2)
+         |  AND column_2 IN (SELECT column_4 FROM ${ThreeTestTable.quoted} AS T1)
+         |""".stripMargin
+    )
+  }
 }

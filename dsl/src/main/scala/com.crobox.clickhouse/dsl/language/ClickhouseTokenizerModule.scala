@@ -13,7 +13,7 @@ import scala.collection.JavaConverters._
 
 case class TokenizeContext(var joinNr: Int = 0,
                            var tableAliases: Map[Table, String] = Map.empty,
-                           useTableAlias: Boolean = false) {
+                           var useTableAlias: Boolean = false) {
 
   def incrementJoinNumber(): Unit = joinNr += 1
 
@@ -26,7 +26,16 @@ case class TokenizeContext(var joinNr: Int = 0,
       })
     } else ""
 
-  def setTableAlias(value: Boolean): TokenizeContext = copy(useTableAlias = value)
+  def setTableAlias(value: Boolean): TokenizeContext = {
+    // change this object since we want to maintain all tableAliases over all joins
+    val uniqueTableAlias = false
+    if (uniqueTableAlias) {
+      copy(useTableAlias = value)
+    } else {
+      useTableAlias = value
+      this
+    }
+  }
 
   def leftAlias(alias: Option[String]): String  = ClickhouseStatement.quoteIdentifier(alias.getOrElse("L" + joinNr))
   def rightAlias(alias: Option[String]): String = ClickhouseStatement.quoteIdentifier(alias.getOrElse("R" + joinNr))

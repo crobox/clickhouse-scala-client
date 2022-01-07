@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.DslITSpec
+import com.crobox.clickhouse.dsl.misc.LogicalOperatorImprovements.ExpressionColumnImpr
 import com.crobox.clickhouse.dsl.select
 
 import java.util.UUID
@@ -20,9 +21,21 @@ class INFunctionsIT extends DslITSpec {
       Table3Entry(UUID.randomUUID(), 2, Option("b"), "c", "c")
     )
 
-  it should "use tableAlias for IN" in {
+  it should "use tableAlias for IN, single table" in {
     execute(
       select(col4).from(TwoTestTable).where(col4.in(select(col4).from(ThreeTestTable)))
+    ).futureValue should be("a\nb")
+  }
+
+  it should "use tableAlias for IN multiple tables" in {
+    execute(
+      select(col4)
+        .from(TwoTestTable)
+        .where(
+          col4.in(select(col4).from(ThreeTestTable)) and
+          col2.in(select(col2).from(ThreeTestTable)) and
+          col2.in(select(col4).from(ThreeTestTable))
+        )
     ).futureValue should be("a\nb")
   }
 }
