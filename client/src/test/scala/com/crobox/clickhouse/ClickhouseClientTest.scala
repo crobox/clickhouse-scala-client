@@ -42,7 +42,7 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
     }
   }
 
-  // flaky test
+  // flaky test (not possible to rerun failed tasks in GitHub Actions. Therefore -for now- ignored this test
   ignore should "publish query progress messages" in {
     client
       .queryWithProgress("select 1 + 2")
