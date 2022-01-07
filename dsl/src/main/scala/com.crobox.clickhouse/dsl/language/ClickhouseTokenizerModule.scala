@@ -28,12 +28,12 @@ case class TokenizeContext(var joinNr: Int = 0,
 
   def setTableAlias(value: Boolean): TokenizeContext = {
     // change this object since we want to maintain all tableAliases over all joins
-    val uniqueTableAlias = false
-    if (uniqueTableAlias) {
-      copy(useTableAlias = value)
-    } else {
+    val globalTableAlias = true
+    if (globalTableAlias) {
       useTableAlias = value
       this
+    } else {
+      copy(useTableAlias = value)
     }
   }
 
