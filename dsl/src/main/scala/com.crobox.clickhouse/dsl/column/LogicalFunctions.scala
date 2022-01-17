@@ -18,6 +18,14 @@ trait LogicalFunctions { this: Magnets =>
     def or(other: LogicalOpsMagnet): ExpressionColumn[Boolean]  = _or(this, other)
     def xor(other: LogicalOpsMagnet): ExpressionColumn[Boolean] = _xor(this, other)
     def not(other: LogicalOpsMagnet): ExpressionColumn[Boolean] = _not(other)
+
+    def op(operator: LogicalOperator, other: LogicalOpsMagnet): ExpressionColumn[Boolean] =
+      operator match {
+        case And => and(other)
+        case Or  => or(other)
+        case Xor => xor(other)
+        case Not => not(other)
+      }
   }
 
   //Reference with another name to allow to use it in the trait
