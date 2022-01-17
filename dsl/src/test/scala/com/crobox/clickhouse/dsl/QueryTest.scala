@@ -53,6 +53,15 @@ class QueryTest extends DslTestSpec {
     )
   }
 
+  it should "overrule with right preference" in {
+    val query    = select(shieldId) from OneTestTable
+    val query2   = select(itemId) from OneTestTable where col2 >= 2
+    val composed = query <+: query2
+    toSql(composed.internalQuery) should matchSQL(
+      s"SELECT item_id FROM $database.captainAmerica WHERE column_2 >= 2 FORMAT JSON"
+    )
+  }
+  
   it should "compose indexOf and arrayElement" in {
 
     def lookupNestedValue(column: NativeColumn[_], elm: String): ExpressionColumn[String] =
@@ -72,15 +81,6 @@ class QueryTest extends DslTestSpec {
       "SELECT `props.value`[indexOf(`props.key`,'cate\\'gory')] FORMAT JSON"
     )
 
-  }
-
-  it should "overrule with right preference" in {
-    val query    = select(shieldId) from OneTestTable
-    val query2   = select(itemId) from OneTestTable where col2 >= 2
-    val composed = query <+: query2
-    toSql(composed.internalQuery) should matchSQL(
-      s"SELECT shield_id FROM $database.captainAmerica WHERE column_2 >= 2 FORMAT JSON"
-    )
   }
 
   it should "fail on try override of conflicting queries" in {

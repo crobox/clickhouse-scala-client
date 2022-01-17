@@ -271,7 +271,7 @@ trait OperationalQuery extends Query {
    */
 
   def <+:(other: OperationalQuery): OperationalQuery =
-    OperationalQuery(other.internalQuery :+> this.internalQuery)
+    OperationalQuery(this.internalQuery :+> other.internalQuery)
 
   /**
    * Tries to merge this OperationalQuery with other
