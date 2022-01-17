@@ -79,7 +79,7 @@ class QueryTest extends DslTestSpec {
     val query2   = select(itemId) from OneTestTable where col2 >= 2
     val composed = query <+: query2
     toSql(composed.internalQuery) should matchSQL(
-      s"SELECT item_id FROM $database.captainAmerica WHERE column_2 >= 2 FORMAT JSON"
+      s"SELECT shield_id FROM $database.captainAmerica WHERE column_2 >= 2 FORMAT JSON"
     )
   }
 
