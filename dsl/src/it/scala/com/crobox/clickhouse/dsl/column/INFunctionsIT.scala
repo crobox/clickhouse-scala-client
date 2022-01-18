@@ -28,6 +28,8 @@ class INFunctionsIT extends DslITSpec {
   }
 
   it should "use tableAlias for IN multiple tables" in {
+    assumeMinimalClickhouseVersion(21)
+
     // check if syntax is correct
     execute(
       select(col4)

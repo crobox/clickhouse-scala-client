@@ -40,7 +40,7 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
 
   // Returns the Clickhouse Version. DEFAUlT VALUE *must* equal the one set in .travis.yml AND docker-compose.xml
   lazy val ClickHouseVersion: String =
-    Option(System.getenv("CLICKHOUSE_VERSION")).map(_.trim).filter(_.nonEmpty).getOrElse("20.11.4.13")
+    Option(System.getenv("CLICKHOUSE_VERSION")).map(_.trim).filter(_.nonEmpty).getOrElse("21.1.7.1")
   lazy val ClickHouseMayorVersion: Int = ClickHouseVersion.substring(0, ClickHouseVersion.indexOf('.')).toInt
 
   def assumeMinimalClickhouseVersion(version: Int): Assertion =
