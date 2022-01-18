@@ -4,10 +4,10 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalactic.{Tolerance, TripleEqualsSupport}
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{Assertion, BeforeAndAfterAll}
 
 import java.util.UUID
 import scala.concurrent.duration._
@@ -21,7 +21,7 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
     with BeforeAndAfterAll
     with ScalaFutures {
 
-  implicit val ec: ExecutionContext       = system.dispatcher
+  implicit val ec: ExecutionContext = system.dispatcher
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(1.seconds, 50.millis)
 
@@ -37,23 +37,6 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
 
   def randomInt: Int =
     Random.nextInt(100000)
-
-  // Returns the Clickhouse Version. DEFAUlT VALUE *must* equal the one set in .travis.yml AND docker-compose.xml
-  lazy val ClickHouseVersion: String =
-    Option(System.getenv("CLICKHOUSE_VERSION")).map(_.trim).filter(_.nonEmpty).getOrElse("21.1.7.1")
-  lazy val ClickHouseMayorVersion: Int = ClickHouseVersion.substring(0, ClickHouseVersion.indexOf('.')).toInt
-
-  def assumeMinimalClickhouseVersion(version: Int): Assertion =
-    assume(ClickHouseMayorVersion >= version, s"ClickhouseVersion: ${} >= $version does NOT hold")
-
-  def mustMatchClickHouseVersion(version: Int, testFun: => Any): Any =
-    if (ClickHouseMayorVersion >= version) {
-      // continue with test
-      testFun
-    } else {
-      // abort test
-      cancel()
-    }
 
   implicit class PercentageDelta[T: Numeric](value: T) extends Tolerance {
     type Base = T

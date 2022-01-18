@@ -7,11 +7,12 @@ import akka.stream.scaladsl.{Framing, Source}
 import akka.util.ByteString
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.QuerySettings._
-import com.crobox.clickhouse.internal.progress.QueryProgress.QueryProgress
 import com.crobox.clickhouse.internal._
+import com.crobox.clickhouse.internal.progress.QueryProgress.QueryProgress
 import com.typesafe.config.{Config, ConfigFactory}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
  * Async clickhouse client using Akka Http and Streams
@@ -116,4 +117,21 @@ class ClickhouseClient(configuration: Option[Config] = None)
     val entity = HttpEntity.apply(ContentTypes.`text/plain(UTF-8)`, source)
     executeRequestInternal(hostBalancer.nextHost, sql, queryIdentifier, settings, Option(entity), None)
   }
+
+  /**
+   * Function to get the current version of the Clickhouse Server / Cluster you're connected with
+   *
+   * @return
+   */
+  def getServerVersion: String =
+    Await.result(
+      query("select version")(QuerySettings(ReadQueries).copy(retries = Option(0))).recover {
+        case x: ClickhouseException =>
+          val key = "(version "
+          val idx = x.getMessage.indexOf(key)
+          if (idx > 0) x.getMessage.substring(idx + key.length, x.getMessage.indexOf(")", idx + key.length))
+          else "Unknown"
+      },
+      3.seconds
+    )
 }

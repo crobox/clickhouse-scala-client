@@ -107,4 +107,20 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
       }
       Await.result(internalClient.shutdown(), clickhouseSpecTimeout)
     }
+
+  // Returns the Clickhouse Version. DEFAUlT VALUE *must* equal the one set in .travis.yml AND docker-compose.xml
+  lazy val ClickHouseVersion: String   = clickClient.getServerVersion
+  lazy val ClickHouseMayorVersion: Int = ClickHouseVersion.substring(0, ClickHouseVersion.indexOf('.')).toInt
+
+  def assumeMinimalClickhouseVersion(version: Int): Assertion =
+    assume(ClickHouseMayorVersion >= version, s"ClickhouseVersion: ${} >= $version does NOT hold")
+
+  def mustMatchClickHouseVersion(version: Int, testFun: => Any): Any =
+    if (ClickHouseMayorVersion >= version) {
+      // continue with test
+      testFun
+    } else {
+      // abort test
+      cancel()
+    }
 }

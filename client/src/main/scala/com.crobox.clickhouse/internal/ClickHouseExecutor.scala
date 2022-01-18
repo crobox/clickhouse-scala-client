@@ -53,7 +53,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
                      entity: Option[RequestEntity] = None,
                      progressQueue: Option[SourceQueueWithComplete[QueryProgress]] = None): Future[String] = {
     val internalQueryIdentifier = queryIdentifier
-    executeWithRetries(queryRetries, progressQueue, settings) { () =>
+    executeWithRetries(settings.retries.getOrElse(queryRetries), progressQueue, settings) { () =>
       executeRequestInternal(hostBalancer.nextHost, query, internalQueryIdentifier, settings, entity, progressQueue)
     }.andThen {
       case _ => progressQueue.foreach(_.complete())

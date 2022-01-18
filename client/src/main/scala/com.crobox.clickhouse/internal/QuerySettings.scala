@@ -15,7 +15,8 @@ case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
                          profile: Option[String] = None,
                          httpCompression: Option[Boolean] = None,
                          settings: Map[String, String] = Map.empty,
-                         idempotent: Option[Boolean] = None) {
+                         idempotent: Option[Boolean] = None,
+                         retries: Option[Int] = None) {
 
   def asQueryParams: Query =
     Query(
