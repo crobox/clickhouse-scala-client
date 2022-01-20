@@ -65,4 +65,8 @@ class ArrayFunctionsIT extends DslITSpec {
     execute(select(arrayMatch(Array(1, 2, 3), Array(3, 4, 5)))).futureValue should be("1")
     execute(select(arrayMatch(Array(1, 2, 3), Array(1, 2, 3)))).futureValue should be("1")
   }
+
+  it should "arrayFunction: join" in {
+    execute(select(arrayJoin(Array("1", "2")))).futureValue should be ("1\n2")
+  }
 }
