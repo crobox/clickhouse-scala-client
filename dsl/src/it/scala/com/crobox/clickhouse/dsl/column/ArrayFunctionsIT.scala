@@ -67,6 +67,6 @@ class ArrayFunctionsIT extends DslITSpec {
   }
 
   it should "arrayFunction: join" in {
-    execute(select(arrayJoin(Array("1", "2")))).futureValue should be ("1\n2")
+    execute(select(arrayJoin(Array("1", "2")))).futureValue should be("1\n2")
   }
 }

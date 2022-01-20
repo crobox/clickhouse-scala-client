@@ -48,4 +48,8 @@ class ArrayFunctionsTest extends DslTestSpec {
     query = select(arrayResize(arrayNumbers, 4, 0))
     toSQL(query) should be(s"SELECT arrayResize($arrayNumbersSerialized,4,0)")
   }
+
+  it should "arrayFunction: join" in {
+    toSQL(select(arrayJoin(Array(shieldId, itemId)))) should be(s"SELECT arrayJoin([shield_id, item_id])")
+  }
 }
