@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/crobox/clickhouse-scala-client/actions/workflows/ci.yml/badge.svg)](https://github.com/crobox/clickhouse-scala-client/actions/workflows/)
 [![Gitter](https://img.shields.io/gitter/room/clickhouse-scala-client/lobby.svg)](https://gitter.im/clickhouse-scala-client/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.crobox.clickhouse/client_2.12/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/com.crobox.clickhouse/client_2.12)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.crobox.clickhouse/client_2.13/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/com.crobox.clickhouse/client_2.13)
 
 Clickhouse Scala Client that uses Akka Http to create a reactive streams implementation to access the [Clickhouse](https://clickhouse.yandex) database in a reactive way.
 
