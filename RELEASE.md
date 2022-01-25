@@ -43,3 +43,6 @@ sbt sonatypeRelease
 
 You can verify if all has been published correctly by visiting the following url:<br> 
 https://oss.sonatype.org/#nexus-search;quick~clickhouse%20crobox
+
+Eventually it will also be available over here (usually takes around 15 to 60 min)
+https://repo1.maven.org/maven2/com/crobox/clickhouse/testkit_2.13/
