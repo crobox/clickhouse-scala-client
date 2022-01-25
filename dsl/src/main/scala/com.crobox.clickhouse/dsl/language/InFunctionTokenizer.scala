@@ -14,21 +14,22 @@ trait InFunctionTokenizer {
 
   private def tokenizeInFunctionCol(col: InFunctionCol[_])(implicit ctx: TokenizeContext): String = col match {
     case In(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
-      s"${tokenizeColumn(l.column)} IN ${tokenizeInFunRHCol(r)(ctx.setTableAlias(r.query.forall(_.internalQuery.join.isEmpty)))}"
+      s"${tokenizeColumn(l.column)} IN ${tokenizeInFunRHCol(r, () => ctx.setTableAlias(r.query.forall(_.internalQuery.join.isEmpty)))}"
     case NotIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
-      s"${tokenizeColumn(l.column)} NOT IN ${tokenizeInFunRHCol(r)(ctx.setTableAlias(r.query.forall(_.internalQuery.join.isEmpty)))}"
+      s"${tokenizeColumn(l.column)} NOT IN ${tokenizeInFunRHCol(r, () => ctx.setTableAlias(r.query.forall(_.internalQuery.join.isEmpty)))}"
     case GlobalIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
-      s"${tokenizeColumn(l.column)} GLOBAL IN ${tokenizeInFunRHCol(r)}"
+      s"${tokenizeColumn(l.column)} GLOBAL IN ${tokenizeInFunRHCol(r, () => ctx)}"
     case GlobalNotIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
-      s"${tokenizeColumn(l.column)} GLOBAL NOT IN ${tokenizeInFunRHCol(r)}"
+      s"${tokenizeColumn(l.column)} GLOBAL NOT IN ${tokenizeInFunRHCol(r, () => ctx)}"
   }
 
-  private def tokenizeInFunRHCol(value: InFuncRHMagnet)(implicit ctx: TokenizeContext): String =
+  private def tokenizeInFunRHCol(value: InFuncRHMagnet,
+                                 fn: () => TokenizeContext)(implicit ctx: TokenizeContext): String =
     value match {
       case col: InFuncRHMagnet if col.query.isDefined =>
-        s"(${toRawSql(col.query.get.internalQuery)})"
+        s"(${toRawSql(col.query.get.internalQuery)(fn())})"
       case col: InFuncRHMagnet if col.tableRef.isDefined =>
-        col.tableRef.map(table => table.quoted + ctx.tableAlias(table)).get
+        col.tableRef.map(table => table.quoted + fn().tableAlias(table)).get
       case col: InFuncRHMagnet => tokenizeColumn(col.column)
     }
 }
