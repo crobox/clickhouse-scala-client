@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.DslITSpec
-import com.crobox.clickhouse.dsl.{arrayJoin, arrayStringConcat, select, splitByChar, splitByString}
+import com.crobox.clickhouse.dsl._
 
 import java.util.UUID
 
@@ -38,7 +38,5 @@ class StringFunctionsIT extends DslITSpec {
         .rows
     resultRows.length shouldBe 1
     resultRows.map(_.result).head shouldBe columnString
-
   }
-
 }
