@@ -20,7 +20,8 @@ trait StringSearchFunctions { self: Magnets =>
       extends StringSearchFunc[String](col, pattern)
   case class ExtractAll(col: StringColMagnet[_], pattern: StringColMagnet[_])
       extends StringSearchFunc[Iterable[String]](col, pattern)
-  case class Like(col: StringColMagnet[_], pattern: StringColMagnet[_]) extends StringSearchFunc[Boolean](col, pattern)
+  case class ILike(col: StringColMagnet[_], pattern: StringColMagnet[_]) extends StringSearchFunc[Boolean](col, pattern)
+  case class Like(col: StringColMagnet[_], pattern: StringColMagnet[_])  extends StringSearchFunc[Boolean](col, pattern)
   case class NotLike(col: StringColMagnet[_], pattern: StringColMagnet[_])
       extends StringSearchFunc[Boolean](col, pattern)
   case class ReplaceOne(col: StringColMagnet[_], pattern: StringColMagnet[_], replacement: StringColMagnet[_])
@@ -43,6 +44,7 @@ trait StringSearchFunctions { self: Magnets =>
   def strMatch(col: StringColMagnet[_], pattern: StringColMagnet[_]): StrMatch     = StrMatch(col, pattern)
   def extract(col: StringColMagnet[_], pattern: StringColMagnet[_]): Extract       = Extract(col, pattern)
   def extractAll(col: StringColMagnet[_], pattern: StringColMagnet[_]): ExtractAll = ExtractAll(col, pattern)
+  def iLike(col: StringColMagnet[_], pattern: StringColMagnet[_]): ILike           = ILike(col, pattern)
   def like(col: StringColMagnet[_], pattern: StringColMagnet[_]): Like             = Like(col, pattern)
   def notLike(col: StringColMagnet[_], pattern: StringColMagnet[_]): NotLike       = NotLike(col, pattern)
 
@@ -68,6 +70,7 @@ trait StringSearchFunctions { self: Magnets =>
     def strMatch(pattern: StringColMagnet[_]): StrMatch                       = StrMatch(self, pattern)
     def extract(pattern: StringColMagnet[_]): Extract                         = Extract(self, pattern)
     def extractAll(pattern: StringColMagnet[_]): ExtractAll                   = ExtractAll(self, pattern)
+    def iLike(pattern: StringColMagnet[_]): ILike                             = ILike(self, pattern)
     def like(pattern: StringColMagnet[_]): Like                               = Like(self, pattern)
     def notLike(pattern: StringColMagnet[_]): NotLike                         = NotLike(self, pattern)
 

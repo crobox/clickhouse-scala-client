@@ -6,6 +6,35 @@ trait ScalaStringFunctions { self: StringFunctions with StringSearchFunctions wi
 
   trait ScalaStringFunctionOps { self: StringSearchOps with StringOps with StringColMagnet[_] =>
 
+    def startsWithAnyOf[S](others: Seq[S],
+                           caseInsensitive: Boolean)(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+      if (caseInsensitive) iStartsWithAnyOf(others) else startsWithAnyOf(others)
+
+    def endsWithAnyOf[S](others: Seq[S],
+                         caseInsensitive: Boolean)(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+      if (caseInsensitive) iEndsWithAnyOf(others) else endsWithAnyOf(others)
+
+    def containsAnyOf[S](others: Iterable[S],
+                         caseInsensitive: Boolean)(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+      if (caseInsensitive) iContainsAnyOf(others) else containsAnyOf(others)
+
+    def startsWith(other: StringColMagnet[_], caseInsensitive: Boolean): TableColumn[Boolean] =
+      if (caseInsensitive) iStartsWith(other) else startsWith(other)
+
+    def endsWith(other: StringColMagnet[_], caseInsensitive: Boolean): TableColumn[Boolean] =
+      if (caseInsensitive) iEndsWith(other) else endsWith(other)
+
+    def contains(other: StringColMagnet[_], caseInsensitive: Boolean): TableColumn[Boolean] =
+      if (caseInsensitive) iContains(other) else contains(other)
+
+    def like[S](others: Iterable[S],
+                caseInsensitive: Boolean)(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+      if (caseInsensitive) iLike(others) else like(others)
+
+    //
+    // Case Sensitive
+    //
+
     def startsWithAnyOf[S](others: Seq[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
       like(others.map(other => concat(other, "%")))
 
@@ -16,22 +45,40 @@ trait ScalaStringFunctions { self: StringFunctions with StringSearchFunctions wi
       like(others.map(other => concat("%", other, "%")))
 
     def startsWith(other: StringColMagnet[_]): TableColumn[Boolean] =
-      Like(self,Concat(other, "%"))
+      Like(self, Concat(other, "%"))
 
     def endsWith(other: StringColMagnet[_]): TableColumn[Boolean] =
-      Like(self,Concat("%", other))
+      Like(self, Concat("%", other))
 
     def contains(other: StringColMagnet[_]): TableColumn[Boolean] =
-      Like(self,Concat("%", other, "%"))
+      Like(self, Concat("%", other, "%"))
 
     def like[S](others: Iterable[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
-      others
-        .map {
-          o => Like(self,o).asInstanceOf[TableColumn[Boolean]]
-        }
-        .reduce {
-          (a, b) => or(a, b)
-        }
+      others.map(o => Like(self, o).asInstanceOf[TableColumn[Boolean]]).reduce((a, b) => or(a, b))
 
+    //
+    // Case Insensitive
+    //
+
+    def iStartsWithAnyOf[S](others: Seq[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+      iLike(others.map(other => concat(other, "%")))
+
+    def iEndsWithAnyOf[S](others: Seq[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+      iLike(others.map(other => concat("%", other)))
+
+    def iContainsAnyOf[S](others: Iterable[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+      iLike(others.map(other => concat("%", other, "%")))
+
+    def iStartsWith(other: StringColMagnet[_]): TableColumn[Boolean] =
+      ILike(self, Concat(other, "%"))
+
+    def iEndsWith(other: StringColMagnet[_]): TableColumn[Boolean] =
+      ILike(self, Concat("%", other))
+
+    def iContains(other: StringColMagnet[_]): TableColumn[Boolean] =
+      ILike(self, Concat("%", other, "%"))
+
+    def iLike[S](others: Iterable[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+      others.map(o => ILike(self, o).asInstanceOf[TableColumn[Boolean]]).reduce((a, b) => or(a, b))
   }
 }

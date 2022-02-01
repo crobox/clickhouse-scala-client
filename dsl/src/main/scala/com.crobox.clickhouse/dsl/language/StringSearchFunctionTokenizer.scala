@@ -14,6 +14,7 @@ trait StringSearchFunctionTokenizer {
       case StrMatch(_, _)            => "match"
       case Extract(_, _)             => "extract"
       case ExtractAll(_, _)          => "extractAll"
+      case ILike(_, _)               => "ilike"
       case Like(_, _)                => "like"
       case NotLike(_, _)             => "notLike"
       case ReplaceOne(_, _, _)       => "replaceOne"
