@@ -33,7 +33,8 @@ trait StringSearchFunctions { self: Magnets =>
   case class ReplaceRegexpAll(col: StringColMagnet[_], pattern: StringColMagnet[_], replacement: StringColMagnet[_])
       extends StringSearchReplaceFunc(col, pattern, replacement)
 
-  def position(col: StringColMagnet[_], needle: StringColMagnet[_]): Position = Position(col, needle)
+  def position(col: StringColMagnet[_], needle: StringColMagnet[_]): Position =
+    Position(col, needle, caseSensitive = true)
 
   def position(col: StringColMagnet[_], needle: StringColMagnet[_], caseInsensitive: Boolean): Position =
     if (caseInsensitive) positionCaseInsensitive(col, needle) else position(col, needle)
