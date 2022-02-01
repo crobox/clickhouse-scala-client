@@ -41,6 +41,10 @@ trait StringSearchFunctions { self: Magnets =>
 
   def positionCaseInsensitive(col: StringColMagnet[_], needle: StringColMagnet[_]): Position =
     Position(col, needle, caseSensitive = false)
+
+  def positionUTF8(col: StringColMagnet[_], needle: StringColMagnet[_], caseInsensitive: Boolean): PositionUTF8 =
+    if (caseInsensitive) positionUTF8CaseInsensitive(col, needle) else positionUTF8(col, needle)
+
   def positionUTF8(col: StringColMagnet[_], needle: StringColMagnet[_]): PositionUTF8 = PositionUTF8(col, needle)
 
   def positionUTF8CaseInsensitive(col: StringColMagnet[_], needle: StringColMagnet[_]): PositionUTF8 =
@@ -70,9 +74,15 @@ trait StringSearchFunctions { self: Magnets =>
                        replacement: StringColMagnet[_]): ReplaceRegexpAll = ReplaceRegexpAll(col, pattern, replacement)
 
   trait StringSearchOps { self: StringColMagnet[_] =>
-    def position(needle: StringColMagnet[_]): Position                        = Position(self, needle)
-    def positionCaseInsensitive(needle: StringColMagnet[_]): Position         = Position(self, needle, false)
-    def positionUTF8(needle: StringColMagnet[_]): PositionUTF8                = PositionUTF8(self, needle)
+
+    def position(needle: StringColMagnet[_], caseInsensitive: Boolean): Position =
+      if (caseInsensitive) positionCaseInsensitive(needle) else position(needle)
+    def position(needle: StringColMagnet[_]): Position                = Position(self, needle, true)
+    def positionCaseInsensitive(needle: StringColMagnet[_]): Position = Position(self, needle, false)
+
+    def positionUTF8(needle: StringColMagnet[_], caseInsensitive: Boolean): PositionUTF8 =
+      if (caseInsensitive) positionUTF8CaseInsensitive(needle) else positionUTF8(needle)
+    def positionUTF8(needle: StringColMagnet[_]): PositionUTF8                = PositionUTF8(self, needle, true)
     def positionUTF8CaseInsensitive(needle: StringColMagnet[_]): PositionUTF8 = PositionUTF8(self, needle, false)
     def strMatch(pattern: StringColMagnet[_]): StrMatch                       = StrMatch(self, pattern)
     def extract(pattern: StringColMagnet[_]): Extract                         = Extract(self, pattern)
