@@ -35,6 +35,9 @@ trait StringSearchFunctions { self: Magnets =>
 
   def position(col: StringColMagnet[_], needle: StringColMagnet[_]): Position = Position(col, needle)
 
+  def position(col: StringColMagnet[_], needle: StringColMagnet[_], caseInsensitive: Boolean): Position =
+    if (caseInsensitive) positionCaseInsensitive(col, needle) else position(col, needle)
+
   def positionCaseInsensitive(col: StringColMagnet[_], needle: StringColMagnet[_]): Position =
     Position(col, needle, caseSensitive = false)
   def positionUTF8(col: StringColMagnet[_], needle: StringColMagnet[_]): PositionUTF8 = PositionUTF8(col, needle)
