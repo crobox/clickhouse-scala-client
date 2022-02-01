@@ -46,7 +46,10 @@ trait StringSearchFunctions { self: Magnets =>
   def extractAll(col: StringColMagnet[_], pattern: StringColMagnet[_]): ExtractAll = ExtractAll(col, pattern)
   def iLike(col: StringColMagnet[_], pattern: StringColMagnet[_]): ILike           = ILike(col, pattern)
   def like(col: StringColMagnet[_], pattern: StringColMagnet[_]): Like             = Like(col, pattern)
-  def notLike(col: StringColMagnet[_], pattern: StringColMagnet[_]): NotLike       = NotLike(col, pattern)
+
+  def like(col: StringColMagnet[_], pattern: StringColMagnet[_], caseInsensitive: Boolean): StringSearchFunc[Boolean] =
+    if (caseInsensitive) iLike(col, pattern) else like(col, pattern)
+  def notLike(col: StringColMagnet[_], pattern: StringColMagnet[_]): NotLike = NotLike(col, pattern)
 
   def replaceOne(col: StringColMagnet[_], pattern: StringColMagnet[_], replacement: StringColMagnet[_]): ReplaceOne =
     ReplaceOne(col, pattern, replacement)
@@ -72,7 +75,10 @@ trait StringSearchFunctions { self: Magnets =>
     def extractAll(pattern: StringColMagnet[_]): ExtractAll                   = ExtractAll(self, pattern)
     def iLike(pattern: StringColMagnet[_]): ILike                             = ILike(self, pattern)
     def like(pattern: StringColMagnet[_]): Like                               = Like(self, pattern)
-    def notLike(pattern: StringColMagnet[_]): NotLike                         = NotLike(self, pattern)
+
+    def like(pattern: StringColMagnet[_], caseInsensitive: Boolean): StringSearchFunc[Boolean] =
+      if (caseInsensitive) ILike(self, pattern) else Like(self, pattern)
+    def notLike(pattern: StringColMagnet[_]): NotLike = NotLike(self, pattern)
 
     def replaceOne(pattern: StringColMagnet[_], replacement: StringColMagnet[_]): ReplaceOne =
       ReplaceOne(self, pattern, replacement)
