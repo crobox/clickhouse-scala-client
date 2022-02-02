@@ -27,22 +27,18 @@ trait ScalaStringFunctions { self: StringFunctions with StringSearchFunctions wi
     def contains(other: StringColMagnet[_], caseInsensitive: Boolean): TableColumn[Boolean] =
       if (caseInsensitive) iContains(other) else contains(other)
 
-    def like[S](others: Iterable[S],
-                caseInsensitive: Boolean)(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
-      if (caseInsensitive) iLike(others) else like(others)
-
     //
     // Case Sensitive
     //
 
     def startsWithAnyOf[S](others: Seq[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
-      like(others.map(other => concat(other, "%")))
+      likeWithAnyOf(others.map(other => concat(other, "%")))
 
     def endsWithAnyOf[S](others: Seq[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
-      like(others.map(other => concat("%", other)))
+      likeWithAnyOf(others.map(other => concat("%", other)))
 
     def containsAnyOf[S](others: Iterable[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
-      like(others.map(other => concat("%", other, "%")))
+      likeWithAnyOf(others.map(other => concat("%", other, "%")))
 
     def startsWith(other: StringColMagnet[_]): TableColumn[Boolean] =
       Like(self, Concat(other, "%"))
@@ -53,7 +49,7 @@ trait ScalaStringFunctions { self: StringFunctions with StringSearchFunctions wi
     def contains(other: StringColMagnet[_]): TableColumn[Boolean] =
       Like(self, Concat("%", other, "%"))
 
-    def like[S](others: Iterable[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+    def likeWithAnyOf[S](others: Iterable[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
       others.map(o => Like(self, o).asInstanceOf[TableColumn[Boolean]]).reduce((a, b) => or(a, b))
 
     //
@@ -61,13 +57,13 @@ trait ScalaStringFunctions { self: StringFunctions with StringSearchFunctions wi
     //
 
     def iStartsWithAnyOf[S](others: Seq[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
-      iLike(others.map(other => concat(other, "%")))
+      iLikeWithAnyOf(others.map(other => concat(other, "%")))
 
     def iEndsWithAnyOf[S](others: Seq[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
-      iLike(others.map(other => concat("%", other)))
+      iLikeWithAnyOf(others.map(other => concat("%", other)))
 
     def iContainsAnyOf[S](others: Iterable[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
-      iLike(others.map(other => concat("%", other, "%")))
+      iLikeWithAnyOf(others.map(other => concat("%", other, "%")))
 
     def iStartsWith(other: StringColMagnet[_]): TableColumn[Boolean] =
       ILike(self, Concat(other, "%"))
@@ -78,7 +74,7 @@ trait ScalaStringFunctions { self: StringFunctions with StringSearchFunctions wi
     def iContains(other: StringColMagnet[_]): TableColumn[Boolean] =
       ILike(self, Concat("%", other, "%"))
 
-    def iLike[S](others: Iterable[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+    def iLikeWithAnyOf[S](others: Iterable[S])(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
       others.map(o => ILike(self, o).asInstanceOf[TableColumn[Boolean]]).reduce((a, b) => or(a, b))
   }
 }
