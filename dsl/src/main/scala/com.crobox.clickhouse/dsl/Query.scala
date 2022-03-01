@@ -8,6 +8,11 @@ trait Table {
   lazy val quoted: String =
     s"${ClickhouseStatement.quoteIdentifier(database)}.${ClickhouseStatement.quoteIdentifier(name)}"
   val columns: Seq[NativeColumn[_]]
+
+  override def equals(obj: Any): Boolean = obj match {
+    case other: Table => quoted == other.quoted
+    case _            => false
+  }
 }
 
 trait Query {
