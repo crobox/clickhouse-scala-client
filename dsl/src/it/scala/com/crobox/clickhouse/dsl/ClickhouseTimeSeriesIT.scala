@@ -22,9 +22,9 @@ class ClickhouseTimeSeriesIT extends DslITSpec with TableDrivenPropertyChecks {
 
   implicit val clickhouseClient                   = clickClient
   val startInterval                               = DateTime.parse("2019-03-01").withTimeAtStartOfDay().withZone(DateTimeZone.UTC)
-  val secondsId                                   = java.util.UUID.randomUUID()
-  val dayId                                       = java.util.UUID.randomUUID()
-  val minutesId                                   = java.util.UUID.randomUUID()
+  val secondsId                                   = UUID.randomUUID()
+  val dayId                                       = UUID.randomUUID()
+  val minutesId                                   = UUID.randomUUID()
   private val numberOfGeneratedEntries: Int       = 60 * 60 * 5
   private val numberOfGeneratedEntriesForDay: Int = Days.daysBetween(startInterval, startInterval.plusYears(5)).getDays
 
@@ -170,7 +170,7 @@ class ClickhouseTimeSeriesIT extends DslITSpec with TableDrivenPropertyChecks {
     }
   }
 
-  private def getEntries(multiInterval: MultiInterval, entriesId: java.util.UUID) =
+  private def getEntries(multiInterval: MultiInterval, entriesId: UUID) =
     chExecutor.execute[CustomResult](
       select(count() as "shields", toUInt64(timeSeries(timestampColumn, multiInterval)) as alias)
         .from(OneTestTable)

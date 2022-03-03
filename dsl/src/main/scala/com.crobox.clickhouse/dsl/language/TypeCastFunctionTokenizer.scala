@@ -27,7 +27,7 @@ trait TypeCastFunctionTokenizer {
       case FixedString(tableColumn, n)  => s"toFixedString(${tokenizeColumn(tableColumn.column)},$n)"
       case StringCutToZero(tableColumn) => s"toStringCutToZero(${tokenizeColumn(tableColumn.column)})"
 
-      case UUID(tableColumn, orZero, orNull) =>
+      case Uuid(tableColumn, orZero, orNull) =>
         s"toUUID${tknzZero(orZero)}${tknzNull(orNull)}(${tokenizeColumn(tableColumn.column)})"
 
       case Reinterpret(typeCastColumn) => s"reinterpretAs${tokenizeTypeCastColumn(typeCastColumn).substring(2)}"

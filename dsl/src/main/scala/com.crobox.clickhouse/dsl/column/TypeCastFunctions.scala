@@ -49,7 +49,7 @@ trait TypeCastFunctions { self: Magnets =>
       extends TypeCastColumn[Double](tableColumn)
       with Reinterpretable
 
-  case class UUID(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false, orNull: Boolean = false)
+  case class Uuid(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false, orNull: Boolean = false)
       extends TypeCastColumn[java.util.UUID](tableColumn)
       with Reinterpretable
 
@@ -121,9 +121,9 @@ trait TypeCastFunctions { self: Magnets =>
   def toFixedString(tableColumn: ConstOrColMagnet[_], n: Int): FixedString = FixedString(tableColumn, n)
   def toStringCutToZero(tableColumn: ConstOrColMagnet[_]): StringCutToZero = StringCutToZero(tableColumn)
 
-  def toUUID(tableColumn: ConstOrColMagnet[_]): UUID       = UUID(tableColumn, orZero = false, orNull = false)
-  def toUUIDOrZero(tableColumn: ConstOrColMagnet[_]): UUID = UUID(tableColumn, orZero = true, orNull = false)
-  def toUUIDOrNull(tableColumn: ConstOrColMagnet[_]): UUID = UUID(tableColumn, orZero = false, orNull = true)
+  def toUUID(tableColumn: ConstOrColMagnet[_]): Uuid       = Uuid(tableColumn, orZero = false, orNull = false)
+  def toUUIDOrZero(tableColumn: ConstOrColMagnet[_]): Uuid = Uuid(tableColumn, orZero = true, orNull = false)
+  def toUUIDOrNull(tableColumn: ConstOrColMagnet[_]): Uuid = Uuid(tableColumn, orZero = false, orNull = true)
 
   def reinterpret[V](typeCastColumn: TypeCastColumn[_] with Reinterpretable): Reinterpret[V] =
     Reinterpret[V](typeCastColumn)
