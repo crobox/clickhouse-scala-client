@@ -38,5 +38,9 @@ class TypeCastFunctionsTest extends DslIntegrationSpec {
     r(toTypeName(toStringCutToZero(someStringNum))) shouldBe "String"
     r(reinterpret(toStringRep(65))) shouldBe "A"
     r(toTypeName(cast(someStringNum, ColumnType.Int32))) shouldBe "Int32"
+
+    r(toTypeName(toUUID(const("00000000-0000-0000-0000-000000000000")))) shouldBe "UUID"
+    r(toTypeName(toUUIDOrZero(const("123")))) shouldBe "UUID"
+    r(toTypeName(toUUIDOrNull(const("123")))) shouldBe "Nullable(UUID)"
   }
 }
