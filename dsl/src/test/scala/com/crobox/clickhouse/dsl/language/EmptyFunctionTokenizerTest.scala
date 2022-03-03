@@ -7,17 +7,17 @@ class EmptyFunctionTokenizerTest extends DslTestSpec {
 
   it should "UUID empty" in {
     if (ClickHouseVersion.minimalVersion(21, 8)) {
-      toSQL(dsl.empty(shieldId)) should matchSQL("empty(shield_id)")
+      toSQL(dsl.empty(nativeUUID)) should matchSQL("empty(uuid)")
     } else {
-      toSQL(dsl.empty(shieldId)) should matchSQL("shield_id == 0")
+      toSQL(dsl.empty(nativeUUID)) should matchSQL("uuid == 0")
     }
   }
 
   it should "UUID notEmpty" in {
     if (ClickHouseVersion.minimalVersion(21, 8)) {
-      toSQL(dsl.notEmpty(shieldId)) should matchSQL("notEmpty(shield_id)")
+      toSQL(dsl.notEmpty(nativeUUID)) should matchSQL("notEmpty(uuid)")
     } else {
-      toSQL(dsl.notEmpty(shieldId)) should matchSQL("shield_id != 0")
+      toSQL(dsl.notEmpty(nativeUUID)) should matchSQL("uuid != 0")
     }
   }
 
