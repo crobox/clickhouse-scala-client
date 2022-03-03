@@ -41,5 +41,6 @@ class TypeCastFunctionsTest extends DslIntegrationSpec {
 
     r(toTypeName(toUUID(const("00000000-0000-0000-0000-000000000000")))) shouldBe "UUID"
     r(toTypeName(toUUIDOrZero(const("123")))) shouldBe "UUID"
+    r(toTypeName(toUUIDOrNull(const("123")))) shouldBe "UUID"
   }
 }
