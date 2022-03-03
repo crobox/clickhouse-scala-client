@@ -16,7 +16,7 @@ trait DslIntegrationSpec
     with ClickhouseTokenizerModule {
   this: Suite =>
 
-  implicit lazy val ctx: TokenizeContext = TokenizeContext(clickClient.getServerVersion)
+  implicit def ctx: TokenizeContext = TokenizeContext(clickClient.getServerVersion)
 
   protected def r(query: Column): String =
     runSql(select(query)).futureValue.trim
