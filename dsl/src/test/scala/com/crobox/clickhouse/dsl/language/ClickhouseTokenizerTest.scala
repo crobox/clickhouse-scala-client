@@ -164,29 +164,29 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   }
 
   it should "generate CONDITIONAL cases" in {
-    this.tokenizeColumn(switch(const(3)))(TokenizeContext()) shouldBe "3"
-    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId)))(TokenizeContext()) shouldBe
-    (s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END")
+    this.tokenizeColumn(switch(const(3))) shouldBe "3"
+    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe
+    s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
   }
 
   it should "generate CONDITIONAL multiIf" in {
 
     // test no cases
-    this.tokenizeColumn(multiIf(const(3)))(TokenizeContext()) shouldBe "3"
+    this.tokenizeColumn(multiIf(const(3))) shouldBe "3"
 
     // test single case
-    this.tokenizeColumn(multiIf(shieldId, columnCase(col1.isEq("test"), itemId)))(TokenizeContext()) shouldBe
+    this.tokenizeColumn(multiIf(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe
     (s"if(${col1.name} = 'test', ${itemId.name}, ${shieldId.name})")
 
     // test multi cases
     this.tokenizeColumn(
       multiIf(shieldId, columnCase(col1.isEq("test"), itemId), columnCase(col1.isEq("test"), itemId))
-    )(TokenizeContext()) shouldBe
+    ) shouldBe
     (s"multiIf(${col1.name} = 'test', ${itemId.name}, ${col1.name} = 'test', ${itemId.name}, ${shieldId.name})")
   }
 
   it should "use constant" in {
-    this.tokenizeColumn(const(3).as(col2))(TokenizeContext()) shouldBe s"3 AS ${col2.name}"
+    this.tokenizeColumn(const(3).as(col2)) shouldBe s"3 AS ${col2.name}"
   }
 
   it should "allow to behave like little bobby tables" in {
@@ -197,7 +197,6 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   }
 
   it should "build with combinators" in {
-    implicit val ctx = TokenizeContext()
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniq(col1))) shouldBe s"uniqIf(${col1.name},${col1.name} = 'test')"
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqHLL12(col1))) shouldBe s"uniqHLL12If(${col1.name},${col1.name} = 'test')"
     this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqCombined(col1))) shouldBe s"uniqCombinedIf(${col1.name},${col1.name} = 'test')"
@@ -208,7 +207,6 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   }
 
   it should "uniq for multiple columns" in {
-    implicit val ctx = TokenizeContext()
     this.tokenizeColumn(uniq(col1, col2)) shouldBe s"uniq(${col1.name},${col2.name})"
     this.tokenizeColumn(uniqHLL12(col1, col2)) shouldBe s"uniqHLL12(${col1.name},${col2.name})"
     this.tokenizeColumn(uniqExact(col1, col2)) shouldBe s"uniqExact(${col1.name},${col2.name})"
@@ -224,7 +222,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
                       DateTime.now(DateTimeZone.forOffsetHours(2)),
                       MultiDuration(TimeUnit.Month))
       )
-    )(TokenizeContext()) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
+    ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
   }
 
   it should "quote them correctly" in {

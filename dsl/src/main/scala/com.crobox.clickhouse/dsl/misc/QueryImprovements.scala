@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl.misc
 
 import com.crobox.clickhouse.dsl.Query
 import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryResult}
-import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
+import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizeContext}
 import com.typesafe.scalalogging.LazyLogging
 import spray.json.JsonReader
 
@@ -17,7 +17,10 @@ object QueryImprovements extends LazyLogging {
         implicit executionContext: ExecutionContext,
         clickhouseExecutor: ClickhouseQueryExecutor
     ): Future[QueryResult[V]] = {
-      if (debug) logger.info(s"SQL: ${tokenizer.toSql(query.internalQuery)}")
+      if (debug)
+        logger.info(
+          s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.client.getServerVersion))}"
+        )
       clickhouseExecutor.execute(query)
     }
 
@@ -25,7 +28,9 @@ object QueryImprovements extends LazyLogging {
         implicit executionContext: ExecutionContext,
         clickhouseExecutor: ClickhouseQueryExecutor
     ): Future[QueryResult[V]] = {
-      logger.info(s"SQL: ${tokenizer.toSql(query.internalQuery)}")
+      logger.info(
+        s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.client.getServerVersion))}"
+      )
       clickhouseExecutor.execute(query)
     }
   }

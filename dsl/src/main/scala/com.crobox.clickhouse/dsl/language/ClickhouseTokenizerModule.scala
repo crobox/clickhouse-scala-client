@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
+import com.crobox.clickhouse.ClickhouseServerVersion
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.misc.StringUtils
@@ -11,7 +12,8 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConverters._
 //import scala.jdk.CollectionConverters._
 
-case class TokenizeContext(var joinNr: Int = 0,
+case class TokenizeContext(version: ClickhouseServerVersion,
+                           var joinNr: Int = 0,
                            var tableAliases: Map[Table, String] = Map.empty,
                            var useTableAlias: Boolean = false) {
 
@@ -26,7 +28,7 @@ case class TokenizeContext(var joinNr: Int = 0,
       })
     } else ""
 
-  def setTableAlias(value: Boolean): TokenizeContext = {
+  def setTableAlias(value: Boolean): TokenizeContext =
     // change this object since we want to maintain all tableAliases over all joins
     if (true) {
       useTableAlias = value
@@ -34,7 +36,6 @@ case class TokenizeContext(var joinNr: Int = 0,
     } else {
       copy(useTableAlias = value)
     }
-  }
 
   def leftAlias(alias: Option[String]): String  = ClickhouseStatement.quoteIdentifier(alias.getOrElse("L" + joinNr))
   def rightAlias(alias: Option[String]): String = ClickhouseStatement.quoteIdentifier(alias.getOrElse("R" + joinNr))

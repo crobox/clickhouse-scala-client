@@ -1,7 +1,7 @@
 package com.crobox.clickhouse
 
+import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizeContext}
 import com.crobox.clickhouse.dsl.{InternalQuery, OperationalQuery, TableColumn}
-import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
 import com.crobox.clickhouse.testkit.ClickhouseSpec
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.BeforeAndAfterAll
@@ -19,6 +19,8 @@ trait DslTestSpec
     with ClickhouseTokenizerModule {
 
   override val config: Config = ConfigFactory.load()
+
+  implicit lazy val ctx: TokenizeContext = TokenizeContext(clickClient.getServerVersion)
 
   def toSQL(condition: TableColumn[Boolean]): String = toSQL(Option(condition))
 

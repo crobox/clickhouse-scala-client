@@ -2,7 +2,7 @@ package com.crobox.clickhouse
 
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.execution.ClickhouseQueryExecutor
-import com.crobox.clickhouse.dsl.language.ClickhouseTokenizerModule
+import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizeContext}
 import com.crobox.clickhouse.dsl.schemabuilder.{CreateTable, Engine}
 import com.crobox.clickhouse.testkit.ClickhouseSpec
 import org.scalatest.Suite
@@ -15,6 +15,8 @@ trait DslIntegrationSpec
     with TestSchema
     with ClickhouseTokenizerModule {
   this: Suite =>
+
+  implicit lazy val ctx: TokenizeContext = TokenizeContext(clickClient.getServerVersion)
 
   protected def r(query: Column): String =
     runSql(select(query)).futureValue.trim

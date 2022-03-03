@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.Query
 import com.crobox.clickhouse.internal.QuerySettings
 import org.scalatest.Suite
 import org.scalatest.time.{Millis, Seconds, Span}
-import spray.json.DefaultJsonProtocol.{IntJsonFormat, StringJsonFormat, jsonFormat}
+import spray.json.DefaultJsonProtocol.{jsonFormat, IntJsonFormat, StringJsonFormat}
 import spray.json.RootJsonFormat
 
 import scala.concurrent.Future
