@@ -49,6 +49,10 @@ trait TypeCastFunctions { self: Magnets =>
       extends TypeCastColumn[Double](tableColumn)
       with Reinterpretable
 
+  case class UUID(tableColumn: ConstOrColMagnet[_], orZero:Boolean = false)
+      extends TypeCastColumn[java.util.UUID](tableColumn)
+      with Reinterpretable
+
   case class DateRep(tableColumn: ConstOrColMagnet[_])
       extends TypeCastColumn[org.joda.time.LocalDate](tableColumn)
       with Reinterpretable
@@ -116,6 +120,9 @@ trait TypeCastFunctions { self: Magnets =>
   def toStringRep(tableColumn: ConstOrColMagnet[_]): StringRep             = StringRep(tableColumn)
   def toFixedString(tableColumn: ConstOrColMagnet[_], n: Int): FixedString = FixedString(tableColumn, n)
   def toStringCutToZero(tableColumn: ConstOrColMagnet[_]): StringCutToZero = StringCutToZero(tableColumn)
+
+  def toUUID(tableColumn: ConstOrColMagnet[_]): UUID = UUID(tableColumn, orZero = false)
+  def toUUIDOrZero(tableColumn: ConstOrColMagnet[_]): UUID = UUID(tableColumn, orZero = true)
 
   def reinterpret[V](typeCastColumn: TypeCastColumn[_] with Reinterpretable): Reinterpret[V] =
     Reinterpret[V](typeCastColumn)

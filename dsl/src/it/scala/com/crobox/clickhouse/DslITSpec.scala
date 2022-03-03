@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.Query
 import com.crobox.clickhouse.internal.QuerySettings
 import org.scalatest.Suite
 import org.scalatest.time.{Millis, Seconds, Span}
-import spray.json.DefaultJsonProtocol.{StringJsonFormat, jsonFormat}
+import spray.json.DefaultJsonProtocol.{IntJsonFormat, StringJsonFormat, jsonFormat}
 import spray.json.RootJsonFormat
 
 import scala.concurrent.Future
@@ -23,4 +23,8 @@ trait DslITSpec extends DslIntegrationSpec {
   case class StringResult(result: String)
   implicit val stringResultFormat: RootJsonFormat[StringResult] =
     jsonFormat[String, StringResult](StringResult.apply, "result")
+
+  case class IntResult(result: Int)
+  implicit val intResultFormat: RootJsonFormat[IntResult] =
+    jsonFormat[Int, IntResult](IntResult.apply, "result")
 }
