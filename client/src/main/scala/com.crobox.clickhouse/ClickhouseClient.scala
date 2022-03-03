@@ -123,8 +123,8 @@ class ClickhouseClient(configuration: Option[Config] = None)
    *
    * @return
    */
-  def getServerVersion: String =
-    Await.result(
+  def getServerVersion: ClickhouseServerVersion = {
+    val chVersion = Await.result(
       query("select version")(QuerySettings(ReadQueries).copy(retries = Option(0))).recover {
         case x: ClickhouseException =>
           val key = "(version "
@@ -134,4 +134,6 @@ class ClickhouseClient(configuration: Option[Config] = None)
       },
       3.seconds
     )
+    ClickhouseServerVersion(chVersion)
+  }
 }
