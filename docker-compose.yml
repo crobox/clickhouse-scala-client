@@ -2,8 +2,7 @@ version: '3'
 services:
   clickhouse:
       # https://docs.docker.com/compose/compose-file/#variable-substitution
-      # image: "yandex/clickhouse-server:${CLICKHOUSE_VERSION:-CLICKHOUSE:-21.1.7.1}"
-      image: "yandex/clickhouse-server:${CLICKHOUSE_VERSION:-21.1.7.1}"
+      image: "clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-21.8}"
       expose:
         - "8123"
       ports:
