@@ -3,11 +3,12 @@ package com.crobox
 package object clickhouse {
   case class ClickhouseServerVersion(versions: Seq[Int]) {
 
-    def minimalVersion(version: Int): Boolean =
-      versions.head >= version
+    def minimalVersion(version: Int): Boolean = versions.head >= version
 
     def minimalVersion(version: Int, subVersion: Int): Boolean =
-      versions.head >= version && versions(1) >= subVersion
+      if (versions.head < version) false
+      else if (versions.head == version) versions(1) >= subVersion
+      else true
   }
 
   object ClickhouseServerVersion {

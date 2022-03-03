@@ -112,20 +112,10 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
   lazy val ClickHouseVersion: ClickhouseServerVersion = clickClient.getServerVersion
 
   def assumeMinimalClickhouseVersion(version: Int): Assertion =
-    assume(ClickHouseVersion.versions(0) >= version, s"ClickhouseVersion: $ClickHouseVersion >= $version does NOT hold")
+    assume(ClickHouseVersion.minimalVersion(version),
+           s"ClickhouseVersion: $ClickHouseVersion >= $version does NOT hold")
 
   def assumeMinimalClickhouseVersion(version: Int, subVersion: Int): Assertion =
-    assume(
-      ClickHouseVersion.versions(0) >= version && ClickHouseVersion.versions(1) >= subVersion,
-      s"ClickhouseVersion: $ClickHouseVersion >= $version.$subVersion does NOT hold"
-    )
-
-  def mustMatchClickHouseVersion(version: Int, testFun: => Any): Any =
-    if (ClickHouseVersion.versions(0) >= version) {
-      // continue with test
-      testFun
-    } else {
-      // abort test
-      cancel()
-    }
+    assume(ClickHouseVersion.minimalVersion(version, subVersion),
+           s"ClickhouseVersion: $ClickHouseVersion >= $version.$subVersion does NOT hold")
 }
