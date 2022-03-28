@@ -109,7 +109,7 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
     }
 
   // Returns the Clickhouse Version. DEFAUlT VALUE *must* equal the one set in .travis.yml AND docker-compose.xml
-  lazy val ClickHouseVersion: ClickhouseServerVersion = clickClient.getServerVersion
+  lazy val ClickHouseVersion: ClickhouseServerVersion = clickClient.serverVersion
 
   def assumeMinimalClickhouseVersion(version: Int): Assertion =
     assume(ClickHouseVersion.minimalVersion(version),

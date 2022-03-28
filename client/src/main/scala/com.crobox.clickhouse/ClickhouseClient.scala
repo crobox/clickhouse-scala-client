@@ -136,4 +136,6 @@ class ClickhouseClient(configuration: Option[Config] = None)
     )
     ClickhouseServerVersion(chVersion)
   }
+
+  lazy val serverVersion: ClickhouseServerVersion = getServerVersion
 }
