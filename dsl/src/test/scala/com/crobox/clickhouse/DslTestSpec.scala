@@ -20,7 +20,7 @@ trait DslTestSpec
 
   override val config: Config = ConfigFactory.load()
 
-  implicit def ctx: TokenizeContext = TokenizeContext(clickClient.getServerVersion)
+  implicit def ctx: TokenizeContext = TokenizeContext(clickClient.serverVersion)
 
   def toSQL(condition: TableColumn[Boolean]): String = toSQL(Option(condition))
 

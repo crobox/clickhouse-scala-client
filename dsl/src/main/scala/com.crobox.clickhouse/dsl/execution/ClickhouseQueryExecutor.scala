@@ -17,7 +17,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
   def execute[V: JsonReader](query: Query)(implicit executionContext: ExecutionContext,
                                            settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] = {
     import QueryResult._
-    val queryResult = client.query(toSql(query.internalQuery)(ctx = TokenizeContext(client.getServerVersion)))
+    val queryResult = client.query(toSql(query.internalQuery)(ctx = TokenizeContext(client.serverVersion)))
     queryResult.map(_.parseJson.convertTo[QueryResult[V]])
   }
 
@@ -27,7 +27,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
     settings: QuerySettings = QuerySettings()): Source[QueryProgress, Future[QueryResult[V]]] = {
     import QueryResult._
     val queryResult =
-      client.queryWithProgress(toSql(query.internalQuery)(ctx = TokenizeContext(client.getServerVersion)))
+      client.queryWithProgress(toSql(query.internalQuery)(ctx = TokenizeContext(client.serverVersion)))
     queryResult.mapMaterializedValue(_.map(_.parseJson.convertTo[QueryResult[V]]))
   }
 

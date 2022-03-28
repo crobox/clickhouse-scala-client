@@ -19,7 +19,7 @@ object QueryImprovements extends LazyLogging {
     ): Future[QueryResult[V]] = {
       if (debug)
         logger.info(
-          s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.client.getServerVersion))}"
+          s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.client.serverVersion))}"
         )
       clickhouseExecutor.execute(query)
     }
@@ -29,7 +29,7 @@ object QueryImprovements extends LazyLogging {
         clickhouseExecutor: ClickhouseQueryExecutor
     ): Future[QueryResult[V]] = {
       logger.info(
-        s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.client.getServerVersion))}"
+        s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.client.serverVersion))}"
       )
       clickhouseExecutor.execute(query)
     }
