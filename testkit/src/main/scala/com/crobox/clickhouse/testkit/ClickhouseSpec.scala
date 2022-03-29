@@ -51,39 +51,42 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
     }
   }
 
-  def blockUntilTableDropped(table: String): Unit = {
+  def blockUntilTableDropped(table: String)(implicit maxBackOff: Int = 16): Unit = {
     sql(s"DROP TABLE IF EXISTS $table")
     blockUntilTableIsMissing(table)
   }
 
-  def blockUntilTableIsMissing(table: String): Unit =
+  def blockUntilTableIsMissing(table: String)(implicit maxBackOff: Int = 16): Unit =
     blockUntil(s"Expected that table $table is missing") { () =>
       sql(s"EXISTS TABLE $table") == "0"
     }
 
-  def blockUntilTableExists(table: String): Unit =
+  def blockUntilTableExists(table: String)(implicit maxBackOff: Int = 16): Unit =
     blockUntil(s"Expected that table $table exists") { () =>
       sql(s"EXISTS TABLE $table") == "1"
     }
 
-  def blockUntilRowsInTable(rowCount: Int, tableName: String): Unit =
+  def blockUntilRowsInTable(rowCount: Int, tableName: String)(implicit maxBackOff: Int = 16): Unit =
     blockUntil(s"Expected to find $rowCount in table $tableName") { () =>
       Try(sql(s"SELECT COUNT(*) FROM $tableName").toInt).getOrElse(-1) >= rowCount
     }
 
-  def blockUntilExactRowsInTable(rowCount: Int, tableName: String): Unit =
+  def blockUntilExactRowsInTable(rowCount: Int, tableName: String)(implicit maxBackOff: Int = 16): Unit =
     blockUntil(s"Expected to find $rowCount in table $tableName") { () =>
       sql(s"SELECT COUNT(*) FROM $tableName") == rowCount.toString
     }
 
-  /* Borrowed from Elastic4s ElasticSugar */
-  def blockUntil(explain: String)(predicate: () => Boolean): Unit = {
+  def blockUntil(explain: String)(predicate: () => Boolean)(implicit maxBackOff: Int = 16): Unit = {
 
     var backoff = 0
     var done    = false
+    var total   = 0
 
-    while (backoff <= 16 && !done) {
-      if (backoff > 0) Thread.sleep(200 * backoff)
+    while (backoff <= maxBackOff && !done) {
+      if (backoff > 0) {
+        total += (200 * backoff)
+        Thread.sleep(total)
+      }
       backoff = backoff + 1
       try {
         done = predicate()
@@ -92,8 +95,9 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
       }
     }
 
-    require(done, s"Failed waiting on: $explain")
+    require(done, s"Failed waiting on: $explain. Waited: $total ms")
   }
+  
   override protected def beforeAll(): Unit = {
     super.beforeAll() // To be stackable, must call super.beforeAll
     databases.foreach(db => sql(s"CREATE DATABASE IF NOT EXISTS $db"))
