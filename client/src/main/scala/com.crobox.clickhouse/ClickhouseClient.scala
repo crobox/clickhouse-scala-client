@@ -20,7 +20,8 @@ import scala.concurrent.{Await, ExecutionContext, Future}
  * @author Sjoerd Mulder
  * @since 31-03-17
  */
-class ClickhouseClient(configuration: Option[Config] = None)
+class ClickhouseClient(configuration: Option[Config] = None,
+                       clickhouseServerVersion: Option[ClickhouseServerVersion] = None)
     extends ClickHouseExecutor
     with ClickhouseResponseParser
     with ClickhouseQueryBuilder {
@@ -134,12 +135,14 @@ class ClickhouseClient(configuration: Option[Config] = None)
       }
       .map(ClickhouseServerVersion(_))
 
-  lazy val serverVersion: ClickhouseServerVersion = try {
-    Await.result(getServerVersion, 30.seconds)
-  } catch {
-    case x: Throwable =>
-      val latest = ClickhouseServerVersion.latest
-      logger.warn(s"Can't determine Clickhouse Server Version. Falling back to: $latest. Error: ${x.getMessage}", x)
-      latest
+  lazy val serverVersion: ClickhouseServerVersion = clickhouseServerVersion.getOrElse {
+    try {
+      Await.result(getServerVersion, 30.seconds)
+    } catch {
+      case x: Throwable =>
+        val latest = clickhouseServerVersion.getOrElse(ClickhouseServerVersion.latest)
+        logger.warn(s"Can't determine Clickhouse Server Version. Falling back to: $latest. Error: ${x.getMessage}", x)
+        latest
+    }
   }
 }
