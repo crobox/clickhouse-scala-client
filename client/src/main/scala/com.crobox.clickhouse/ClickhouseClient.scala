@@ -134,5 +134,11 @@ class ClickhouseClient(configuration: Option[Config] = None)
       }
       .map(ClickhouseServerVersion(_))
 
-  lazy val serverVersion: ClickhouseServerVersion = Await.result(getServerVersion, 30.seconds)
+  lazy val serverVersion: ClickhouseServerVersion = try {
+    Await.result(getServerVersion, 30.seconds)
+  } catch {
+    case x: Throwable =>
+      logger.warn(x.getMessage)
+      ClickhouseServerVersion.latest
+  }
 }
