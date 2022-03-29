@@ -123,19 +123,16 @@ class ClickhouseClient(configuration: Option[Config] = None)
    *
    * @return
    */
-  def getServerVersion: ClickhouseServerVersion = {
-    val chVersion = Await.result(
-      query("select version")(QuerySettings(ReadQueries).copy(retries = Option(0))).recover {
+  def getServerVersion: Future[ClickhouseServerVersion] =
+    query("select version")(QuerySettings(ReadQueries).copy(retries = Option(0)))
+      .recover {
         case x: ClickhouseException =>
           val key = "(version "
           val idx = x.getMessage.indexOf(key)
           if (idx > 0) x.getMessage.substring(idx + key.length, x.getMessage.indexOf(")", idx + key.length))
           else "Unknown"
-      },
-      3.seconds
-    )
-    ClickhouseServerVersion(chVersion)
-  }
+      }
+      .map(ClickhouseServerVersion(_))
 
-  lazy val serverVersion: ClickhouseServerVersion = getServerVersion
+  lazy val serverVersion: ClickhouseServerVersion = Await.result(getServerVersion, 30.seconds)
 }
