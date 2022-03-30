@@ -29,15 +29,16 @@ object ClickhouseSink extends LazyLogging {
           else None
       )
       .getOrElse(indexerGeneralConfig)
+    val batchSize     = mergedIndexerConfig.getInt("batch-size")
+    val flushInterval = mergedIndexerConfig.getDuration("flush-interval").getSeconds.seconds
     Flow[Insert]
       .groupBy(Int.MaxValue, _.table)
-      .groupedWithin(mergedIndexerConfig.getInt("batch-size"),
-                     mergedIndexerConfig.getDuration("flush-interval").getSeconds.seconds)
+      .groupedWithin(batchSize, flushInterval)
       .mapAsyncUnordered(mergedIndexerConfig.getInt("concurrent-requests"))(inserts => {
         val table       = inserts.head.table
         val insertQuery = s"INSERT INTO $table FORMAT JSONEachRow"
         val payload     = inserts.map(_.jsonRow)
-        logger.debug(s"Inserting ${inserts.size} entries in table: $table")
+        logger.debug(s"Inserting ${inserts.size} entries in table: $table. Group Within: ($batchSize - $flushInterval)")
         client
           .execute(insertQuery, payload.mkString("\n"))
           .recover {
