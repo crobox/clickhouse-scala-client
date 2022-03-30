@@ -28,8 +28,9 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
     val urlQuery = uri.withQuery(Query(Query("query" -> query) ++ settings.withFallback(config).asQueryParams: _*))
     entity match {
       case Some(e) =>
-        logger.debug(s"Executing clickhouse query [$query] on host [${uri
-          .toString()}] with entity payload of length ${e.contentLengthOption}")
+        logger.debug(
+          s"Executing clickhouse query [$query] on host [${uri.toString()}] with entity payload of length ${e.contentLengthOption}"
+        )
         HttpRequest(
           method = HttpMethods.POST,
           uri = urlQuery,
@@ -37,10 +38,9 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
           headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
         )
       case None
-          if settings.idempotent.contains(true) && settings.readOnly == ReadQueries && urlQuery
-            .toString()
-            .getBytes
-            .length < MaxUriSize => //max url size
+          if settings.idempotent.contains(true)
+          && settings.readOnly == ReadQueries
+          && urlQuery.toString().getBytes.length < MaxUriSize => //max url size
         logger.debug(s"Executing clickhouse idempotent query [$query] on host [${uri.toString()}]")
         HttpRequest(
           method = HttpMethods.GET,
