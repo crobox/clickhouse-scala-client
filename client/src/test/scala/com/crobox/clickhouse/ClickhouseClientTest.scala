@@ -2,7 +2,7 @@ package com.crobox.clickhouse
 
 import akka.stream.scaladsl.{Keep, Sink}
 import com.crobox.clickhouse.internal.progress.QueryProgress.{Progress, QueryAccepted, QueryFinished, QueryProgress}
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 
 /**
  * @author Sjoerd Mulder
@@ -70,4 +70,9 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
       })
   }
 
+  it should "parse server version" in {
+    new ClickhouseClient(
+      Some(config.withValue("crobox.clickhouse.server.version", ConfigValueFactory.fromAnyRef("21.99.98")))
+    ).serverVersion should be(ClickhouseServerVersion(Seq(21, 99, 98)))
+  }
 }

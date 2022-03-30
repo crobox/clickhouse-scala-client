@@ -20,8 +20,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
  * @author Sjoerd Mulder
  * @since 31-03-17
  */
-class ClickhouseClient(configuration: Option[Config] = None,
-                       clickhouseServerVersion: Option[ClickhouseServerVersion] = None)
+class ClickhouseClient(configuration: Option[Config] = None)
     extends ClickHouseExecutor
     with ClickhouseResponseParser
     with ClickhouseQueryBuilder {
@@ -119,30 +118,31 @@ class ClickhouseClient(configuration: Option[Config] = None,
     executeRequestInternal(hostBalancer.nextHost, sql, queryIdentifier, settings, Option(entity), None)
   }
 
-  /**
-   * Function to get the current version of the Clickhouse Server / Cluster you're connected with
-   *
-   * @return
-   */
-  def getServerVersion: Future[ClickhouseServerVersion] =
-    query("select version")(QuerySettings(ReadQueries).copy(retries = Option(0)))
-      .recover {
-        case x: ClickhouseException =>
-          val key = "(version "
-          val idx = x.getMessage.indexOf(key)
-          if (idx > 0) x.getMessage.substring(idx + key.length, x.getMessage.indexOf(")", idx + key.length))
-          else "Unknown"
-      }
-      .map(ClickhouseServerVersion(_))
-
-  lazy val serverVersion: ClickhouseServerVersion = clickhouseServerVersion.getOrElse {
+  val serverVersion: ClickhouseServerVersion = {
     try {
-      val version = Await.result(getServerVersion, 30.seconds)
+      val path = "crobox.clickhouse.server.version"
+      val cfg  = configuration.getOrElse(ConfigFactory.load())
+      val version = if (cfg.hasPath(path)) {
+        ClickhouseServerVersion(cfg.getString(path))
+      } else {
+        Await.result(
+          query("select version")(QuerySettings(ReadQueries).copy(retries = Option(0)))
+            .recover {
+              case x: ClickhouseException =>
+                val key = "(version "
+                val idx = x.getMessage.indexOf(key)
+                if (idx > 0) x.getMessage.substring(idx + key.length, x.getMessage.indexOf(")", idx + key.length))
+                else "Unknown"
+            }
+            .map(ClickhouseServerVersion(_)),
+          30.seconds
+        )
+      }
       logger.info(s"Clickhouse Server Version set to: $version")
       version
     } catch {
       case x: Throwable =>
-        val latest = clickhouseServerVersion.getOrElse(ClickhouseServerVersion.latest)
+        val latest = ClickhouseServerVersion.latest
         logger.error(s"Can't determine Clickhouse Server Version. Falling back to: $latest. Error: ${x.getMessage}", x)
         latest
     }
