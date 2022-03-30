@@ -37,11 +37,12 @@ object ClickhouseSink extends LazyLogging {
         val table       = inserts.head.table
         val insertQuery = s"INSERT INTO $table FORMAT JSONEachRow"
         val payload     = inserts.map(_.jsonRow)
-        val payloadSql  = payload.mkString("\n")
-        client.execute(insertQuery, payloadSql) recover {
-          case ex =>
-            throw ClickhouseIndexingException("failed to index", ex, payload, table)
-        } map (_ => inserts)
+        client
+          .execute(insertQuery, payload.mkString("\n"))
+          .recover {
+            case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
+          }
+          .map(_ => inserts)
       })
       .mergeSubstreams
       .toMat(Sink.ignore)(Keep.right)
