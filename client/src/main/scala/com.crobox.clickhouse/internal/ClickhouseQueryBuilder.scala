@@ -63,5 +63,4 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
         )
     }
   }
-
 }
