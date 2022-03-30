@@ -137,7 +137,9 @@ class ClickhouseClient(configuration: Option[Config] = None,
 
   lazy val serverVersion: ClickhouseServerVersion = clickhouseServerVersion.getOrElse {
     try {
-      Await.result(getServerVersion, 30.seconds)
+      val version = Await.result(getServerVersion, 30.seconds)
+      logger.info(s"Clickhouse Server Version set to: $version")
+      version
     } catch {
       case x: Throwable =>
         val latest = clickhouseServerVersion.getOrElse(ClickhouseServerVersion.latest)
