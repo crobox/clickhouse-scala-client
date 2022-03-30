@@ -98,6 +98,12 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
     require(done, s"Failed waiting on: $explain. Waited: $total ms")
   }
 
+  def truncate(tableName: String): String =
+    sql(s"TRUNCATE TABLE IF EXISTS $tableName")
+
+  def optimize(tableName: String): String =
+    sql(s"OPTIMIZE TABLE $tableName")
+
   override protected def beforeAll(): Unit = {
     super.beforeAll() // To be stackable, must call super.beforeAll
     databases.foreach(db => sql(s"CREATE DATABASE IF NOT EXISTS $db"))
