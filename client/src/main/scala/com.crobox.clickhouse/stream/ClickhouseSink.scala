@@ -37,6 +37,7 @@ object ClickhouseSink extends LazyLogging {
         val table       = inserts.head.table
         val insertQuery = s"INSERT INTO $table FORMAT JSONEachRow"
         val payload     = inserts.map(_.jsonRow)
+        logger.debug(s"Inserting ${inserts.size} entries in table: $table")
         client
           .execute(insertQuery, payload.mkString("\n"))
           .recover {
