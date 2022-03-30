@@ -135,7 +135,7 @@ class ClickhouseClient(configuration: Option[Config] = None)
                 else "Unknown"
             }
             .map(ClickhouseServerVersion(_)),
-          30.seconds
+          5.seconds
         )
       }
       logger.info(s"Clickhouse Server Version set to: $version")
