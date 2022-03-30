@@ -141,7 +141,7 @@ class ClickhouseClient(configuration: Option[Config] = None,
     } catch {
       case x: Throwable =>
         val latest = clickhouseServerVersion.getOrElse(ClickhouseServerVersion.latest)
-        logger.warn(s"Can't determine Clickhouse Server Version. Falling back to: $latest. Error: ${x.getMessage}", x)
+        logger.error(s"Can't determine Clickhouse Server Version. Falling back to: $latest. Error: ${x.getMessage}", x)
         latest
     }
   }
