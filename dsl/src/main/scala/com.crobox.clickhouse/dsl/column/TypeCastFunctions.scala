@@ -16,47 +16,83 @@ trait TypeCastFunctions { self: Magnets =>
   sealed trait Reinterpretable
 
   // @todo Unsigned types are basically not supported. For now keep the same as signed types
-  case class UInt8(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
+  case class UInt8(tableColumn: ConstOrColMagnet[_],
+                   orZero: Boolean = false,
+                   orDefault: Boolean = false,
+                   orNull: Boolean = false)
       extends TypeCastColumn[Byte](tableColumn)
       with Reinterpretable
-  case class UInt16(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
+  case class UInt16(tableColumn: ConstOrColMagnet[_],
+                    orZero: Boolean = false,
+                    orDefault: Boolean = false,
+                    orNull: Boolean = false)
       extends TypeCastColumn[Short](tableColumn)
       with Reinterpretable
-  case class UInt32(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
+  case class UInt32(tableColumn: ConstOrColMagnet[_],
+                    orZero: Boolean = false,
+                    orDefault: Boolean = false,
+                    orNull: Boolean = false)
       extends TypeCastColumn[Int](tableColumn)
       with Reinterpretable
-  case class UInt64(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
+  case class UInt64(tableColumn: ConstOrColMagnet[_],
+                    orZero: Boolean = false,
+                    orDefault: Boolean = false,
+                    orNull: Boolean = false)
       extends TypeCastColumn[Long](tableColumn)
       with Reinterpretable
 
-  case class Int8(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
+  case class Int8(tableColumn: ConstOrColMagnet[_],
+                  orZero: Boolean = false,
+                  orDefault: Boolean = false,
+                  orNull: Boolean = false)
       extends TypeCastColumn[Byte](tableColumn)
       with Reinterpretable
-  case class Int16(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
+  case class Int16(tableColumn: ConstOrColMagnet[_],
+                   orZero: Boolean = false,
+                   orDefault: Boolean = false,
+                   orNull: Boolean = false)
       extends TypeCastColumn[Short](tableColumn)
       with Reinterpretable
-  case class Int32(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
+  case class Int32(tableColumn: ConstOrColMagnet[_],
+                   orZero: Boolean = false,
+                   orDefault: Boolean = false,
+                   orNull: Boolean = false)
       extends TypeCastColumn[Int](tableColumn)
       with Reinterpretable
-  case class Int64(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
+  case class Int64(tableColumn: ConstOrColMagnet[_],
+                   orZero: Boolean = false,
+                   orDefault: Boolean = false,
+                   orNull: Boolean = false)
       extends TypeCastColumn[Long](tableColumn)
       with Reinterpretable
 
-  case class Float32(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
+  case class Float32(tableColumn: ConstOrColMagnet[_],
+                     orZero: Boolean = false,
+                     orDefault: Boolean = false,
+                     orNull: Boolean = false)
       extends TypeCastColumn[Float](tableColumn)
       with Reinterpretable
-  case class Float64(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false)
+  case class Float64(tableColumn: ConstOrColMagnet[_],
+                     orZero: Boolean = false,
+                     orDefault: Boolean = false,
+                     orNull: Boolean = false)
       extends TypeCastColumn[Double](tableColumn)
       with Reinterpretable
 
-  case class Uuid(tableColumn: ConstOrColMagnet[_], orZero: Boolean = false, orNull: Boolean = false)
+  case class Uuid(tableColumn: ConstOrColMagnet[_],
+                  orZero: Boolean = false,
+                  orNull: Boolean = false,
+                  orDefault: Boolean = false)
       extends TypeCastColumn[java.util.UUID](tableColumn)
       with Reinterpretable
 
   case class DateRep(tableColumn: ConstOrColMagnet[_])
       extends TypeCastColumn[org.joda.time.LocalDate](tableColumn)
       with Reinterpretable
-  case class DateTimeRep(tableColumn: ConstOrColMagnet[_])
+  case class DateTimeRep(tableColumn: ConstOrColMagnet[_],
+                         orZero: Boolean = false,
+                         orNull: Boolean = false,
+                         orDefault: Boolean = false)
       extends TypeCastColumn[org.joda.time.DateTime](tableColumn)
       with Reinterpretable
 
@@ -88,34 +124,54 @@ trait TypeCastFunctions { self: Magnets =>
   implicit object DateCastOutBind        extends CastOutBind[ColumnType.Date.type, Int]
   implicit object DateTimeCastOutBind    extends CastOutBind[ColumnType.DateTime.type, Int]
 
-  def toUInt8(tableColumn: ConstOrColMagnet[_]): UInt8   = UInt8(tableColumn)
-  def toUInt16(tableColumn: ConstOrColMagnet[_]): UInt16 = UInt16(tableColumn)
-  def toUInt32(tableColumn: ConstOrColMagnet[_]): UInt32 = UInt32(tableColumn)
-  def toUInt64(tableColumn: ConstOrColMagnet[_]): UInt64 = UInt64(tableColumn)
+  def toUInt8(tableColumn: ConstOrColMagnet[_]): UInt8            = UInt8(tableColumn)
+  def toUInt8OrDefault(tableColumn: ConstOrColMagnet[_]): UInt8   = UInt8(tableColumn, orDefault = true)
+  def toUInt8OrNull(tableColumn: ConstOrColMagnet[_]): UInt8      = UInt8(tableColumn, orNull = true)
+  def toUInt8OrZero(tableColumn: ConstOrColMagnet[_]): UInt8      = UInt8(tableColumn, orZero = true)
+  def toUInt16(tableColumn: ConstOrColMagnet[_]): UInt16          = UInt16(tableColumn)
+  def toUInt16OrDefault(tableColumn: ConstOrColMagnet[_]): UInt16 = UInt16(tableColumn, orDefault = true)
+  def toUInt16OrNull(tableColumn: ConstOrColMagnet[_]): UInt16    = UInt16(tableColumn, orNull = true)
+  def toUInt16OrZero(tableColumn: ConstOrColMagnet[_]): UInt16    = UInt16(tableColumn, orZero = true)
+  def toUInt32(tableColumn: ConstOrColMagnet[_]): UInt32          = UInt32(tableColumn)
+  def toUInt32OrDefault(tableColumn: ConstOrColMagnet[_]): UInt32 = UInt32(tableColumn, orDefault = true)
+  def toUInt32OrNull(tableColumn: ConstOrColMagnet[_]): UInt32    = UInt32(tableColumn, orNull = true)
+  def toUInt32OrZero(tableColumn: ConstOrColMagnet[_]): UInt32    = UInt32(tableColumn, orZero = true)
+  def toUInt64(tableColumn: ConstOrColMagnet[_]): UInt64          = UInt64(tableColumn)
+  def toUInt64rDefault(tableColumn: ConstOrColMagnet[_]): UInt64  = UInt64(tableColumn, orDefault = true)
+  def toUInt64rNull(tableColumn: ConstOrColMagnet[_]): UInt64     = UInt64(tableColumn, orNull = true)
+  def toUInt64OrZero(tableColumn: ConstOrColMagnet[_]): UInt64    = UInt64(tableColumn, orZero = true)
 
-  def toInt8(tableColumn: ConstOrColMagnet[_]): Int8   = Int8(tableColumn)
-  def toInt16(tableColumn: ConstOrColMagnet[_]): Int16 = Int16(tableColumn)
-  def toInt32(tableColumn: ConstOrColMagnet[_]): Int32 = Int32(tableColumn)
-  def toInt64(tableColumn: ConstOrColMagnet[_]): Int64 = Int64(tableColumn)
+  def toInt8(tableColumn: ConstOrColMagnet[_]): Int8            = Int8(tableColumn)
+  def toInt8OrDefault(tableColumn: ConstOrColMagnet[_]): Int8   = Int8(tableColumn, orDefault = true)
+  def toInt8OrNull(tableColumn: ConstOrColMagnet[_]): Int8      = Int8(tableColumn, orNull = true)
+  def toInt8OrZero(tableColumn: ConstOrColMagnet[_]): Int8      = Int8(tableColumn, orZero = true)
+  def toInt16(tableColumn: ConstOrColMagnet[_]): Int16          = Int16(tableColumn)
+  def toInt16OrDefault(tableColumn: ConstOrColMagnet[_]): Int16 = Int16(tableColumn, orDefault = true)
+  def toInt16OrNull(tableColumn: ConstOrColMagnet[_]): Int16    = Int16(tableColumn, orNull = true)
+  def toInt16OrZero(tableColumn: ConstOrColMagnet[_]): Int16    = Int16(tableColumn, orZero = true)
+  def toInt32(tableColumn: ConstOrColMagnet[_]): Int32          = Int32(tableColumn)
+  def toInt32OrDefault(tableColumn: ConstOrColMagnet[_]): Int32 = Int32(tableColumn, orDefault = true)
+  def toInt32OrNull(tableColumn: ConstOrColMagnet[_]): Int32    = Int32(tableColumn, orNull = true)
+  def toInt32OrZero(tableColumn: ConstOrColMagnet[_]): Int32    = Int32(tableColumn, orZero = true)
+  def toInt64(tableColumn: ConstOrColMagnet[_]): Int64          = Int64(tableColumn)
+  def toInt64OrDefault(tableColumn: ConstOrColMagnet[_]): Int64 = Int64(tableColumn, orDefault = true)
+  def toInt64OrNull(tableColumn: ConstOrColMagnet[_]): Int64    = Int64(tableColumn, orNull = true)
+  def toInt64OrZero(tableColumn: ConstOrColMagnet[_]): Int64    = Int64(tableColumn, orZero = true)
 
-  def toFloat32(tableColumn: ConstOrColMagnet[_]): Float32 = Float32(tableColumn)
-  def toFloat64(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn)
+  def toFloat32(tableColumn: ConstOrColMagnet[_]): Float32          = Float32(tableColumn)
+  def toFloat32OrDefault(tableColumn: ConstOrColMagnet[_]): Float32 = Float32(tableColumn, orDefault = true)
+  def toFloat32OrNull(tableColumn: ConstOrColMagnet[_]): Float32    = Float32(tableColumn, orNull = true)
+  def toFloat32OrZero(tableColumn: ConstOrColMagnet[_]): Float32    = Float32(tableColumn, orZero = true)
+  def toFloat64(tableColumn: ConstOrColMagnet[_]): Float64          = Float64(tableColumn)
+  def toFloat64OrDefault(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn, orDefault = true)
+  def toFloat64OrNull(tableColumn: ConstOrColMagnet[_]): Float64    = Float64(tableColumn, orNull = true)
+  def toFloat64OrZero(tableColumn: ConstOrColMagnet[_]): Float64    = Float64(tableColumn, orZero = true)
 
-  def toUInt8OrZero(tableColumn: ConstOrColMagnet[_]): UInt8   = UInt8(tableColumn, orZero = true)
-  def toUInt16OrZero(tableColumn: ConstOrColMagnet[_]): UInt16 = UInt16(tableColumn, orZero = true)
-  def toUInt32OrZero(tableColumn: ConstOrColMagnet[_]): UInt32 = UInt32(tableColumn, orZero = true)
-  def toUInt64OrZero(tableColumn: ConstOrColMagnet[_]): UInt64 = UInt64(tableColumn, orZero = true)
-
-  def toInt8OrZero(tableColumn: ConstOrColMagnet[_]): Int8   = Int8(tableColumn, orZero = true)
-  def toInt16OrZero(tableColumn: ConstOrColMagnet[_]): Int16 = Int16(tableColumn, orZero = true)
-  def toInt32OrZero(tableColumn: ConstOrColMagnet[_]): Int32 = Int32(tableColumn, orZero = true)
-  def toInt64OrZero(tableColumn: ConstOrColMagnet[_]): Int64 = Int64(tableColumn, orZero = true)
-
-  def toFloat32OrZero(tableColumn: ConstOrColMagnet[_]): Float32 = Float32(tableColumn, orZero = true)
-  def toFloat64OrZero(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn, orZero = true)
-
-  def toDate(tableColumn: ConstOrColMagnet[_]): DateRep         = DateRep(tableColumn)
-  def toDateTime(tableColumn: ConstOrColMagnet[_]): DateTimeRep = DateTimeRep(tableColumn)
+  def toDate(tableColumn: ConstOrColMagnet[_]): DateRep                  = DateRep(tableColumn)
+  def toDateTime(tableColumn: ConstOrColMagnet[_]): DateTimeRep          = DateTimeRep(tableColumn)
+  def toDateTimeOrDefault(tableColumn: ConstOrColMagnet[_]): DateTimeRep = DateTimeRep(tableColumn)
+  def toDateTimeOrNul(tableColumn: ConstOrColMagnet[_]): DateTimeRep     = DateTimeRep(tableColumn)
+  def toDateTimeOrZero(tableColumn: ConstOrColMagnet[_]): DateTimeRep    = DateTimeRep(tableColumn)
 
   def toStringRep(tableColumn: ConstOrColMagnet[_]): StringRep             = StringRep(tableColumn)
   def toFixedString(tableColumn: ConstOrColMagnet[_], n: Int): FixedString = FixedString(tableColumn, n)
