@@ -87,7 +87,10 @@ trait TypeCastFunctions { self: Magnets =>
       extends TypeCastColumn[java.util.UUID](tableColumn)
       with Reinterpretable
 
-  case class DateRep(tableColumn: ConstOrColMagnet[_])
+  case class DateRep(tableColumn: ConstOrColMagnet[_],
+                     orZero: Boolean = false,
+                     orDefault: Option[DateTime] = None,
+                     orNull: Boolean = false)
       extends TypeCastColumn[org.joda.time.LocalDate](tableColumn)
       with Reinterpretable
   case class DateTimeRep(tableColumn: ConstOrColMagnet[_],
@@ -188,7 +191,13 @@ trait TypeCastFunctions { self: Magnets =>
   def toFloat64OrNull(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn, orNull = true)
   def toFloat64OrZero(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn, orZero = true)
 
-  def toDate(tableColumn: ConstOrColMagnet[_]): DateRep         = DateRep(tableColumn)
+  def toDate(tableColumn: ConstOrColMagnet[_]): DateRep = DateRep(tableColumn)
+
+  def toDateOrDefault(tableColumn: ConstOrColMagnet[_], value: DateTime): DateRep =
+    DateRep(tableColumn, orDefault = Option(value))
+  def toDateOrNull(tableColumn: ConstOrColMagnet[_]): DateRep = DateRep(tableColumn, orNull = true)
+  def toDateOrZero(tableColumn: ConstOrColMagnet[_]): DateRep = DateRep(tableColumn, orZero = true)
+
   def toDateTime(tableColumn: ConstOrColMagnet[_]): DateTimeRep = DateTimeRep(tableColumn)
 
   def toDateTimeOrDefault(tableColumn: ConstOrColMagnet[_], value: DateTime): DateTimeRep =
