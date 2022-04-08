@@ -19,13 +19,13 @@ trait TypeCastFunctions { self: Magnets =>
   // @todo Unsigned types are basically not supported. For now keep the same as signed types
   case class UInt8(tableColumn: ConstOrColMagnet[_],
                    orZero: Boolean = false,
-                   orDefault: Option[UInt8] = None,
+                   orDefault: Option[Byte] = None,
                    orNull: Boolean = false)
       extends TypeCastColumn[Byte](tableColumn)
       with Reinterpretable
   case class UInt16(tableColumn: ConstOrColMagnet[_],
                     orZero: Boolean = false,
-                    orDefault: Option[UInt16] = None,
+                    orDefault: Option[Short] = None,
                     orNull: Boolean = false)
       extends TypeCastColumn[Short](tableColumn)
       with Reinterpretable
@@ -44,13 +44,13 @@ trait TypeCastFunctions { self: Magnets =>
 
   case class Int8(tableColumn: ConstOrColMagnet[_],
                   orZero: Boolean = false,
-                  orDefault: Option[Int8] = None,
+                  orDefault: Option[Byte] = None,
                   orNull: Boolean = false)
       extends TypeCastColumn[Byte](tableColumn)
       with Reinterpretable
   case class Int16(tableColumn: ConstOrColMagnet[_],
                    orZero: Boolean = false,
-                   orDefault: Option[Int16] = None,
+                   orDefault: Option[Short] = None,
                    orNull: Boolean = false)
       extends TypeCastColumn[Short](tableColumn)
       with Reinterpretable

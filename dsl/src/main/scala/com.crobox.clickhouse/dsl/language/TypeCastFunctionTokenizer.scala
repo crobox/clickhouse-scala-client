@@ -9,6 +9,8 @@ trait TypeCastFunctionTokenizer {
     def tknzZero(orZero: Boolean): String = if (orZero) "OrZero" else ""
     def tknzNull(orNull: Boolean): String = if (orNull) "OrNull" else ""
 
+    def tknzNull(orNull: Boolean): String = if (orNull) "OrNull" else ""
+
     col match {
       case UInt8(tableColumn, orZero)   => s"toUInt8${tknzZero(orZero)}(${tokenizeColumn(tableColumn.column)})"
       case UInt16(tableColumn, orZero)  => s"toUInt16${tknzZero(orZero)}(${tokenizeColumn(tableColumn.column)})"
