@@ -106,6 +106,12 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toInt32OrZero(Float.MinValue.toString)) should be("0")
     r(toInt32OrZero(Double.MaxValue.toString)) should be("0")
     r(toInt32OrZero(Double.MinValue.toString)) should be("0")
+
+    r(toInt32OrZero("")) should be("0")
+    r(toInt32OrZero("error")) should be("0")
+    r(toInt32OrZero("er\nror")) should be("0")
+    r(toInt32OrZero("12\n58")) should be("0")
+    r(toInt32OrZero("12\n58 gram")) should be("0")
   }
 
   it should "handle Int32OrNull" in {
