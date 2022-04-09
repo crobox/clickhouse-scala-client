@@ -130,13 +130,13 @@ trait TypeCastFunctions { self: Magnets =>
 
   def toUInt8(tableColumn: ConstOrColMagnet[_]): UInt8 = UInt8(tableColumn)
 
-  def toUInt8OrDefault(tableColumn: ConstOrColMagnet[_], value: UInt8): UInt8 =
+  def toUInt8OrDefault(tableColumn: ConstOrColMagnet[_], value: Byte): UInt8 =
     UInt8(tableColumn, orDefault = Option(value))
   def toUInt8OrNull(tableColumn: ConstOrColMagnet[_]): UInt8 = UInt8(tableColumn, orNull = true)
   def toUInt8OrZero(tableColumn: ConstOrColMagnet[_]): UInt8 = UInt8(tableColumn, orZero = true)
   def toUInt16(tableColumn: ConstOrColMagnet[_]): UInt16     = UInt16(tableColumn)
 
-  def toUInt16OrDefault(tableColumn: ConstOrColMagnet[_], value: UInt16): UInt16 =
+  def toUInt16OrDefault(tableColumn: ConstOrColMagnet[_], value: Short): UInt16 =
     UInt16(tableColumn, orDefault = Option(value))
   def toUInt16OrNull(tableColumn: ConstOrColMagnet[_]): UInt16 = UInt16(tableColumn, orNull = true)
   def toUInt16OrZero(tableColumn: ConstOrColMagnet[_]): UInt16 = UInt16(tableColumn, orZero = true)
@@ -155,13 +155,13 @@ trait TypeCastFunctions { self: Magnets =>
 
   def toInt8(tableColumn: ConstOrColMagnet[_]): Int8 = Int8(tableColumn)
 
-  def toInt8OrDefault(tableColumn: ConstOrColMagnet[_], value: Int8): Int8 =
+  def toInt8OrDefault(tableColumn: ConstOrColMagnet[_], value: Byte): Int8 =
     Int8(tableColumn, orDefault = Option(value))
   def toInt8OrNull(tableColumn: ConstOrColMagnet[_]): Int8 = Int8(tableColumn, orNull = true)
   def toInt8OrZero(tableColumn: ConstOrColMagnet[_]): Int8 = Int8(tableColumn, orZero = true)
   def toInt16(tableColumn: ConstOrColMagnet[_]): Int16     = Int16(tableColumn)
 
-  def toInt16OrDefault(tableColumn: ConstOrColMagnet[_], value: Int16): Int16 =
+  def toInt16OrDefault(tableColumn: ConstOrColMagnet[_], value: Short): Int16 =
     Int16(tableColumn, orDefault = Option(value))
   def toInt16OrNull(tableColumn: ConstOrColMagnet[_]): Int16 = Int16(tableColumn, orNull = true)
   def toInt16OrZero(tableColumn: ConstOrColMagnet[_]): Int16 = Int16(tableColumn, orZero = true)
