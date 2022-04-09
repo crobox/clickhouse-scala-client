@@ -56,6 +56,12 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toUInt32(Double.MaxValue)) should be("0")
     an[Exception] should be thrownBy r(toUInt32(Double.MinValue.toString))
     r(toUInt32(Double.MinValue)) should be("0")
+
+    an[Exception] should be thrownBy r(toUInt32(""))
+    an[Exception] should be thrownBy r(toUInt32("error"))
+    an[Exception] should be thrownBy r(toUInt32("er\nror"))
+    an[Exception] should be thrownBy r(toUInt32("12\n58"))
+    an[Exception] should be thrownBy r(toUInt32("12\n58 gram"))
   }
 
   // this is the java/scala int (since we need 1 byte for negative)
@@ -87,6 +93,12 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toInt32(Double.MaxValue)) should be("-2147483648")
     an[Exception] should be thrownBy r(toInt32(Double.MinValue.toString))
     r(toInt32(Double.MinValue)) should be("-2147483648")
+
+    an[Exception] should be thrownBy r(toInt32(""))
+    an[Exception] should be thrownBy r(toInt32("error"))
+    an[Exception] should be thrownBy r(toInt32("er\nror"))
+    an[Exception] should be thrownBy r(toInt32("12\n58"))
+    an[Exception] should be thrownBy r(toInt32("12\n58 gram"))
   }
 
   it should "handle Int32OrZero" in {
