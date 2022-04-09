@@ -125,6 +125,12 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toInt32OrNull(Float.MinValue.toString)) should be("\\N")
     r(toInt32OrNull(Double.MaxValue.toString)) should be("\\N")
     r(toInt32OrNull(Double.MinValue.toString)) should be("\\N")
+
+    r(toInt32OrNull("")) should be("\\N")
+    r(toInt32OrNull("error")) should be("\\N")
+    r(toInt32OrNull("er\nror")) should be("\\N")
+    r(toInt32OrNull("12\n58")) should be("\\N")
+    r(toInt32OrNull("12\n58 gram")) should be("\\N")
   }
 
   it should "handle Int32OrDefault" in {
@@ -144,6 +150,12 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toInt32OrDefault(Float.MinValue.toString, 123)) should be("123")
     r(toInt32OrDefault(Double.MaxValue.toString, 123)) should be("123")
     r(toInt32OrDefault(Double.MinValue.toString, 123)) should be("123")
+
+    r(toInt32OrDefault("", 123)) should be("123")
+    r(toInt32OrDefault("error", 123)) should be("123")
+    r(toInt32OrDefault("er\nror", 123)) should be("123")
+    r(toInt32OrDefault("12\n58", 123)) should be("123")
+    r(toInt32OrDefault("12\n58 gram", 123)) should be("123")
   }
 
   def r(col: TypeCastColumn[_]): String =
