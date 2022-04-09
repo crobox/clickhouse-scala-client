@@ -91,6 +91,8 @@ class TypeCastFunctionsIT extends DslITSpec {
 
   it should "handle Int32OrZero" in {
     // orZero only accept STRING
+    an[Exception] should be thrownBy r(toInt32OrZero(Int.MaxValue))
+
     r(toInt32OrZero("1")) should be("1")
     r(toInt32OrZero(Byte.MaxValue.toString)) should be("127")
     r(toInt32OrZero(Byte.MinValue.toString)) should be("-128")
@@ -106,6 +108,25 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toInt32OrZero(Double.MinValue.toString)) should be("0")
   }
 
+  it should "handle Int32OrNull" in {
+    // orNull only accept STRING
+    an[Exception] should be thrownBy r(toInt32OrZero(Int.MaxValue))
+
+    r(toInt32OrNull("1")) should be("1")
+    r(toInt32OrNull(Byte.MaxValue.toString)) should be("127")
+    r(toInt32OrNull(Byte.MinValue.toString)) should be("-128")
+    r(toInt32OrNull(Short.MaxValue.toString)) should be("32767")
+    r(toInt32OrNull(Short.MinValue.toString)) should be("-32768")
+    r(toInt32OrNull(Int.MaxValue.toString)) should be("2147483647")
+    r(toInt32OrNull(Int.MinValue.toString)) should be("-2147483648")
+    r(toInt32OrNull(Long.MaxValue.toString)) should be("\\N")
+    r(toInt32OrNull(Long.MinValue.toString)) should be("\\N")
+    r(toInt32OrNull(Float.MaxValue.toString)) should be("\\N")
+    r(toInt32OrNull(Float.MinValue.toString)) should be("\\N")
+    r(toInt32OrNull(Double.MaxValue.toString)) should be("\\N")
+    r(toInt32OrNull(Double.MinValue.toString)) should be("\\N")
+  }
+
   def r(col: TypeCastColumn[_]): String =
-    execute(select(col)).futureValue
+    execute(select(col)).futureValue.trim
 }
