@@ -127,6 +127,25 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toInt32OrNull(Double.MinValue.toString)) should be("\\N")
   }
 
+  it should "handle Int32OrDefault" in {
+    // orNull only accept STRING (and only available in version 22.3 and upwards)
+    assumeMinimalClickhouseVersion(22, 3)
+
+    r(toInt32OrDefault("1", 123)) should be("1")
+    r(toInt32OrDefault(Byte.MaxValue.toString, 123)) should be("127")
+    r(toInt32OrDefault(Byte.MinValue.toString, 123)) should be("-128")
+    r(toInt32OrDefault(Short.MaxValue.toString, 123)) should be("32767")
+    r(toInt32OrDefault(Short.MinValue.toString, 123)) should be("-32768")
+    r(toInt32OrDefault(Int.MaxValue.toString, 123)) should be("2147483647")
+    r(toInt32OrDefault(Int.MinValue.toString, 123)) should be("-2147483648")
+    r(toInt32OrDefault(Long.MaxValue.toString, 123)) should be("123")
+    r(toInt32OrDefault(Long.MinValue.toString, 123)) should be("123")
+    r(toInt32OrDefault(Float.MaxValue.toString, 123)) should be("123")
+    r(toInt32OrDefault(Float.MinValue.toString, 123)) should be("123")
+    r(toInt32OrDefault(Double.MaxValue.toString, 123)) should be("123")
+    r(toInt32OrDefault(Double.MinValue.toString, 123)) should be("123")
+  }
+
   def r(col: TypeCastColumn[_]): String =
     execute(select(col)).futureValue.trim
 }
