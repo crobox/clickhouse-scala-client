@@ -14,7 +14,7 @@ package object clickhouse {
   object ClickhouseServerVersion {
 
     def apply(version: String): ClickhouseServerVersion =
-      ClickhouseServerVersion(version.split('.').toSeq.map(_.filter(_.isDigit)).map(_.toInt))
+      ClickhouseServerVersion(version.split('.').toSeq.map(_.filter(_.isDigit)).filter(_.trim.nonEmpty).map(_.toInt))
 
     def latest: ClickhouseServerVersion = ClickhouseServerVersion(versions = Seq(21, 8, 14))
   }
