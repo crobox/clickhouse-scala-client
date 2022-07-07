@@ -34,6 +34,19 @@ object QueryImprovements extends LazyLogging {
       clickhouseExecutor.execute(query)
     }
 
+    def executeWithLogging[V: JsonReader](traceId: Option[String])(
+        implicit executionContext: ExecutionContext,
+        clickhouseExecutor: ClickhouseQueryExecutor
+    ): Future[QueryResult[V]] = {
+      traceId.foreach(
+        id =>
+          logger.info(
+            s"[$id] ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.client.serverVersion))}"
+        )
+      )
+      clickhouseExecutor.execute(query)
+    }
+
     def executeWithLogging[V: JsonReader](
         implicit executionContext: ExecutionContext,
         clickhouseExecutor: ClickhouseQueryExecutor
