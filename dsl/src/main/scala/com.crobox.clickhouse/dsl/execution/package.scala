@@ -22,11 +22,12 @@ package object execution {
       val rows = jsObject.getFields("data") match {
         case Seq(JsArray(results)) => results.map(_.convertTo[V])
       }
-      val meta = jsObject.fields.get("meta").map {
+      val meta: Option[ResultMeta] = jsObject.fields.get("meta").flatMap {
         case JsArray(columnDefinitions) =>
-          ResultMeta(columnDefinitions.map(_.asJsObject.getFields("name", "type") match {
+          Option(ResultMeta(columnDefinitions.map(_.asJsObject.getFields("name", "type") match {
             case Seq(JsString(name), JsString(colType)) => ResultColumnType(name, colType)
-          }))
+          })))
+        case _ => None
       }
       val statistic = jsObject.getFields("rows_before_limit_at_least", "rows") match {
         case Seq(JsNumber(limit), JsNumber(rowsRead)) => Some(Statistic(rowsRead.longValue, limit.longValue))

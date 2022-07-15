@@ -19,7 +19,7 @@ lazy val root = (project in file("."))
         scalaVersion := "2.13.8",
         crossScalaVersions := List("2.12.13", "2.13.8"),
         javacOptions ++= Seq("-g", "-Xlint:unchecked", "-Xlint:deprecation", "-source", "11", "-target", "11"),
-        scalacOptions ++= Seq("-Wconf:cat=deprecation:ws,any:e",
+        scalacOptions ++= Seq( //"-Wconf:cat=deprecation:ws,any:e",
                               "-target:jvm-11",
                               "-unchecked",
                               "-deprecation",
