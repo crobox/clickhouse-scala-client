@@ -61,6 +61,10 @@ trait ArrayFunctions { this: Magnets =>
                             columns: ArrayColMagnet[_ <: Iterable[V]]*)
       extends ArrayFunctionOp[V]
   case class ArrayReverse[V](col: ArrayColMagnet[_ <: Iterable[V]]) extends ArrayFunctionOp[Iterable[V]]
+  // new 22-07-15
+  case class ArrayEmpty(col: ArrayColMagnet[_])    extends ArrayFunctionOp[Boolean]
+  case class ArrayNotEmpty(col: ArrayColMagnet[_]) extends ArrayFunctionOp[Boolean]
+  case class ArrayLength(col: ArrayColMagnet[_])   extends ArrayFunctionOp[Long]
 
   def emptyArrayUInt8: EmptyArrayUInt8                                     = EmptyArrayUInt8()
   def emptyArrayUInt16: EmptyArrayUInt16                                   = EmptyArrayUInt16()
@@ -145,4 +149,13 @@ trait ArrayFunctions { this: Magnets =>
                     col2: ArrayColMagnet[_ <: Iterable[V]],
                     columns: ArrayColMagnet[_ <: Iterable[V]]*): ExpressionColumn[Boolean] =
     notEmpty(arrayIntersect(col1, col2, columns: _*))
+
+  def arrayEmpty(col: ArrayColMagnet[_]): ArrayEmpty = ArrayEmpty(col)
+  def empty(col: ArrayColMagnet[_]): ArrayEmpty      = ArrayEmpty(col)
+
+  def arrayNotEmpty(col: ArrayColMagnet[_]): ArrayNotEmpty = ArrayNotEmpty(col)
+  def notEmpty(col: ArrayColMagnet[_]): ArrayNotEmpty      = ArrayNotEmpty(col)
+
+  def arrayLength(col: ArrayColMagnet[_]): ArrayLength = ArrayLength(col)
+  def length(col: ArrayColMagnet[_]): ArrayLength      = ArrayLength(col)
 }
