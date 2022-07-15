@@ -150,7 +150,12 @@ trait ArrayFunctions { this: Magnets =>
                     columns: ArrayColMagnet[_ <: Iterable[V]]*): ExpressionColumn[Boolean] =
     notEmpty(arrayIntersect(col1, col2, columns: _*))
 
-  def empty(col: ArrayColMagnet[_]): ArrayEmpty       = ArrayEmpty(col)
-  def notEmpty(col: ArrayColMagnet[_]): ArrayNotEmpty = ArrayNotEmpty(col)
-  def length(col: ArrayColMagnet[_]): ArrayLength     = ArrayLength(col)
+  def arrayEmpty(col: ArrayColMagnet[_]): ArrayEmpty = ArrayEmpty(col)
+  def empty(col: ArrayColMagnet[_]): ArrayEmpty      = ArrayEmpty(col)
+
+  def arrayNotEmpty(col: ArrayColMagnet[_]): ArrayNotEmpty = ArrayNotEmpty(col)
+  def notEmpty(col: ArrayColMagnet[_]): ArrayNotEmpty      = ArrayNotEmpty(col)
+
+  def arrayLength(col: ArrayColMagnet[_]): ArrayLength = ArrayLength(col)
+  def length(col: ArrayColMagnet[_]): ArrayLength      = ArrayLength(col)
 }
