@@ -69,4 +69,16 @@ class ArrayFunctionsIT extends DslITSpec {
   it should "arrayFunction: join" in {
     execute(select(arrayJoin(Array("1", "2")))).futureValue should be("1\n2")
   }
+
+  it should "arrayFunction: empty" in {
+    execute(select(ArrayEmpty(Array("1", "2")))).futureValue should be("0")
+  }
+
+  it should "arrayFunction: notEmpty" in {
+    execute(select(ArrayNotEmpty(Array("1", "2")))).futureValue should be("1")
+  }
+
+  it should "arrayFunction: length" in {
+    execute(select(ArrayLength(Array("1", "2")))).futureValue should be("2")
+  }
 }
