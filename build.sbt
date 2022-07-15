@@ -18,13 +18,15 @@ lazy val root = (project in file("."))
         organization := "com.crobox.clickhouse",
         scalaVersion := "2.13.8",
         crossScalaVersions := List("2.12.13", "2.13.8"),
-        scalacOptions ++= List(
-          "-unchecked",
-          "-deprecation",
-          "-language:_",
-          "-encoding",
-          "UTF-8"
-        ),
+        javacOptions ++= Seq("-g", "-Xlint:unchecked", "-Xlint:deprecation", "-source", "11", "-target", "11"),
+        scalacOptions ++= Seq("-Wconf:cat=deprecation:ws,any:e",
+                              "-target:jvm-11",
+                              "-unchecked",
+                              "-deprecation",
+                              "-feature",
+                              "-language:_",
+                              "-encoding",
+                              "UTF-8"),
         publishTo := {
           val nexus = "https://oss.sonatype.org/"
           if (version.value.trim.endsWith("SNAPSHOT"))
