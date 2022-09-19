@@ -310,4 +310,64 @@ class CreateTableTest extends DslTestSpec {
         |) ENGINE = Distributed(target_table_cluster, target_database, target_table ,sipHash(gig))""".stripMargin
     )
   }
+
+  it should "create a table with an AggregatingMergeTree engine with TTL" in {
+    val date     = NativeColumn[LocalDate]("date", ColumnType.Date)
+    val clientId = NativeColumn("client_id", ColumnType.FixedString(16))
+    val uniqHits =
+      NativeColumn[StateResult[Long]]("hits", ColumnType.AggregateFunctionColumn("uniq", ColumnType.String))
+
+    val create = CreateTable(
+      TestTable(
+        "test_table_agg",
+        Seq(date, clientId, uniqHits)
+      ),
+      Engine.AggregatingMergeTree(Seq(s"toYYYYMM(${date.name})"),
+                                  Seq(date, clientId),
+                                  ttl = Option(TTL(date, "3 MONTH")))
+    )
+
+    create.toString should be("""CREATE TABLE default.test_table_agg (
+        |  date Date,
+        |  client_id FixedString(16),
+        |  hits AggregateFunction(uniq, String)
+        |) ENGINE = AggregatingMergeTree
+        |PARTITION BY (toYYYYMM(date))
+        |ORDER BY (date, client_id)
+        |TTL date + INTERVAL 3 MONTH
+        |SETTINGS index_granularity=8192""".stripMargin)
+  }
+
+  it should "create a table with an AggregatingMergeTree engine with multiple TTL's" in {
+    val date     = NativeColumn[LocalDate]("date", ColumnType.Date)
+    val clientId = NativeColumn("client_id", ColumnType.FixedString(16), ttl = Option(TTL(date, "1 MONTH")))
+    val uniqHits =
+      NativeColumn[StateResult[Long]]("hits", ColumnType.AggregateFunctionColumn("uniq", ColumnType.String))
+
+    val create = CreateTable(
+      TestTable(
+        "test_table_agg",
+        Seq(date, clientId, uniqHits)
+      ),
+      Engine.AggregatingMergeTree(
+        Seq(s"toYYYYMM(${date.name})"),
+        Seq(date, clientId),
+        ttl = Iterable(TTL(date, "1 MONTH [DELETE]"),
+                       TTL(date, "1 WEEK TO VOLUME 'aaa'"),
+                       TTL(date, "2 WEEK TO DISK 'bbb'"))
+      )
+    )
+
+    create.toString should matchSQL("""CREATE TABLE default.test_table_agg (
+        |  date Date,
+        |  client_id FixedString(16) TTL date + INTERVAL 1 MONTH,
+        |  hits AggregateFunction(uniq, String)
+        |) ENGINE = AggregatingMergeTree
+        |PARTITION BY (toYYYYMM(date))
+        |ORDER BY (date, client_id)
+        |TTL date + INTERVAL 1 MONTH [DELETE],
+        |    date + INTERVAL 1 WEEK TO VOLUME 'aaa',
+        |    date + INTERVAL 2 WEEK TO DISK 'bbb'
+        |SETTINGS index_granularity=8192""".stripMargin)
+  }
 }

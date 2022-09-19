@@ -48,17 +48,19 @@ object Engine {
     val primaryKey: Seq[Column]
     val indexGranularity: Int
     val samplingExpression: Option[String]
+    val ttl: Iterable[TTL]
 
-    private val partitionArgument = Option(partition.mkString(", ")).filter(_.nonEmpty)
-    private val orderByArgument = Option(
+    private val partitionArgument: Option[String] = Option(partition.mkString(", ")).filter(_.nonEmpty)
+    private val orderByArgument: Option[String] = Option(
       (primaryKey.map(col => Option(col.quoted)) ++ Seq(samplingExpression)).flatten.mkString(", ")
-    ).filter(_.nonEmpty)
-    private val settingsArgument = s"index_granularity=$indexGranularity"
+    ).filter(_.nonEmpty).orElse(Option("tuple()"))
+    private val settingsArgument: String = s"index_granularity=$indexGranularity"
 
-    val statements = Seq(
+    val statements: Seq[String] = Seq(
       partitionArgument.map(partitionExp => s"PARTITION BY ($partitionExp)"),
       orderByArgument.map(cols => s"ORDER BY ($cols)"),
       samplingExpression.map(exp => s"SAMPLE BY $exp"),
+      TTL.ttl(ttl),
       Option(s"SETTINGS $settingsArgument")
     ).flatten
 
@@ -70,7 +72,8 @@ object Engine {
   case class MergeTree(partition: Seq[String],
                        primaryKey: Seq[Column],
                        samplingExpression: Option[String] = None,
-                       indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
+                       indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+                       ttl: Iterable[TTL] = Iterable.empty)
       extends MergeTreeEngine("MergeTree")
 
   object MergeTree {
@@ -97,7 +100,8 @@ object Engine {
                                 primaryKey: Seq[Column],
                                 samplingExpression: Option[String] = None,
                                 indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
-                                version: Option[Column] = None)
+                                version: Option[Column] = None,
+                                ttl: Iterable[TTL] = Iterable.empty)
       extends MergeTreeEngine("ReplacingMergeTree" + version.map(col => s"(${col.name})").getOrElse(""))
 
   object ReplacingMergeTree {
@@ -126,13 +130,13 @@ object Engine {
               version: Option[Column]): ReplacingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity, version)
   }
-//SummingMergeTree(EventDate, (OrderID, EventDate, BannerID, ...), 8192)
 
   case class SummingMergeTree(partition: Seq[String],
                               primaryKey: Seq[Column],
                               summingColumns: Seq[Column] = Seq.empty,
                               samplingExpression: Option[String] = None,
-                              indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
+                              indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+                              ttl: Iterable[TTL] = Iterable.empty)
       extends MergeTreeEngine("SummingMergeTree") {
 
     override def toString: String = {
@@ -166,7 +170,8 @@ object Engine {
   case class AggregatingMergeTree(partition: Seq[String],
                                   primaryKey: Seq[Column],
                                   samplingExpression: Option[String] = None,
-                                  indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
+                                  indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+                                  ttl: Iterable[TTL] = Iterable.empty)
       extends MergeTreeEngine("AggregatingMergeTree")
 
   object AggregatingMergeTree {
