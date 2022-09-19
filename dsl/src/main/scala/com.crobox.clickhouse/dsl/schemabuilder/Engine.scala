@@ -55,7 +55,7 @@ object Engine {
       (primaryKey.map(col => Option(col.quoted)) ++ Seq(samplingExpression)).flatten.mkString(", ")
     ).filter(_.nonEmpty).orElse(Option("tuple()"))
     private val settingsArgument: String = s"index_granularity=$indexGranularity"
-
+    
     val statements: Seq[String] = Seq(
       partitionArgument.map(partitionExp => s"PARTITION BY ($partitionExp)"),
       orderByArgument.map(cols => s"ORDER BY ($cols)"),
