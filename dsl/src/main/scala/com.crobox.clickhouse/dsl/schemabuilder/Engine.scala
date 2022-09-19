@@ -48,7 +48,7 @@ object Engine {
     val primaryKey: Seq[Column]
     val indexGranularity: Int
     val samplingExpression: Option[String]
-    val ttl: Iterable[TTLEntry]
+    val ttl: Iterable[TTL]
 
     private val partitionArgument: Option[String] = Option(partition.mkString(", ")).filter(_.nonEmpty)
     private val orderByArgument: Option[String] = Option(
@@ -73,7 +73,7 @@ object Engine {
                        primaryKey: Seq[Column],
                        samplingExpression: Option[String] = None,
                        indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
-                       ttl: Iterable[TTLEntry] = Iterable.empty)
+                       ttl: Iterable[TTL] = Iterable.empty)
       extends MergeTreeEngine("MergeTree")
 
   object MergeTree {
@@ -101,7 +101,7 @@ object Engine {
                                 samplingExpression: Option[String] = None,
                                 indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
                                 version: Option[Column] = None,
-                                ttl: Iterable[TTLEntry] = Iterable.empty)
+                                ttl: Iterable[TTL] = Iterable.empty)
       extends MergeTreeEngine("ReplacingMergeTree" + version.map(col => s"(${col.name})").getOrElse(""))
 
   object ReplacingMergeTree {
@@ -136,7 +136,7 @@ object Engine {
                               summingColumns: Seq[Column] = Seq.empty,
                               samplingExpression: Option[String] = None,
                               indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
-                              ttl: Iterable[TTLEntry] = Iterable.empty)
+                              ttl: Iterable[TTL] = Iterable.empty)
       extends MergeTreeEngine("SummingMergeTree") {
 
     override def toString: String = {
@@ -171,7 +171,7 @@ object Engine {
                                   primaryKey: Seq[Column],
                                   samplingExpression: Option[String] = None,
                                   indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
-                                  ttl: Iterable[TTLEntry] = Iterable.empty)
+                                  ttl: Iterable[TTL] = Iterable.empty)
       extends MergeTreeEngine("AggregatingMergeTree")
 
   object AggregatingMergeTree {

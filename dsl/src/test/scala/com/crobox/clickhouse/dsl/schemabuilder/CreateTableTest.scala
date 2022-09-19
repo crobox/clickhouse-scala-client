@@ -324,7 +324,7 @@ class CreateTableTest extends DslTestSpec {
       ),
       Engine.AggregatingMergeTree(Seq(s"toYYYYMM(${date.name})"),
                                   Seq(date, clientId),
-                                  ttl = Option(TTLEntry(date, "3 MONTH")))
+                                  ttl = Option(TTL(date, "3 MONTH")))
     )
 
     create.toString should be("""CREATE TABLE default.test_table_agg (
@@ -352,9 +352,9 @@ class CreateTableTest extends DslTestSpec {
       Engine.AggregatingMergeTree(
         Seq(s"toYYYYMM(${date.name})"),
         Seq(date, clientId),
-        ttl = Iterable(TTLEntry(date, "1 MONTH [DELETE]"),
-                       TTLEntry(date, "1 WEEK TO VOLUME 'aaa'"),
-                       TTLEntry(date, "2 WEEK TO DISK 'bbb'"))
+        ttl = Iterable(TTL(date, "1 MONTH [DELETE]"),
+                       TTL(date, "1 WEEK TO VOLUME 'aaa'"),
+                       TTL(date, "2 WEEK TO DISK 'bbb'"))
       )
     )
 

@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
-import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue, TTLEntry}
+import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue, TTL}
 
 case object EmptyColumn extends TableColumn("NULL")
 
@@ -24,7 +24,7 @@ abstract class TableColumn[+V](val name: String) extends Column {
 case class NativeColumn[V](override val name: String,
                            clickhouseType: ColumnType = ColumnType.String,
                            defaultValue: DefaultValue = DefaultValue.NoDefault,
-                           ttl: Option[TTLEntry] = None)
+                           ttl: Option[TTL] = None)
     extends TableColumn[V](name) {
 
   def query: String = s"$quoted $clickhouseType$defaultValue".toString

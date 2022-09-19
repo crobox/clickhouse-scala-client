@@ -21,7 +21,7 @@ class CreateTableIT extends DslITSpec {
         override val name: String                  = "table_with_ttl"
         override val columns: Seq[NativeColumn[_]] = Seq(eventTime, userId, comment)
       },
-      Engine.MergeTree(partition = Seq.empty, primaryKey = Seq(), ttl = Option(TTLEntry(eventTime, "3 MONTH")))
+      Engine.MergeTree(partition = Seq.empty, primaryKey = Seq(), ttl = Option(TTL(eventTime, "3 MONTH")))
     )
 
     // create database
