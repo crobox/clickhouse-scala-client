@@ -55,13 +55,12 @@ object Engine {
       (primaryKey.map(col => Option(col.quoted)) ++ Seq(samplingExpression)).flatten.mkString(", ")
     ).filter(_.nonEmpty)
     private val settingsArgument = s"index_granularity=$indexGranularity"
-    private val ttlArgument      = ttl.map(s => s"${s._1.name} + ${s._2}").filter(_.nonEmpty)
 
     val statements = Seq(
       partitionArgument.map(partitionExp => s"PARTITION BY ($partitionExp)"),
       orderByArgument.map(cols => s"ORDER BY ($cols)"),
       samplingExpression.map(exp => s"SAMPLE BY $exp"),
-      ttlArgument.map(exp => s"TTL $exp"),
+      ttl.map(s => s"TTL ${s._1.name} + INTERVAL ${s._2}"),
       Option(s"SETTINGS $settingsArgument")
     ).flatten
 
