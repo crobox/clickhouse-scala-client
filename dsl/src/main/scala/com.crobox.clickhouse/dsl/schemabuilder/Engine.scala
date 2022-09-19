@@ -50,13 +50,13 @@ object Engine {
     val samplingExpression: Option[String]
     val ttl: Option[(Column, String)]
 
-    private val partitionArgument = Option(partition.mkString(", ")).filter(_.nonEmpty)
-    private val orderByArgument = Option(
+    private val partitionArgument: Option[String] = Option(partition.mkString(", ")).filter(_.nonEmpty)
+    private val orderByArgument: Option[String] = Option(
       (primaryKey.map(col => Option(col.quoted)) ++ Seq(samplingExpression)).flatten.mkString(", ")
-    ).filter(_.nonEmpty)
-    private val settingsArgument = s"index_granularity=$indexGranularity"
+    ).filter(_.nonEmpty).orElse(Option("tuple()"))
+    private val settingsArgument: String = s"index_granularity=$indexGranularity"
 
-    val statements = Seq(
+    val statements: Seq[String] = Seq(
       partitionArgument.map(partitionExp => s"PARTITION BY ($partitionExp)"),
       orderByArgument.map(cols => s"ORDER BY ($cols)"),
       samplingExpression.map(exp => s"SAMPLE BY $exp"),

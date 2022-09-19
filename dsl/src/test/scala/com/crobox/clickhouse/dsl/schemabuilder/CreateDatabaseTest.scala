@@ -29,5 +29,4 @@ class CreateDatabaseTest extends DslTestSpec {
       "CREATE DATABASE db ON CLUSTER `.Invalid`"
     )
   }
-
 }
