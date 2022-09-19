@@ -340,7 +340,7 @@ class CreateTableTest extends DslTestSpec {
 
   it should "create a table with an AggregatingMergeTree engine with multiple TTL's" in {
     val date     = NativeColumn[LocalDate]("date", ColumnType.Date)
-    val clientId = NativeColumn("client_id", ColumnType.FixedString(16))
+    val clientId = NativeColumn("client_id", ColumnType.FixedString(16), ttl = Option(TTL(date, "1 MONTH")))
     val uniqHits =
       NativeColumn[StateResult[Long]]("hits", ColumnType.AggregateFunctionColumn("uniq", ColumnType.String))
 
@@ -360,7 +360,7 @@ class CreateTableTest extends DslTestSpec {
 
     create.toString should matchSQL("""CREATE TABLE default.test_table_agg (
         |  date Date,
-        |  client_id FixedString(16),
+        |  client_id FixedString(16) TTL date + INTERVAL 1 MONTH,
         |  hits AggregateFunction(uniq, String)
         |) ENGINE = AggregatingMergeTree
         |PARTITION BY (toYYYYMM(date))

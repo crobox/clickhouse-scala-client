@@ -27,7 +27,7 @@ case class NativeColumn[V](override val name: String,
                            ttl: Option[TTL] = None)
     extends TableColumn[V](name) {
 
-  def query: String = s"$quoted $clickhouseType$defaultValue".toString
+  def query: String = s"$quoted $clickhouseType$defaultValue${TTL.ttl(ttl).map(_.prepended(' ')).getOrElse("")}"
 }
 
 case class RefColumn[V](ref: String) extends TableColumn[V](ref)
