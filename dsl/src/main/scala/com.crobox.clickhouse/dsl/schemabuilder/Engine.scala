@@ -48,17 +48,20 @@ object Engine {
     val primaryKey: Seq[Column]
     val indexGranularity: Int
     val samplingExpression: Option[String]
+    val ttl: Option[(Column, String)]
 
     private val partitionArgument = Option(partition.mkString(", ")).filter(_.nonEmpty)
     private val orderByArgument = Option(
       (primaryKey.map(col => Option(col.quoted)) ++ Seq(samplingExpression)).flatten.mkString(", ")
     ).filter(_.nonEmpty)
     private val settingsArgument = s"index_granularity=$indexGranularity"
+    private val ttlArgument      = ttl.map(s => s"${s._1.name} + ${s._2}").filter(_.nonEmpty)
 
     val statements = Seq(
       partitionArgument.map(partitionExp => s"PARTITION BY ($partitionExp)"),
       orderByArgument.map(cols => s"ORDER BY ($cols)"),
       samplingExpression.map(exp => s"SAMPLE BY $exp"),
+      ttlArgument.map(exp => s"TTL $exp"),
       Option(s"SETTINGS $settingsArgument")
     ).flatten
 
@@ -70,7 +73,8 @@ object Engine {
   case class MergeTree(partition: Seq[String],
                        primaryKey: Seq[Column],
                        samplingExpression: Option[String] = None,
-                       indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
+                       indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+                       ttl: Option[(Column, String)] = None)
       extends MergeTreeEngine("MergeTree")
 
   object MergeTree {
@@ -97,7 +101,8 @@ object Engine {
                                 primaryKey: Seq[Column],
                                 samplingExpression: Option[String] = None,
                                 indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
-                                version: Option[Column] = None)
+                                version: Option[Column] = None,
+                                ttl: Option[(Column, String)] = None)
       extends MergeTreeEngine("ReplacingMergeTree" + version.map(col => s"(${col.name})").getOrElse(""))
 
   object ReplacingMergeTree {
@@ -126,13 +131,13 @@ object Engine {
               version: Option[Column]): ReplacingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity, version)
   }
-//SummingMergeTree(EventDate, (OrderID, EventDate, BannerID, ...), 8192)
 
   case class SummingMergeTree(partition: Seq[String],
                               primaryKey: Seq[Column],
                               summingColumns: Seq[Column] = Seq.empty,
                               samplingExpression: Option[String] = None,
-                              indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
+                              indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+                              ttl: Option[(Column, String)] = None)
       extends MergeTreeEngine("SummingMergeTree") {
 
     override def toString: String = {
@@ -166,7 +171,8 @@ object Engine {
   case class AggregatingMergeTree(partition: Seq[String],
                                   primaryKey: Seq[Column],
                                   samplingExpression: Option[String] = None,
-                                  indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity)
+                                  indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+                                  ttl: Option[(Column, String)] = None)
       extends MergeTreeEngine("AggregatingMergeTree")
 
   object AggregatingMergeTree {
