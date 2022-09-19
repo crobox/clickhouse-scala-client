@@ -6,6 +6,10 @@ import org.joda.time.DateTime
 
 class CreateTableIT extends DslITSpec {
 
+  //
+  // https://clickhouse.com/docs/en/sql-reference/statements/alter/ttl/
+  //
+
   it should "create table with TTL" in {
     val eventTime = NativeColumn[DateTime]("event_time", ColumnType.DateTime)
     val userId    = NativeColumn[Long]("user_id", ColumnType.UInt64)
