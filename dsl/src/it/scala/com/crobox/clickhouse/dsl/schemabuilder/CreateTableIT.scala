@@ -11,8 +11,6 @@ class CreateTableIT extends DslITSpec {
   //
 
   it should "create table with TTL" in {
-    assumeMinimalClickhouseVersion(2, 13)
-
     val eventTime = NativeColumn[DateTime]("event_time", ColumnType.DateTime)
     val userId    = NativeColumn[Long]("user_id", ColumnType.UInt64)
     val comment   = NativeColumn[String]("comment", ColumnType.String)

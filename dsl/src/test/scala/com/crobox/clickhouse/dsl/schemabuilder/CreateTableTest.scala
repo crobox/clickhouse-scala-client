@@ -312,8 +312,6 @@ class CreateTableTest extends DslTestSpec {
   }
 
   it should "create a table with an AggregatingMergeTree engine with TTL" in {
-    assumeMinimalClickhouseVersion(2, 13)
-    
     val date     = NativeColumn[LocalDate]("date", ColumnType.Date)
     val clientId = NativeColumn("client_id", ColumnType.FixedString(16))
     val uniqHits =
@@ -341,8 +339,6 @@ class CreateTableTest extends DslTestSpec {
   }
 
   it should "create a table with an AggregatingMergeTree engine with multiple TTL's" in {
-    assumeMinimalClickhouseVersion(2, 13)
-
     val date     = NativeColumn[LocalDate]("date", ColumnType.Date)
     val clientId = NativeColumn("client_id", ColumnType.FixedString(16), ttl = Option(TTL(date, "1 MONTH")))
     val uniqHits =
