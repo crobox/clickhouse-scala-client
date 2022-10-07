@@ -74,16 +74,12 @@ trait ClickhouseSpec
 
   def blockUntilRowsInTable(rowCount: Int, tableName: String)(implicit maxBackOff: Int = 16): Unit =
     blockUntil(s"Expected to find $rowCount in table $tableName") { () =>
-      val rc = Try(sql(s"SELECT COUNT(*) FROM $tableName").toInt).getOrElse(-1)
-      logger.debug(s"Count[$tableName] $rc >= $rowCount")
-      rc >= rowCount
+      Try(sql(s"SELECT COUNT(*) FROM $tableName").toInt).getOrElse(-1) >= rowCount
     }
 
   def blockUntilExactRowsInTable(rowCount: Int, tableName: String)(implicit maxBackOff: Int = 16): Unit =
     blockUntil(s"Expected to find $rowCount in table $tableName") { () =>
-      val rc = Try(sql(s"SELECT COUNT(*) FROM $tableName").toInt).getOrElse(-1)
-      logger.debug(s"Count[$tableName] $rc == $rowCount")
-      rc == rowCount
+      sql(s"SELECT COUNT(*) FROM $tableName") == rowCount.toString
     }
 
   def blockUntil(explain: String)(predicate: () => Boolean)(implicit maxBackOff: Int = 16): Unit = {
