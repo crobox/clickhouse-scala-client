@@ -2,13 +2,19 @@ package com.crobox.clickhouse.testkit
 
 import com.crobox.clickhouse.{ClickhouseClient, ClickhouseServerVersion}
 import com.typesafe.config.Config
+import com.typesafe.scalalogging.LazyLogging
 import org.scalatest._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Random, Try}
 
-trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterAll with ClickhouseMatchers {
+trait ClickhouseSpec
+    extends SuiteMixin
+    with BeforeAndAfter
+    with BeforeAndAfterAll
+    with ClickhouseMatchers
+    with LazyLogging {
   this: Suite =>
 
   val config: Config
@@ -68,12 +74,16 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
 
   def blockUntilRowsInTable(rowCount: Int, tableName: String)(implicit maxBackOff: Int = 16): Unit =
     blockUntil(s"Expected to find $rowCount in table $tableName") { () =>
-      Try(sql(s"SELECT COUNT(*) FROM $tableName").toInt).getOrElse(-1) >= rowCount
+      val rc = Try(sql(s"SELECT COUNT(*) FROM $tableName").toInt).getOrElse(-1)
+      logger.debug(s"Count[$tableName] $rc >= $rowCount")
+      rc >= rowCount
     }
 
   def blockUntilExactRowsInTable(rowCount: Int, tableName: String)(implicit maxBackOff: Int = 16): Unit =
     blockUntil(s"Expected to find $rowCount in table $tableName") { () =>
-      sql(s"SELECT COUNT(*) FROM $tableName") == rowCount.toString
+      val rc = Try(sql(s"SELECT COUNT(*) FROM $tableName").toInt).getOrElse(-1)
+      logger.debug(s"Count[$tableName] $rc == $rowCount")
+      rc == rowCount
     }
 
   def blockUntil(explain: String)(predicate: () => Boolean)(implicit maxBackOff: Int = 16): Unit = {
