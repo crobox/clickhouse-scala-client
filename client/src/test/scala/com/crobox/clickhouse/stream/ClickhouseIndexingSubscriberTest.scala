@@ -16,20 +16,21 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
 
   var subscriberCompletes: Promise[Unit] = Promise[Unit]()
 
-  val createDb    = "CREATE DATABASE IF NOT EXISTS test"
-  val dropDb      = "DROP DATABASE IF EXISTS test"
-  val createTable = """CREATE TABLE test.insert
-                      |(
-                      |    i UInt64,
-                      |    s String,
-                      |    a Array(UInt32)
-                      |) ENGINE = Memory""".stripMargin
+  val createDb = "CREATE DATABASE IF NOT EXISTS test"
+  val dropDb = "DROP DATABASE IF EXISTS test"
+  val createTable =
+    """CREATE TABLE test.insert
+      |(
+      |    i UInt64,
+      |    s String,
+      |    a Array(UInt32)
+      |) ENGINE = Memory""".stripMargin
 
   override protected def beforeEach(): Unit = {
     super.beforeAll()
 
     Await.ready(for {
-      _      <- client.execute(createDb)
+      _ <- client.execute(createDb)
       create <- client.execute(createTable)
     } yield create, timeout.duration)
 
@@ -48,13 +49,13 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
         "i" -> Random.nextInt(100),
         "s" -> key,
         "a" -> (1 to Random.nextInt(20)).map(_ => Random.nextInt(200))
-    )
+      )
   )
 
   def parsedInserts(key: String) = unparsedInserts(key).map(
-    _.mapValues({  // do NOT change to .view.mapValues given compilation errors for scala 2.12.+
-      case value: Int           => value.toString
-      case value: String        => "\"" + value + "\""
+    _.mapValues({ // do NOT change to .view.mapValues given compilation errors for scala 2.12.+
+      case value: Int => value.toString
+      case value: String => "\"" + value + "\""
       case value: IndexedSeq[_] => "[" + value.mkString(", ") + "]"
     }).map { case (k, v) => s""""$k" : $v""" }
       .mkString(", ")
@@ -65,7 +66,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     val res = Source
       .fromIterator(() => inserts.toIterator) // do NOT change to .iterator given compilation errors for scala 2.12.+
       .map(data => Insert("test.insert", "{" + data + "}"))
-      .runWith(ClickhouseSink.insertSink(config, client, Some("no-overrides")))
+      .runWith(ClickhouseSink.operationSink(config, client, Some("no-overrides")))
     Await.ready(res, 5.seconds)
     checkRowCount("two").map(_ shouldBe inserts.size)
   }
