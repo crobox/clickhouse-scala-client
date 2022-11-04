@@ -83,7 +83,7 @@ object ClickhouseSink extends LazyLogging {
     Future.sequence(
       ops.map { o =>
         client
-          .execute(s"OPTIMIZE TABLE ${o.table}${o.cluster.map(s => s"_local ON CLUSTER $s").getOrElse("")} FINAL")
+          .execute(s"OPTIMIZE TABLE ${o.table}${o.cluster.map(s => s" ON CLUSTER $s").getOrElse("")} FINAL")
           .recover {
             case ex => throw ClickhouseIndexingException(s"failed to optimize ${o.table}", ex, Seq(), o.table)
           }
