@@ -7,6 +7,7 @@ import com.crobox.clickhouse.internal.QuerySettings
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,19 +43,28 @@ object ClickhouseSink extends LazyLogging {
           else None
       )
       .getOrElse(indexerGeneralConfig)
-    val batchSize     = mergedIndexerConfig.getInt("batch-size")
-    val flushInterval = mergedIndexerConfig.getDuration("flush-interval").getSeconds.seconds
+    val batchSize                        = mergedIndexerConfig.getInt("batch-size")
+    val flushInterval                    = mergedIndexerConfig.getDuration("flush-interval").getSeconds.seconds
+    val inserts: ArrayBuffer[Insert]     = ArrayBuffer[Insert]()
+    val optimizes: ArrayBuffer[Optimize] = ArrayBuffer[Optimize]()
     Flow[TableOperation]
       .groupBy(Int.MaxValue, _.table)
       .groupedWithin(batchSize, flushInterval)
       .mapAsync(mergedIndexerConfig.getInt("concurrent-requests"))(operations => {
         val table = operations.head.table
+        inserts.clear()
+        optimizes.clear()
         logger.debug(
           s"Executing ${operations.size} operations on table: $table. Group Within: ($batchSize - $flushInterval)"
         )
 
-        insertOp(operations.collect { case o: Insert                     => o }, client)
-          .flatMap(_ => optimizeOp(operations.collect { case o: Optimize => o }, client))
+        operations.map {
+          case o: Insert   => inserts += o
+          case o: Optimize => optimizes += o
+        }
+
+        insertOp(inserts.toSeq, client)
+          .flatMap(_ => optimizeOp(optimizes.toSeq, client))
           .map(_ => operations)
       })
       .mergeSubstreams
