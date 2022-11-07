@@ -7,7 +7,7 @@ import com.crobox.clickhouse.internal.QuerySettings
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,9 +28,12 @@ object ClickhouseSink extends LazyLogging {
   def insertSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(
       implicit ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()
-  ): Sink[Insert, Future[Done]] = toSink(config, client, indexerName)
+  ): Sink[Insert, Future[Done]] = toSink(config, client, indexerName, sequentialOperationProcessing = true)
 
-  def toSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(
+  def toSink(config: Config,
+             client: ClickhouseClient,
+             indexerName: Option[String] = None,
+             sequentialOperationProcessing: Boolean = true)(
       implicit ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()
   ): Sink[TableOperation, Future[Done]] = {
@@ -43,35 +46,37 @@ object ClickhouseSink extends LazyLogging {
           else None
       )
       .getOrElse(indexerGeneralConfig)
-    val batchSize                        = mergedIndexerConfig.getInt("batch-size")
-    val flushInterval                    = mergedIndexerConfig.getDuration("flush-interval").getSeconds.seconds
-    val inserts: ArrayBuffer[Insert]     = ArrayBuffer[Insert]()
-    val optimizes: ArrayBuffer[Optimize] = ArrayBuffer[Optimize]()
+    val batchSize      = mergedIndexerConfig.getInt("batch-size")
+    val flushInterval  = mergedIndexerConfig.getDuration("flush-interval").getSeconds.seconds
+    val insertBuffer   = mutable.ArrayBuffer.empty[Insert] // keep outside Flow and reuse (memory friendly)
+    val optimizeBuffer = mutable.ArrayBuffer.empty[Optimize] // keep outside Flow and reuse (memory friendly)
     Flow[TableOperation]
       .groupBy(Int.MaxValue, _.table)
       .groupedWithin(batchSize, flushInterval)
       .mapAsync(mergedIndexerConfig.getInt("concurrent-requests"))(operations => {
         val table = operations.head.table
-        inserts.clear()
-        optimizes.clear()
         logger.debug(
           s"Executing ${operations.size} operations on table: $table. Group Within: ($batchSize - $flushInterval)"
         )
 
-        operations.map {
-          case o: Insert   => inserts += o
-          case o: Optimize => optimizes += o
+        // split operations based on their type
+        insertBuffer.clear()   // Memory friendly
+        optimizeBuffer.clear() // Memory friendly
+        operations.foreach {
+          case op: Insert   => insertBuffer.append(op)
+          case op: Optimize => optimizeBuffer.append(op)
         }
-
-        insertOp(inserts.toSeq, client)
-          .flatMap(_ => optimizeOp(optimizes.toSeq, client))
-          .map(_ => operations)
+        if (sequentialOperationProcessing) {
+          insertOp(insertBuffer, client).flatMap(_ => optimizeOp(optimizeBuffer, client)).map(_ => operations)
+        } else {
+          Future.sequence(Seq(insertOp(insertBuffer, client), optimizeOp(optimizeBuffer, client))).map(_ => operations)
+        }
       })
       .mergeSubstreams
       .toMat(Sink.ignore)(Keep.right)
   }
 
-  private def insertOp(ops: Seq[Insert], client: ClickhouseClient)(
+  private def insertOp(ops: Iterable[Insert], client: ClickhouseClient)(
       implicit ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()
   ): Future[Iterable[String]] =
@@ -81,11 +86,11 @@ object ClickhouseSink extends LazyLogging {
       client
         .execute(s"INSERT INTO ${t._1} FORMAT JSONEachRow", payload.mkString("\n"))
         .recover {
-          case ex => throw ClickhouseIndexingException("failed to index", ex, payload, t._1)
+          case ex => throw ClickhouseIndexingException("failed to index", ex, payload.toSeq, t._1)
         }
     })
 
-  private def optimizeOp(ops: Seq[Optimize], client: ClickhouseClient)(
+  private def optimizeOp(ops: Iterable[Optimize], client: ClickhouseClient)(
       implicit ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()
   ): Future[Iterable[String]] = {
