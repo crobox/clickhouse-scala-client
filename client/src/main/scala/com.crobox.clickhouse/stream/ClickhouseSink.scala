@@ -19,7 +19,8 @@ sealed trait TableOperation {
 
 case class Insert(table: String, jsonRow: String) extends TableOperation
 
-case class Optimize(table: String, localTable: Option[String], cluster: Option[String]) extends TableOperation
+case class Optimize(table: String, localTable: Option[String] = None, cluster: Option[String] = None)
+    extends TableOperation
 
 object ClickhouseSink extends LazyLogging {
 
