@@ -59,7 +59,7 @@ object ClickhouseSink extends LazyLogging {
           case op: Insert   => Option(op.jsonRow)
           case op: Optimize => optimize = Option(op); None
         }
-
+        
         if (payload.nonEmpty) {
           optimize match {
             case Some(statement) => insertTable(client, table, payload).flatMap(_ => optimizeTable(client, statement))
@@ -81,17 +81,20 @@ object ClickhouseSink extends LazyLogging {
   private def insertTable(client: ClickhouseClient, table: String, payload: Seq[String])(
       implicit ec: ExecutionContext,
       settings: QuerySettings
-  ): Future[String] = {
-    logger.debug(s"Inserting ${payload.size} entries in table: $table.")
-    client
-      .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
-      .recover {
-        case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
-      }
-  }
+  ): Future[String] =
+    if (payload.nonEmpty) {
+      logger.debug(s"Inserting ${payload.size} entries in table: $table.")
+      client
+        .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
+        .recover {
+          case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
+        }
+    } else Future.successful("")
 
-  private def optimizeTable(client: ClickhouseClient, statement: Optimize)(implicit ec: ExecutionContext,
-                                                                           settings: QuerySettings): Future[String] = {
+  private def optimizeTable(
+      client: ClickhouseClient,
+      statement: Optimize
+  )(implicit ec: ExecutionContext, settings: QuerySettings): Future[String] = {
     val table = statement.distributedTable.getOrElse(statement.table)
     logger.debug(s"Optimizing table: $table.")
     client
