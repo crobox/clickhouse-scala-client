@@ -84,7 +84,7 @@ object ClickhouseSink extends LazyLogging {
       .toMat(Sink.ignore)(Keep.right)
   }
 
-  private def insertTable(client: ClickhouseClient, table: String, payload: Seq[String])(
+  protected[stream] def insertTable(client: ClickhouseClient, table: String, payload: Seq[String])(
       implicit ec: ExecutionContext,
       settings: QuerySettings
   ): Future[String] = {
@@ -96,7 +96,7 @@ object ClickhouseSink extends LazyLogging {
       }
   }
 
-  private def optimizeTable(
+  protected[stream] def optimizeTable(
       client: ClickhouseClient,
       statement: Optimize
   )(implicit ec: ExecutionContext, settings: QuerySettings): Future[String] = {
