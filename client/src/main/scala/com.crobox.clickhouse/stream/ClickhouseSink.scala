@@ -101,8 +101,7 @@ object ClickhouseSink extends LazyLogging {
       statement: Optimize
   )(implicit ec: ExecutionContext, settings: QuerySettings): Future[String] = {
     val table = statement.localTable.getOrElse(statement.table)
-    logger.debug(s"Optimizing table: $table.")
-    var sql = s"OPTIMIZE TABLE $table"
+    var sql   = s"OPTIMIZE TABLE $table"
     statement.cluster.foreach(cluster => sql += s" ON CLUSTER $cluster")
     statement.partition.foreach(partition => sql += s" PARTITION $partition")
     if (statement.`final`) sql += " FINAL"
@@ -110,7 +109,7 @@ object ClickhouseSink extends LazyLogging {
     client
       .execute(sql)
       .recover {
-        case ex => throw ClickhouseIndexingException(s"failed to optimize $table", ex, Seq(), table)
+        case ex => throw ClickhouseIndexingException(s"failed to optimize $table", ex, Seq(sql), table)
       }
   }
 }
