@@ -70,7 +70,7 @@ object ClickhouseSink extends LazyLogging {
           optimize match {
             case Some(statement) => optimizeTable(client, statement)
             case _ =>
-              logger.warn(s"No insert or optimize statements for table: $table. How is batch triggered?")
+              logger.warn(s"No insert or optimize statements for table: $table")
               Future.successful("")
           }
         }
