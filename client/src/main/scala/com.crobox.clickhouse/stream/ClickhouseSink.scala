@@ -7,7 +7,6 @@ import com.crobox.clickhouse.internal.QuerySettings
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -20,7 +19,7 @@ sealed trait TableOperation {
 
 case class Insert(table: String, jsonRow: String) extends TableOperation
 
-case class Optimize(table: String, cluster: Option[String]) extends TableOperation
+case class Optimize(table: String, distributedTable: Option[String], cluster: Option[String]) extends TableOperation
 
 object ClickhouseSink extends LazyLogging {
 
@@ -28,12 +27,9 @@ object ClickhouseSink extends LazyLogging {
   def insertSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(
       implicit ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()
-  ): Sink[Insert, Future[Done]] = toSink(config, client, indexerName, sequentialOperationProcessing = true)
+  ): Sink[Insert, Future[Done]] = toSink(config, client, indexerName)
 
-  def toSink(config: Config,
-             client: ClickhouseClient,
-             indexerName: Option[String] = None,
-             sequentialOperationProcessing: Boolean = true)(
+  def toSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(
       implicit ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()
   ): Sink[TableOperation, Future[Done]] = {
@@ -46,10 +42,8 @@ object ClickhouseSink extends LazyLogging {
           else None
       )
       .getOrElse(indexerGeneralConfig)
-    val batchSize      = mergedIndexerConfig.getInt("batch-size")
-    val flushInterval  = mergedIndexerConfig.getDuration("flush-interval").getSeconds.seconds
-    val insertBuffer   = mutable.ArrayBuffer.empty[Insert] // keep outside Flow and reuse (memory friendly)
-    val optimizeBuffer = mutable.ArrayBuffer.empty[Optimize] // keep outside Flow and reuse (memory friendly)
+    val batchSize     = mergedIndexerConfig.getInt("batch-size")
+    val flushInterval = mergedIndexerConfig.getDuration("flush-interval").getSeconds.seconds
     Flow[TableOperation]
       .groupBy(Int.MaxValue, _.table)
       .groupedWithin(batchSize, flushInterval)
@@ -60,49 +54,31 @@ object ClickhouseSink extends LazyLogging {
         )
 
         // split operations based on their type
-        insertBuffer.clear()   // Memory friendly
-        optimizeBuffer.clear() // Memory friendly
-        operations.foreach {
-          case op: Insert   => insertBuffer.append(op)
-          case op: Optimize => optimizeBuffer.append(op)
+        var optimize: Option[Optimize] = None
+        val payload = operations.flatMap {
+          case op: Insert   => Option(op.jsonRow)
+          case op: Optimize => optimize = Option(op); None
         }
-        if (sequentialOperationProcessing) {
-          insertOp(insertBuffer, client).flatMap(_ => optimizeOp(optimizeBuffer, client)).map(_ => operations)
-        } else {
-          Future.sequence(Seq(insertOp(insertBuffer, client), optimizeOp(optimizeBuffer, client))).map(_ => operations)
-        }
+        logger.debug(s"Inserting ${payload.size} entries in table: $table.")
+        client
+          .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
+          .recover {
+            case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
+          }
+          .flatMap(result => {
+            optimize
+              .map(o => {
+                val table = o.distributedTable.getOrElse(o.table)
+                client
+                  .execute(s"OPTIMIZE TABLE $table${o.cluster.map(s => s" ON CLUSTER $s").getOrElse("")} FINAL")
+                  .recover {
+                    case ex => throw ClickhouseIndexingException(s"failed to optimize $table", ex, Seq(), table)
+                  }
+              })
+              .getOrElse(Future.successful(result))
+          })
       })
       .mergeSubstreams
       .toMat(Sink.ignore)(Keep.right)
-  }
-
-  private def insertOp(ops: Iterable[Insert], client: ClickhouseClient)(
-      implicit ec: ExecutionContext,
-      settings: QuerySettings = QuerySettings()
-  ): Future[Iterable[String]] =
-    Future.sequence(ops.groupBy(_.table).map { t =>
-      val payload = t._2.map(_.jsonRow)
-      logger.debug(s"Inserting ${payload.size} entries in table: ${t._1}.")
-      client
-        .execute(s"INSERT INTO ${t._1} FORMAT JSONEachRow", payload.mkString("\n"))
-        .recover {
-          case ex => throw ClickhouseIndexingException("failed to index", ex, payload.toSeq, t._1)
-        }
-    })
-
-  private def optimizeOp(ops: Iterable[Optimize], client: ClickhouseClient)(
-      implicit ec: ExecutionContext,
-      settings: QuerySettings = QuerySettings()
-  ): Future[Iterable[String]] = {
-    logger.debug(s"Optimizing tables")
-    Future.sequence(
-      ops.map { o =>
-        client
-          .execute(s"OPTIMIZE TABLE ${o.table}${o.cluster.map(s => s" ON CLUSTER $s").getOrElse("")} FINAL")
-          .recover {
-            case ex => throw ClickhouseIndexingException(s"failed to optimize ${o.table}", ex, Seq(), o.table)
-          }
-      }
-    )
   }
 }
