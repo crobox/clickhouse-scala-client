@@ -2,19 +2,13 @@ package com.crobox.clickhouse.testkit
 
 import com.crobox.clickhouse.{ClickhouseClient, ClickhouseServerVersion}
 import com.typesafe.config.Config
-import com.typesafe.scalalogging.LazyLogging
 import org.scalatest._
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Random, Try}
 
-trait ClickhouseSpec
-    extends SuiteMixin
-    with BeforeAndAfter
-    with BeforeAndAfterAll
-    with ClickhouseMatchers
-    with LazyLogging {
+trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterAll with ClickhouseMatchers {
   this: Suite =>
 
   val config: Config
