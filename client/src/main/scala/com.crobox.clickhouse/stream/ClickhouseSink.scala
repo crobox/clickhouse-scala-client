@@ -12,14 +12,33 @@ import scala.concurrent.{ExecutionContext, Future}
 
 case class ClickhouseIndexingException(msg: String, cause: Throwable, payload: Seq[String], table: String)
     extends RuntimeException(msg, cause)
-case class Insert(table: String, jsonRow: String)
+
+sealed trait TableOperation {
+  def table: String
+}
+
+case class Insert(table: String, jsonRow: String) extends TableOperation
+
+case class Optimize(table: String,
+                    localTable: Option[String] = None,
+                    cluster: Option[String] = None,
+                    partition: Option[String] = None,
+                    `final`: Boolean = true,
+                    deduplicate: Option[String] = None)
+    extends TableOperation
 
 object ClickhouseSink extends LazyLogging {
 
+  @deprecated("use [[#toSink()]] instead")
   def insertSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(
       implicit ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()
-  ): Sink[Insert, Future[Done]] = {
+  ): Sink[Insert, Future[Done]] = toSink(config, client, indexerName)
+
+  def toSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(
+      implicit ec: ExecutionContext,
+      settings: QuerySettings = QuerySettings()
+  ): Sink[TableOperation, Future[Done]] = {
     val indexerGeneralConfig = config.getConfig("crobox.clickhouse.indexer")
     val mergedIndexerConfig = indexerName
       .flatMap(
@@ -31,22 +50,66 @@ object ClickhouseSink extends LazyLogging {
       .getOrElse(indexerGeneralConfig)
     val batchSize     = mergedIndexerConfig.getInt("batch-size")
     val flushInterval = mergedIndexerConfig.getDuration("flush-interval").getSeconds.seconds
-    Flow[Insert]
+    Flow[TableOperation]
       .groupBy(Int.MaxValue, _.table)
       .groupedWithin(batchSize, flushInterval)
-      .mapAsyncUnordered(mergedIndexerConfig.getInt("concurrent-requests"))(inserts => {
-        val table       = inserts.head.table
-        val insertQuery = s"INSERT INTO $table FORMAT JSONEachRow"
-        val payload     = inserts.map(_.jsonRow)
-        logger.debug(s"Inserting ${inserts.size} entries in table: $table. Group Within: ($batchSize - $flushInterval)")
-        client
-          .execute(insertQuery, payload.mkString("\n"))
-          .recover {
-            case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
+      .mapAsync(mergedIndexerConfig.getInt("concurrent-requests"))(operations => {
+        val table = operations.head.table
+        logger.debug(
+          s"Executing ${operations.size} operations on table: $table. Group Within: ($batchSize - $flushInterval)"
+        )
+
+        // split operations based on their type
+        var optimize: Option[Optimize] = None
+        val payload = operations.flatMap {
+          case op: Insert   => Option(op.jsonRow)
+          case op: Optimize => optimize = Option(op); None
+        }
+
+        if (payload.nonEmpty) {
+          optimize match {
+            case Some(statement) => insertTable(client, table, payload).flatMap(_ => optimizeTable(client, statement))
+            case _               => insertTable(client, table, payload)
           }
-          .map(_ => inserts)
+        } else {
+          optimize match {
+            case Some(statement) => optimizeTable(client, statement)
+            case _ =>
+              logger.warn(s"No insert or optimize statements for table: $table")
+              Future.successful("")
+          }
+        }
       })
       .mergeSubstreams
       .toMat(Sink.ignore)(Keep.right)
+  }
+
+  private def insertTable(client: ClickhouseClient, table: String, payload: Seq[String])(
+      implicit ec: ExecutionContext,
+      settings: QuerySettings
+  ): Future[String] = {
+    logger.debug(s"Inserting ${payload.size} entries in table: $table.")
+    client
+      .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
+      .recover {
+        case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
+      }
+  }
+
+  private def optimizeTable(
+      client: ClickhouseClient,
+      statement: Optimize
+  )(implicit ec: ExecutionContext, settings: QuerySettings): Future[String] = {
+    val table = statement.localTable.getOrElse(statement.table)
+    var sql   = s"OPTIMIZE TABLE $table"
+    statement.cluster.foreach(cluster => sql += s" ON CLUSTER $cluster")
+    statement.partition.foreach(partition => sql += s" PARTITION $partition")
+    if (statement.`final`) sql += " FINAL"
+    statement.deduplicate.foreach(exp => sql += " DEDUPLICATE" + (if (exp.trim.isEmpty) "" else " BY " + exp))
+    client
+      .execute(sql)
+      .recover {
+        case ex => throw ClickhouseIndexingException(s"failed to optimize $table", ex, Seq(sql), table)
+      }
   }
 }
