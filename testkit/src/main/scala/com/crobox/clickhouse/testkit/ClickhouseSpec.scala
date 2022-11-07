@@ -17,7 +17,7 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
   lazy val database                         = s"crobox_clickhouse_client_${Random.nextInt(1000000)}"
 
   /** Explicitly add this sequence that can be overwritten in order to create multiple databases for a test */
-  lazy val databases = Seq(database)
+  lazy val databases: Seq[String] = Seq(database)
 
   /* When true, databases will be dropped when finished (e.g. AfterAll). Can be overwritten to disable */
   val dropDatabasesAfterTest = true
