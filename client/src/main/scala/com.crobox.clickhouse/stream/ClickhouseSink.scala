@@ -82,15 +82,14 @@ object ClickhouseSink extends LazyLogging {
   private def insertTable(client: ClickhouseClient, table: String, payload: Seq[String])(
       implicit ec: ExecutionContext,
       settings: QuerySettings
-  ): Future[String] =
-    if (payload.nonEmpty) {
-      logger.debug(s"Inserting ${payload.size} entries in table: $table.")
-      client
-        .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
-        .recover {
-          case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
-        }
-    } else Future.successful("")
+  ): Future[String] = {
+    logger.debug(s"Inserting ${payload.size} entries in table: $table.")
+    client
+      .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
+      .recover {
+        case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
+      }
+  }
 
   private def optimizeTable(
       client: ClickhouseClient,
