@@ -60,29 +60,42 @@ object ClickhouseSink extends LazyLogging {
           case op: Optimize => optimize = Option(op); None
         }
 
-        val insertFuture = if (payload.nonEmpty) {
-          logger.debug(s"Inserting ${payload.size} entries in table: $table.")
-          client
-            .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
-            .recover {
-              case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
-            }
-        } else Future.successful("")
-
-        optimize
-          .map(o => {
-            insertFuture.flatMap(_ => {
-              val table = o.distributedTable.getOrElse(o.table)
-              client
-                .execute(s"OPTIMIZE TABLE $table${o.cluster.map(s => s" ON CLUSTER $s").getOrElse("")} FINAL")
-                .recover {
-                  case ex => throw ClickhouseIndexingException(s"failed to optimize $table", ex, Seq(), table)
-                }
-            })
-          })
-          .getOrElse(insertFuture)
+        if (payload.nonEmpty) {
+          optimize match {
+            case Some(statement) => insertTable(client, table, payload).flatMap(_ => optimizeTable(client, statement))
+            case _               => insertTable(client, table, payload)
+          }
+        } else {
+          optimize match {
+            case Some(statement) => optimizeTable(client, statement)
+            case _               => Future.successful("")
+          }
+        }
       })
       .mergeSubstreams
       .toMat(Sink.ignore)(Keep.right)
+  }
+
+  private def insertTable(client: ClickhouseClient, table: String, payload: Seq[String])(
+      implicit ec: ExecutionContext,
+      settings: QuerySettings
+  ): Future[String] = {
+    logger.debug(s"Inserting ${payload.size} entries in table: $table.")
+    client
+      .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
+      .recover {
+        case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
+      }
+  }
+
+  private def optimizeTable(client: ClickhouseClient, statement: Optimize)(implicit ec: ExecutionContext,
+                                                                           settings: QuerySettings): Future[String] = {
+    val table = statement.distributedTable.getOrElse(statement.table)
+    logger.debug(s"Optimizing table: $table.")
+    client
+      .execute(s"OPTIMIZE TABLE $table${statement.cluster.map(s => s" ON CLUSTER $s").getOrElse("")} FINAL")
+      .recover {
+        case ex => throw ClickhouseIndexingException(s"failed to optimize $table", ex, Seq(), table)
+      }
   }
 }
