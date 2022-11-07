@@ -103,8 +103,8 @@ object ClickhouseSink extends LazyLogging {
     val table = statement.localTable.getOrElse(statement.table)
     logger.debug(s"Optimizing table: $table.")
     var sql = s"OPTIMIZE TABLE $table"
-    statement.cluster.foreach(s => sql += s" ON CLUSTER $s")
-    statement.partition.foreach(s => sql += s" PARTITION $s")
+    statement.cluster.foreach(cluster => sql += s" ON CLUSTER $cluster")
+    statement.partition.foreach(partition => sql += s" PARTITION $partition")
     if (statement.`final`) sql += " FINAL"
     statement.deduplicate.foreach(exp => sql += " DEDUPLICATE" + (if (exp.trim.isEmpty) "" else " BY " + exp))
     client
