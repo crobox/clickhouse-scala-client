@@ -19,7 +19,7 @@ sealed trait TableOperation {
 
 case class Insert(table: String, jsonRow: String) extends TableOperation
 
-case class Optimize(table: String, distributedTable: Option[String], cluster: Option[String]) extends TableOperation
+case class Optimize(table: String, localTable: Option[String], cluster: Option[String]) extends TableOperation
 
 object ClickhouseSink extends LazyLogging {
 
@@ -59,7 +59,7 @@ object ClickhouseSink extends LazyLogging {
           case op: Insert   => Option(op.jsonRow)
           case op: Optimize => optimize = Option(op); None
         }
-        
+
         if (payload.nonEmpty) {
           optimize match {
             case Some(statement) => insertTable(client, table, payload).flatMap(_ => optimizeTable(client, statement))
@@ -95,7 +95,7 @@ object ClickhouseSink extends LazyLogging {
       client: ClickhouseClient,
       statement: Optimize
   )(implicit ec: ExecutionContext, settings: QuerySettings): Future[String] = {
-    val table = statement.distributedTable.getOrElse(statement.table)
+    val table = statement.localTable.getOrElse(statement.table)
     logger.debug(s"Optimizing table: $table.")
     client
       .execute(s"OPTIMIZE TABLE $table${statement.cluster.map(s => s" ON CLUSTER $s").getOrElse("")} FINAL")
