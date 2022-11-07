@@ -59,24 +59,28 @@ object ClickhouseSink extends LazyLogging {
           case op: Insert   => Option(op.jsonRow)
           case op: Optimize => optimize = Option(op); None
         }
-        logger.debug(s"Inserting ${payload.size} entries in table: $table.")
-        client
-          .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
-          .recover {
-            case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
-          }
-          .flatMap(result => {
-            optimize
-              .map(o => {
-                val table = o.distributedTable.getOrElse(o.table)
-                client
-                  .execute(s"OPTIMIZE TABLE $table${o.cluster.map(s => s" ON CLUSTER $s").getOrElse("")} FINAL")
-                  .recover {
-                    case ex => throw ClickhouseIndexingException(s"failed to optimize $table", ex, Seq(), table)
-                  }
-              })
-              .getOrElse(Future.successful(result))
+
+        val insertFuture = if (payload.nonEmpty) {
+          logger.debug(s"Inserting ${payload.size} entries in table: $table.")
+          client
+            .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
+            .recover {
+              case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
+            }
+        } else Future.successful("")
+
+        optimize
+          .map(o => {
+            insertFuture.flatMap(_ => {
+              val table = o.distributedTable.getOrElse(o.table)
+              client
+                .execute(s"OPTIMIZE TABLE $table${o.cluster.map(s => s" ON CLUSTER $s").getOrElse("")} FINAL")
+                .recover {
+                  case ex => throw ClickhouseIndexingException(s"failed to optimize $table", ex, Seq(), table)
+                }
+            })
           })
+          .getOrElse(insertFuture)
       })
       .mergeSubstreams
       .toMat(Sink.ignore)(Keep.right)
