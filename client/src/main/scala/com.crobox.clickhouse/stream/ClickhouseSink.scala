@@ -106,7 +106,7 @@ object ClickhouseSink extends LazyLogging {
     statement.cluster.foreach(s => sql += s" ON CLUSTER $s")
     statement.partition.foreach(s => sql += s" PARTITION $s")
     if (statement.`final`) sql += " FINAL"
-    statement.deduplicate.foreach(s => sql += " DEDUPLICATE" + (if (s.trim.isEmpty) "" else " BY " + s))
+    statement.deduplicate.foreach(exp => sql += " DEDUPLICATE" + (if (exp.trim.isEmpty) "" else " BY " + exp))
     client
       .execute(sql)
       .recover {
