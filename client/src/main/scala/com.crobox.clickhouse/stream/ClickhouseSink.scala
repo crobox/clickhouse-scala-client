@@ -68,7 +68,9 @@ object ClickhouseSink extends LazyLogging {
         } else {
           optimize match {
             case Some(statement) => optimizeTable(client, statement)
-            case _               => Future.successful("")
+            case _ =>
+              logger.warn(s"No insert or optimize statements for table: $table. How is batch triggered?")
+              Future.successful("")
           }
         }
       })
