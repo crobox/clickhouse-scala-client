@@ -19,7 +19,12 @@ sealed trait TableOperation {
 
 case class Insert(table: String, jsonRow: String) extends TableOperation
 
-case class Optimize(table: String, localTable: Option[String] = None, cluster: Option[String] = None)
+case class Optimize(table: String,
+                    localTable: Option[String] = None,
+                    cluster: Option[String] = None,
+                    partition: Option[String] = None,
+                    `final`: Boolean = true,
+                    deduplicate: Option[String] = None)
     extends TableOperation
 
 object ClickhouseSink extends LazyLogging {
@@ -97,8 +102,13 @@ object ClickhouseSink extends LazyLogging {
   )(implicit ec: ExecutionContext, settings: QuerySettings): Future[String] = {
     val table = statement.localTable.getOrElse(statement.table)
     logger.debug(s"Optimizing table: $table.")
+    var sql = s"OPTIMIZE TABLE $table"
+    statement.cluster.foreach(s => sql += s" ON CLUSTER $s")
+    statement.partition.foreach(s => sql += s" PARTITION $s")
+    if (statement.`final`) sql += " FINAL"
+    statement.deduplicate.foreach(s => sql += " DEDUPLICATE" + (if (s.trim.isEmpty) "" else " BY " + s))
     client
-      .execute(s"OPTIMIZE TABLE $table${statement.cluster.map(s => s" ON CLUSTER $s").getOrElse("")} FINAL")
+      .execute(sql)
       .recover {
         case ex => throw ClickhouseIndexingException(s"failed to optimize $table", ex, Seq(), table)
       }
