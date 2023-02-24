@@ -67,14 +67,16 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
     }
 
   def blockUntilRowsInTable(rowCount: Int, tableName: String)(implicit maxBackOff: Int = 16): Unit =
-    blockUntil(s"Expected to find $rowCount in table $tableName") { () =>
-      Try(sql(s"SELECT COUNT(*) FROM $tableName").toInt).getOrElse(-1) >= rowCount
+    blockUntil(s"Expected to find $rowCount in table $tableName. Found: ${count(tableName)}") { () =>
+      count(tableName) >= rowCount
     }
 
   def blockUntilExactRowsInTable(rowCount: Int, tableName: String)(implicit maxBackOff: Int = 16): Unit =
-    blockUntil(s"Expected to find $rowCount in table $tableName") { () =>
-      sql(s"SELECT COUNT(*) FROM $tableName") == rowCount.toString
+    blockUntil(s"Expected to find $rowCount in table $tableName. Found: ${count(tableName)}") { () =>
+      count(tableName) == rowCount
     }
+
+  private def count(tableName: String): Int = Try(sql(s"SELECT COUNT(*) FROM $tableName").toInt).getOrElse(-1)
 
   def blockUntil(explain: String)(predicate: () => Boolean)(implicit maxBackOff: Int = 16): Unit = {
 
