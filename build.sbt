@@ -73,8 +73,8 @@ lazy val client: Project = (project in file("client"))
       "com.typesafe.akka"          %% "akka-actor" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-stream" % AkkaVersion,
       "com.typesafe.akka"          %% "akka-http" % AkkaHttpVersion,
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
-      "joda-time"                  % "joda-time" % "2.10.13"
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
+      "joda-time"                  % "joda-time" % "2.12.2"
     ) ++ testDependencies.map(_    % Test)
   )
 
@@ -84,9 +84,7 @@ lazy val dsl = (project in file("dsl"))
   .settings(
     name := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % "23.0"
-    )
+    libraryDependencies ++= Seq("com.google.guava" % "guava" % "23.0")
   )
   .dependsOn(client, client % "test->test", testkit % Test)
 
@@ -94,7 +92,6 @@ lazy val testkit = (project in file("testkit"))
   .settings(
     name := "testkit",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    libraryDependencies ++=
-      Build.testDependencies
+    libraryDependencies ++= Build.testDependencies
   )
   .dependsOn(client)
