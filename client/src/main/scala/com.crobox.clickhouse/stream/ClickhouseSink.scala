@@ -28,8 +28,7 @@ case class Optimize(table: String,
     extends TableOperation {
 
   def toSql: String = {
-    val table = localTable.getOrElse(table)
-    var sql   = s"OPTIMIZE TABLE $table"
+    var sql = s"OPTIMIZE TABLE ${localTable.getOrElse(table)}"
     cluster.foreach(cluster => sql += s" ON CLUSTER $cluster")
     partition.foreach(partition => sql += s" PARTITION $partition")
     if (`final`) sql += " FINAL"
