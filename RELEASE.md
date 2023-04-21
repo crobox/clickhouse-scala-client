@@ -20,7 +20,6 @@ $ gpg --keyserver keyserver.ubuntu.com --send-keys 2BE.......E804D85663F
 The single command that does it all:
 ```
 sbt release publishSigned sonatypeRelease
-
 ```
 
 To release and publish a version to oss.sonatype for both scala 2.11 and scala 2.12 run:
