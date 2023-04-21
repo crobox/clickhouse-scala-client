@@ -25,11 +25,11 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
   private val fallbackToConfigurationHost = config.getBoolean("fallback-to-config-host-during-initialization")
 
   //  state
-  val connectionIterator: CircularIteratorSet[Uri] = new CircularIteratorSet[Uri]()
-  val hostsStatus                                  = mutable.Map.empty[Uri, ClickhouseHostStatus]
-  val hostHealthScheduler                          = mutable.Map.empty[Uri, Cancellable]
-  var currentConfiguredHosts: Set[Uri]             = Set.empty
-  var initialized                                  = false
+  private val connectionIterator: CircularIteratorSet[Uri]        = new CircularIteratorSet[Uri]()
+  private val hostsStatus: mutable.Map[Uri, ClickhouseHostStatus] = mutable.Map.empty
+  private val hostHealthScheduler: mutable.Map[Uri, Cancellable]  = mutable.Map.empty
+  private var currentConfiguredHosts: Set[Uri]                    = Set.empty
+  private var initialized: Boolean                                = false
 
   context.system.scheduler.scheduleWithFixedDelay(30.seconds, 30.seconds, self, LogDeadConnections)(
     context.system.dispatcher
@@ -41,8 +41,14 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
         .foreach(host => {
           if (!currentConfiguredHosts.contains(host)) {
             log.info(s"Setting up host health checks for host $host")
-            hostHealthScheduler.put(host,
-                                    healthSource(host).toMat(Sink.actorRef(self, LogDeadConnections))(Keep.left).run())
+            hostHealthScheduler.put(
+              host,
+              healthSource(host)
+                .toMat(
+                  Sink.actorRef(self, LogDeadConnections, throwable => log.error(throwable.getMessage, throwable))
+                )(Keep.left)
+                .run()
+            )
           }
         })
       currentConfiguredHosts = hosts

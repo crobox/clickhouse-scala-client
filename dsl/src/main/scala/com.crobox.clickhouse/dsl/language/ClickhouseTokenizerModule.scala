@@ -227,6 +227,7 @@ trait ClickhouseTokenizerModule
         s"subtractMinutes(${convert("toStartOfMinute")}, ${convert("toRelativeMinuteNum")} % $nth, '$dateZone')"
       case MultiDuration(nth, TimeUnit.Second) =>
         s"subtractSeconds(${toDateTime(s"$column / 1000")}, ${convert("toRelativeSecondNum")} % $nth, '$dateZone')"
+      case unsupported => throw new IllegalArgumentException(s"Unsupported interval: $unsupported")
     }
   }
 

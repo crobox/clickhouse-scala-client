@@ -38,7 +38,7 @@ case class ClusterAwareHostBalancer(host: Uri,
           Supervision.Resume
       })
     )
-    .runWith(Sink.actorRef(manager, LogDeadConnections))
+    .runWith(Sink.actorRef(manager, LogDeadConnections, throwable => logger.error(throwable.getMessage, throwable)))
 
   override def nextHost: Future[Uri] =
     (manager ? GetConnection()).mapTo[Uri]

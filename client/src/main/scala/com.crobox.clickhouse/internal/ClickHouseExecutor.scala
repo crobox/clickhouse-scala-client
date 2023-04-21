@@ -36,11 +36,11 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     )
   private lazy val http              = Http()
   private lazy val pool              = http.superPool[Promise[HttpResponse]](settings = superPoolSettings)
-  protected lazy val bufferSize: Int = config.getInt("buffer-size")
+  private lazy val bufferSize: Int   = config.getInt("buffer-size")
   private lazy val queryRetries: Int = config.getInt("retries")
 
   private lazy val (queue, completion) = Source
-    .queue[(HttpRequest, Promise[HttpResponse])](bufferSize, OverflowStrategy.dropNew)
+    .queue[(HttpRequest, Promise[HttpResponse])](bufferSize, OverflowStrategy.backpressure)
     .via(pool)
     .toMat(Sink.foreach {
       case (Success(resp), p) => p.success(resp)
