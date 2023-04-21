@@ -106,7 +106,7 @@ object ClickhouseSink extends LazyLogging {
       }
   }
 
-  private def optimizeTable(
+  protected[stream] def optimizeTable(
       client: ClickhouseClient,
       statement: Optimize
   )(implicit ec: ExecutionContext, settings: QuerySettings): Future[String] =
