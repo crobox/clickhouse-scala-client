@@ -33,6 +33,8 @@ To release and publish a version to oss.sonatype for both scala 2.12 and scala 2
 ```
 sbt release 
 ```
+It's likely that *after* pushing all artifacts to the online repository you'll see an error complaining that the
+tag already exists. That's ok.
 
 ## Publish Artifacts
 
