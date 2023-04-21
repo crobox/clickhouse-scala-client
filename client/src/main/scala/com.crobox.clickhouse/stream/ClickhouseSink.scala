@@ -25,7 +25,18 @@ case class Optimize(table: String,
                     partition: Option[String] = None,
                     `final`: Boolean = true,
                     deduplicate: Option[String] = None)
-    extends TableOperation
+    extends TableOperation {
+
+  def toSql: String = {
+    val table = localTable.getOrElse(table)
+    var sql   = s"OPTIMIZE TABLE $table"
+    cluster.foreach(cluster => sql += s" ON CLUSTER $cluster")
+    partition.foreach(partition => sql += s" PARTITION $partition")
+    if (`final`) sql += " FINAL"
+    deduplicate.foreach(exp => sql += " DEDUPLICATE" + (if (exp.trim.isEmpty) "" else " BY " + exp))
+    sql
+  }
+}
 
 object ClickhouseSink extends LazyLogging {
 
@@ -99,17 +110,14 @@ object ClickhouseSink extends LazyLogging {
   protected[stream] def optimizeTable(
       client: ClickhouseClient,
       statement: Optimize
-  )(implicit ec: ExecutionContext, settings: QuerySettings): Future[String] = {
-    val table = statement.localTable.getOrElse(statement.table)
-    var sql   = s"OPTIMIZE TABLE $table"
-    statement.cluster.foreach(cluster => sql += s" ON CLUSTER $cluster")
-    statement.partition.foreach(partition => sql += s" PARTITION $partition")
-    if (statement.`final`) sql += " FINAL"
-    statement.deduplicate.foreach(exp => sql += " DEDUPLICATE" + (if (exp.trim.isEmpty) "" else " BY " + exp))
+  )(implicit ec: ExecutionContext, settings: QuerySettings): Future[String] =
     client
-      .execute(sql)
+      .execute(statement.toSql)
       .recover {
-        case ex => throw ClickhouseIndexingException(s"failed to optimize $table", ex, Seq(sql), table)
+        case ex =>
+          throw ClickhouseIndexingException(s"failed to optimize ${statement.table}",
+                                            ex,
+                                            Seq(statement.toSql),
+                                            statement.table)
       }
-  }
 }
