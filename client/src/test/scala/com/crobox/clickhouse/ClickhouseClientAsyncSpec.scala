@@ -12,7 +12,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest._
 import org.scalatest.flatspec.AsyncFlatSpecLike
 import org.scalatest.matchers.should.Matchers
-
+import java.io.ByteArrayOutputStream
+import java.util.zip.GZIPOutputStream
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
@@ -57,5 +58,13 @@ abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load
         )
         succeed
       })
+  }
+
+  def compressGzip(content: String): Array[Byte] = {
+    val arrOutputStream = new ByteArrayOutputStream()
+    val zipOutputStream = new GZIPOutputStream(arrOutputStream)
+    zipOutputStream.write(content.getBytes)
+    zipOutputStream.close()
+    arrOutputStream.toByteArray
   }
 }

@@ -79,6 +79,9 @@ class ClickhouseClient(configuration: Option[Config] = None)
   def execute(sql: String, entity: String)(implicit settings: QuerySettings): Future[String] =
     executeRequest(sql, settings, Option(entity))
 
+  def execute(sql: String, entity: Array[Byte])(implicit settings: QuerySettings): Future[String] =
+    executeRequest(sql, settings, Option(entity))
+
   /**
    * Creates a stream of the SQL query that will delimit the result from Clickhouse on new-line
    *

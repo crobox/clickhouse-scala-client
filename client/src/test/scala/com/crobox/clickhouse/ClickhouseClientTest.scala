@@ -1,8 +1,10 @@
 package com.crobox.clickhouse
 
 import akka.stream.scaladsl.{Keep, Sink}
+import com.crobox.clickhouse.internal.QuerySettings
 import com.crobox.clickhouse.internal.progress.QueryProgress.{Progress, QueryAccepted, QueryFinished, QueryProgress}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+import akka.http.scaladsl.model.headers.HttpEncodings.gzip
 
 /**
  * @author Sjoerd Mulder
@@ -27,12 +29,19 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
       )
   }
 
-  it should "support compression" in {
+  it should "support response compression" in {
     val client: ClickhouseClient = new ClickhouseClient(
       Some(config.resolveWith(ConfigFactory.parseString("crobox.clickhouse.client.http-compression = true")))
     )
     client.query("select count(*) from system.tables").map { f =>
       f.trim.toInt > 10 should be(true)
+    }
+  }
+
+  it should "support request compression" in {
+    val client: ClickhouseClient = new ClickhouseClient(Some(config))
+    client.execute("", compressGzip("select 1+1"))(QuerySettings(requestCompressionType = Some(gzip))).map { f =>
+      f.trim.toInt should be(2)
     }
   }
 
