@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.internal
 
 import akka.http.scaladsl.model.Uri.Query
+import akka.http.scaladsl.model.headers.HttpEncoding
 import com.crobox.clickhouse.internal.QuerySettings._
 import com.typesafe.config.Config
 
@@ -16,7 +17,8 @@ case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
                          httpCompression: Option[Boolean] = None,
                          settings: Map[String, String] = Map.empty,
                          idempotent: Option[Boolean] = None,
-                         retries: Option[Int] = None) {
+                         retries: Option[Int] = None,
+                         requestCompressionType: Option[HttpEncoding] = None) {
 
   def asQueryParams: Query =
     Query(

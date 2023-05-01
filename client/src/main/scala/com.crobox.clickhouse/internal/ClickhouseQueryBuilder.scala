@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.internal
 
 import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.model.headers.{HttpEncodingRange, RawHeader}
+import akka.http.scaladsl.model.headers.{HttpEncodingRange, RawHeader, `Content-Encoding`}
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity, Uri}
 import com.crobox.clickhouse.internal.QuerySettings.ReadQueries
 import com.crobox.clickhouse.internal.progress.ProgressHeadersAsEventsStage
@@ -35,7 +35,9 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
           method = HttpMethods.POST,
           uri = urlQuery,
           entity = e,
-          headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
+          headers = Headers ++
+            queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _)) ++
+            settings.requestCompressionType.map(`Content-Encoding`(_))
         )
       case None
           if settings.idempotent.contains(true)
