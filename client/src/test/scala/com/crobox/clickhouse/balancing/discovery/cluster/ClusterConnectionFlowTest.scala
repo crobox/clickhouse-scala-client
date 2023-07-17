@@ -13,7 +13,7 @@ class ClusterConnectionFlowTest extends ClickhouseClientAsyncSpec {
   private val clickhouseUri: Uri = ClickhouseHostBuilder.toHost("localhost", Some(8123))
   it should "select cluster hosts" in {
     val (_, futureResult) = ClusterConnectionFlow
-      .clusterConnectionsFlow(Future.successful(clickhouseUri), 2 seconds, "test_shard_localhost")
+      .clusterConnectionsFlow(Future.successful(clickhouseUri), 2.seconds, "test_shard_localhost")
       .toMat(Sink.head)(Keep.both)
       .run()
     futureResult.map(result => {
@@ -23,7 +23,7 @@ class ClusterConnectionFlowTest extends ClickhouseClientAsyncSpec {
 
   it should "fail for non existing cluster" in {
     val (_, futureResult) = ClusterConnectionFlow
-      .clusterConnectionsFlow(Future.successful(clickhouseUri), 2 seconds, "cluster")
+      .clusterConnectionsFlow(Future.successful(clickhouseUri), 2.seconds, "cluster")
       .toMat(Sink.head)(Keep.both)
       .run()
     futureResult

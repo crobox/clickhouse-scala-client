@@ -1,8 +1,8 @@
 package com.crobox.clickhouse.dsl
 
+import com.crobox.clickhouse._
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
-import com.crobox.clickhouse._
 import org.joda.time.{DateTime, LocalDate}
 
 import java.util.UUID
@@ -61,7 +61,7 @@ class QueryTest extends DslTestSpec {
       s"SELECT item_id FROM $database.captainAmerica WHERE column_2 >= 2 FORMAT JSON"
     )
   }
-  
+
   it should "compose indexOf and arrayElement" in {
 
     def lookupNestedValue(column: NativeColumn[_], elm: String): ExpressionColumn[String] =
@@ -186,7 +186,7 @@ class QueryTest extends DslTestSpec {
   }
 
   it should "select from using ALIAS and final" in {
-    var query = select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable as "3sf" asFinal
+    var query = select(shieldId as itemId, col1, notEmpty(col1) as "empty").from(OneTestTable).as("3sf").asFinal
 
     toSql(query.internalQuery) should matchSQL(
       s"""
@@ -195,7 +195,7 @@ class QueryTest extends DslTestSpec {
          |FORMAT JSON""".stripMargin
     )
 
-    query = select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable as "3sf"
+    query = select(shieldId as itemId, col1, notEmpty(col1) as "empty").from(OneTestTable).as("3sf")
 
     toSql(query.internalQuery) should matchSQL(
       s"""
