@@ -54,7 +54,7 @@ class ArrayFunctionsTest extends DslTestSpec {
   }
 
   it should "arrayFunction: join with concat" in {
-    val col = arrayConcat(Array(shieldId, itemId), Array[String]()).asInstanceOf[ArrayFunctionOp[Iterable[String]]]
+    val col = arrayConcat(Array(shieldId, itemId), Array[String]())
     toSQL(select(arrayJoin(col))) should be(s"SELECT arrayJoin(arrayConcat([shield_id, item_id], []))")
   }
 }

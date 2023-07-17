@@ -44,8 +44,6 @@ trait Magnets {
       override val column: TableColumn[T] = Const(s)
     }
 
-  sealed trait TupleColMagnet extends Magnet[Nothing]
-
   /**
    * Represents any accepted type for the right hand argument of the IN operators (tuple, table or Qry)
    */
@@ -88,18 +86,14 @@ trait Magnets {
    */
   sealed trait ArrayColMagnet[+C] extends Magnet[C]
 
-  implicit def arrayColMagnetFromIterable[T: QueryValue](s: Iterable[T]): ArrayColMagnet[Iterable[T]] =
-    new ArrayColMagnet[Iterable[T]] {
-
+  implicit def arrayColMagnetFromIterableConst[T: QueryValue](s: scala.Iterable[T]): ArrayColMagnet[scala.Iterable[T]] =
+    new ArrayColMagnet[scala.Iterable[T]] {
       val qvForIterable = QueryValueFormats.queryValueToSeq(implicitly[QueryValue[T]])
-
       override val column = Const(s)(qvForIterable)
     }
 
-  implicit def arrayColMagnetFromIterableCol[Elem, Collection[B] <: Iterable[B], ColType[A] <: TableColumn[A]](
-      s: ColType[Collection[Elem]]
-  ): ArrayColMagnet[Collection[Elem]] =
-    new ArrayColMagnet[Collection[Elem]] {
+  implicit def arrayColMagnetFromIterableCol[C](s: TableColumn[_ <: scala.Iterable[C]]): ArrayColMagnet[scala.Iterable[C]] =
+    new ArrayColMagnet[scala.Iterable[C]] {
       override val column = s
     }
 
