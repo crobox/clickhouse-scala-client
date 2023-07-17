@@ -92,7 +92,7 @@ trait Magnets {
       override val column = Const(s)(qvForIterable)
     }
 
-  implicit def arrayColMagnetFromIterableCol[C](s: TableColumn[_ <: scala.Iterable[C]]): ArrayColMagnet[scala.Iterable[C]] =
+  implicit def arrayColMagnetFromIterableCol[C](s: TableColumn[scala.Iterable[C]]): ArrayColMagnet[scala.Iterable[C]] =
     new ArrayColMagnet[scala.Iterable[C]] {
       override val column = s
     }
