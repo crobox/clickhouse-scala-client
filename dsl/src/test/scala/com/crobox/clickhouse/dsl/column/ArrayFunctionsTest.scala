@@ -9,7 +9,7 @@ class ArrayFunctionsTest extends DslTestSpec {
 
   it should "arrayFunction: array" in {
     toSQL(select(Array())) should be("SELECT []")
-    toSQL(select(Array(1,2))) should be("SELECT [1, 2]")
+    toSQL(select(Array(1, 2))) should be("SELECT [1, 2]")
   }
 
   it should "arrayFunction: arrayConcat" in {
@@ -51,5 +51,10 @@ class ArrayFunctionsTest extends DslTestSpec {
 
   it should "arrayFunction: join" in {
     toSQL(select(arrayJoin(Array(shieldId, itemId)))) should be(s"SELECT arrayJoin([shield_id, item_id])")
+  }
+
+  it should "arrayFunction: join with concat" in {
+    val col = arrayConcat(Array(shieldId, itemId), Array[String]())
+    toSQL(select(arrayJoin(col))) should be(s"SELECT arrayJoin(arrayConcat([shield_id, item_id], []))")
   }
 }
