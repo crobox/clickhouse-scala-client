@@ -68,6 +68,8 @@ trait OperationalQuery extends Query {
         .getOrElse(internalQuery)
     )
 
+  def asFinal(`final`: Boolean): OperationalQuery = if (`final`) asFinal else this
+
   def groupBy(columns: Column*): OperationalQuery = {
     val internalGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery())
     val newGroupBy      = Some(internalGroupBy.copy(usingColumns = internalGroupBy.usingColumns ++ columns))
