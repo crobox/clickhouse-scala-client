@@ -57,6 +57,7 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
     case ArrayEmpty(col: ArrayColMagnet[_])    => s"empty(${tokenizeColumn(col.column)})"
     case ArrayNotEmpty(col: ArrayColMagnet[_]) => s"notEmpty(${tokenizeColumn(col.column)})"
     case ArrayLength(col: ArrayColMagnet[_])   => s"length(${tokenizeColumn(col.column)})"
+    case ArrayFlatten(col: ArrayColMagnet[_])  => s"arrayFlatten(${tokenizeColumn(col.column)})"
   }
 
   protected def tokenizeArrayFunctionConst(col: ArrayFunctionConst[_])(implicit ctx: TokenizeContext): String =

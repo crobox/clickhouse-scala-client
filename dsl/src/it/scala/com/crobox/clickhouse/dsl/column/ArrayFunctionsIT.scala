@@ -84,4 +84,13 @@ class ArrayFunctionsIT extends DslITSpec {
     execute(select(ArrayLength(Array("1", "2")))).futureValue should be("2")
     execute(select(arrayLength(Array("1", "2")))).futureValue should be("2")
   }
+
+  it should "arrayFunction: flatten" in {
+    execute(select(ArrayFlatten(Array("1", "2")))).futureValue should be("['1','2']")
+    execute(select(ArrayFlatten(Array(Array("1"), Array("2"))))).futureValue should be("['1','2']")
+    execute(select(ArrayFlatten(Array(Array("1", "2"), Array("3", "4"))))).futureValue should be("['1','2','3','4']")
+    execute(select(ArrayFlatten(Array(Array(Array("1")), Array(Array("2"), Array("3", "4")))))).futureValue should be(
+      "['1','2','3','4']"
+    )
+  }
 }
