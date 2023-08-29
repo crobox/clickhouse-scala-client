@@ -65,6 +65,8 @@ trait ArrayFunctions { this: Magnets =>
   case class ArrayEmpty(col: ArrayColMagnet[_])    extends ArrayFunctionOp[Boolean]
   case class ArrayNotEmpty(col: ArrayColMagnet[_]) extends ArrayFunctionOp[Boolean]
   case class ArrayLength(col: ArrayColMagnet[_])   extends ArrayFunctionOp[Long]
+  // now 23-08-29
+  case class ArrayFlatten[V](col1: ArrayColMagnet[V]) extends ArrayFunctionOp[Iterable[V]]
 
   def emptyArrayUInt8: EmptyArrayUInt8                                     = EmptyArrayUInt8()
   def emptyArrayUInt16: EmptyArrayUInt16                                   = EmptyArrayUInt16()
@@ -158,4 +160,7 @@ trait ArrayFunctions { this: Magnets =>
 
   def arrayLength(col: ArrayColMagnet[_]): ArrayLength = ArrayLength(col)
   def length(col: ArrayColMagnet[_]): ArrayLength      = ArrayLength(col)
+
+  def arrayFlatten[V](col: ArrayColMagnet[V]): ArrayFlatten[V] = ArrayFlatten(col)
+  def flatten[V](col: ArrayColMagnet[V]): ArrayFlatten[V]      = ArrayFlatten(col)
 }
