@@ -161,5 +161,6 @@ trait ArrayFunctions { this: Magnets =>
   def arrayLength(col: ArrayColMagnet[_]): ArrayLength = ArrayLength(col)
   def length(col: ArrayColMagnet[_]): ArrayLength      = ArrayLength(col)
 
-  def flatten[_](col: ArrayColMagnet[_]): ArrayFlatten[_] = ArrayFlatten(col)
+  def arrayFlatten[V](col: ArrayColMagnet[V]): ArrayFlatten[V] = ArrayFlatten(col)
+  def flatten[V](col: ArrayColMagnet[V]): ArrayFlatten[V]      = ArrayFlatten(col)
 }

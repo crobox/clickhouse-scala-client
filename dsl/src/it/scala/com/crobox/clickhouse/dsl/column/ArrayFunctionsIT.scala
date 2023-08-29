@@ -92,5 +92,9 @@ class ArrayFunctionsIT extends DslITSpec {
     execute(select(ArrayFlatten(Array(Array(Array("1")), Array(Array("2"), Array("3", "4")))))).futureValue should be(
       "['1','2','3','4']"
     )
+
+    execute(select(arrayFlatten(Array(Array(Array("1")), Array(Array("2"), Array("3", "4")))))).futureValue should be(
+      "['1','2','3','4']"
+    )
   }
 }
