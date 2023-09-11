@@ -41,4 +41,15 @@ class INFunctionsIT extends DslITSpec {
         )
     ).futureValue should be("")
   }
+
+  it should "use/cast big decimal" in {
+    assumeMinimalClickhouseVersion(21)
+
+    // check if syntax is correct
+    execute(
+      select(colBigDecimal)
+        .from(ThreeTestTable)
+        .orderBy(colBigDecimal)
+    ).futureValue should be("-1.7976931348623157e308\n34.34\n9223372036854776000")
+  }
 }
