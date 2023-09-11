@@ -176,6 +176,31 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toInt32OrDefault("12\n58 gram", 123)) should be("123")
   }
 
+  it should "handle BigDecimalOrDefault" in {
+    // orNull only accept STRING (and only available in version 22.3 and upwards)
+    assumeMinimalClickhouseVersion(22, 3)
+
+    r(toBigDecimalOrDefault("1", 123)) should be("1")
+    r(toBigDecimalOrDefault(Byte.MaxValue.toString, 123)) should be("127")
+    r(toBigDecimalOrDefault(Byte.MinValue.toString, 123)) should be("-128")
+    r(toBigDecimalOrDefault(Short.MaxValue.toString, 123)) should be("32767")
+    r(toBigDecimalOrDefault(Short.MinValue.toString, 123)) should be("-32768")
+    r(toBigDecimalOrDefault(Int.MaxValue.toString, 123)) should be("2147483647")
+    r(toBigDecimalOrDefault(Int.MinValue.toString, 123)) should be("-2147483648")
+    r(toBigDecimalOrDefault(Long.MaxValue.toString, 123)) should be("9223372036854776000")
+    r(toBigDecimalOrDefault(Long.MinValue.toString, 123)) should be("-9223372036854776000")
+    r(toBigDecimalOrDefault(Float.MaxValue.toString, 123)) should be("3.4028235000000003e38")
+    r(toBigDecimalOrDefault(Float.MinValue.toString, 123)) should be("-3.4028235000000003e38")
+    r(toBigDecimalOrDefault(Double.MaxValue.toString, 123)) should be("1.7976931348623157e308")
+    r(toBigDecimalOrDefault(Double.MinValue.toString, 123)) should be("-1.7976931348623157e308")
+
+    r(toBigDecimalOrDefault("", 123)) should be("123")
+    r(toBigDecimalOrDefault("error", 123)) should be("123")
+    r(toBigDecimalOrDefault("er\nror", 123)) should be("123")
+    r(toBigDecimalOrDefault("12\n58", 123)) should be("123")
+    r(toBigDecimalOrDefault("12\n58 gram", 123)) should be("123")
+  }
+
   def r(col: TypeCastColumn[_]): String =
     execute(select(col)).futureValue.trim
 }

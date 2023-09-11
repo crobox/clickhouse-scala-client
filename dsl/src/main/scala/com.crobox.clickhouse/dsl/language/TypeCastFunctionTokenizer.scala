@@ -34,7 +34,7 @@ trait TypeCastFunctionTokenizer {
       case c: Int64                            => tknz(c.tableColumn.column, ColumnType.Int64, c.orZero, c.orNull, c.orDefault)
       case c: Float32                          => tknz(c.tableColumn.column, ColumnType.Float32, c.orZero, c.orNull, c.orDefault)
       case c: Float64                          => tknz(c.tableColumn.column, ColumnType.Float64, c.orZero, c.orNull, c.orDefault)
-      case c: BigDecimal                       => tknz(c.tableColumn.column, ColumnType.Float64, c.orZero, c.orNull, c.orDefault)
+      case c: BigDecimal64                     => tknz(c.tableColumn.column, ColumnType.Float64, c.orZero, c.orNull, c.orDefault)
       case c: DateRep                          => tknz(c.tableColumn.column, ColumnType.Date, c.orZero, c.orNull, c.orDefault)
       case c: DateTimeRep                      => tknz(c.tableColumn.column, ColumnType.DateTime, c.orZero, c.orNull, c.orDefault)
       case c: Uuid                             => tknz(c.tableColumn.column, ColumnType.UUID, c.orZero, c.orNull, c.orDefault)
