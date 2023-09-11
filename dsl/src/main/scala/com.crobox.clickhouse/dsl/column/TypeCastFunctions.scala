@@ -80,6 +80,13 @@ trait TypeCastFunctions { self: Magnets =>
       extends TypeCastColumn[Double](tableColumn)
       with Reinterpretable
 
+  case class BigDecimal(tableColumn: ConstOrColMagnet[_],
+                        orZero: Boolean = false,
+                        orDefault: Option[BigDecimal] = None,
+                        orNull: Boolean = false)
+      extends TypeCastColumn[BigDecimal](tableColumn)
+      with Reinterpretable
+
   case class Uuid(tableColumn: ConstOrColMagnet[_],
                   orZero: Boolean = false,
                   orDefault: Option[Uuid] = None,
@@ -184,12 +191,20 @@ trait TypeCastFunctions { self: Magnets =>
     Float32(tableColumn, orDefault = Option(value))
   def toFloat32OrNull(tableColumn: ConstOrColMagnet[_]): Float32 = Float32(tableColumn, orNull = true)
   def toFloat32OrZero(tableColumn: ConstOrColMagnet[_]): Float32 = Float32(tableColumn, orZero = true)
-  def toFloat64(tableColumn: ConstOrColMagnet[_]): Float64       = Float64(tableColumn)
+
+  def toFloat64(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn)
 
   def toFloat64OrDefault(tableColumn: ConstOrColMagnet[_], value: Double): Float64 =
     Float64(tableColumn, orDefault = Option(value))
   def toFloat64OrNull(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn, orNull = true)
   def toFloat64OrZero(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn, orZero = true)
+
+  def toBigDecimal(tableColumn: ConstOrColMagnet[_]): BigDecimal = BigDecimal(tableColumn)
+
+  def toBigDecimalOrDefault(tableColumn: ConstOrColMagnet[_], value: BigDecimal): BigDecimal =
+    BigDecimal(tableColumn, orDefault = Option(value))
+  def toBigDecimalOrNull(tableColumn: ConstOrColMagnet[_]): BigDecimal = BigDecimal(tableColumn, orNull = true)
+  def toBigDecimalOrZero(tableColumn: ConstOrColMagnet[_]): BigDecimal = BigDecimal(tableColumn, orZero = true)
 
   def toDate(tableColumn: ConstOrColMagnet[_]): DateRep = DateRep(tableColumn)
 
