@@ -31,6 +31,8 @@ class TypeCastFunctionsTest extends DslIntegrationSpec {
     r(toTypeName(toInt64OrZero(someStringNum))) shouldBe "Int64"
     r(toTypeName(toFloat32OrZero(someStringNum))) shouldBe "Float32"
     r(toTypeName(toFloat64OrZero(someStringNum))) shouldBe "Float64"
+    r(toTypeName(toBigDecimal(someStringNum))) shouldBe "Float64"
+    r(toTypeName(toBigDecimalOrZero(someStringNum))) shouldBe "Float64"
     r(toTypeName(toDate(someDateStr))) shouldBe "Date"
     r(toTypeName(toDateTime(someDateTimeStr))) shouldBe "DateTime"
     r(toTypeName(toStringRep(someStringNum))) shouldBe "String"

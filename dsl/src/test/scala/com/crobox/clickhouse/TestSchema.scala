@@ -46,7 +46,7 @@ trait TestSchema {
   case object ThreeTestTable extends Table {
     override lazy val database: String          = _db
     override val name: String                   = "threeTestTable"
-    override val columns: List[NativeColumn[_]] = List(itemId, col2, col4, col5, col6)
+    override val columns: List[NativeColumn[_]] = List(itemId, col2, col4, col5, col6, bigDecimal)
   }
 
   val shieldId        = NativeColumn[String]("shield_id")
@@ -58,6 +58,7 @@ trait TestSchema {
   val col4            = NativeColumn[String]("column_4")
   val col5            = NativeColumn[String]("column_5")
   val col6            = NativeColumn[String]("column_6")
+  val bigDecimal      = NativeColumn[BigDecimal]("column_bg", ColumnType.BigDecimal64)
   val timestampColumn = NativeColumn[Long]("ts", ColumnType.UInt64)
   val nativeUUID      = NativeColumn[UUID]("uuid", ColumnType.UUID)
 
@@ -73,12 +74,13 @@ trait TestSchema {
                          secondColumn: Int,
                          forthColumn: Option[String],
                          fifthColumn: String,
-                         sixthColumn: String)
+                         sixthColumn: String,
+                         bigDecimalColumn: BigDecimal)
 
   implicit val entry1Format =
     jsonFormat(Table1Entry.apply, "shield_id", "ts", "numbers")
   implicit val entry2Format =
     jsonFormat(Table2Entry.apply, "item_id", "column_1", "column_2", "column_3", "column_4")
   implicit val entry3Format =
-    jsonFormat(Table3Entry.apply, "item_id", "column_2", "column_4", "column_5", "column_6")
+    jsonFormat(Table3Entry.apply, "item_id", "column_2", "column_4", "column_5", "column_6", "column_bg")
 }

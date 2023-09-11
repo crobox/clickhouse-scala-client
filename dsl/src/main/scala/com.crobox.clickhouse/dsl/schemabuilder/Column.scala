@@ -48,6 +48,10 @@ object ColumnType {
 
   val Double: ColumnType = Float64
 
+  case object BigDecimal64 extends SimpleColumnType("Float64")
+
+  val BigDecimal: ColumnType = BigDecimal64
+
   case object String extends SimpleColumnType("String")
 
   case class FixedString(length: Int) extends SimpleColumnType(s"FixedString($length)")

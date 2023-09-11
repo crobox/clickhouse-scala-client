@@ -16,9 +16,9 @@ class INFunctionsIT extends DslITSpec {
     )
   override val table3Entries: Seq[Table3Entry] =
     Seq(
-      Table3Entry(UUID.randomUUID(), 2, Option("a"), "a", "a"),
-      Table3Entry(UUID.randomUUID(), 2, Option("a"), "b", "b"),
-      Table3Entry(UUID.randomUUID(), 2, Option("b"), "c", "c")
+      Table3Entry(UUID.randomUUID(), 2, Option("a"), "a", "a", BigDecimal(34.34)),
+      Table3Entry(UUID.randomUUID(), 2, Option("a"), "b", "b", BigDecimal(Long.MaxValue)),
+      Table3Entry(UUID.randomUUID(), 2, Option("b"), "c", "c", BigDecimal(Double.MinValue))
     )
 
   it should "use tableAlias for IN, single table" in {
