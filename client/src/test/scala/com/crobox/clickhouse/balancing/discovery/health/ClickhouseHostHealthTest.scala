@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.balancing.discovery.health
 
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
-import akka.stream.scaladsl.{Sink, Source}
+import org.apache.pekko.http.scaladsl.model.{HttpResponse, StatusCodes}
+import org.apache.pekko.stream.scaladsl.{Sink, Source}
 import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.balancing.discovery.health.ClickhouseHostHealth.{Alive, Dead}
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder

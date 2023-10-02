@@ -4,12 +4,12 @@
 [![Gitter](https://img.shields.io/gitter/room/clickhouse-scala-client/lobby.svg)](https://gitter.im/clickhouse-scala-client/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.crobox.clickhouse/client_2.13/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/com.crobox.clickhouse/client_2.13)
 
-Clickhouse Scala Client that uses Akka Http to create a reactive streams implementation to access the [Clickhouse](https://clickhouse.yandex) database in a reactive way.
+Clickhouse Scala Client that uses Pekko Http to create a reactive streams implementation to access the [Clickhouse](https://clickhouse.yandex) database in a reactive way.
 
 Features:
 * read/write query execution
-* akka streaming source for result parsing
-* akka streaming sink for data insertion
+* pekko streaming source for result parsing
+* pekko streaming sink for data insertion
 * streaming query progress (experimental)
 * all the http interface settings 
 * load balancing with internal health checks (multi host and cluster aware host balancer)
@@ -35,7 +35,7 @@ libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.9.0"
 ## Documentation
 - [Quick Setup](#quick-setup)
     - [Client](#client)
-    - [Indexer (Akka Streams Sink)](#indexer)
+    - [Indexer (Pekko Streams Sink)](#indexer)
 - [Configuration](#configuration)
     - [Client](#client-configuration)
         - [Health checks](#health-checks)
@@ -77,7 +77,7 @@ val config: Config
 val client: ClickhouseClient
 
 val sink = ClickhouseSink.insertSink(config, client)
-sink.runWith(Source.single(Insert("clicks", "{some_column: 3 }"))
+sink.runWith(Source.single(Insert("clicks", "{some_column: 3 }")))
 ```
 
 ## Configuration
@@ -171,7 +171,7 @@ crobox.clickhouse.client {
 
 ### Indexer configuration
 
-Inserting into clickhouse is done using an akka stream. All the settings are applied on a per table basis.
+Inserting into clickhouse is done using an pekko stream. All the settings are applied on a per table basis.
 We will do one insert when the maximum number of items `batch-size` or the maximum time has been exceeded `flush-interval`. Based on the number of `concurrent-requests` we can run multiple inserts in parallel for the same table.
 
 ```
@@ -256,7 +256,7 @@ client.sink("INSERT INTO my_table", Source.single(ByteString("el1"))).map(result
 We only expose progress when running read only queries. The current implementation is recommended to be used only for long running queries which return a result relatively small in size (fits easily in memory).
 The returned source is materialized with the query result.
 
-When running queries with progress we set a custom client transport for the super pool used by client to run the queries. Due to limitation in the akka implementation which does not allow for the headers to be streamed we are parsing the raw http output and intercept the http headers to receive the progress.
+When running queries with progress we set a custom client transport for the super pool used by client to run the queries. Due to limitation in the pekko implementation which does not allow for the headers to be streamed we are parsing the raw http output and intercept the http headers to receive the progress.
 
 We expose multiple events for the progress:
  * QueryAccepted - clickhouse returned the http response with code 200 (query might still fail)

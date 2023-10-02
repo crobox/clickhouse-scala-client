@@ -1,8 +1,8 @@
 package com.crobox.clickhouse.internal
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{HttpResponse, Uri}
-import akka.stream.scaladsl.{Sink, SourceQueue}
-import akka.stream.{Materializer, StreamTcpException}
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.model.{HttpResponse, Uri}
+import org.apache.pekko.stream.scaladsl.{Sink, SourceQueue}
+import org.apache.pekko.stream.{Materializer, StreamTcpException}
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.balancing.iterator.CircularIteratorSet
 import com.crobox.clickhouse.internal.QuerySettings.{AllQueries, ReadQueries}

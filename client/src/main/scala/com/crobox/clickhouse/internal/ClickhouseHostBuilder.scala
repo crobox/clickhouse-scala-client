@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.internal
 
-import akka.http.scaladsl.model.Uri
+import org.apache.pekko.http.scaladsl.model.Uri
 
 private[clickhouse] trait ClickhouseHostBuilder {
 

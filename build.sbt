@@ -69,12 +69,12 @@ lazy val client: Project = (project in file("client"))
     name := "client",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
-      "io.spray"                   %% "spray-json" % "1.3.6",
-      "com.typesafe.akka"          %% "akka-actor" % AkkaVersion,
-      "com.typesafe.akka"          %% "akka-stream" % AkkaVersion,
-      "com.typesafe.akka"          %% "akka-http" % AkkaHttpVersion,
+      "io.spray"                   %% "spray-json"    % "1.3.6",
+      "org.apache.pekko"           %% "pekko-actor"   % PekkoVersion,
+      "org.apache.pekko"           %% "pekko-stream"  % PekkoVersion,
+      "org.apache.pekko"           %% "pekko-http"    % PekkoHttpVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
-      "joda-time"                  % "joda-time" % "2.12.2"
+      "joda-time"                  % "joda-time"      % "2.12.2"
     ) ++ testDependencies.map(_    % Test)
   )
 

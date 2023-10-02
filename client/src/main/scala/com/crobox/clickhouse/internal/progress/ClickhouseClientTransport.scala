@@ -1,17 +1,17 @@
 package com.crobox.clickhouse.internal.progress
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.settings.ClientConnectionSettings
-import akka.http.scaladsl.{ClientTransport, Http}
-import akka.stream.scaladsl.{BidiFlow, Flow, SourceQueue}
-import akka.stream.stage._
-import akka.stream.{Attributes, BidiShape, Inlet, Outlet}
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.settings.ClientConnectionSettings
+import org.apache.pekko.http.scaladsl.{ClientTransport, Http}
+import org.apache.pekko.stream.scaladsl.{BidiFlow, Flow, SourceQueue}
+import org.apache.pekko.stream.stage._
+import org.apache.pekko.stream.{Attributes, BidiShape, Inlet, Outlet}
+import org.apache.pekko.util.ByteString
 
 import scala.concurrent.Future
 
 /**
- * Clickhouse sends http progress headers with the name X-ClickHouse-Progress which cannot be handled in a streaming way in akka
+ * Clickhouse sends http progress headers with the name X-ClickHouse-Progress which cannot be handled in a streaming way in Pekko.
  * In the request we include our own custom header `X-Internal-Identifier` so we can send the internal query id with the progress
  * The progress headers are being intercepted by the transport and sent to an internal source as progress events with the internal query id which will be used to route them to the query progress source
  * We just proxy the request/response and do not manipulate them in any way

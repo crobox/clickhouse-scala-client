@@ -1,11 +1,11 @@
 package com.crobox.clickhouse.balancing
 
-import akka.actor.{ActorRef, ActorSystem}
-import akka.http.scaladsl.model.Uri
-import akka.pattern.ask
-import akka.stream.scaladsl.Sink
-import akka.stream.{ActorAttributes, Supervision}
-import akka.util.Timeout
+import org.apache.pekko.actor.{ActorRef, ActorSystem}
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.pattern.ask
+import org.apache.pekko.stream.scaladsl.Sink
+import org.apache.pekko.stream.{ActorAttributes, Supervision}
+import org.apache.pekko.util.Timeout
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.{GetConnection, LogDeadConnections}
 import com.crobox.clickhouse.balancing.discovery.cluster.ClusterConnectionFlow
 

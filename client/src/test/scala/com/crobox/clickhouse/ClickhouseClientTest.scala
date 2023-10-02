@@ -1,10 +1,10 @@
 package com.crobox.clickhouse
 
-import akka.stream.scaladsl.{Keep, Sink}
+import org.apache.pekko.stream.scaladsl.{Keep, Sink}
 import com.crobox.clickhouse.internal.QuerySettings
 import com.crobox.clickhouse.internal.progress.QueryProgress.{Progress, QueryAccepted, QueryFinished, QueryProgress}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-import akka.http.scaladsl.model.headers.HttpEncodings.gzip
+import org.apache.pekko.http.scaladsl.model.headers.HttpEncodings.gzip
 
 /**
  * @author Sjoerd Mulder

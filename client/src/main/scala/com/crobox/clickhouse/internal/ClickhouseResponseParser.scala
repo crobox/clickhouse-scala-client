@@ -1,11 +1,11 @@
 package com.crobox.clickhouse.internal
 
-import akka.http.scaladsl.coding.Coders
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{HttpEncoding, HttpEncodings}
-import akka.http.scaladsl.unmarshalling.Unmarshaller
-import akka.stream.Materializer
-import akka.stream.scaladsl.SourceQueue
+import org.apache.pekko.http.scaladsl.coding.Coders
+import org.apache.pekko.http.scaladsl.model._
+import org.apache.pekko.http.scaladsl.model.headers.{HttpEncoding, HttpEncodings}
+import org.apache.pekko.http.scaladsl.unmarshalling.Unmarshaller
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.SourceQueue
 import com.crobox.clickhouse.internal.progress.QueryProgress._
 import com.crobox.clickhouse.{ClickhouseChunkedException, ClickhouseException}
 

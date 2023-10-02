@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.execution
 
-import akka.stream.scaladsl.Source
+import org.apache.pekko.stream.scaladsl.Source
 import com.crobox.clickhouse.ClickhouseClient
 import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizeContext, TokenizerModule}
 import com.crobox.clickhouse.dsl.{Query, Table}

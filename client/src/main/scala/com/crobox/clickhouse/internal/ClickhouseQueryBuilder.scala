@@ -1,8 +1,8 @@
 package com.crobox.clickhouse.internal
 
-import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.model.headers.{HttpEncodingRange, RawHeader, `Content-Encoding`}
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity, Uri}
+import org.apache.pekko.http.scaladsl.model.Uri.Query
+import org.apache.pekko.http.scaladsl.model.headers.{HttpEncodingRange, RawHeader, `Content-Encoding`}
+import org.apache.pekko.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity, Uri}
 import com.crobox.clickhouse.internal.QuerySettings.ReadQueries
 import com.crobox.clickhouse.internal.progress.ProgressHeadersAsEventsStage
 import com.typesafe.config.Config
@@ -14,8 +14,8 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
 
   private val Headers = {
     import HttpEncodingRange.apply
-    import akka.http.scaladsl.model.headers.HttpEncodings.{deflate, gzip}
-    import akka.http.scaladsl.model.headers.`Accept-Encoding`
+    import org.apache.pekko.http.scaladsl.model.headers.HttpEncodings.{deflate, gzip}
+    import org.apache.pekko.http.scaladsl.model.headers.`Accept-Encoding`
     immutable.Seq(`Accept-Encoding`(gzip, deflate))
   }
   private val MaxUriSize = 16 * 1024

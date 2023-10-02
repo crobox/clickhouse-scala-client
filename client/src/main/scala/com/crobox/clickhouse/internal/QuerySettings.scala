@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.internal
 
-import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.model.headers.HttpEncoding
+import org.apache.pekko.http.scaladsl.model.Uri.Query
+import org.apache.pekko.http.scaladsl.model.headers.HttpEncoding
 import com.crobox.clickhouse.internal.QuerySettings._
 import com.typesafe.config.Config
 
