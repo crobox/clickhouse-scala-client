@@ -1,7 +1,7 @@
 package com.crobox.clickhouse
 
-import akka.actor.ActorSystem
-import akka.testkit.TestKit
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.testkit.TestKit
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalactic.{Tolerance, TripleEqualsSupport}
 import org.scalatest.BeforeAndAfterAll

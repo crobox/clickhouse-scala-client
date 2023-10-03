@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.stream
 
-import akka.stream.scaladsl._
+import org.apache.pekko.stream.scaladsl._
 import com.crobox.clickhouse.internal.QuerySettings
 import com.crobox.clickhouse.{ClickhouseClient, ClickhouseClientAsyncSpec}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}

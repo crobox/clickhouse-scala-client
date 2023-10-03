@@ -1,10 +1,10 @@
 package com.crobox.clickhouse.balancing.discovery.cluster
 
-import akka.actor.{ActorSystem, Cancellable}
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.settings.ConnectionPoolSettings
-import akka.stream.scaladsl.Source
+import org.apache.pekko.actor.{ActorSystem, Cancellable}
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings
+import org.apache.pekko.stream.scaladsl.Source
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
 import com.crobox.clickhouse.internal.QuerySettings.ReadQueries
 import com.crobox.clickhouse.internal.{

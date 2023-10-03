@@ -1,9 +1,9 @@
 package com.crobox.clickhouse.balancing.discovery
 
-import akka.actor.{Actor, ActorLogging, Cancellable, PoisonPill, Props, Stash, Status}
-import akka.http.scaladsl.model.Uri
-import akka.stream.Materializer
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import org.apache.pekko.actor.{Actor, ActorLogging, Cancellable, PoisonPill, Props, Stash, Status}
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.{Keep, Sink, Source}
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.balancing.discovery.health.ClickhouseHostHealth.{Alive, ClickhouseHostStatus, Dead}
 import com.crobox.clickhouse.balancing.iterator.CircularIteratorSet

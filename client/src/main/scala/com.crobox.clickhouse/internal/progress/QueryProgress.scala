@@ -1,7 +1,8 @@
 package com.crobox.clickhouse.internal.progress
-import akka.NotUsed
-import akka.stream.scaladsl.{BroadcastHub, Keep, RunnableGraph, Source, SourceQueueWithComplete}
-import akka.stream.{ActorAttributes, OverflowStrategy, Supervision}
+
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.scaladsl.{BroadcastHub, Keep, RunnableGraph, Source, SourceQueueWithComplete}
+import org.apache.pekko.stream.{ActorAttributes, OverflowStrategy, Supervision}
 import com.typesafe.scalalogging.LazyLogging
 import spray.json._
 import spray.json.DefaultJsonProtocol._

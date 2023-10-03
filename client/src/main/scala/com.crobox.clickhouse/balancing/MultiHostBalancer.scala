@@ -1,10 +1,10 @@
 package com.crobox.clickhouse.balancing
 
-import akka.actor.{ActorRef, ActorSystem}
-import akka.http.scaladsl.model.Uri
-import akka.pattern.ask
-import akka.util.Timeout
-import akka.util.Timeout.durationToTimeout
+import org.apache.pekko.actor.{ActorRef, ActorSystem}
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.pattern.ask
+import org.apache.pekko.util.Timeout
+import org.apache.pekko.util.Timeout.durationToTimeout
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.GetConnection
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder

@@ -1,13 +1,13 @@
 package com.crobox.clickhouse.balancing.discovery.health
 
-import akka.NotUsed
-import akka.actor.{ActorSystem, Cancellable}
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.settings.ConnectionPoolSettings
-import akka.http.scaladsl.unmarshalling.Unmarshaller
-import akka.stream.Materializer
-import akka.stream.scaladsl.{Flow, Source}
+import org.apache.pekko.NotUsed
+import org.apache.pekko.actor.{ActorSystem, Cancellable}
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.model._
+import org.apache.pekko.http.scaladsl.settings.ConnectionPoolSettings
+import org.apache.pekko.http.scaladsl.unmarshalling.Unmarshaller
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.{Flow, Source}
 import com.crobox.clickhouse.internal.ClickhouseResponseParser
 
 import scala.concurrent.duration._
@@ -70,7 +70,7 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
       host: Uri
   )(implicit ec: ExecutionContext, mat: Materializer): Flow[(Try[HttpResponse], T), ClickhouseHostStatus, NotUsed] =
     Flow[(Try[HttpResponse], T)].mapAsync(1) {
-      case (Success(response @ akka.http.scaladsl.model.HttpResponse(StatusCodes.OK, _, _, _)), _) =>
+      case (Success(response @ org.apache.pekko.http.scaladsl.model.HttpResponse(StatusCodes.OK, _, _, _)), _) =>
         Unmarshaller
           .stringUnmarshaller(decodeResponse(response).entity)
           .map(splitResponse)

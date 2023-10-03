@@ -1,6 +1,6 @@
 package com.crobox.clickhouse
 
-import akka.http.scaladsl.model.StatusCode
+import org.apache.pekko.http.scaladsl.model.StatusCode
 
 sealed abstract class ClickhouseExecutionException(msg: String, cause: Throwable = null)
     extends RuntimeException(msg, cause) {
@@ -18,7 +18,7 @@ case class ClickhouseChunkedException(message: String) extends ClickhouseExecuti
 
 case class TooManyQueriesException()
     extends ClickhouseExecutionException(
-      "The client's queue is full, you are trying to execute too many queries at the same time. This can be solved by either: checking the source of the queries to make sure this is not a bug\n Increasing the buffer size under the property `crobox.clickhouse.client.buffer-size`\n Adjust the settings of the super pool under `akka.http.host-connection-pool`"
+      "The client's queue is full, you are trying to execute too many queries at the same time. This can be solved by either: checking the source of the queries to make sure this is not a bug\n Increasing the buffer size under the property `crobox.clickhouse.client.buffer-size`\n Adjust the settings of the super pool under `pekko.http.host-connection-pool`"
     ) {
   override val retryable: Boolean = false
 }

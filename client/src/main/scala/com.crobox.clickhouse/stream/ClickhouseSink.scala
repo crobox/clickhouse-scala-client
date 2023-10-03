@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.stream
 
-import akka.Done
-import akka.stream.scaladsl.{Flow, Keep, Sink}
+import org.apache.pekko.Done
+import org.apache.pekko.stream.scaladsl.{Flow, Keep, Sink}
 import com.crobox.clickhouse.ClickhouseClient
 import com.crobox.clickhouse.internal.QuerySettings
 import com.typesafe.config.Config

@@ -1,10 +1,10 @@
 package com.crobox.clickhouse
 
-import akka.NotUsed
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model._
-import akka.stream.scaladsl.{Framing, Source}
-import akka.util.ByteString
+import org.apache.pekko.NotUsed
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.model._
+import org.apache.pekko.stream.scaladsl.{Framing, Source}
+import org.apache.pekko.util.ByteString
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.QuerySettings._
 import com.crobox.clickhouse.internal._
@@ -15,7 +15,7 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
- * Async clickhouse client using Akka Http and Streams
+ * Async clickhouse client using Pekko Http and Streams
  *
  * @author Sjoerd Mulder
  * @since 31-03-17

@@ -1,11 +1,11 @@
 package com.crobox.clickhouse.balancing
 
-import akka.Done
-import akka.actor.{ActorRef, Cancellable, PoisonPill}
-import akka.http.scaladsl.model.Uri
-import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.{Source, SourceQueueWithComplete}
-import akka.testkit.TestProbe
+import org.apache.pekko.Done
+import org.apache.pekko.actor.{ActorRef, Cancellable, PoisonPill}
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.stream.OverflowStrategy
+import org.apache.pekko.stream.scaladsl.{Source, SourceQueueWithComplete}
+import org.apache.pekko.testkit.TestProbe
 import com.crobox.clickhouse.ClickhouseClientAsyncSpec
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.{Connections, GetConnection}

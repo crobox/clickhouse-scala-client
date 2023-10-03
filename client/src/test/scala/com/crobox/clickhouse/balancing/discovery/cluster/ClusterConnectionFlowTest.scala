@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.balancing.discovery.cluster
 
-import akka.http.scaladsl.model.Uri
-import akka.stream.scaladsl.{Keep, Sink}
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.stream.scaladsl.{Keep, Sink}
 import com.crobox.clickhouse.ClickhouseClientAsyncSpec
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
 

@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.balancing
 
-import akka.testkit.TestProbe
+import org.apache.pekko.testkit.TestProbe
 import com.crobox.clickhouse.ClickhouseClientSpec
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor.Connections
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
