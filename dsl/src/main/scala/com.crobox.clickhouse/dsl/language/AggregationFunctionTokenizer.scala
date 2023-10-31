@@ -35,11 +35,19 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       agg: AggregateFunction[_]
   )(implicit ctx: TokenizeContext): (String, String) =
     agg match {
-      case Avg(column)   => ("avg", tokenizeColumn(column))
-      case Count(column) => ("count", tokenizeColumn(column.getOrElse(EmptyColumn)))
+      case AnyResult(column, modifier) => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
+      case Avg(column)                 => ("avg", tokenizeColumn(column))
+      case Count(column)               => ("count", tokenizeColumn(column.getOrElse(EmptyColumn)))
+      case FirstValue(column)          => ("first_value", tokenizeColumn(column))
+      case GroupArray(tableColumn, maxValues) =>
+        ("groupArray", s"${maxValues.map(_.toString + ")(").getOrElse("")}${tokenizeColumn(tableColumn)}")
+      case GroupUniqArray(tableColumn) => ("groupUniqArray", tokenizeColumn(tableColumn))
+      case LastValue(column)           => ("last_value", tokenizeColumn(column))
       case Median(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (s"median$modifierName", s"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
+      case Min(tableColumn) => ("min", tokenizeColumn(tableColumn))
+      case Max(tableColumn) => ("max", tokenizeColumn(tableColumn))
       case Quantile(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (s"quantile$modifierName", s"$level)(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")})")
@@ -47,16 +55,10 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (s"quantiles$modifierName",
          s"${levels.mkString(",")})(${tokenizeColumn(column)}${modifierValue.map("," + _).getOrElse("")}")
+      case Sum(column, modifier) => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
+      case SumMap(key, value)    => (s"sumMap", tokenizeColumns(Seq(key, value)))
       case Uniq(columns, modifier) =>
         (s"uniq${tokenizeUniqModifier(modifier)}", columns.map(tokenizeColumn).mkString(","))
-      case Sum(column, modifier)       => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
-      case SumMap(key, value)          => (s"sumMap", tokenizeColumns(Seq(key, value)))
-      case AnyResult(column, modifier) => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
-      case Min(tableColumn)            => ("min", tokenizeColumn(tableColumn))
-      case Max(tableColumn)            => ("max", tokenizeColumn(tableColumn))
-      case GroupUniqArray(tableColumn) => ("groupUniqArray", tokenizeColumn(tableColumn))
-      case GroupArray(tableColumn, maxValues) =>
-        ("groupArray", s"${maxValues.map(_.toString + ")(").getOrElse("")}${tokenizeColumn(tableColumn)}")
       case f: AggregateFunction[_] =>
         throw new IllegalArgumentException(s"Cannot use $f aggregated function with combinator")
     }

@@ -1,7 +1,18 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.{TableColumn, forEach, quantiles, ref, select, sum, uniq, uniqExact}
-import com.crobox.clickhouse.{ClickhouseClientSpec, DslITSpec}
+import com.crobox.clickhouse.DslITSpec
+import com.crobox.clickhouse.dsl.{
+  firstValue,
+  forEach,
+  lastValue,
+  quantiles,
+  ref,
+  select,
+  sum,
+  uniq,
+  uniqExact,
+  TableColumn
+}
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
@@ -13,8 +24,9 @@ class AggregationFunctionsIT extends DslITSpec {
   private val delta   = 2
   override val table1Entries: Seq[Table1Entry] =
     Seq.fill(entries)(Table1Entry(UUID.randomUUID(), numbers = Seq(1, 2, 3)))
-  override val table2Entries: Seq[Table2Entry] =
-    Seq.fill(entries)(Table2Entry(UUID.randomUUID(), randomString, randomInt, randomString, None))
+  override val table2Entries: Seq[Table2Entry] = {
+    (1 to entries).map(i => Table2Entry(UUID.randomUUID(), i + "_" + randomString, randomInt, randomString, None))
+  }
 
   "Combinators" should "apply for aggregations" in {
     case class Result(columnResult: String) {
@@ -58,4 +70,23 @@ class AggregationFunctionsIT extends DslITSpec {
     queryResult should contain theSameElementsAs Seq(entries, entries * 2, entries * 3)
   }
 
+  it should "firstValue in aggregate" in {
+    val resultRows =
+      chExecutor
+        .execute[StringResult](select(firstValue(col1) as "result").from(TwoTestTable))
+        .futureValue
+        .rows
+    resultRows.length shouldBe 1
+    resultRows.map(_.result).head.startsWith("1_") should be(true)
+  }
+
+  it should "lastValue in aggregate" in {
+    val resultRows =
+      chExecutor
+        .execute[StringResult](select(lastValue(col1) as "result").from(TwoTestTable))
+        .futureValue
+        .rows
+    resultRows.length shouldBe 1
+    resultRows.map(_.result).head.startsWith(s"${entries}_") should be(true)
+  }
 }
