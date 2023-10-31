@@ -1,18 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.DslITSpec
-import com.crobox.clickhouse.dsl.{
-  firstValue,
-  forEach,
-  lastValue,
-  quantiles,
-  ref,
-  select,
-  sum,
-  uniq,
-  uniqExact,
-  TableColumn
-}
+import com.crobox.clickhouse.dsl._
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
