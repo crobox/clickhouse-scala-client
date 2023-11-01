@@ -10,4 +10,16 @@ class AggregationFunctionTokenizerTest extends DslTestSpec {
       "SELECT groupArray(column_1)[1] AS p"
     )
   }
+
+  it should "firstValue in groupArray" in {
+    toSQL(select(firstValue(groupArray(col1)) as "p"), false) should matchSQL(
+      "SELECT first_value(groupArray(column_1)) AS p"
+    )
+  }
+
+  it should "lastValue in groupArray" in {
+    toSQL(select(lastValue(groupArray(col1)) as "p"), false) should matchSQL(
+      "SELECT last_value(groupArray(column_1)) AS p"
+    )
+  }
 }

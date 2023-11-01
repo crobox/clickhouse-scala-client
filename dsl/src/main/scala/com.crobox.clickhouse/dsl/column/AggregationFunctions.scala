@@ -32,6 +32,10 @@ trait AggregationFunctions {
 
   case class Max[V](tableColumn: TableColumn[V]) extends AggregateFunction[V](tableColumn)
 
+  case class FirstValue[V](tableColumn: TableColumn[V]) extends AggregateFunction[V](tableColumn)
+
+  case class LastValue[V](tableColumn: TableColumn[V]) extends AggregateFunction[V](tableColumn)
+
   case class TimeSeries(tableColumn: TableColumn[Long], interval: MultiInterval)
       extends AggregateFunction[Long](tableColumn)
 
@@ -44,6 +48,10 @@ trait AggregationFunctions {
   def min[V](tableColumn: TableColumn[V]): Min[V] = Min(tableColumn)
 
   def max[V](tableColumn: TableColumn[V]): Max[V] = Max(tableColumn)
+
+  def firstValue[V](tableColumn: TableColumn[V]): FirstValue[V] = FirstValue(tableColumn)
+
+  def lastValue[V](tableColumn: TableColumn[V]): LastValue[V] = LastValue(tableColumn)
 
   /**
    * This function will push back the timestamp represented by tableColumn to the start of this interval,
