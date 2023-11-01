@@ -16,9 +16,9 @@ class INFunctionsIT extends DslITSpec {
     )
   override val table3Entries: Seq[Table3Entry] =
     Seq(
-      Table3Entry(UUID.randomUUID(), 2, Option("a"), "a", "a"),
-      Table3Entry(UUID.randomUUID(), 2, Option("a"), "b", "b"),
-      Table3Entry(UUID.randomUUID(), 2, Option("b"), "c", "c")
+      Table3Entry(UUID.randomUUID(), 2, Option("a"), "a", "a", BigDecimal(34.34)),
+      Table3Entry(UUID.randomUUID(), 2, Option("a"), "b", "b", BigDecimal(Long.MaxValue)),
+      Table3Entry(UUID.randomUUID(), 2, Option("b"), "c", "c", BigDecimal(Double.MinValue))
     )
 
   it should "use tableAlias for IN, single table" in {
@@ -40,5 +40,16 @@ class INFunctionsIT extends DslITSpec {
           col2.in(select(col4).from(ThreeTestTable))
         )
     ).futureValue should be("")
+  }
+
+  it should "use/cast big decimal" in {
+    assumeMinimalClickhouseVersion(21)
+
+    // check if syntax is correct
+    execute(
+      select(colBigDecimal)
+        .from(ThreeTestTable)
+        .orderBy(colBigDecimal)
+    ).futureValue should be("-1.7976931348623157e308\n34.34\n9223372036854776000")
   }
 }

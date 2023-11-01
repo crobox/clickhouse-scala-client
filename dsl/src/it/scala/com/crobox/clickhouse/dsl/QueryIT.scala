@@ -72,6 +72,7 @@ class QueryIT extends DslITSpec {
       toInt64OrZero _,
       toFloat32OrZero _,
       toFloat64OrZero _,
+      toBigDecimalOrZero _,
       (col: TableColumn[_]) => toFixedString(col, 10),
       toStringCutToZero _
     )

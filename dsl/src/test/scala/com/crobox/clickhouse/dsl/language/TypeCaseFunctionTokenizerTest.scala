@@ -9,5 +9,7 @@ class TypeCaseFunctionTokenizerTest extends DslTestSpec {
     toSQL(select(toUUID(const("00000000-0000-0000-0000-000000000000")))) shouldBe "SELECT toUUID('00000000-0000-0000-0000-000000000000')"
     toSQL(select(toUUIDOrZero(const("123")))) shouldBe "SELECT toUUIDOrZero('123')"
     toSQL(select(toUUIDOrNull(const("123")))) shouldBe "SELECT toUUIDOrNull('123')"
+
+    toSQL(select(toBigDecimalOrZero(const("123")))) shouldBe "SELECT toFloat64OrZero('123')"
   }
 }

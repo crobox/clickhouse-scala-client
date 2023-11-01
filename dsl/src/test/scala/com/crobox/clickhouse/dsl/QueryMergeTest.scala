@@ -57,6 +57,7 @@ class QueryMergeTest extends DslTestSpec {
          |       uuid,
          |       column_5,
          |       column_6,
+         |       column_bg,
          |       *
          |FROM
          |  (SELECT *
@@ -70,6 +71,7 @@ class QueryMergeTest extends DslTestSpec {
          |          column_4,
          |          column_5,
          |          column_6,
+         |          column_bg,
          |          *
          |   FROM
          |     (SELECT *

@@ -80,6 +80,13 @@ trait TypeCastFunctions { self: Magnets =>
       extends TypeCastColumn[Double](tableColumn)
       with Reinterpretable
 
+  case class BigDecimal64(tableColumn: ConstOrColMagnet[_],
+                          orZero: Boolean = false,
+                          orDefault: Option[BigDecimal] = None,
+                          orNull: Boolean = false)
+      extends TypeCastColumn[BigDecimal](tableColumn)
+      with Reinterpretable
+
   case class Uuid(tableColumn: ConstOrColMagnet[_],
                   orZero: Boolean = false,
                   orDefault: Option[Uuid] = None,
@@ -113,20 +120,21 @@ trait TypeCastFunctions { self: Magnets =>
   }
 
   sealed trait CastOutBind[I, O]
-  implicit object UInt8CastOutBind       extends CastOutBind[ColumnType.UInt8.type, Byte]
-  implicit object UInt16CastOutBind      extends CastOutBind[ColumnType.UInt16.type, Short]
-  implicit object UInt32CastOutBind      extends CastOutBind[ColumnType.UInt32.type, Int]
-  implicit object UInt64CastOutBind      extends CastOutBind[ColumnType.UInt64.type, Long]
-  implicit object Int8CastOutBind        extends CastOutBind[ColumnType.Int8.type, Byte]
-  implicit object Int16CastOutBind       extends CastOutBind[ColumnType.Int16.type, Short]
-  implicit object Int32CastOutBind       extends CastOutBind[ColumnType.Int32.type, Int]
-  implicit object Int64CastOutBind       extends CastOutBind[ColumnType.Int64.type, Long]
-  implicit object Float32CastOutBind     extends CastOutBind[ColumnType.Float32.type, Float]
-  implicit object Float64CastOutBind     extends CastOutBind[ColumnType.Float64.type, Double]
-  implicit object StringCastOutBind      extends CastOutBind[ColumnType.String.type, Int]
-  implicit object FixedStringCastOutBind extends CastOutBind[ColumnType.FixedString.type, Int]
-  implicit object DateCastOutBind        extends CastOutBind[ColumnType.Date.type, Int]
-  implicit object DateTimeCastOutBind    extends CastOutBind[ColumnType.DateTime.type, Int]
+  implicit object UInt8CastOutBind        extends CastOutBind[ColumnType.UInt8.type, Byte]
+  implicit object UInt16CastOutBind       extends CastOutBind[ColumnType.UInt16.type, Short]
+  implicit object UInt32CastOutBind       extends CastOutBind[ColumnType.UInt32.type, Int]
+  implicit object UInt64CastOutBind       extends CastOutBind[ColumnType.UInt64.type, Long]
+  implicit object Int8CastOutBind         extends CastOutBind[ColumnType.Int8.type, Byte]
+  implicit object Int16CastOutBind        extends CastOutBind[ColumnType.Int16.type, Short]
+  implicit object Int32CastOutBind        extends CastOutBind[ColumnType.Int32.type, Int]
+  implicit object Int64CastOutBind        extends CastOutBind[ColumnType.Int64.type, Long]
+  implicit object Float32CastOutBind      extends CastOutBind[ColumnType.Float32.type, Float]
+  implicit object Float64CastOutBind      extends CastOutBind[ColumnType.Float64.type, Double]
+  implicit object BigDecimal64CastOutBind extends CastOutBind[ColumnType.BigDecimal64.type, BigDecimal]
+  implicit object StringCastOutBind       extends CastOutBind[ColumnType.String.type, Int]
+  implicit object FixedStringCastOutBind  extends CastOutBind[ColumnType.FixedString.type, Int]
+  implicit object DateCastOutBind         extends CastOutBind[ColumnType.Date.type, Int]
+  implicit object DateTimeCastOutBind     extends CastOutBind[ColumnType.DateTime.type, Int]
 
   def toUInt8(tableColumn: ConstOrColMagnet[_]): UInt8 = UInt8(tableColumn)
 
@@ -184,12 +192,20 @@ trait TypeCastFunctions { self: Magnets =>
     Float32(tableColumn, orDefault = Option(value))
   def toFloat32OrNull(tableColumn: ConstOrColMagnet[_]): Float32 = Float32(tableColumn, orNull = true)
   def toFloat32OrZero(tableColumn: ConstOrColMagnet[_]): Float32 = Float32(tableColumn, orZero = true)
-  def toFloat64(tableColumn: ConstOrColMagnet[_]): Float64       = Float64(tableColumn)
+
+  def toFloat64(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn)
 
   def toFloat64OrDefault(tableColumn: ConstOrColMagnet[_], value: Double): Float64 =
     Float64(tableColumn, orDefault = Option(value))
   def toFloat64OrNull(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn, orNull = true)
   def toFloat64OrZero(tableColumn: ConstOrColMagnet[_]): Float64 = Float64(tableColumn, orZero = true)
+
+  def toBigDecimal(tableColumn: ConstOrColMagnet[_]): BigDecimal64 = BigDecimal64(tableColumn)
+
+  def toBigDecimalOrDefault(tableColumn: ConstOrColMagnet[_], value: BigDecimal): BigDecimal64 =
+    BigDecimal64(tableColumn, orDefault = Option(value))
+  def toBigDecimalOrNull(tableColumn: ConstOrColMagnet[_]): BigDecimal64 = BigDecimal64(tableColumn, orNull = true)
+  def toBigDecimalOrZero(tableColumn: ConstOrColMagnet[_]): BigDecimal64 = BigDecimal64(tableColumn, orZero = true)
 
   def toDate(tableColumn: ConstOrColMagnet[_]): DateRep = DateRep(tableColumn)
 
