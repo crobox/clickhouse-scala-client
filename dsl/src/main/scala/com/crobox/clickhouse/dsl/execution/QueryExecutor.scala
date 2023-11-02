@@ -20,4 +20,5 @@ trait QueryExecutor { self: TokenizerModule =>
 
   def insert[V: JsonWriter](table: Table, values: Seq[V])(implicit executionContext: ExecutionContext,
                                                           settings: QuerySettings = QuerySettings()): Future[String]
+
 }
