@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.dsl.execution
 
+import com.crobox.clickhouse.ClickhouseServerVersion
 import com.crobox.clickhouse.dsl.language.TokenizerModule
 import com.crobox.clickhouse.dsl.{Query, Table}
 import com.crobox.clickhouse.internal.QuerySettings
@@ -12,9 +13,11 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait QueryExecutor { self: TokenizerModule =>
 
+  val serverVersion: ClickhouseServerVersion
+
   def execute[V: JsonReader](query: Query)(implicit executionContext: ExecutionContext,
-                                           settings: QuerySettings): Future[QueryResult[V]]
+                                           settings: QuerySettings = QuerySettings()): Future[QueryResult[V]]
 
   def insert[V: JsonWriter](table: Table, values: Seq[V])(implicit executionContext: ExecutionContext,
-                                                          settings: QuerySettings): Future[String]
+                                                          settings: QuerySettings = QuerySettings()): Future[String]
 }

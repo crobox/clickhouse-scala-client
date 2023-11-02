@@ -1,9 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.DslIntegrationSpec
+import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl._
 
-class JsonFunctionsTest extends DslIntegrationSpec {
+class JsonFunctionsIT extends DslITSpec {
   it should "succeed for JsonFunctions" in {
     val someJson = """{"foo":"bar", "baz":123, "boz":3.1415, "bool":true}"""
 

@@ -1,8 +1,8 @@
 package com.crobox.clickhouse.stream
 
-import org.apache.pekko.stream.scaladsl._
 import com.crobox.clickhouse.internal.QuerySettings
 import com.crobox.clickhouse.{ClickhouseClient, ClickhouseClientAsyncSpec}
+import org.apache.pekko.stream.scaladsl._
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
 import scala.concurrent.duration._
@@ -54,19 +54,21 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     )
   )
 
-  def parsedInserts(key: String) = unparsedInserts(key).map(
-    _.mapValues({ // do NOT change to .view.mapValues given compilation errors for scala 2.12.+
-      case value: Int           => value.toString
-      case value: String        => "\"" + value + "\""
-      case value: IndexedSeq[_] => "[" + value.mkString(", ") + "]"
-    }).map { case (k, v) => s""""$k" : $v""" }
+  def parsedInserts(key: String): Seq[String] = unparsedInserts(key).map(
+    _.view
+      .mapValues({
+        case value: Int           => value.toString
+        case value: String        => "\"" + value + "\""
+        case value: IndexedSeq[_] => "[" + value.mkString(", ") + "]"
+      })
+      .map { case (k, v) => s""""$k" : $v""" }
       .mkString(", ")
   )
 
   it should "index items" in {
     val inserts = parsedInserts("two")
     val res = Source
-      .fromIterator(() => inserts.toIterator) // do NOT change to .iterator given compilation errors for scala 2.12.+
+      .fromIterator(() => inserts.iterator)
       .map(data => Insert("test.insert", "{" + data + "}"))
       .runWith(ClickhouseSink.toSink(config, client, Some("no-overrides")))
     Await.ready(res, 5.seconds)

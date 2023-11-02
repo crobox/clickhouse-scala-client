@@ -171,7 +171,7 @@ class ClickhouseTimeSeriesIT extends DslITSpec with TableDrivenPropertyChecks {
   }
 
   private def getEntries(multiInterval: MultiInterval, entriesId: UUID) =
-    chExecutor.execute[CustomResult](
+    queryExecutor.execute[CustomResult](
       select(count() as "shields", toUInt64(timeSeries(timestampColumn, multiInterval)) as alias)
         .from(OneTestTable)
         .groupBy(alias)

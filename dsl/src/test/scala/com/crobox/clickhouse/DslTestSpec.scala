@@ -2,7 +2,7 @@ package com.crobox.clickhouse
 
 import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizeContext}
 import com.crobox.clickhouse.dsl.{InternalQuery, OperationalQuery, TableColumn}
-import com.crobox.clickhouse.testkit.ClickhouseSpec
+import com.crobox.clickhouse.testkit.ClickhouseMatchers
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -10,17 +10,19 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 trait DslTestSpec
-    extends AnyFlatSpec //Like
+    extends AnyFlatSpec
     with BeforeAndAfterAll
     with ScalaFutures
     with Matchers
-    with ClickhouseSpec
     with TestSchema
+    with ClickhouseMatchers
     with ClickhouseTokenizerModule {
 
-  override val config: Config = ConfigFactory.load()
+  val config: Config                         = ConfigFactory.load()
+  val serverVersion: ClickhouseServerVersion = ClickhouseServerVersion(Seq(22, 3))
+  override val database: String              = "test"
 
-  implicit def ctx: TokenizeContext = TokenizeContext(clickClient.serverVersion)
+  implicit def ctx: TokenizeContext = TokenizeContext(serverVersion)
 
   def toSQL(condition: TableColumn[Boolean]): String = toSQL(Option(condition))
 
