@@ -1,4 +1,4 @@
-import Build._
+import Build.*
 
 // Scala Formatting
 ThisBuild / scalafmtVersion := "1.5.1"
@@ -19,15 +19,7 @@ lazy val root = (project in file("."))
         scalaVersion := "2.13.8",
         crossScalaVersions := List("2.12.13", "2.13.8"),
         javacOptions ++= Seq("-g", "-Xlint:unchecked", "-Xlint:deprecation", "-source", "11", "-target", "11"),
-        scalacOptions ++= Seq(
-//          "-Wconf:cat=deprecation:ws,any:e",
-//          "-target:jvm-11",
-                              "-unchecked",
-                              "-deprecation",
-                              "-feature",
-                              "-language:_",
-                              "-encoding",
-                              "UTF-8"),
+        scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:_", "-encoding", "UTF-8"),
         publishTo := {
           val nexus = "https://oss.sonatype.org/"
           if (version.value.trim.endsWith("SNAPSHOT"))
@@ -79,6 +71,7 @@ lazy val client: Project = (project in file("client"))
   )
 
 lazy val dsl = (project in file("dsl"))
+  .dependsOn(client, client % "test->test", testkit % Test)
   .configs(Config.CustomIntegrationTest)
   .settings(Config.testSettings: _*)
   .settings(
@@ -86,12 +79,11 @@ lazy val dsl = (project in file("dsl"))
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq("com.google.guava" % "guava" % "23.0")
   )
-  .dependsOn(client, client % "test->test", testkit % Test)
 
 lazy val testkit = (project in file("testkit"))
+  .dependsOn(client)
   .settings(
     name := "testkit",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Build.testDependencies
   )
-  .dependsOn(client)
