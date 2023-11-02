@@ -1,7 +1,7 @@
 package com.crobox.clickhouse
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.execution.ClickhouseQueryExecutor
+import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryExecutor}
 import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizeContext}
 import com.crobox.clickhouse.dsl.schemabuilder.{CreateTable, Engine}
 import com.crobox.clickhouse.testkit.ClickhouseSpec
@@ -30,7 +30,7 @@ trait DslIntegrationSpec
 
   implicit val ec: ExecutionContext
 
-  implicit lazy val chExecutor: ClickhouseQueryExecutor = ClickhouseQueryExecutor.default(clickClient)
+  implicit lazy val chExecutor: QueryExecutor = ClickhouseQueryExecutor.default(clickClient)
 
   override def beforeAll(): Unit = {
     super.beforeAll()

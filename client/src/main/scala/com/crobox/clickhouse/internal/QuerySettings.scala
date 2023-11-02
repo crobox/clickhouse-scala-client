@@ -1,12 +1,11 @@
 package com.crobox.clickhouse.internal
 
-import org.apache.pekko.http.scaladsl.model.Uri.Query
-import org.apache.pekko.http.scaladsl.model.headers.HttpEncoding
 import com.crobox.clickhouse.internal.QuerySettings._
 import com.typesafe.config.Config
+import org.apache.pekko.http.scaladsl.model.Uri.Query
+import org.apache.pekko.http.scaladsl.model.headers.HttpEncoding
 
-//import scala.jdk.CollectionConverters._
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
