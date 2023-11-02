@@ -12,7 +12,7 @@ class StringFunctionsIT extends DslITSpec {
 
   it should "split by character" in {
     val resultRows =
-      chExecutor
+      queryExecutor
         .execute[StringResult](select(arrayJoin(splitByChar(",", col1)) as "result") from TwoTestTable)
         .futureValue
         .rows
@@ -22,7 +22,7 @@ class StringFunctionsIT extends DslITSpec {
 
   it should "split by string" in {
     val resultRows =
-      chExecutor
+      queryExecutor
         .execute[StringResult](select(arrayJoin(splitByString("em,", col1)) as "result") from TwoTestTable)
         .futureValue
         .rows
@@ -32,7 +32,7 @@ class StringFunctionsIT extends DslITSpec {
 
   it should "concatenate string back" in {
     val resultRows =
-      chExecutor
+      queryExecutor
         .execute[StringResult](select(arrayStringConcat(splitByChar(",", col1), ",") as "result") from TwoTestTable)
         .futureValue
         .rows

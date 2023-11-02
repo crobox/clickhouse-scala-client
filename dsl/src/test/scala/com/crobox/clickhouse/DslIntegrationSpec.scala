@@ -30,7 +30,7 @@ trait DslIntegrationSpec
 
   implicit val ec: ExecutionContext
 
-  implicit lazy val chExecutor: QueryExecutor = ClickhouseQueryExecutor.default(clickClient)
+  implicit lazy val queryExecutor: QueryExecutor = ClickhouseQueryExecutor.default(clickClient)
 
   override def beforeAll(): Unit = {
     super.beforeAll()

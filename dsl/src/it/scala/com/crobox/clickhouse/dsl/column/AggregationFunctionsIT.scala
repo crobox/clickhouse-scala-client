@@ -22,10 +22,10 @@ class AggregationFunctionsIT extends DslITSpec {
       def result = columnResult.toInt
     }
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
-    val resultSimple = chExecutor
+    val resultSimple = queryExecutor
       .execute[Result](select(uniq(shieldId) as "result") from OneTestTable)
       .futureValue
-    val resultExact = chExecutor
+    val resultExact = queryExecutor
       .execute[Result](select(uniqExact(shieldId) as "result") from OneTestTable)
       .futureValue
     resultSimple.rows.head.result shouldBe (entries ~% delta)
@@ -36,7 +36,7 @@ class AggregationFunctionsIT extends DslITSpec {
   it should "run quantiles" in {
     case class Result(result: Seq[Float])
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[Float], Result](Result.apply, "result")
-    val result = chExecutor
+    val result = queryExecutor
       .execute[Result](
         select(quantiles(col2, 0.1F, 0.2F, 0.3F, 0.4F, 0.5F, 0.99F) as ref[Seq[Float]]("result")) from TwoTestTable
       )
@@ -47,7 +47,7 @@ class AggregationFunctionsIT extends DslITSpec {
   it should "run for each" in {
     case class Result(result: Seq[String])
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[String], Result](Result.apply, "result")
-    val result = chExecutor
+    val result = queryExecutor
       .execute[Result](
         select(forEach[Int, TableColumn[Seq[Int]], Double](numbers) { column =>
           sum(column)
@@ -61,7 +61,7 @@ class AggregationFunctionsIT extends DslITSpec {
 
   it should "firstValue in aggregate" in {
     val resultRows =
-      chExecutor
+      queryExecutor
         .execute[StringResult](select(firstValue(col1) as "result").from(TwoTestTable))
         .futureValue
         .rows
@@ -71,7 +71,7 @@ class AggregationFunctionsIT extends DslITSpec {
 
   it should "lastValue in aggregate" in {
     val resultRows =
-      chExecutor
+      queryExecutor
         .execute[StringResult](select(lastValue(col1) as "result").from(TwoTestTable))
         .futureValue
         .rows

@@ -1,7 +1,7 @@
 package com.crobox.clickhouse
 
 import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
-import com.crobox.clickhouse.dsl.execution.{ClickhouseQueryExecutor, QueryExecutor, QueryResult}
+import com.crobox.clickhouse.dsl.execution.{QueryExecutor, QueryResult}
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import spray.json.{JsonReader, JsonWriter}
 
@@ -18,16 +18,16 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
 
     def execute[V: JsonReader](
         implicit executionContext: ExecutionContext,
-        clickhouseExecutor: QueryExecutor
-    ): Future[QueryResult[V]] = clickhouseExecutor.execute(query)
+        queryExecutor: QueryExecutor
+    ): Future[QueryResult[V]] = queryExecutor.execute(query)
   }
 
   implicit class ValueInsertion[V: JsonWriter](values: Seq[V]) {
 
     def into(table: Table)(
         implicit executionContext: ExecutionContext,
-        clickhouseExecutor: QueryExecutor
-    ): Future[String] = clickhouseExecutor.insert(table, values)
+        queryExecutor: QueryExecutor
+    ): Future[String] = queryExecutor.insert(table, values)
   }
 
   /**

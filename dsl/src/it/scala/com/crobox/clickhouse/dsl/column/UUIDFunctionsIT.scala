@@ -11,7 +11,7 @@ class UUIDFunctionsIT extends DslITSpec {
 
   it should "handle notEmpty" in {
     val resultRows =
-      chExecutor
+      queryExecutor
         .execute[StringResult](select(shieldId as "result").from(OneTestTable).where(dsl.notEmpty(shieldId)))
         .futureValue
         .rows

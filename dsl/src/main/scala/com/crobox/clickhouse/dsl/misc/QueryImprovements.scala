@@ -15,46 +15,46 @@ object QueryImprovements extends LazyLogging {
 
     def executeWithLogging[V: JsonReader](debug: Boolean)(
         implicit executionContext: ExecutionContext,
-        clickhouseExecutor: QueryExecutor
+        queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
       if (debug)
         logger.info(
-          s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.serverVersion))}"
+          s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(queryExecutor.serverVersion))}"
         )
-      clickhouseExecutor.execute(query)
+      queryExecutor.execute(query)
     }
 
     def executeWithLogging[V: JsonReader](traceId: String)(
         implicit executionContext: ExecutionContext,
-        clickhouseExecutor: QueryExecutor
+        queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
       logger.info(
-        s"[$traceId] ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.serverVersion))}"
+        s"[$traceId] ${tokenizer.toSql(query.internalQuery)(TokenizeContext(queryExecutor.serverVersion))}"
       )
-      clickhouseExecutor.execute(query)
+      queryExecutor.execute(query)
     }
 
     def executeWithLogging[V: JsonReader](traceId: Option[String])(
         implicit executionContext: ExecutionContext,
-        clickhouseExecutor: QueryExecutor
+        queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
       traceId.foreach(
         id =>
           logger.info(
-            s"[$id] ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.serverVersion))}"
+            s"[$id] ${tokenizer.toSql(query.internalQuery)(TokenizeContext(queryExecutor.serverVersion))}"
         )
       )
-      clickhouseExecutor.execute(query)
+      queryExecutor.execute(query)
     }
 
     def executeWithLogging[V: JsonReader](
         implicit executionContext: ExecutionContext,
-        clickhouseExecutor: QueryExecutor
+        queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
       logger.info(
-        s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(clickhouseExecutor.serverVersion))}"
+        s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(queryExecutor.serverVersion))}"
       )
-      clickhouseExecutor.execute(query)
+      queryExecutor.execute(query)
     }
   }
 }
