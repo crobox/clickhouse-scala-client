@@ -1,21 +1,22 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.DslITSpec
-import com.crobox.clickhouse.DslITSpec.StringResult
+import com.crobox.clickhouse.DslITSpec.IntResult
 import com.crobox.clickhouse.dsl._
+import com.typesafe.scalalogging.LazyLogging
 import spray.json.DefaultJsonProtocol._
 import spray.json.RootJsonFormat
 
 import java.util.UUID
 
-class AggregationFunctionsIT extends DslITSpec {
+class AggregationFunctionsIT extends DslITSpec with LazyLogging {
 
   private val entries = 200145
   private val delta   = 2
   override val table1Entries: Seq[Table1Entry] =
     Seq.fill(entries)(Table1Entry(UUID.randomUUID(), numbers = Seq(1, 2, 3)))
   override val table2Entries: Seq[Table2Entry] = {
-    (1 to entries).map(i => Table2Entry(UUID.randomUUID(), i + "_" + randomString, randomInt, randomString, None))
+    (1 to entries).map(i => Table2Entry(UUID.randomUUID(), randomString, i, randomString, None))
   }
 
   "Combinators" should "apply for aggregations" in {
@@ -63,20 +64,22 @@ class AggregationFunctionsIT extends DslITSpec {
   it should "firstValue in aggregate" in {
     val resultRows =
       queryExecutor
-        .execute[StringResult](select(firstValue(col1) as "result").from(TwoTestTable))
+        .execute[IntResult](select(firstValue(col2) as "result").from(TwoTestTable))
         .futureValue
         .rows
     resultRows.length shouldBe 1
-    resultRows.map(_.result).head.startsWith("1_") should be(true)
+    logger.info("FIRST_VALUE: " + resultRows.map(_.result).head)
+    resultRows.map(_.result).head should be(1)
   }
 
   it should "lastValue in aggregate" in {
     val resultRows =
       queryExecutor
-        .execute[StringResult](select(lastValue(col1) as "result").from(TwoTestTable))
+        .execute[IntResult](select(lastValue(col2) as "result").from(TwoTestTable))
         .futureValue
         .rows
     resultRows.length shouldBe 1
-    resultRows.map(_.result).head.startsWith(s"${entries}_") should be(true)
+    logger.info("LAST_VALUE: " + resultRows.map(_.result).head)
+    resultRows.map(_.result).head should be(entries)
   }
 }
