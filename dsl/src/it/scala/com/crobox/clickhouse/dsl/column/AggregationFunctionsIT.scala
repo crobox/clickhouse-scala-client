@@ -64,22 +64,24 @@ class AggregationFunctionsIT extends DslITSpec with LazyLogging {
   it should "firstValue in aggregate" in {
     val resultRows =
       queryExecutor
-        .execute[IntResult](select(firstValue(col2) as "result").from(TwoTestTable))
+        .execute[IntResult](
+          select(firstValue(col2) as "result").from(select(col2).from(TwoTestTable).orderBy(col2))
+        )
         .futureValue
         .rows
     resultRows.length shouldBe 1
-    logger.info("FIRST_VALUE: " + resultRows.map(_.result).head)
     resultRows.map(_.result).head should be(1)
   }
 
   it should "lastValue in aggregate" in {
     val resultRows =
       queryExecutor
-        .execute[IntResult](select(lastValue(col2) as "result").from(TwoTestTable))
+        .execute[IntResult](
+          select(lastValue(col2) as "result").from(select(col2).from(TwoTestTable).orderBy(col2))
+        )
         .futureValue
         .rows
     resultRows.length shouldBe 1
-    logger.info("LAST_VALUE: " + resultRows.map(_.result).head)
     resultRows.map(_.result).head should be(entries)
   }
 }
