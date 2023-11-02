@@ -24,14 +24,14 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
   }
 
 //  def executeWithProgress[V: JsonReader](
-//      query: Query
-//  )(implicit executionContext: ExecutionContext,
-//    settings: QuerySettings = QuerySettings()): Source[QueryProgress, Future[QueryResult[V]]] = {
-//    import QueryResult._
-//    val queryResult =
-//      client.queryWithProgress(toSql(query.internalQuery)(ctx = TokenizeContext(client.serverVersion)))
-//    queryResult.mapMaterializedValue(_.map(_.parseJson.convertTo[QueryResult[V]]))
-//  }
+  //      query: Query
+  //  )(implicit executionContext: ExecutionContext,
+  //    settings: QuerySettings = QuerySettings()): Source[QueryProgress, Future[QueryResult[V]]] = {
+  //    import QueryResult._
+  //    val queryResult =
+  //      client.queryWithProgress(toSql(query.internalQuery)(ctx = TokenizeContext(client.serverVersion)))
+  //    queryResult.mapMaterializedValue(_.map(_.parseJson.convertTo[QueryResult[V]]))
+  //  }
 
   override def insert[V: JsonWriter](
       table: Table,
