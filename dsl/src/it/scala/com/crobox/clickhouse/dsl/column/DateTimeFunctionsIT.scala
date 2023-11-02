@@ -1,11 +1,11 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.DslIntegrationSpec
+import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.TestUtils.DDTStringify
 import com.crobox.clickhouse.dsl._
 import org.joda.time._
 
-class DateTimeFunctionsTest extends DslIntegrationSpec {
+class DateTimeFunctionsIT extends DslITSpec {
   it should "succeed for DateTimeFunctions" in {
     val now         = new DateTime().withZone(DateTimeZone.UTC)
     val epoch       = new DateTime(0).withZone(DateTimeZone.UTC)

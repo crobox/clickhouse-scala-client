@@ -1,7 +1,8 @@
 package com.crobox.clickhouse.dsl
 
+import com.crobox.clickhouse.DslITSpec.StringResult
 import com.crobox.clickhouse.dsl.JoinQuery.{AllLeftJoin, InnerJoin}
-import com.crobox.clickhouse.{DslITSpec, dsl}
+import com.crobox.clickhouse.{dsl, DslITSpec}
 import org.scalatest.prop.TableDrivenPropertyChecks
 
 class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {

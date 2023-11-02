@@ -77,9 +77,9 @@ lazy val dsl = (project in file("dsl"))
   .settings(
     name := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    libraryDependencies ++= Seq("com.google.guava" % "guava" % "23.0")
+    libraryDependencies ++= Seq("com.google.guava" % "guava" % "23.0", "com.typesafe" % "config" % "1.4.2")
   )
-  .settings(excludeDependencies ++= Seq(ExclusionRule("org.apache.pekko")))
+//  .settings(excludeDependencies ++= Seq(ExclusionRule("org.apache.pekko")))
 
 lazy val testkit = (project in file("testkit"))
   .dependsOn(client)

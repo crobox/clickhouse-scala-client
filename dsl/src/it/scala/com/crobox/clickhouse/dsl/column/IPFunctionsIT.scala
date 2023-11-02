@@ -1,9 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.DslIntegrationSpec
+import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl._
 
-class IPFunctionsTest extends DslIntegrationSpec {
+class IPFunctionsIT extends DslITSpec {
 
   "Tokenization" should "succeed for IPFunctions" in {
     val num = toUInt32(1)

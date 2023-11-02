@@ -11,6 +11,7 @@ import java.util.UUID
 trait TestSchema {
 
   val database: String
+  private lazy val _db = database
 
   implicit object UUIDFormat extends JsonFormat[UUID] {
 
@@ -30,7 +31,6 @@ trait TestSchema {
     }
   }
 
-  private lazy val _db = database
   case object OneTestTable extends Table {
     override lazy val database: String          = _db
     override val name: String                   = "captainAmerica"

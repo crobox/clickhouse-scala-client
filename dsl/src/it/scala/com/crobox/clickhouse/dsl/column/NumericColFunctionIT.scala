@@ -1,9 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.{DslIntegrationSpec, dsl => CHDsl}
+import com.crobox.clickhouse.{DslITSpec, dsl => CHDsl}
 
-class NumericColFunctionTest extends DslIntegrationSpec {
+class NumericColFunctionIT extends DslITSpec {
 
   it should "succeed for ArithmeticFunctions" in {
     r(plus(3, 3)) shouldBe "6"

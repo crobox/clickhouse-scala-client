@@ -1,9 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.{DslIntegrationSpec, dsl => CHDsl}
+import com.crobox.clickhouse.{DslITSpec, dsl => CHDsl}
 
-class MiscellaneousFunctionsTest extends DslIntegrationSpec {
+class MiscellaneousFunctionsIT extends DslITSpec {
 
   it should "succeed for MiscFunctions" in {
     val inf = const(1) / 0

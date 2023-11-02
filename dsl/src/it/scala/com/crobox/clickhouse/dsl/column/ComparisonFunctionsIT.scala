@@ -1,9 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.DslIntegrationSpec
+import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl._
 
-class ComparisonFunctionsTest extends DslIntegrationSpec {
+class ComparisonFunctionsIT extends DslITSpec {
   "Tokenization" should "succeed for ComparisonFunctions" in {
     val someNum = const(10L)
 

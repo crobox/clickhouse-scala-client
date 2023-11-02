@@ -13,7 +13,6 @@ class RandomStringGeneratorTest extends DslTestSpec {
 
   it should "avoid doubles of equal length" in {
     val n = 1000000
-//    (1 to n).map(i => RandomStringGenerator.random(6)).toSet should have size(n)
     (1 to n).map(i => RandomStringGenerator.random(6)).toSet.size should be(n +- 50)
   }
 }
