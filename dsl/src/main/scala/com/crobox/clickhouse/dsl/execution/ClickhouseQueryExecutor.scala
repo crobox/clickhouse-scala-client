@@ -13,7 +13,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
   self: TokenizerModule =>
   implicit val client: ClickhouseClient
 
-  override val serverVersion: clickhouse.ClickhouseServerVersion = client.serverVersion
+  override lazy val serverVersion: clickhouse.ClickhouseServerVersion = client.serverVersion
 
   override def execute[V: JsonReader](
       query: Query

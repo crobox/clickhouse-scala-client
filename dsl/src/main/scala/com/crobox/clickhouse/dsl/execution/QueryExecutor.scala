@@ -13,7 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait QueryExecutor { self: TokenizerModule =>
 
-  val serverVersion: ClickhouseServerVersion
+  def serverVersion: ClickhouseServerVersion
 
   def execute[V: JsonReader](query: Query)(implicit executionContext: ExecutionContext,
                                            settings: QuerySettings = QuerySettings()): Future[QueryResult[V]]
