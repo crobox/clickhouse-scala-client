@@ -46,7 +46,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
 
       - name: Cache sbt
         uses: actions/cache@v2
@@ -96,7 +96,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
 
       - name: Cache sbt
         uses: actions/cache@v2
@@ -109,16 +109,6 @@ jobs:
             ~/AppData/Local/Coursier/Cache/v1
             ~/Library/Caches/Coursier/v1
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
-
-      - name: Download target directories (2.12.13)
-        uses: actions/download-artifact@v2
-        with:
-          name: target-${{ matrix.os }}-2.12.13-${{ matrix.java }}
-
-      - name: Inflate target directories (2.12.13)
-        run: |
-          tar xf targets.tar
-          rm targets.tar
 
       - name: Download target directories (2.13.8)
         uses: actions/download-artifact@v2
