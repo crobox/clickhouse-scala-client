@@ -13,7 +13,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
   self: TokenizerModule =>
   implicit val client: ClickhouseClient
 
-  override val serverVersion: clickhouse.ClickhouseServerVersion = client.serverVersion
+  override lazy val serverVersion: clickhouse.ClickhouseServerVersion = client.serverVersion
 
   override def execute[V: JsonReader](
       query: Query
@@ -23,7 +23,12 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
     queryResult.map(_.parseJson.convertTo[QueryResult[V]])
   }
 
-//  def executeWithProgress[V: JsonReader](
+//  override def execute[V: JsonReader](
+//      sql: String
+//  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] =
+//    client.query(sql).map(_.parseJson.convertTo[QueryResult[V]])
+
+  //  def executeWithProgress[V: JsonReader](
   //      query: Query
   //  )(implicit executionContext: ExecutionContext,
   //    settings: QuerySettings = QuerySettings()): Source[QueryProgress, Future[QueryResult[V]]] = {
@@ -46,7 +51,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
 
 object ClickhouseQueryExecutor {
 
-  def default(clickhouseClient: ClickhouseClient): ClickhouseQueryExecutor =
+  def default(clickhouseClient: ClickhouseClient): QueryExecutor =
     new DefaultClickhouseQueryExecutor(clickhouseClient)
 }
 
