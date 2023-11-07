@@ -41,7 +41,7 @@ object QueryProgress extends LazyLogging {
                         fields("total_rows").convertTo[String].toLong
                     )
                   )
-                case JsObject(fields) if fields.size == 5 =>
+                case JsObject(fields) if fields.size >= 5 =>
                   ClickhouseQueryProgress(
                     queryId,
                     Progress(
