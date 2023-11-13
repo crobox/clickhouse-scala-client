@@ -59,9 +59,9 @@ trait DslITSpec extends ClickhouseClientSpec with ClickhouseSpec with TestSchema
     } yield {}
     whenReady(tables) { _ =>
       val inserts = for {
-        _ <- table1Entries.into(OneTestTable)
-        _ <- table2Entries.into(TwoTestTable)
-        _ <- table3Entries.into(ThreeTestTable)
+        _ <- queryExecutor.insert(OneTestTable, table1Entries)
+        _ <- queryExecutor.insert(TwoTestTable, table2Entries)
+        _ <- queryExecutor.insert(ThreeTestTable, table3Entries)
       } yield {}
       inserts.futureValue
     }
