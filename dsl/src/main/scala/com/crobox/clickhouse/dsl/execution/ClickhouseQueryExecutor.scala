@@ -23,6 +23,11 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
     queryResult.map(_.parseJson.convertTo[QueryResult[V]])
   }
 
+  override def query[V: JsonReader](
+      sql: String
+  )(implicit executionContext: ExecutionContext): Future[QueryResult[V]] =
+    client.query(sql).map(_.parseJson.convertTo[QueryResult[V]])
+
 //  override def execute[V: JsonReader](
 //      sql: String
 //  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] =
