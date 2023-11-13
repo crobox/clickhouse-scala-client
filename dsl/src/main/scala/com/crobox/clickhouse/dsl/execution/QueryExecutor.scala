@@ -15,7 +15,8 @@ trait QueryExecutor { self: TokenizerModule =>
 
   def serverVersion: ClickhouseServerVersion
 
-  def query[V: JsonReader](sql: String)(implicit executionContext: ExecutionContext): Future[QueryResult[V]]
+  def query[V: JsonReader](sql: String)(implicit executionContext: ExecutionContext,
+                                        settings: QuerySettings = QuerySettings()): Future[QueryResult[V]]
 
   def execute[V: JsonReader](query: Query)(implicit executionContext: ExecutionContext,
                                            settings: QuerySettings = QuerySettings()): Future[QueryResult[V]]
