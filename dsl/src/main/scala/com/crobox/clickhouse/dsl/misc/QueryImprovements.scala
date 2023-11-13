@@ -13,6 +13,12 @@ object QueryImprovements extends LazyLogging {
 
   implicit class QueryImpr(query: Query) {
 
+    def execute[V: JsonReader](
+        implicit executionContext: ExecutionContext,
+        queryExecutor: QueryExecutor
+    ): Future[QueryResult[V]] =
+      queryExecutor.execute(query)
+
     def executeWithLogging[V: JsonReader](debug: Boolean)(
         implicit executionContext: ExecutionContext,
         queryExecutor: QueryExecutor
