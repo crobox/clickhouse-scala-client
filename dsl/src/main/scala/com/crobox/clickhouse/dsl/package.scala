@@ -1,11 +1,8 @@
 package com.crobox.clickhouse
 
 import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
-import com.crobox.clickhouse.dsl.execution.{QueryExecutor, QueryResult}
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
-import spray.json.{JsonReader, JsonWriter}
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
 package object dsl extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats {
@@ -13,22 +10,6 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
   //Naive union type context bound
   trait Contra[-A]
   type Union[A, B] = Contra[A] <:< Contra[B]
-
-  implicit class QueryExecution(query: Query) {
-
-    def execute[V: JsonReader](
-        implicit executionContext: ExecutionContext,
-        queryExecutor: QueryExecutor
-    ): Future[QueryResult[V]] = queryExecutor.execute(query)
-  }
-
-  implicit class ValueInsertion[V: JsonWriter](values: Seq[V]) {
-
-    def into(table: Table)(
-        implicit executionContext: ExecutionContext,
-        queryExecutor: QueryExecutor
-    ): Future[String] = queryExecutor.insert(table, values)
-  }
 
   /**
    * Exposes the OperationalQuery.+ operator on Try[OperationalQuery]

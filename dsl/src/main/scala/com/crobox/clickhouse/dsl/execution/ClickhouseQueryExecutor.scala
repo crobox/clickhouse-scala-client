@@ -19,11 +19,19 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
       query: Query
   )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] = {
     import QueryResult._
-    val queryResult = client.query(toSql(query.internalQuery)(ctx = TokenizeContext(client.serverVersion)))
+    val queryResult = client.query(toSql(query.internalQuery)(ctx = TokenizeContext(client.serverVersion)))(settings)
     queryResult.map(_.parseJson.convertTo[QueryResult[V]])
   }
 
-//  override def execute[V: JsonReader](
+  override def query[V: JsonReader](
+      sql: String
+  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] = {
+    import QueryResult._
+    val queryResult = client.query(sql)(settings)
+    queryResult.map(_.parseJson.convertTo[QueryResult[V]])
+  }
+
+  //  override def execute[V: JsonReader](
 //      sql: String
 //  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] =
 //    client.query(sql).map(_.parseJson.convertTo[QueryResult[V]])
@@ -45,7 +53,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
     Future {
       values.map(_.toJson.compactPrint).mkString("\n") + "\n"
     }.flatMap(
-      entity => client.execute(s"INSERT INTO ${table.quoted} FORMAT JSONEachRow", entity)
+      entity => client.execute(s"INSERT INTO ${table.quoted} FORMAT JSONEachRow", entity)(settings)
     )
 }
 
