@@ -41,7 +41,7 @@ package object parallel {
       def recursiveCollectCols(qry: InternalQuery, cols: Seq[Column] = Seq.empty): Seq[Column] = {
         val uQry = qry
 
-        val selectAll = uQry.select.toSeq.flatMap(_.columns).contains(all())
+        val selectAll = uQry.select.toSeq.flatMap(_.columns).contains(all)
 
         val maybeFromCols = uQry.from match {
           case Some(value: InnerFromQuery) if selectAll =>
@@ -68,7 +68,7 @@ package object parallel {
         .map(origCol => RefColumn(origCol.name))
         .toList
         .filterNot(_.name == EmptyColumn.name)
-        .:+(all())
+        .:+(all)
         .distinct
 
       select(joinCols: _*)

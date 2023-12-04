@@ -42,7 +42,7 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
 
   it should s"QUERY - TABLE - using" in {
     val query =
-    select(dsl.all())
+    select(dsl.all)
       .from(
         select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
       )
@@ -57,7 +57,7 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
 
   it should s"QUERY - QUERY - using" in {
     val query =
-    select(dsl.all())
+    select(dsl.all)
       .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
     toSql(query.internalQuery) should matchSQL(
@@ -70,7 +70,7 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
   // ON --> check prefix per ON condition
   it should s"QUERY - QUERY - on simple" in {
     val query =
-    select(dsl.all())
+    select(dsl.all)
       .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
     toSql(query.internalQuery) should matchSQL(
@@ -83,7 +83,7 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
   // ON --> check prefix per ON condition
   it should s"QUERY - QUERY - on complex" in {
     val query =
-    select(dsl.all())
+    select(dsl.all)
       .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
       .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on ((itemId, "<=", itemId))
     toSql(query.internalQuery) should matchSQL(
@@ -110,9 +110,9 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
 
   it should s"triple complex join query" in {
     val query =
-      select(dsl.all())
+      select(dsl.all)
         .from(
-          select(dsl.all())
+          select(dsl.all)
             .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
             .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
         )
@@ -141,9 +141,9 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
 
   it should s"triple complex join query with custom aliases" in {
     val query =
-      select(dsl.all())
+      select(dsl.all)
         .from(
-          select(dsl.all())
+          select(dsl.all)
             .from(select(shieldId as itemId).from(OneTestTable).as("ott_alias").where(notEmpty(itemId)))
             .as("1_lEfT")
             .join(InnerJoin, select(itemId, col2).from(TwoTestTable).as("ttt.alias").where(notEmpty(itemId))) on itemId

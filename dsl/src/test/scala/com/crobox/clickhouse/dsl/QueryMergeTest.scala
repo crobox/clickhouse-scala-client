@@ -11,7 +11,7 @@ class QueryMergeTest extends DslTestSpec {
     val expectedUUID = UUID.randomUUID()
 
     val left: OperationalQuery  = select(itemId) from TwoTestTable where (col3 isEq "wompalama")
-    val right: OperationalQuery = select(CHDsl.all()) from OneTestTable where shieldId.isEq(expectedUUID)
+    val right: OperationalQuery = select(CHDsl.all) from OneTestTable where shieldId.isEq(expectedUUID)
     val query                   = right.merge(left) on timestampColumn
 
     // PURE SPECULATIVE / SQL ONLY
@@ -40,9 +40,9 @@ class QueryMergeTest extends DslTestSpec {
 
   it should "recursively collect columns from right hand queries" in {
     val expectedUUID             = UUID.randomUUID()
-    val left: OperationalQuery   = select(CHDsl.all()) from OneTestTable where shieldId.isEq(expectedUUID)
-    val right: OperationalQuery  = select(CHDsl.all()) from TwoTestTable where (col3 isEq "wompalama")
-    val right2: OperationalQuery = select(CHDsl.all()) from ThreeTestTable where shieldId.isEq(expectedUUID)
+    val left: OperationalQuery   = select(CHDsl.all) from OneTestTable where shieldId.isEq(expectedUUID)
+    val right: OperationalQuery  = select(CHDsl.all) from TwoTestTable where (col3 isEq "wompalama")
+    val right2: OperationalQuery = select(CHDsl.all) from ThreeTestTable where shieldId.isEq(expectedUUID)
     val query                    = right2 merge (right) on timestampColumn merge (left) on timestampColumn
 
     // PURE SPECULATIVE / SQL ONLY

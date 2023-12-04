@@ -80,7 +80,7 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
 
   def raw(rawSql: String): RawColumn = RawColumn(rawSql)
 
-  def all(): All = All()
+  def all: All = All()
 
   def columnCase[V](condition: TableColumn[Boolean], result: TableColumn[V]): Case[V] = Case[V](condition, result)
 

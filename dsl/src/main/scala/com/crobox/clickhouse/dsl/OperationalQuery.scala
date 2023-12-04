@@ -136,7 +136,7 @@ trait OperationalQuery extends Query {
 
     val selectForGroupCols = selectForGroup.toSeq.flatMap(_.columns)
 
-    val filteredSelectAll = if (selectForGroupCols.contains(all())) {
+    val filteredSelectAll = if (selectForGroupCols.contains(all)) {
       //Only keep aliased, we already select all cols
       newOrderingColumns.collect { case c: AliasedColumn[_] => c }
     } else {

@@ -63,7 +63,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
 
       // QUERY -- TABLE
       query =
-      select(dsl.all())
+      select(dsl.all)
         .from(
           select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
         )
@@ -74,7 +74,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
 
       // QUERY -- QUERY
       query =
-      select(dsl.all())
+      select(dsl.all)
         .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
         .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
       resultRows = queryExecutor.execute[StringResult](query).futureValue.rows
@@ -111,7 +111,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
       resultRows.length shouldBe result
 
       // QUERY -- TABLE
-      query = select(dsl.all())
+      query = select(dsl.all)
         .from(select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId)))
         .join(joinType, ThreeTestTable)
         .where(notEmpty(itemId))
@@ -120,7 +120,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
       resultRows.length shouldBe result
 
       // QUERY -- QUERY
-      query = select(dsl.all())
+      query = select(dsl.all)
         .from(select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId)))
         .join(joinType, select(itemId, col2).from(ThreeTestTable).where(notEmpty(itemId)))
         .on((itemId, "=", itemId), (col2, "<=", col2))

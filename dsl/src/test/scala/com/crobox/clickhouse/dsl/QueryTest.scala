@@ -176,7 +176,7 @@ class QueryTest extends DslTestSpec {
 
   it should "use alias in subselect" in {
     val query =
-      select(dsl.all()).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
+      select(dsl.all).from(select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
     toSql(query.internalQuery) should matchSQL(s"""
          |SELECT * FROM
          |(SELECT column_1, shield_id FROM $database.captainAmerica AS L1
