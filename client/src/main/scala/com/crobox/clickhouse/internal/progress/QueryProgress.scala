@@ -31,21 +31,24 @@ object QueryProgress extends LazyLogging {
             Some(ClickhouseQueryProgress(queryId, QueryAccepted))
           case queryId :: progressJson :: Nil =>
             Try {
-              val fields = progressJson.parseJson.asJsObject.fields
-              ClickhouseQueryProgress(
-                queryId,
-                Progress(
-                  fields("read_rows").convertTo[String].toLong,
-                  fields("read_bytes").convertTo[String].toLong,
-                  fields.get("written_rows").map(_.convertTo[String].toLong).getOrElse(0),
-                  fields.get("written_bytes").map(_.convertTo[String].toLong).getOrElse(0),
-                  Iterable("total_rows_to_read", "total_rows")
-                    .flatMap(fields.get)
-                    .map(_.convertTo[String].toLong)
-                    .headOption
-                    .getOrElse(0L)
-                )
-              )
+              progressJson.parseJson match {
+                case JsObject(fields) =>
+                  ClickhouseQueryProgress(
+                    queryId,
+                    Progress(
+                      fields("read_rows").convertTo[String].toLong,
+                      fields("read_bytes").convertTo[String].toLong,
+                      fields.get("written_rows").map(_.convertTo[String].toLong).getOrElse(0),
+                      fields.get("written_bytes").map(_.convertTo[String].toLong).getOrElse(0),
+                      Iterable("total_rows_to_read", "total_rows")
+                        .flatMap(fields.get)
+                        .map(_.convertTo[String].toLong)
+                        .headOption
+                        .getOrElse(0L)
+                    )
+                  )
+                case unknown => throw new IllegalArgumentException(s"Cannot extract progress from $unknown")
+              }
             } match {
               case Success(value) => Some(value)
               case Failure(exception) =>
