@@ -47,8 +47,7 @@ object QueryProgress extends LazyLogging {
                         .getOrElse(0L)
                     )
                   )
-                case unknown =>
-                  throw new IllegalArgumentException(s"Cannot extract progress from $unknown. Input: $progressJson")
+                case unknown => throw new IllegalArgumentException(s"Cannot extract progress from $unknown")
               }
             } match {
               case Success(value) => Some(value)
