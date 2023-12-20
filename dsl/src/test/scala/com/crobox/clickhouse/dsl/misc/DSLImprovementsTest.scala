@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.misc
 
 import com.crobox.clickhouse.DslTestSpec
-import com.crobox.clickhouse.dsl.misc.DSLImprovements.ColumnsImprv
+import com.crobox.clickhouse.dsl.misc.DSLImprovements._
 import com.crobox.clickhouse.dsl.{Column, NativeColumn}
 
 class DSLImprovementsTest extends DslTestSpec {

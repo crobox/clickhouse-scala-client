@@ -3,7 +3,6 @@ package com.crobox.clickhouse.dsl.language
 import com.crobox.clickhouse.ClickhouseServerVersion
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.misc.StringUtils
 import com.crobox.clickhouse.time.{MultiDuration, TimeUnit, TotalDuration}
 import com.typesafe.scalalogging.Logger
 import org.joda.time.{DateTime, DateTimeZone}
@@ -80,10 +79,22 @@ trait ClickhouseTokenizerModule
   override def toSql(query: InternalQuery,
                      formatting: Option[String] = Some("JSON"))(implicit ctx: TokenizeContext): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = StringUtils.removeRedundantWhitespaces(toRawSql(query) + formatSql)
+    val sql       = removeRedundantWhitespaces(toRawSql(query) + formatSql)
     logger.debug(s"Generated sql [$sql]")
     sql
   }
+
+  private def removeSurroundingBrackets(value: String): String =
+    if (value.startsWith("(") && value.endsWith(")") && value.count(_ == '(') == 1 && value.count(_ == ')') == 1) {
+      value.substring(1, value.length - 1)
+    } else value
+
+  private def removeRedundantWhitespaces(value: String): String =
+    value
+      .replaceAll("\\s+", " ")
+      .replace(" ( ", " (")
+      .replace(" )", ")")
+      .trim
 
   private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
     query match {
@@ -369,7 +380,7 @@ trait ClickhouseTokenizerModule
       case None            => ""
       case Some(condition) =>
         //s"$keyword ${tokenizeColumn(condition)}"
-        s"$keyword ${StringUtils.removeSurroundingBrackets(tokenizeColumn(condition).trim)}"
+        s"$keyword ${removeSurroundingBrackets(tokenizeColumn(condition).trim)}"
     }
 
   private def tokenizeGroupBy(groupBy: Option[GroupByQuery]): String = {
