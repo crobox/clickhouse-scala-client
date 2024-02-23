@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.{Const, TableColumn}
+import com.crobox.clickhouse.dsl._
 
 trait ScalaBooleanFunctions {
   self: Magnets with ComparisonFunctions =>

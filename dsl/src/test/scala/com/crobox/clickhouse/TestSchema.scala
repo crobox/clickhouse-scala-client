@@ -75,10 +75,10 @@ trait TestSchema {
                          fifthColumn: String,
                          sixthColumn: String)
 
-  implicit val entry1Format =
+  implicit val entry1Format: spray.json.RootJsonFormat[TestSchema.this.Table1Entry] =
     jsonFormat(Table1Entry.apply, "shield_id", "ts", "numbers")
-  implicit val entry2Format =
+  implicit val entry2Format: spray.json.RootJsonFormat[TestSchema.this.Table2Entry] =
     jsonFormat(Table2Entry.apply, "item_id", "column_1", "column_2", "column_3", "column_4")
-  implicit val entry3Format =
+  implicit val entry3Format: spray.json.RootJsonFormat[TestSchema.this.Table3Entry] =
     jsonFormat(Table3Entry.apply, "item_id", "column_2", "column_4", "column_5", "column_6")
 }

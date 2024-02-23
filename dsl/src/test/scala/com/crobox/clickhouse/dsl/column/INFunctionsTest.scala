@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.DslTestSpec
+
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl._
 

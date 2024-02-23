@@ -17,10 +17,10 @@ class ClickhouseTimeSeriesIT extends DslITSpec with TableDrivenPropertyChecks {
   case class CustomResult(time: IntervalStart, shields: String)
 
   object CustomResult {
-    implicit val format = jsonFormat2(CustomResult.apply)
+    implicit val format: spray.json.RootJsonFormat[ClickhouseTimeSeriesIT.this.CustomResult] = jsonFormat2(CustomResult.apply)
   }
 
-  implicit val clickhouseClient                   = clickClient
+  implicit val clickhouseClient: com.crobox.clickhouse.ClickhouseClient                   = clickClient
   val startInterval                               = DateTime.parse("2019-03-01").withTimeAtStartOfDay().withZone(DateTimeZone.UTC)
   val secondsId                                   = UUID.randomUUID()
   val dayId                                       = UUID.randomUUID()

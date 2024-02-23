@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl.misc
 
 import com.crobox.clickhouse.dsl.{ExpressionColumn, NativeColumn}
+import com.crobox.clickhouse.dsl._
 import org.joda.time.{DateTime, DateTimeZone, LocalDate}
 
 trait DateConditions {

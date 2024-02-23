@@ -1,25 +1,30 @@
 import Build.*
 
-// Scala Formatting
-ThisBuild / scalafmtVersion := "1.5.1"
-ThisBuild / scalafmtOnCompile := false     // all projects
-ThisBuild / scalafmtTestOnCompile := false // all projects
-
 releaseCrossBuild := true
 
 sonatypeProfileName := "com.crobox"
 
 lazy val root = (project in file("."))
   .settings(
-    publish := {},
+    publish         := {},
     publishArtifact := false,
     inThisBuild(
       List(
-        organization := "com.crobox.clickhouse",
-        scalaVersion := "2.13.8",
-        crossScalaVersions := List("2.13.8"),
+        organization       := "com.crobox.clickhouse",
+        scalaVersion       := "2.13.13",
+        crossScalaVersions := List("2.13.13"),
         javacOptions ++= Seq("-g", "-Xlint:unchecked", "-Xlint:deprecation", "-source", "11", "-target", "11"),
-        scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:_", "-encoding", "UTF-8"),
+        scalacOptions ++= Seq(
+          "-release:11",
+          "-Xsource:3-cross",
+          "-quickfix:any",
+          "-unchecked",
+          "-deprecation",
+          "-feature",
+          "-language:_",
+          "-encoding",
+          "UTF-8"
+        ),
         publishTo := {
           val nexus = "https://oss.sonatype.org/"
           if (version.value.trim.endsWith("SNAPSHOT"))
@@ -58,7 +63,7 @@ lazy val client: Project = (project in file("client"))
   .configs(Config.CustomIntegrationTest)
   .settings(Config.testSettings: _*)
   .settings(
-    name := "client",
+    name                                                              := "client",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
       "io.spray"                   %% "spray-json"    % "1.3.6",
@@ -66,8 +71,8 @@ lazy val client: Project = (project in file("client"))
       "org.apache.pekko"           %% "pekko-stream"  % PekkoVersion,
       "org.apache.pekko"           %% "pekko-http"    % PekkoHttpVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
-      "joda-time"                  % "joda-time"      % "2.12.5"
-    ) ++ Seq("org.apache.pekko"    %% "pekko-testkit" % PekkoVersion % Test) ++ Build.testDependencies.map(_ % Test)
+      "joda-time"                   % "joda-time"     % "2.12.7"
+    ) ++ Seq("org.apache.pekko" %% "pekko-testkit" % PekkoVersion % Test) ++ Build.testDependencies.map(_ % Test)
   )
 
 lazy val dsl = (project in file("dsl"))
@@ -75,16 +80,16 @@ lazy val dsl = (project in file("dsl"))
   .configs(Config.CustomIntegrationTest)
   .settings(Config.testSettings: _*)
   .settings(
-    name := "dsl",
+    name                                                              := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    libraryDependencies ++= Seq("com.google.guava" % "guava" % "23.0", "com.typesafe" % "config" % "1.4.2")
+    libraryDependencies ++= Seq("com.google.guava" % "guava" % "33.0.0-jre", "com.typesafe" % "config" % "1.4.3")
   )
 //  .settings(excludeDependencies ++= Seq(ExclusionRule("org.apache.pekko")))
 
 lazy val testkit = (project in file("testkit"))
   .dependsOn(client)
   .settings(
-    name := "testkit",
+    name                                                              := "testkit",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Build.testDependencies
   )

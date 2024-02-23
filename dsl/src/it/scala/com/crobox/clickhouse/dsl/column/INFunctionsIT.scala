@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl.misc.LogicalOperatorImprovements.ExpressionColumnImpr
-import com.crobox.clickhouse.dsl.select
+import com.crobox.clickhouse.dsl._
 
 import java.util.UUID
 

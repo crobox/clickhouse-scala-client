@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn}
+import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats.BooleanQueryValue
 
 trait InFunctions { self: Magnets =>
 
