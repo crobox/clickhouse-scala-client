@@ -2,6 +2,7 @@ package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
+import scala.language.implicitConversions
 
 trait ArithmeticFunctions { self: Magnets =>
 

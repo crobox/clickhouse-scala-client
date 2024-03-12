@@ -37,6 +37,6 @@ trait DictionaryFunctionTokenizer {
       s"dictGetHierarchy(${tokenizeColumn(dictName.column)},${tokenizeColumn(id.column)})"
     case DictHas(dictName: StringColMagnet[_], id: ConstOrColMagnet[_]) =>
       s"dictHas(${tokenizeColumn(dictName.column)},${tokenizeColumn(id.column)})"
-    case unsupported => throw new IllegalArgumentException(s"Unsupported dictionary: $unsupported")
+    case null => throw new IllegalArgumentException(s"Unsupported dictionary")
   }
 }

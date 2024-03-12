@@ -4,6 +4,7 @@ import com.crobox.clickhouse.dsl.ClickhouseStatement
 import com.crobox.clickhouse.partitioning.PartitionDateFormatter
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, LocalDate}
+import scala.language.implicitConversions
 
 import java.util.UUID
 import scala.annotation.implicitNotFound
