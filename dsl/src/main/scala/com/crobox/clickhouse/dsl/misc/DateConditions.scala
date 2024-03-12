@@ -1,7 +1,5 @@
 package com.crobox.clickhouse.dsl.misc
 
-//import com.crobox.clickhouse.dsl.ddtFromDateCol
-
 import com.crobox.clickhouse.dsl.ddtFromDate
 import com.crobox.clickhouse.dsl.numericFromLong
 import com.crobox.clickhouse.dsl.logicalOpsMagnetFromOptionCol
@@ -43,7 +41,7 @@ trait DateConditions {
 
     val startCondition: Option[ExpressionColumn[Boolean]] = startDate.map(sd => {
       dateColumn >= sd.withZone(DateTimeZone.UTC).toLocalDate and
-        noneIfStartOfDay(sd).map(dt => timestampColumn >= numericFromLong(dt.getMillis))
+        noneIfStartOfDay(sd).map(dt => timestampColumn >= dt.getMillis)
     })
 
     val endCondition: Option[ExpressionColumn[Boolean]] = endDate.map(ed => {

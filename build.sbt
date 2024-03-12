@@ -52,9 +52,9 @@ lazy val root = (project in file("."))
     ),
     name := "clickhouse"
   )
-  .aggregate(clientPro, dsl, testkit)
+  .aggregate(client, dsl, testkit)
 
-lazy val clientPro: Project = (project in file("client"))
+lazy val client: Project = (project in file("client"))
   .configs(Config.CustomIntegrationTest)
   .settings(Config.testSettings: _*)
   .settings(
@@ -71,7 +71,7 @@ lazy val clientPro: Project = (project in file("client"))
   )
 
 lazy val dsl = (project in file("dsl"))
-  .dependsOn(clientPro, clientPro % "test->test", testkit % Test)
+  .dependsOn(client, client % "test->test", testkit % Test)
   .configs(Config.CustomIntegrationTest)
   .settings(Config.testSettings: _*)
   .settings(
@@ -82,7 +82,7 @@ lazy val dsl = (project in file("dsl"))
 //  .settings(excludeDependencies ++= Seq(ExclusionRule("org.apache.pekko")))
 // go next
 lazy val testkit = (project in file("testkit"))
-  .dependsOn(clientPro)
+  .dependsOn(client)
   .settings(
     name := "testkit",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
