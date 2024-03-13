@@ -1,6 +1,8 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl.{Column, ExpressionColumn}
+import scala.language.implicitConversions
+import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 
 trait SplitMergeFunctions { self: Magnets =>
 

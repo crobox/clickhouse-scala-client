@@ -5,6 +5,7 @@ import java.util.UUID
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.crobox.clickhouse.dsl.{Const, EmptyColumn, OperationalQuery, Table, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
+import com.crobox.clickhouse.dsl.BooleanQueryValue
 import scala.language.implicitConversions
 
 trait Magnets {

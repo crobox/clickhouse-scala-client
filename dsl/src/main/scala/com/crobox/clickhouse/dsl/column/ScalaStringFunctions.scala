@@ -1,6 +1,8 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl.TableColumn
+import scala.language.implicitConversions
+import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 
 trait ScalaStringFunctions { self: StringFunctions with StringSearchFunctions with LogicalFunctions with Magnets =>
 
