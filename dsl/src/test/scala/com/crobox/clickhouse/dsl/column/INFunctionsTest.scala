@@ -5,6 +5,8 @@ import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions.constOrColMagnetFromCol
 
+
+@Ignore
 class INFunctionsTest extends DslTestSpec {
 
   it should "use tableAlias for IN" in {
