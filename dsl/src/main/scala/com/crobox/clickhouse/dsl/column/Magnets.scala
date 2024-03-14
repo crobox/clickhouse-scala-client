@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl.column
 
 import java.util.UUID
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
-import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
+import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
 import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn, OperationalQuery, Table, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
