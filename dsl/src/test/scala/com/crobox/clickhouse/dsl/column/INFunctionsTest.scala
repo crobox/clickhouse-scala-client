@@ -11,17 +11,17 @@ import scala.language.implicitConversions
 class INFunctionsTest extends DslTestSpec {
 
   it should "use tableAlias for IN" in {
-    val shieldToUse: ConstOrColMagnet[String] = shieldId
-    val resToSee = toSQL(shieldToUse.in(select(itemId).from(OneTestTable).where(itemId.isEq("a"))))
+    //val shieldToUse: ConstOrColMagnet[String] =
+    val resToSee = toSQL(shieldId.in(select(itemId).from(OneTestTable).where(itemId.isEq("a"))))
 
     println("==================================")
     println(s"in SQL building result: $resToSee")
     println("==================================")
 
-//    resToSee should matchSQL(
-//      s"""
-//         |shield_id IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
-//         |""".stripMargin)
+    //    resToSee should matchSQL(
+    //      s"""
+    //         |shield_id IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
+    //         |""".stripMargin)
   }
 
   //  it should "use tableAlias for NOT IN" in {
