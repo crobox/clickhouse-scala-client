@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl
 import scala.util.Try
 
 trait Table {
-  lazy val database: String = ""
+  def database: String = ""
   val name: String
   lazy val quoted: String =
     s"${ClickhouseStatement.quoteIdentifier(database)}.${ClickhouseStatement.quoteIdentifier(name)}"
