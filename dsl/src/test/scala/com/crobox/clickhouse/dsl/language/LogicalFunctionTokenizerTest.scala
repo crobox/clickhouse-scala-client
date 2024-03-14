@@ -106,11 +106,10 @@ class LogicalFunctionTokenizerTest extends DslTestSpec {
     )
   }
 
-  def conditionOr(nr: Seq[Int]): Option[TableColumn[Boolean]] = Option(nr.map(x => (col2 === x)
-    .asInstanceOf[ExpressionColumn[Boolean]]).reduce((a, b) => (a or b)))
+  def conditionOr(nr: Seq[Int]): Option[TableColumn[Boolean]] = Option(nr.map(x => col2 isEq x).reduce((a, b) => (a or b)))
 
   def conditionAnd(nr: Seq[Int]): Option[TableColumn[Boolean]] =
-    Option(nr.map(x => (col2 === x).asInstanceOf[ExpressionColumn[Boolean]]).reduce((a, b) => a and b))
+    Option(nr.map(x => col2 isEq x).reduce((a, b) => a and b))
 
   it should "tokenize numbers OR with NONE" in {
     toSQL(None and conditionOr(Seq(1, 3)) and None and conditionOr(Seq(3, 4)) and None) should matchSQL(

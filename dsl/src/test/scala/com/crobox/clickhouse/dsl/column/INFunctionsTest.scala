@@ -7,16 +7,16 @@ import com.crobox.clickhouse.dsl._
 class INFunctionsTest extends DslTestSpec {
 
   it should "use tableAlias for IN" in {
-    toSQL(shieldId.in(select(itemId).from(OneTestTable).where(itemId.===("a")
-      .asInstanceOf[ExpressionColumn[Boolean]]))) should matchSQL(
+    toSQL(shieldId.in(select(itemId).from(OneTestTable).where(itemId.isEq("a")
+    ))) should matchSQL(
       s"""
          |shield_id IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
          |""".stripMargin)
   }
 
   it should "use tableAlias for NOT IN" in {
-    toSQL(shieldId.notIn(select(itemId).from(OneTestTable).where(itemId.===("a")
-      .asInstanceOf[ExpressionColumn[Boolean]]))) should matchSQL(
+    toSQL(shieldId.notIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")
+    ))) should matchSQL(
       s"""
          |shield_id NOT IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
          |""".stripMargin)
@@ -29,23 +29,23 @@ class INFunctionsTest extends DslTestSpec {
          |""".stripMargin)
 
     toSQL(select(itemId.in(Seq("a", "b")) as "l").from(OneTestTable)
-      .where(itemId.===("a").asInstanceOf[ExpressionColumn[Boolean]]), false) should matchSQL(
+      .where(itemId.isEq("a")), false) should matchSQL(
       s"""
          |SELECT item_id IN ('a', 'b') AS l FROM ${OneTestTable.quoted} WHERE item_id = 'a'
          |""".stripMargin)
   }
 
   it should "SKIP tableAlias for GLOBAL IN" in {
-    toSQL(shieldId.globalIn(select(itemId).from(OneTestTable).where(itemId.===("a")
-      .asInstanceOf[ExpressionColumn[Boolean]]))) should matchSQL(
+    toSQL(shieldId.globalIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")
+    ))) should matchSQL(
       s"""
          |shield_id GLOBAL IN (SELECT item_id FROM ${OneTestTable.quoted} WHERE item_id = 'a')
          |""".stripMargin)
   }
 
   it should "SKIP tableAlias for GLOBAL NOT IN" in {
-    toSQL(shieldId.globalNotIn(select(itemId).from(OneTestTable).where(itemId.===("a")
-      .asInstanceOf[ExpressionColumn[Boolean]]))) should matchSQL(
+    toSQL(shieldId.globalNotIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")
+    ))) should matchSQL(
       s"""
          |shield_id GLOBAL NOT IN (SELECT item_id FROM ${OneTestTable.quoted} WHERE item_id = 'a')
          |""".stripMargin)
