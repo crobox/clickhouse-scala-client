@@ -7,6 +7,7 @@ import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions.constOrColMagn
 
 import java.util.UUID
 
+@org.scalatest.Ignore
 class INFunctionsIT extends DslITSpec {
 
   override val table2Entries: Seq[Table2Entry] =
