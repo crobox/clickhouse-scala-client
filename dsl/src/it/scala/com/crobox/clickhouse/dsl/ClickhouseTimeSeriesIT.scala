@@ -1,12 +1,13 @@
 package com.crobox.clickhouse.dsl
 
-import com.crobox.clickhouse.DslITSpec
+import com.crobox.clickhouse.{ClickhouseClient, DslITSpec}
 import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
 import com.crobox.clickhouse.time.{IntervalStart, MultiDuration, MultiInterval, TimeUnit, TotalDuration}
 import org.joda.time.{DateTime, DateTimeZone, Days}
 import org.scalactic.TripleEqualsSupport
 import org.scalatest.prop.TableDrivenPropertyChecks
+import spray.json.RootJsonFormat
 
 import java.util.UUID
 import scala.concurrent.Future
@@ -17,10 +18,10 @@ class ClickhouseTimeSeriesIT extends DslITSpec with TableDrivenPropertyChecks {
   case class CustomResult(time: IntervalStart, shields: String)
 
   object CustomResult {
-    implicit val format = jsonFormat2(CustomResult.apply)
+    implicit val format: RootJsonFormat[CustomResult] = jsonFormat2(CustomResult.apply)
   }
 
-  implicit val clickhouseClient                   = clickClient
+  implicit val clickhouseClient: ClickhouseClient = clickClient
   val startInterval                               = DateTime.parse("2019-03-01").withTimeAtStartOfDay().withZone(DateTimeZone.UTC)
   val secondsId                                   = UUID.randomUUID()
   val dayId                                       = UUID.randomUUID()
