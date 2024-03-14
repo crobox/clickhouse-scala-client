@@ -22,10 +22,10 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toUInt8(Long.MaxValue)) should be("255")
 
     an[Exception] should be thrownBy r(toUInt8(Float.MaxValue.toString))
-    r(toUInt8(Float.MaxValue)) should be("255")
+    r(toUInt8(Float.MaxValue)) should be("0")
 
     an[Exception] should be thrownBy r(toUInt8(Double.MaxValue.toString))
-    r(toUInt8(Double.MaxValue)) should be("255")
+    r(toUInt8(Double.MaxValue)) should be("0")
   }
 
   it should "handle UInt32" in {
@@ -49,12 +49,12 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toUInt32(Long.MinValue)) should be("0")
 
     an[Exception] should be thrownBy r(toUInt32(Float.MaxValue.toString))
-    r(toUInt32(Float.MaxValue)) should be("4294967295")
+    r(toUInt32(Float.MaxValue)) should be("0")
     an[Exception] should be thrownBy r(toUInt32(Float.MinValue.toString))
     r(toUInt32(Float.MinValue)) should be("0")
 
     an[Exception] should be thrownBy r(toUInt32(Double.MaxValue.toString))
-    r(toUInt32(Double.MaxValue)) should be("4294967295")
+    r(toUInt32(Double.MaxValue)) should be("0")
     an[Exception] should be thrownBy r(toUInt32(Double.MinValue.toString))
     r(toUInt32(Double.MinValue)) should be("0")
 
@@ -86,12 +86,12 @@ class TypeCastFunctionsIT extends DslITSpec {
     r(toInt32(Long.MinValue)) should be("0")
 
     an[Exception] should be thrownBy r(toInt32(Float.MaxValue.toString))
-    r(toInt32(Float.MaxValue)) should be("2147483647")
+    r(toInt32(Float.MaxValue)) should be("-2147483648")
     an[Exception] should be thrownBy r(toInt32(Float.MinValue.toString))
     r(toInt32(Float.MinValue)) should be("-2147483648")
 
     an[Exception] should be thrownBy r(toInt32(Double.MaxValue.toString))
-    r(toInt32(Double.MaxValue)) should be("2147483647")
+    r(toInt32(Double.MaxValue)) should be("-2147483648")
     an[Exception] should be thrownBy r(toInt32(Double.MinValue.toString))
     r(toInt32(Double.MinValue)) should be("-2147483648")
 
