@@ -3,6 +3,7 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl.misc.LogicalOperatorImprovements.ExpressionColumnImpr
 import com.crobox.clickhouse.dsl.select
+import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions.constOrColMagnetFromCol
 
 import java.util.UUID
 
@@ -36,8 +37,8 @@ class INFunctionsIT extends DslITSpec {
         .from(TwoTestTable)
         .where(
           col4.in(select(col4).from(ThreeTestTable)) and
-          col2.in(select(col2).from(TwoTestTable)) and
-          col2.in(select(col4).from(ThreeTestTable))
+            col2.in(select(col2).from(TwoTestTable)) and
+            col2.in(select(col4).from(ThreeTestTable))
         )
     ).futureValue should be("")
   }
