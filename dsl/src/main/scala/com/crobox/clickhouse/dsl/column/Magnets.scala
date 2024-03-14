@@ -6,8 +6,8 @@ import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
 import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn, OperationalQuery, Table, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
-
 import scala.language.implicitConversions
+
 
 trait Magnets {
   self: ArithmeticFunctions

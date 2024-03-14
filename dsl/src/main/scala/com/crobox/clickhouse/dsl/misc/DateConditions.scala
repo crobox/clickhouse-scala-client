@@ -1,11 +1,14 @@
 package com.crobox.clickhouse.dsl.misc
 
 import com.crobox.clickhouse.dsl.ddtFromDate
+import com.crobox.clickhouse.dsl.ddtFromDateCol
 import com.crobox.clickhouse.dsl.numericFromLong
+import com.crobox.clickhouse.dsl.numericFromLongCol
 import com.crobox.clickhouse.dsl.logicalOpsMagnetFromOptionCol
 import com.crobox.clickhouse.dsl.logicalOpsMagnetFromBooleanCol
 import com.crobox.clickhouse.dsl.{ExpressionColumn, NativeColumn}
 import org.joda.time.{DateTime, DateTimeZone, LocalDate}
+import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 
 import scala.language.implicitConversions
 
