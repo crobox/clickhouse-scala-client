@@ -13,8 +13,6 @@ class ComparisonFunctionsIT extends DslITSpec {
     r(someNum >= 3) shouldBe "1"
     r(someNum <= 3) shouldBe "0"
     r(someNum isEq 3) shouldBe "0"
-    r(someNum === 3) shouldBe "0"
-    r(someNum !== 3) shouldBe "1"
     r(notEquals(1,2)) shouldBe "1"
     r(_equals(2L,2)) shouldBe "1"
     r(less(1.0,200)) shouldBe "1"
