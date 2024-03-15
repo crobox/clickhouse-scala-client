@@ -3,25 +3,24 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions.constOrColMagnetFromCol
+import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions.{constOrColMagnetFromCol => toCol}
 import scala.language.implicitConversions
-//import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions.constOrColMagnetFromConst
 
 
 class INFunctionsTest extends DslTestSpec {
 
   it should "use tableAlias for IN" in {
     //val shieldToUse: ConstOrColMagnet[String] =
-    val resToSee = toSQL(shieldId.in(select(itemId).from(OneTestTable).where(itemId.isEq("a"))))
+    val resToSee = toSQL(toCol(shieldId).in(select(itemId).from(OneTestTable).where(itemId.isEq("a"))))
 
     println("==================================")
     println(s"in SQL building result: $resToSee")
     println("==================================")
 
-    //    resToSee should matchSQL(
-    //      s"""
-    //         |shield_id IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
-    //         |""".stripMargin)
+    resToSee should matchSQL(
+      s"""
+         |shield_id IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
+         |""".stripMargin)
   }
 
   //  it should "use tableAlias for NOT IN" in {
