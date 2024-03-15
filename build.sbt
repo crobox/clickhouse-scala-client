@@ -16,8 +16,8 @@ lazy val root = (project in file("."))
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
-        scalaVersion := "2.13.8",
-        crossScalaVersions := List("2.13.8", "3.3.1"),
+        scalaVersion := "2.13.13",
+        crossScalaVersions := List("2.13.13", "3.3.1"),
         javacOptions ++= Seq("-g", "-Xlint:unchecked", "-Xlint:deprecation", "-source", "11", "-target", "11"),
         scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:_", "-encoding", "UTF-8"),
         publishTo := {
