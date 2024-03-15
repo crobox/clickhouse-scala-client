@@ -37,18 +37,18 @@ class NumericColFunctionIT extends DslITSpec {
     r(CHDsl.not(None)) shouldBe "1"
   }
 
-//  it should "have correct types so reduce can be used" in {
-//    val exp = Seq(
-//      Const(true),
-//      2 === 2,
-//      3 === 3
-//    ).reduce(_ or _)
-//
-//    toSql(
-//      select(exp).internalQuery,
-//      None
-//    ) shouldBe "SELECT 1"
-//  }
+  it should "have correct types so reduce can be used" in {
+    val exp = Seq(
+      Const(true),
+      2 isEq 2,
+      3 isEq 3
+    ).reduce(_ or _)
+
+    toSql(
+      select(exp).internalQuery,
+      None
+    ) shouldBe "SELECT 1"
+  }
 
   it should "properly reduce any constant result of LogicalFunctions" in {
     toSql(
