@@ -8,6 +8,9 @@ import scala.language.implicitConversions
 
 class INFunctionsTest extends DslTestSpec {
 
+  // TODO: Temporary Scala 3 Workaround. Somehow in CI/CD version of Scala 3, columns are not converted to respectible
+  // Magnet instances, so that `in` method could be used. Need to explicitly specify type annotation for conversion to
+  // work. This may require more deep work on this in the future
   private val shieldCol: ConstOrColMagnet[String] = shieldId
   private val itemCol: ConstOrColMagnet[String] = itemId
   private val constCol4: ConstOrColMagnet[String] = col4
