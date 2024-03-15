@@ -128,7 +128,7 @@ object DSLImprovements {
         //            case _                    =>
         //          }
         case _: TableFromQuery[_] => return query.andConstraint(condition)
-        case null =>
+        case _ =>
       }
       query
     }

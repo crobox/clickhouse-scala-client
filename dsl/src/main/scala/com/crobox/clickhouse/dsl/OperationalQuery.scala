@@ -146,7 +146,7 @@ trait OperationalQuery extends Query {
     val filteredDuplicates = filteredSelectAll.filterNot(column => {
       selectForGroupCols.exists {
         case c: Column => column.name == c.name
-        case null => false
+        case _ => false
       }
     })
 
