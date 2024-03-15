@@ -3,11 +3,11 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl.misc.LogicalOperatorImprovements.ExpressionColumnImpr
 import com.crobox.clickhouse.dsl.select
-import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions.constOrColMagnetFromCol
+import com.crobox.clickhouse.dsl._
+import scala.language.implicitConversions
 
 import java.util.UUID
 
-@org.scalatest.Ignore
 class INFunctionsIT extends DslITSpec {
 
   override val table2Entries: Seq[Table2Entry] =
@@ -23,9 +23,12 @@ class INFunctionsIT extends DslITSpec {
       Table3Entry(UUID.randomUUID(), 2, Option("b"), "c", "c")
     )
 
+  private val constCol4: ConstOrColMagnet[String] = col4
+  private val constCol2: ConstOrColMagnet[Int] = col2
+
   it should "use tableAlias for IN, single table" in {
     execute(
-      select(col4).from(TwoTestTable).where(col4.in(select(col4).from(ThreeTestTable)))
+      select(col4).from(TwoTestTable).where(constCol4.in(select(col4).from(ThreeTestTable)))
     ).futureValue should be("a\nb")
   }
 
@@ -37,9 +40,9 @@ class INFunctionsIT extends DslITSpec {
       select(col4)
         .from(TwoTestTable)
         .where(
-          col4.in(select(col4).from(ThreeTestTable)) and
-            col2.in(select(col2).from(TwoTestTable)) and
-            col2.in(select(col4).from(ThreeTestTable))
+          constCol4.in(select(col4).from(ThreeTestTable)) and
+            constCol2.in(select(col2).from(TwoTestTable)) and
+            constCol2.in(select(col4).from(ThreeTestTable))
         )
     ).futureValue should be("")
   }

@@ -10,6 +10,8 @@ class INFunctionsTest extends DslTestSpec {
 
   private val shieldCol: ConstOrColMagnet[String] = shieldId
   private val itemCol: ConstOrColMagnet[String] = itemId
+  private val constCol4: ConstOrColMagnet[String] = col4
+  private val constCol2: ConstOrColMagnet[Int] = col2
 
   it should "use tableAlias for IN" in {
     toSQL(shieldCol.in(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(
@@ -67,23 +69,23 @@ class INFunctionsTest extends DslTestSpec {
     )
   }
 
-  //  it should "use tableAlias for IN multiple tables" in {
-  //    toSQL(
-  //      (
-  //        select(col4)
-  //          .from(TwoTestTable)
-  //          .where(
-  //            col4.in(select(col4).from(ThreeTestTable)) and
-  //              col2.in(select(col2).from(TwoTestTable)) and
-  //              col2.in(select(col4).from(ThreeTestTable))
-  //          )
-  //        )
-  //    ) should matchSQL(
-  //      s"""
-  //         |WHERE column_4 IN (SELECT column_4 FROM ${ThreeTestTable.quoted} AS T1)
-  //         |  AND column_2 IN (SELECT column_2 FROM ${TwoTestTable.quoted} AS T2)
-  //         |  AND column_2 IN (SELECT column_4 FROM ${ThreeTestTable.quoted} AS T1)
-  //         |""".stripMargin
-  //)
-  //}
+  it should "use tableAlias for IN multiple tables" in {
+    toSQL(
+      (
+        select(col4)
+          .from(TwoTestTable)
+          .where(
+            constCol4.in(select(col4).from(ThreeTestTable)) and
+              constCol2.in(select(col2).from(TwoTestTable)) and
+              constCol2.in(select(col4).from(ThreeTestTable))
+          )
+        )
+    ) should matchSQL(
+      s"""
+         |WHERE column_4 IN (SELECT column_4 FROM ${ThreeTestTable.quoted} AS T1)
+         |  AND column_2 IN (SELECT column_2 FROM ${TwoTestTable.quoted} AS T2)
+         |  AND column_2 IN (SELECT column_4 FROM ${ThreeTestTable.quoted} AS T1)
+         |""".stripMargin
+    )
+  }
 }
