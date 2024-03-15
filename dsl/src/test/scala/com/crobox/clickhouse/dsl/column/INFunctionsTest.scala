@@ -84,6 +84,6 @@ class INFunctionsTest extends DslTestSpec {
   //         |  AND column_2 IN (SELECT column_2 FROM ${TwoTestTable.quoted} AS T2)
   //         |  AND column_2 IN (SELECT column_4 FROM ${ThreeTestTable.quoted} AS T1)
   //         |""".stripMargin
-  )
-}
+  //)
+  //}
 }
