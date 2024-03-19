@@ -36,7 +36,7 @@ trait OperationalQuery extends Query {
     OperationalQuery(
       internalQuery.from
         .map {
-          case query: InnerFromQuery => internalQuery.copy(from = Some(query.copy(alias = Option(alias))))
+          case query: InnerFromQuery    => internalQuery.copy(from = Some(query.copy(alias = Option(alias))))
           case table: TableFromQuery[_] => internalQuery.copy(from = Some(table.copy(alias = Option(alias))))
         }
         .getOrElse(internalQuery)
@@ -72,8 +72,8 @@ trait OperationalQuery extends Query {
 
   def groupBy(columns: Column*): OperationalQuery = {
     val internalGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery())
-    val newGroupBy = Some(internalGroupBy.copy(usingColumns = internalGroupBy.usingColumns ++ columns))
-    val newSelect = mergeOperationalColumns(columns)
+    val newGroupBy      = Some(internalGroupBy.copy(usingColumns = internalGroupBy.usingColumns ++ columns))
+    val newSelect       = mergeOperationalColumns(columns)
     OperationalQuery(
       internalQuery.copy(select = newSelect, groupBy = newGroupBy)
     )
@@ -122,7 +122,7 @@ trait OperationalQuery extends Query {
 
   def unionAll(otherQuery: OperationalQuery): OperationalQuery = {
     require(internalQuery.select.isDefined && otherQuery.internalQuery.select.isDefined,
-      "Trying to apply UNION ALL on non SELECT queries.")
+            "Trying to apply UNION ALL on non SELECT queries.")
     require(
       otherQuery.internalQuery.select.get.columns.size == internalQuery.select.get.columns.size,
       "SELECT queries needs to have the same number of columns to perform UNION ALL."
@@ -146,7 +146,7 @@ trait OperationalQuery extends Query {
     val filteredDuplicates = filteredSelectAll.filterNot(column => {
       selectForGroupCols.exists {
         case c: Column => column.name == c.name
-        case _ => false
+        case _         => false
       }
     })
 
@@ -225,9 +225,9 @@ trait OperationalQuery extends Query {
     globalJoin(JoinQuery.AnyRightJoin, query)
 
   def using(
-             column: Column,
-             columns: Column*
-           ): OperationalQuery = {
+      column: Column,
+      columns: Column*
+  ): OperationalQuery = {
     require(internalQuery.join.isDefined)
 
     val newJoin = this.internalQuery.join.get.copy(`using` = (column +: columns).distinct)

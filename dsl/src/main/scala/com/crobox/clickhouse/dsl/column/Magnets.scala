@@ -8,7 +8,6 @@ import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn, Operatio
 import org.joda.time.{DateTime, LocalDate}
 import scala.language.implicitConversions
 
-
 trait Magnets {
   self: ArithmeticFunctions
     with ComparisonFunctions
@@ -56,11 +55,10 @@ trait Magnets {
   }
 
   case class Cast[T](tableColumn: ConstOrColMagnet[_], simpleColumnType: SimpleColumnType)
-    extends TypeCastColumn[T](tableColumn)
+      extends TypeCastColumn[T](tableColumn)
       with ConstOrColMagnet[T] {
     override val column: TableColumn[T] = this
   }
-
 
   /**
    * Any constant or column.
@@ -83,35 +81,35 @@ trait Magnets {
    */
   sealed trait InFuncRHMagnet extends Magnet[Nothing] {
     val query: Option[OperationalQuery] = None
-    val tableRef: Option[Table] = None
+    val tableRef: Option[Table]         = None
 
     val isEmptyCollection: Boolean = false
   }
 
   implicit def InFuncRHMagnetFromIterable[T: QueryValue](s: Iterable[T]): InFuncRHMagnet =
     new InFuncRHMagnet {
-      val qvT = implicitly[QueryValue[T]]
+      val qvT                               = implicitly[QueryValue[T]]
       val sConsts: Seq[ConstOrColMagnet[T]] = s.map(col => constOrColMagnetFromConst(col)(qvT)).toSeq
 
-      override val column: Tuple = tuple(sConsts: _*)
+      override val column: Tuple              = tuple(sConsts: _*)
       override val isEmptyCollection: Boolean = column.coln.isEmpty
     }
 
   implicit def InFuncRHMagnetFromTuple(s: Tuple): InFuncRHMagnet =
     new InFuncRHMagnet {
-      override val column: Tuple = s
+      override val column: Tuple              = s
       override val isEmptyCollection: Boolean = column.coln.isEmpty
     }
 
   implicit def InFuncRHMagnetFromQuery(s: OperationalQuery): InFuncRHMagnet =
     new InFuncRHMagnet {
-      override val column = EmptyColumn
+      override val column                          = EmptyColumn
       override val query: Option[OperationalQuery] = Some(s)
     }
 
   implicit def InFuncRHMagnetFromTable(s: Table): InFuncRHMagnet =
     new InFuncRHMagnet {
-      override val column = EmptyColumn
+      override val column                  = EmptyColumn
       override val tableRef: Option[Table] = Some(s)
     }
 
@@ -122,7 +120,7 @@ trait Magnets {
 
   implicit def arrayColMagnetFromIterableConst[T: QueryValue](s: scala.Iterable[T]): ArrayColMagnet[scala.Iterable[T]] =
     new ArrayColMagnet[scala.Iterable[T]] {
-      val qvForIterable = QueryValueFormats.queryValueToSeq(implicitly[QueryValue[T]])
+      val qvForIterable   = QueryValueFormats.queryValueToSeq(implicitly[QueryValue[T]])
       override val column = Const(s)(qvForIterable)
     }
 
@@ -135,7 +133,7 @@ trait Magnets {
    * UUID-like columns
    */
   trait UUIDColMagnet[C]
-    extends Magnet[C]
+      extends Magnet[C]
       with HexCompatible[C]
       with ComparableWith[UUIDColMagnet[_]]
       with EmptyOps[C]
@@ -145,7 +143,7 @@ trait Magnets {
    * String-like columns
    */
   trait StringColMagnet[C]
-    extends Magnet[C]
+      extends Magnet[C]
       with HexCompatible[C]
       with ComparableWith[StringColMagnet[_]]
       with ScalaStringFunctionOps
@@ -154,7 +152,7 @@ trait Magnets {
       with StringSearchOps
       with EmptyNonEmptyCol[C]
 
-  implicit def stringColMagnetFromString[T <: String : QueryValue](s: T): StringColMagnet[String] =
+  implicit def stringColMagnetFromString[T <: String: QueryValue](s: T): StringColMagnet[String] =
     new StringColMagnet[String] {
       override val column: TableColumn[String] = Const(s)
     }
@@ -164,7 +162,7 @@ trait Magnets {
       override val column: TableColumn[String] = s
     }
 
-  implicit def stringColMagnetFromUUID[T <: UUID : QueryValue](s: T): StringColMagnet[UUID] =
+  implicit def stringColMagnetFromUUID[T <: UUID: QueryValue](s: T): StringColMagnet[UUID] =
     new StringColMagnet[UUID] {
       override val column: TableColumn[UUID] = Const(s)
     }
@@ -194,12 +192,12 @@ trait Magnets {
       override val column = s
     }
 
-  implicit def ddtFromDate[T <: LocalDate : QueryValue](s: T): DateOrDateTime[LocalDate] =
+  implicit def ddtFromDate[T <: LocalDate: QueryValue](s: T): DateOrDateTime[LocalDate] =
     new DateOrDateTime[LocalDate] {
       override val column = toDate(s)
     }
 
-  implicit def ddtFromDateTime[T <: DateTime : QueryValue](s: T): DateOrDateTime[DateTime] =
+  implicit def ddtFromDateTime[T <: DateTime: QueryValue](s: T): DateOrDateTime[DateTime] =
     new DateOrDateTime[DateTime] {
       override val column = toDateTime(s)
     }
@@ -209,12 +207,12 @@ trait Magnets {
 
     def isConstTrue: Boolean = asOption match {
       case Some(Const(el: Boolean)) => el
-      case _ => false
+      case _                        => false
     }
 
     def isConstFalse: Boolean = asOption match {
       case Some(Const(false)) => true
-      case _ => false
+      case _                  => false
     }
   }
 
@@ -251,43 +249,43 @@ trait Magnets {
   sealed trait AddSubtractable[C] extends Magnet[C] with AddSubtractOps[C]
 
   trait NumericCol[C]
-    extends Magnet[C]
+      extends Magnet[C]
       with AddSubtractable[C]
       with HexCompatible[C]
       with ComparableWith[NumericCol[_]]
       with ArithmeticOps[C]
 
-  implicit def numericFromLong[T <: Long : QueryValue](s: T): NumericCol[Long] =
+  implicit def numericFromLong[T <: Long: QueryValue](s: T): NumericCol[Long] =
     new NumericCol[Long] {
       override val column = Const(s)
     }
 
-  implicit def numericFromInt[T <: Int : QueryValue](s: T): NumericCol[Int] =
+  implicit def numericFromInt[T <: Int: QueryValue](s: T): NumericCol[Int] =
     new NumericCol[Int] {
       override val column = Const(s)
     }
 
-  implicit def numericFromDouble[T <: Double : QueryValue](s: T): NumericCol[Double] =
+  implicit def numericFromDouble[T <: Double: QueryValue](s: T): NumericCol[Double] =
     new NumericCol[Double] {
       override val column = Const(s)
     }
 
-  implicit def numericFromFloat[T <: Float : QueryValue](s: T): NumericCol[Float] =
+  implicit def numericFromFloat[T <: Float: QueryValue](s: T): NumericCol[Float] =
     new NumericCol[Float] {
       override val column = Const(s)
     }
 
-  implicit def numericFromBigInt[T <: BigInt : QueryValue](s: T): NumericCol[BigInt] =
+  implicit def numericFromBigInt[T <: BigInt: QueryValue](s: T): NumericCol[BigInt] =
     new NumericCol[BigInt] {
       override val column = Const(s)
     }
 
-  implicit def numericFromBigDecimal[T <: BigDecimal : QueryValue](s: T): NumericCol[BigDecimal] =
+  implicit def numericFromBigDecimal[T <: BigDecimal: QueryValue](s: T): NumericCol[BigDecimal] =
     new NumericCol[BigDecimal] {
       override val column = Const(s)
     }
 
-  implicit def numericFromBoolean[T <: Boolean : QueryValue](s: T): NumericCol[Boolean] =
+  implicit def numericFromBoolean[T <: Boolean: QueryValue](s: T): NumericCol[Boolean] =
     new NumericCol[Boolean] {
       override val column = Const(s)
     }
@@ -333,13 +331,13 @@ trait Magnets {
   sealed trait EmptyNonEmptyCol[C] extends Magnet[C]
 
   implicit def emptyNonEmptyFromIterableCol[Elem, Collection[B] <: Iterable[B], ColType[A] <: TableColumn[A]](
-                                                                                                               s: ColType[Collection[Elem]]
-                                                                                                             ): EmptyNonEmptyCol[Collection[Elem]] =
+      s: ColType[Collection[Elem]]
+  ): EmptyNonEmptyCol[Collection[Elem]] =
     new EmptyNonEmptyCol[Collection[Elem]] {
       override val column: TableColumn[Collection[Elem]] = s
     }
 
-  implicit def emptyNonEmptyFromIterable[T <: Iterable[_] : QueryValue](s: T): EmptyNonEmptyCol[T] =
+  implicit def emptyNonEmptyFromIterable[T <: Iterable[_]: QueryValue](s: T): EmptyNonEmptyCol[T] =
     new EmptyNonEmptyCol[T] {
       override val column = Const(s)
     }
