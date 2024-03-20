@@ -1,10 +1,5 @@
 import Build.*
 
-// Scala Formatting
-ThisBuild / scalafmtVersion := "1.5.1"
-ThisBuild / scalafmtOnCompile := false     // all projects
-ThisBuild / scalafmtTestOnCompile := false // all projects
-
 releaseCrossBuild := true
 
 sonatypeProfileName := "com.crobox"
@@ -66,7 +61,7 @@ lazy val client: Project = (project in file("client"))
       "org.apache.pekko"           %% "pekko-stream"  % PekkoVersion,
       "org.apache.pekko"           %% "pekko-http"    % PekkoHttpVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
-      "joda-time"                  % "joda-time"      % "2.12.5"
+      "joda-time"                  % "joda-time"      % "2.12.7"
     ) ++ Seq("org.apache.pekko"    %% "pekko-testkit" % PekkoVersion % Test) ++ Build.testDependencies.map(_ % Test)
   )
 
@@ -77,7 +72,10 @@ lazy val dsl = (project in file("dsl"))
   .settings(
     name := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    libraryDependencies ++= Seq("com.google.guava" % "guava" % "23.0", "com.typesafe" % "config" % "1.4.2")
+    libraryDependencies ++= Seq(
+      "com.google.guava" % "guava" % "33.1.0-jre",
+      "com.typesafe" % "config" % "1.4.3"
+    )
   )
 //  .settings(excludeDependencies ++= Seq(ExclusionRule("org.apache.pekko")))
 
