@@ -5,64 +5,56 @@ import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl._
 import scala.language.implicitConversions
 
-
 class INFunctionsTest extends DslTestSpec {
 
   // TODO: Temporary Scala 3 Workaround. Somehow in CI/CD version of Scala 3, columns are not converted to respectible
   // Magnet instances, so that `in` method could be used. Need to explicitly specify type annotation for conversion to
   // work. This may require more deep work on this in the future
-  private val shieldCol: ConstOrColMagnet[String] = shieldId
-  private val itemCol: ConstOrColMagnet[String] = itemId
-  private val constCol4: ConstOrColMagnet[String] = col4
-  private val constCol2: ConstOrColMagnet[Int] = col2
+//  private val shieldCol: ConstOrColMagnet[String] = shieldId
+//  private val itemCol: ConstOrColMagnet[String] = itemId
+//  private val constCol4: ConstOrColMagnet[String] = col4
+//  private val constCol2: ConstOrColMagnet[Int] = col2
 
   it should "use tableAlias for IN" in {
-    toSQL(shieldId.in(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(
-      s"""
+    toSQL(shieldId.in(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(s"""
          |shield_id IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
          |""".stripMargin)
   }
 
   it should "use tableAlias for NOT IN" in {
-    toSQL(shieldCol.notIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")
-    ))) should matchSQL(
-      s"""
+    toSQL(shieldId.notIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(s"""
          |shield_id NOT IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
          |""".stripMargin)
   }
 
   it should "SKIP tableAlias for IN as select clause" in {
-    toSQL(select(itemId).from(OneTestTable).where(itemCol.in(Seq("a", "b"))), false) should matchSQL(
-      s"""
+    toSQL(select(itemId).from(OneTestTable).where(itemId.in(Seq("a", "b"))), false) should matchSQL(s"""
          |SELECT item_id FROM ${OneTestTable.quoted} WHERE item_id IN ('a', 'b')
          |""".stripMargin)
 
-    toSQL(select(itemCol.in(Seq("a", "b")) as "l").from(OneTestTable)
-      .where(itemId.isEq("a")), false) should matchSQL(
-      s"""
+    toSQL(select(itemId.in(Seq("a", "b")) as "l")
+            .from(OneTestTable)
+            .where(itemId.isEq("a")),
+          false) should matchSQL(s"""
          |SELECT item_id IN ('a', 'b') AS l FROM ${OneTestTable.quoted} WHERE item_id = 'a'
          |""".stripMargin)
   }
 
   it should "SKIP tableAlias for GLOBAL IN" in {
-    toSQL(shieldCol.globalIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")
-    ))) should matchSQL(
-      s"""
+    toSQL(shieldId.globalIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(s"""
          |shield_id GLOBAL IN (SELECT item_id FROM ${OneTestTable.quoted} WHERE item_id = 'a')
          |""".stripMargin)
   }
 
   it should "SKIP tableAlias for GLOBAL NOT IN" in {
-    toSQL(shieldCol.globalNotIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")
-    ))) should matchSQL(
-      s"""
+    toSQL(shieldId.globalNotIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(s"""
          |shield_id GLOBAL NOT IN (SELECT item_id FROM ${OneTestTable.quoted} WHERE item_id = 'a')
          |""".stripMargin)
   }
 
   it should "use tableAlias for nested IN" in {
     toSQL(
-      shieldCol.in(select(itemId).from(OneTestTable).join(InnerJoin, select(itemId).from(TwoTestTable)).using(itemId))
+      shieldId.in(select(itemId).from(OneTestTable).join(InnerJoin, select(itemId).from(TwoTestTable)).using(itemId))
     ) should matchSQL(
       s"""
          |shield_id IN (
@@ -78,9 +70,9 @@ class INFunctionsTest extends DslTestSpec {
         select(col4)
           .from(TwoTestTable)
           .where(
-            constCol4.in(select(col4).from(ThreeTestTable)) and
-              constCol2.in(select(col2).from(TwoTestTable)) and
-              constCol2.in(select(col4).from(ThreeTestTable))
+            col4.in(select(col4).from(ThreeTestTable)) and
+            col2.in(select(col2).from(TwoTestTable)) and
+            col2.in(select(col4).from(ThreeTestTable))
           )
         )
     ) should matchSQL(
