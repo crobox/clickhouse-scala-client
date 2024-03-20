@@ -17,7 +17,7 @@ class INFunctionsTest extends DslTestSpec {
   private val constCol2: ConstOrColMagnet[Int] = col2
 
   it should "use tableAlias for IN" in {
-    toSQL(shieldCol.in(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(
+    toSQL(shieldId.in(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(
       s"""
          |shield_id IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
          |""".stripMargin)
