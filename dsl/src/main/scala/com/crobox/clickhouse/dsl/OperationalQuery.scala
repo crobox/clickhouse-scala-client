@@ -230,7 +230,7 @@ trait OperationalQuery extends Query {
   ): OperationalQuery = {
     require(internalQuery.join.isDefined)
 
-    val newJoin = this.internalQuery.join.get.copy(using = (column +: columns).distinct)
+    val newJoin = this.internalQuery.join.get.copy(`using` = (column +: columns).distinct)
     OperationalQuery(internalQuery.copy(join = Some(newJoin)))
   }
 

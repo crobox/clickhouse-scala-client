@@ -299,16 +299,16 @@ trait ClickhouseTokenizerModule
     }
     query.joinType match {
       case CrossJoin =>
-        assert(using.isEmpty, "When using CrossJoin, no using columns should be provided")
+        assert(`using`.isEmpty, "When using CrossJoin, no using columns should be provided")
         assert(query.on.isEmpty, "When using CrossJoin, no on conditions should be provided")
         ""
       case _ =>
-        assert(using.nonEmpty || query.on.nonEmpty, s"No USING or ON provided for joinType: ${query.joinType}")
-        assert(!(using.nonEmpty && query.on.nonEmpty), s"Both USING and ON provided for joinType: ${query.joinType}")
+        assert(`using`.nonEmpty || query.on.nonEmpty, s"No USING or ON provided for joinType: ${query.joinType}")
+        assert(!(`using`.nonEmpty && query.on.nonEmpty), s"Both USING and ON provided for joinType: ${query.joinType}")
 
-        if (using.nonEmpty) {
+        if (`using`.nonEmpty) {
           // TOKENIZE USING
-          if (using.size == 1) s"USING ${using.head.name}"
+          if (`using`.size == 1) s"USING ${using.head.name}"
           else s"USING (${using.map(_.name).mkString(",")})"
         } else if (query.on.nonEmpty) {
           // TOKENIZE ON. If the fromClause is a TABLE, we need to check on aliases!

@@ -40,8 +40,8 @@ class NumericColFunctionIT extends DslITSpec {
   it should "have correct types so reduce can be used" in {
     val exp = Seq(
       Const(true),
-      2 === 2,
-      3 === 3
+      2 isEq 2,
+      3 isEq 3
     ).reduce(_ or _)
 
     toSql(

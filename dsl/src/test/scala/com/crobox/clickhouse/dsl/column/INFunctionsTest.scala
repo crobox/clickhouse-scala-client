@@ -3,17 +3,18 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl._
+import scala.language.implicitConversions
 
 class INFunctionsTest extends DslTestSpec {
 
   it should "use tableAlias for IN" in {
-    toSQL(shieldId.in(select(itemId).from(OneTestTable).where(itemId.===("a")))) should matchSQL(s"""
-        |shield_id IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
-        |""".stripMargin)
+    toSQL(shieldId.in(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(s"""
+         |shield_id IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
+         |""".stripMargin)
   }
 
   it should "use tableAlias for NOT IN" in {
-    toSQL(shieldId.notIn(select(itemId).from(OneTestTable).where(itemId.===("a")))) should matchSQL(s"""
+    toSQL(shieldId.notIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(s"""
          |shield_id NOT IN (SELECT item_id FROM ${OneTestTable.quoted} AS T1 WHERE item_id = 'a')
          |""".stripMargin)
   }
@@ -23,19 +24,22 @@ class INFunctionsTest extends DslTestSpec {
          |SELECT item_id FROM ${OneTestTable.quoted} WHERE item_id IN ('a', 'b')
          |""".stripMargin)
 
-    toSQL(select(itemId.in(Seq("a", "b")) as "l").from(OneTestTable).where(itemId.===("a")), false) should matchSQL(s"""
+    toSQL(select(itemId.in(Seq("a", "b")) as "l")
+            .from(OneTestTable)
+            .where(itemId.isEq("a")),
+          false) should matchSQL(s"""
          |SELECT item_id IN ('a', 'b') AS l FROM ${OneTestTable.quoted} WHERE item_id = 'a'
          |""".stripMargin)
   }
 
   it should "SKIP tableAlias for GLOBAL IN" in {
-    toSQL(shieldId.globalIn(select(itemId).from(OneTestTable).where(itemId.===("a")))) should matchSQL(s"""
+    toSQL(shieldId.globalIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(s"""
          |shield_id GLOBAL IN (SELECT item_id FROM ${OneTestTable.quoted} WHERE item_id = 'a')
          |""".stripMargin)
   }
 
   it should "SKIP tableAlias for GLOBAL NOT IN" in {
-    toSQL(shieldId.globalNotIn(select(itemId).from(OneTestTable).where(itemId.===("a")))) should matchSQL(s"""
+    toSQL(shieldId.globalNotIn(select(itemId).from(OneTestTable).where(itemId.isEq("a")))) should matchSQL(s"""
          |shield_id GLOBAL NOT IN (SELECT item_id FROM ${OneTestTable.quoted} WHERE item_id = 'a')
          |""".stripMargin)
   }

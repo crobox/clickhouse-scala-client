@@ -1,10 +1,12 @@
 package com.crobox.clickhouse.dsl.column
 
 import java.util.UUID
-
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
-import com.crobox.clickhouse.dsl.{Const, EmptyColumn, OperationalQuery, Table, TableColumn}
+import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
+import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
+import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn, OperationalQuery, Table, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
+import scala.language.implicitConversions
 
 trait Magnets {
   self: ArithmeticFunctions
@@ -26,6 +28,36 @@ trait Magnets {
    */
   trait Magnet[+C] {
     val column: TableColumn[C]
+  }
+
+  // ComparabeWith trait and Cast case class were members of ComparisonFunctions and TypeCastFunctions trait
+  // respectively. But placing them in the mixin traits causes Scala 3 compiler to crash. Hence, placing these
+  // constructs here is a workaround allowing for the codebase to be compiled with Scala 3.
+  trait ComparableWith[M <: Magnet[_]] {
+    self: Magnet[_] =>
+    def <(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "<", other)
+
+    def >(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, ">", other)
+
+    def <>(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "!=", other)
+
+    def isEq(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "=", other)
+
+    def notEq(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "!=", other)
+
+    def ===(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "=", other)
+
+    def !==(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "!=", other)
+
+    def <=(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, "<=", other)
+
+    def >=(other: M): ExpressionColumn[Boolean] = ComparisonColumn(self, ">=", other)
+  }
+
+  case class Cast[T](tableColumn: ConstOrColMagnet[_], simpleColumnType: SimpleColumnType)
+      extends TypeCastColumn[T](tableColumn)
+      with ConstOrColMagnet[T] {
+    override val column: TableColumn[T] = this
   }
 
   /**
@@ -88,7 +120,7 @@ trait Magnets {
 
   implicit def arrayColMagnetFromIterableConst[T: QueryValue](s: scala.Iterable[T]): ArrayColMagnet[scala.Iterable[T]] =
     new ArrayColMagnet[scala.Iterable[T]] {
-      val qvForIterable = QueryValueFormats.queryValueToSeq(implicitly[QueryValue[T]])
+      val qvForIterable   = QueryValueFormats.queryValueToSeq(implicitly[QueryValue[T]])
       override val column = Const(s)(qvForIterable)
     }
 
