@@ -174,29 +174,29 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   }
 
   it should "generate CONDITIONAL cases" in {
-    this.tokenizeColumn(switch(const(3))) shouldBe "3"
-    this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe
+    tokenizeColumn(switch(const(3))) shouldBe "3"
+    tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe
     s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
   }
 
   it should "generate CONDITIONAL multiIf" in {
 
     // test no cases
-    this.tokenizeColumn(multiIf(const(3))) shouldBe "3"
+    tokenizeColumn(multiIf(const(3))) shouldBe "3"
 
     // test single case
-    this.tokenizeColumn(multiIf(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe
+    tokenizeColumn(multiIf(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe
     s"if(${col1.name} = 'test', ${itemId.name}, ${shieldId.name})"
 
     // test multi cases
-    this.tokenizeColumn(
+    tokenizeColumn(
       multiIf(shieldId, columnCase(col1.isEq("test"), itemId), columnCase(col1.isEq("test"), itemId))
     ) shouldBe
     s"multiIf(${col1.name} = 'test', ${itemId.name}, ${col1.name} = 'test', ${itemId.name}, ${shieldId.name})"
   }
 
   it should "use constant" in {
-    this.tokenizeColumn(const(3).as(col2)) shouldBe s"3 AS ${col2.name}"
+    tokenizeColumn(const(3).as(col2)) shouldBe s"3 AS ${col2.name}"
   }
 
   it should "allow to behave like little bobby tables" in {
@@ -207,16 +207,16 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   }
 
   it should "build with combinators" in {
-    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniq(col1))) should matchSQL(
+    tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniq(col1))) should matchSQL(
       s"uniqIf(${col1.name}, ${col1.name} = 'test')"
     )
-    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqHLL12(col1))) should matchSQL(
+    tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqHLL12(col1))) should matchSQL(
       s"uniqHLL12If(${col1.name}, ${col1.name} = 'test')"
     )
-    this.tokenizeColumn(
+    tokenizeColumn(
       CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqCombined(col1))
     ) should matchSQL(s"uniqCombinedIf(${col1.name}, ${col1.name} = 'test')")
-    this.tokenizeColumn(
+    tokenizeColumn(
       CombinedAggregatedFunction(
         Combinator.If(col1.isEq("test")),
         CombinedAggregatedFunction(Combinator.If(col2.isEq(3)), uniqExact(col1))
@@ -225,14 +225,14 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   }
 
   it should "uniq for multiple columns" in {
-    this.tokenizeColumn(uniq(col1, col2)) should matchSQL(s"uniq(${col1.name}, ${col2.name})")
-    this.tokenizeColumn(uniqHLL12(col1, col2)) should matchSQL(s"uniqHLL12(${col1.name}, ${col2.name})")
-    this.tokenizeColumn(uniqExact(col1, col2)) should matchSQL(s"uniqExact(${col1.name}, ${col2.name})")
-    this.tokenizeColumn(uniqCombined(col1, col2)) should matchSQL(s"uniqCombined(${col1.name}, ${col2.name})")
+    tokenizeColumn(uniq(col1, col2)) should matchSQL(s"uniq(${col1.name}, ${col2.name})")
+    tokenizeColumn(uniqHLL12(col1, col2)) should matchSQL(s"uniqHLL12(${col1.name}, ${col2.name})")
+    tokenizeColumn(uniqExact(col1, col2)) should matchSQL(s"uniqExact(${col1.name}, ${col2.name})")
+    tokenizeColumn(uniqCombined(col1, col2)) should matchSQL(s"uniqCombined(${col1.name}, ${col2.name})")
   }
 
   it should "use zone name for monthly" in {
-    this.tokenizeTimeSeries(
+    tokenizeTimeSeries(
       TimeSeries(
         timestampColumn,
         MultiInterval(
