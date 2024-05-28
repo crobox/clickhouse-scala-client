@@ -10,20 +10,25 @@ import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
 
-case class TokenizeContext(version: ClickhouseServerVersion,
-                           var joinNr: Int = 0,
-                           var tableAliases: Map[Table, String] = Map.empty,
-                           var useTableAlias: Boolean = false) {
+case class TokenizeContext(
+    version: ClickhouseServerVersion,
+    var joinNr: Int = 0,
+    var tableAliases: Map[Table, String] = Map.empty,
+    var useTableAlias: Boolean = false,
+    delim: String = ", "
+) {
 
   def incrementJoinNumber(): Unit = joinNr += 1
 
   def tableAlias(table: Table): String =
     if (useTableAlias) {
-      tableAliases.getOrElse(table, {
-        val alias = " AS " + ClickhouseStatement.quoteIdentifier("T" + (tableAliases.size + 1))
-        tableAliases += (table -> alias)
-        alias
-      })
+      tableAliases.getOrElse(
+        table, {
+          val alias = " AS " + ClickhouseStatement.quoteIdentifier("T" + (tableAliases.size + 1))
+          tableAliases += (table -> alias)
+          alias
+        }
+      )
     } else ""
 
   def setTableAlias(value: Boolean): TokenizeContext =
@@ -76,8 +81,9 @@ trait ClickhouseTokenizerModule
   protected def tokenizeSeqCol(columns: Column*)(implicit ctx: TokenizeContext): String =
     columns.map(tokenizeColumn).mkString(", ")
 
-  override def toSql(query: InternalQuery,
-                     formatting: Option[String] = Some("JSON"))(implicit ctx: TokenizeContext): String = {
+  override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON"))(implicit
+      ctx: TokenizeContext
+  ): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
     val sql       = removeRedundantWhitespaces(toRawSql(query) + formatSql)
     logger.debug(s"Generated sql [$sql]")
@@ -121,8 +127,9 @@ trait ClickhouseTokenizerModule
       case _       => ""
     }
 
-  private def tokenizeFrom(from: Option[FromQuery],
-                           withPrefix: Boolean = true)(implicit ctx: TokenizeContext): String = {
+  private def tokenizeFrom(from: Option[FromQuery], withPrefix: Boolean = true)(implicit
+      ctx: TokenizeContext
+  ): String = {
     require(from != null)
     val fromClause = from match {
       case Some(query: InnerFromQuery)    => s"(${toRawSql(query.innerQuery.internalQuery).trim})"
@@ -182,12 +189,12 @@ trait ClickhouseTokenizerModule
       case Conditional(cases, default, multiIf) =>
         if (multiIf) {
           s"${if (cases.size > 1) "multiIf" else "if"}(${cases
-            .map(`case` => s"${tokenizeColumn(`case`.condition)}, ${tokenizeColumn(`case`.result)}")
-            .mkString(", ")}, ${tokenizeColumn(default)})"
+              .map(`case` => s"${tokenizeColumn(`case`.condition)}, ${tokenizeColumn(`case`.result)}")
+              .mkString(", ")}, ${tokenizeColumn(default)})"
         } else {
           s"CASE ${cases
-            .map(`case` => s"WHEN ${tokenizeColumn(`case`.condition)} THEN ${tokenizeColumn(`case`.result)}")
-            .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
+              .map(`case` => s"WHEN ${tokenizeColumn(`case`.condition)} THEN ${tokenizeColumn(`case`.result)}")
+              .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
         }
       case c: Const[_] => c.parsed
       case a @ _ =>
@@ -251,9 +258,8 @@ trait ClickhouseTokenizerModule
     val targetZone = zones
       .find(_.getID == zone.getID)
       .orElse(
-        zones.find(
-          targetZone =>
-            targetZone.getID.startsWith("Etc/") &&
+        zones.find(targetZone =>
+          targetZone.getID.startsWith("Etc/") &&
             targetZone.getOffset(start.getMillis) == start.getZone.getOffset(start.getMillis)
         )
       )
@@ -263,8 +269,8 @@ trait ClickhouseTokenizerModule
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
-  private def tokenizeJoin(select: Option[SelectQuery], from: Option[FromQuery], join: Option[JoinQuery])(
-      implicit ctx: TokenizeContext
+  private def tokenizeJoin(select: Option[SelectQuery], from: Option[FromQuery], join: Option[JoinQuery])(implicit
+      ctx: TokenizeContext
   ): String =
     join match {
       case Some(query) =>
@@ -289,8 +295,8 @@ trait ClickhouseTokenizerModule
       case None => ""
     }
 
-  private def tokenizeJoinKeys(select: Option[SelectQuery], from: FromQuery, query: JoinQuery)(
-      implicit ctx: TokenizeContext
+  private def tokenizeJoinKeys(select: Option[SelectQuery], from: FromQuery, query: JoinQuery)(implicit
+      ctx: TokenizeContext
   ): String = {
 
     val using = query.using.filterNot {
@@ -313,10 +319,10 @@ trait ClickhouseTokenizerModule
         } else if (query.on.nonEmpty) {
           // TOKENIZE ON. If the fromClause is a TABLE, we need to check on aliases!
           "ON " + query.on
-            .map(cond => {
+            .map { cond =>
               val left = verifyOnCondition(select, from, cond.left)
               s"${ctx.leftAlias(from.alias)}.$left ${cond.operator} ${ctx.rightAlias(query.other.alias)}.${cond.right.name}"
-            })
+            }
             .mkString(" AND ")
         } else ""
     }
@@ -374,12 +380,13 @@ trait ClickhouseTokenizerModule
       case SemiRightJoin => "SEMI RIGHT JOIN"
     }
 
-  private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]],
-                                keyword: String)(implicit ctx: TokenizeContext): String =
+  private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]], keyword: String)(implicit
+      ctx: TokenizeContext
+  ): String =
     maybeCondition match {
       case None            => ""
       case Some(condition) =>
-        //s"$keyword ${tokenizeColumn(condition)}"
+        // s"$keyword ${tokenizeColumn(condition)}"
         s"$keyword ${removeSurroundingBrackets(tokenizeColumn(condition).trim)}"
     }
 
@@ -422,8 +429,8 @@ trait ClickhouseTokenizerModule
 
   private def tokenizeTuplesAliased(columns: Seq[(Column, OrderingDirection)])(implicit ctx: TokenizeContext): String =
     columns
-      .map {
-        case (column, dir) => tokenizeColumn(column) + " " + direction(dir)
+      .map { case (column, dir) =>
+        tokenizeColumn(column) + " " + direction(dir)
       }
       .mkString(", ")
 
