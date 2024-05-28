@@ -15,7 +15,8 @@ case class TokenizeContext(
     var joinNr: Int = 0,
     var tableAliases: Map[Table, String] = Map.empty,
     var useTableAlias: Boolean = false,
-    delim: String = ", "
+    fDelim: String = ", ", // function delimiter
+    vDelim: String = ","   // values delimiter
 ) {
 
   def incrementJoinNumber(): Unit = joinNr += 1
@@ -79,7 +80,7 @@ trait ClickhouseTokenizerModule
   }
 
   protected def tokenizeSeqCol(columns: Column*)(implicit ctx: TokenizeContext): String =
-    columns.map(tokenizeColumn).mkString(", ")
+    columns.map(tokenizeColumn).mkString(",")
 
   override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON"))(implicit
       ctx: TokenizeContext
