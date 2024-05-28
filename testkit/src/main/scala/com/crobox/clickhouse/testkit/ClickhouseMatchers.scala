@@ -21,10 +21,11 @@ trait ClickhouseMatchers {
         clean(left) == clean(expected),
         s"""
            |SQL messages don't match.
-           |Input:     ${clean(left)}
+           |${clean(left)}
            |!=
-           |Expected:  ${clean(expected)}
-           |DIFF       ${diff(clean(left), clean(expected))}
+           |${clean(expected)}
+           |
+           |${diff(clean(left), clean(expected))}
            |""".stripMargin,
         "SQL messages are equal"
       )
