@@ -19,15 +19,15 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
     case ArrayElement(col: ArrayColMagnet[_], n: NumericCol[_]) =>
       s"${tokenizeColumn(col.column)}[${tokenizeColumn(n.column)}]"
     case Has(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
-      s"has(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
+      s"has(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
     case HasAll(col: ArrayColMagnet[_], elm: ArrayColMagnet[_]) =>
-      s"hasAll(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
+      s"hasAll(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
     case HasAny(col: ArrayColMagnet[_], elm: ArrayColMagnet[_]) =>
-      s"hasAny(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
+      s"hasAny(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
     case IndexOf(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
-      s"indexOf(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
+      s"indexOf(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
     case CountEqual(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
-      s"countEqual(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
+      s"countEqual(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
     case ArrayEnumerate(col: ArrayColMagnet[_]) =>
       s"arrayEnumerate(${tokenizeColumn(col.column)})"
     case ArrayEnumerateUniq(col1: ArrayColMagnet[_], columns @ _*) =>
@@ -37,9 +37,9 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
     case ArrayPopFront(col: ArrayColMagnet[_]) =>
       s"arrayPopFront(${tokenizeColumn(col.column)})"
     case ArrayPushBack(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
-      s"arrayPushBack(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
+      s"arrayPushBack(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
     case ArrayPushFront(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
-      s"arrayPushFront(${tokenizeColumn(col.column)},${tokenizeColumn(elm.column)})"
+      s"arrayPushFront(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
     case ArrayResize(col: ArrayColMagnet[_], size: NumericCol[_], extender: ConstOrColMagnet[_]) =>
       s"arrayResize(${tokenizeColumn(col.column)},${tokenizeColumn(size.column)},${tokenizeColumn(extender.column)})"
     case ArraySlice(col: ArrayColMagnet[_], offset: NumericCol[_], length: NumericCol[_]) =>

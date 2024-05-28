@@ -78,7 +78,7 @@ class QueryTest extends DslTestSpec {
     toSql(
       select(lookupNestedValue(nested, "cate'gory")).internalQuery
     ) should matchSQL(
-      "SELECT `props.value`[indexOf(`props.key`,'cate\\'gory')] FORMAT JSON"
+      "SELECT `props.value`[indexOf(`props.key`, 'cate\\'gory')] FORMAT JSON"
     )
 
   }
