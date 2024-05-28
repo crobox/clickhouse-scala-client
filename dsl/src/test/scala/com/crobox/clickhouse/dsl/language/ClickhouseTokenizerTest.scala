@@ -38,9 +38,11 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   it should "add simple condition between columns" in {
     val select = SelectQuery(Seq(shieldId))
     val query = toSql(
-      InternalQuery(Some(select),
-                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    where = Some(shieldId < itemId))
+      InternalQuery(
+        Some(select),
+        Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+        where = Some(shieldId < itemId)
+      )
     )
     query should be(s"SELECT shield_id FROM ${OneTestTable.quoted} WHERE shield_id < item_id FORMAT JSON")
   }
@@ -50,9 +52,11 @@ class ClickhouseTokenizerTest extends DslTestSpec {
     val uuid   = UUID.randomUUID()
     val query =
       toSql(
-        InternalQuery(Some(select),
-                      Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                      where = Some(shieldId < uuid))
+        InternalQuery(
+          Some(select),
+          Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+          where = Some(shieldId < uuid)
+        )
       )
     query should be(s"SELECT shield_id FROM ${OneTestTable.quoted} WHERE shield_id < '$uuid' FORMAT JSON")
   }
@@ -61,9 +65,11 @@ class ClickhouseTokenizerTest extends DslTestSpec {
     val select = SelectQuery(Seq(shieldId))
     val uuid   = UUID.randomUUID()
     val query = toSql(
-      InternalQuery(Some(select),
-                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    where = Some(shieldId < uuid and shieldId < itemId))
+      InternalQuery(
+        Some(select),
+        Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+        where = Some(shieldId < uuid and shieldId < itemId)
+      )
     )
     query should be(
       s"SELECT shield_id FROM ${OneTestTable.quoted} WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
@@ -74,9 +80,11 @@ class ClickhouseTokenizerTest extends DslTestSpec {
     val alias  = shieldId as "preferable"
     val select = SelectQuery(Seq(alias))
     val query = toSql(
-      InternalQuery(Some(select),
-                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    groupBy = Some(GroupByQuery(Seq(alias))))
+      InternalQuery(
+        Some(select),
+        Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+        groupBy = Some(GroupByQuery(Seq(alias)))
+      )
     )
     query should be(s"SELECT shield_id AS preferable FROM ${OneTestTable.quoted} GROUP BY preferable FORMAT JSON")
   }
@@ -98,9 +106,11 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   it should "group by with cube if using group by mode" in {
     val select = SelectQuery(Seq(shieldId))
     val query = toSql(
-      InternalQuery(Some(select),
-                    Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-                    groupBy = Some(GroupByQuery(mode = Some(GroupByQuery.WithCube))))
+      InternalQuery(
+        Some(select),
+        Some(TableFromQuery[OneTestTable.type](OneTestTable)),
+        groupBy = Some(GroupByQuery(mode = Some(GroupByQuery.WithCube)))
+      )
     )
     query should be(s"SELECT shield_id FROM ${OneTestTable.quoted} WITH CUBE FORMAT JSON")
   }
@@ -166,7 +176,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   it should "generate CONDITIONAL cases" in {
     this.tokenizeColumn(switch(const(3))) shouldBe "3"
     this.tokenizeColumn(switch(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe
-    (s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END")
+    s"CASE WHEN ${col1.name} = 'test' THEN ${itemId.name} ELSE ${shieldId.name} END"
   }
 
   it should "generate CONDITIONAL multiIf" in {
@@ -176,13 +186,13 @@ class ClickhouseTokenizerTest extends DslTestSpec {
 
     // test single case
     this.tokenizeColumn(multiIf(shieldId, columnCase(col1.isEq("test"), itemId))) shouldBe
-    (s"if(${col1.name} = 'test', ${itemId.name}, ${shieldId.name})")
+    s"if(${col1.name} = 'test', ${itemId.name}, ${shieldId.name})"
 
     // test multi cases
     this.tokenizeColumn(
       multiIf(shieldId, columnCase(col1.isEq("test"), itemId), columnCase(col1.isEq("test"), itemId))
     ) shouldBe
-    (s"multiIf(${col1.name} = 'test', ${itemId.name}, ${col1.name} = 'test', ${itemId.name}, ${shieldId.name})")
+    s"multiIf(${col1.name} = 'test', ${itemId.name}, ${col1.name} = 'test', ${itemId.name}, ${shieldId.name})"
   }
 
   it should "use constant" in {
@@ -193,36 +203,45 @@ class ClickhouseTokenizerTest extends DslTestSpec {
     val col    = RawColumn("Robert'); DROP TABLE students;")
     val select = SelectQuery(Seq(col))
     val query  = toSql(InternalQuery(select = Some(select), where = Some(col)))
-    query should be(s"SELECT ${col.rawSql} WHERE ${col.rawSql} FORMAT JSON")
+    query should matchSQL(s"SELECT ${col.rawSql} WHERE ${col.rawSql} FORMAT JSON")
   }
 
   it should "build with combinators" in {
-    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniq(col1))) shouldBe s"uniqIf(${col1.name},${col1.name} = 'test')"
-    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqHLL12(col1))) shouldBe s"uniqHLL12If(${col1.name},${col1.name} = 'test')"
-    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqCombined(col1))) shouldBe s"uniqCombinedIf(${col1.name},${col1.name} = 'test')"
+    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniq(col1))) should matchSQL(
+      s"uniqIf(${col1.name}, ${col1.name} = 'test')"
+    )
+    this.tokenizeColumn(CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqHLL12(col1))) should matchSQL(
+      s"uniqHLL12If(${col1.name}, ${col1.name} = 'test')"
+    )
     this.tokenizeColumn(
-      CombinedAggregatedFunction(Combinator.If(col1.isEq("test")),
-                                 CombinedAggregatedFunction(Combinator.If(col2.isEq(3)), uniqExact(col1)))
-    ) shouldBe s"uniqExactIfIf(${col1.name},${col2.name} = 3,${col1.name} = 'test')"
+      CombinedAggregatedFunction(Combinator.If(col1.isEq("test")), uniqCombined(col1))
+    ) should matchSQL(s"uniqCombinedIf(${col1.name}, ${col1.name} = 'test')")
+    this.tokenizeColumn(
+      CombinedAggregatedFunction(
+        Combinator.If(col1.isEq("test")),
+        CombinedAggregatedFunction(Combinator.If(col2.isEq(3)), uniqExact(col1))
+      )
+    ) should matchSQL(s"uniqExactIfIf(${col1.name}, ${col2.name} = 3, ${col1.name} = 'test')")
   }
 
   it should "uniq for multiple columns" in {
-    this.tokenizeColumn(uniq(col1, col2)) shouldBe s"uniq(${col1.name},${col2.name})"
-    this.tokenizeColumn(uniqHLL12(col1, col2)) shouldBe s"uniqHLL12(${col1.name},${col2.name})"
-    this.tokenizeColumn(uniqExact(col1, col2)) shouldBe s"uniqExact(${col1.name},${col2.name})"
-    this.tokenizeColumn(uniqCombined(col1, col2)) shouldBe s"uniqCombined(${col1.name},${col2.name})"
-
+    this.tokenizeColumn(uniq(col1, col2)) should matchSQL(s"uniq(${col1.name}, ${col2.name})")
+    this.tokenizeColumn(uniqHLL12(col1, col2)) should matchSQL(s"uniqHLL12(${col1.name}, ${col2.name})")
+    this.tokenizeColumn(uniqExact(col1, col2)) should matchSQL(s"uniqExact(${col1.name}, ${col2.name})")
+    this.tokenizeColumn(uniqCombined(col1, col2)) should matchSQL(s"uniqCombined(${col1.name}, ${col2.name})")
   }
 
   it should "use zone name for monthly" in {
     this.tokenizeTimeSeries(
       TimeSeries(
         timestampColumn,
-        MultiInterval(DateTime.now(DateTimeZone.forOffsetHours(2)),
-                      DateTime.now(DateTimeZone.forOffsetHours(2)),
-                      MultiDuration(TimeUnit.Month))
+        MultiInterval(
+          DateTime.now(DateTimeZone.forOffsetHours(2)),
+          DateTime.now(DateTimeZone.forOffsetHours(2)),
+          MultiDuration(TimeUnit.Month)
+        )
       )
-    ) shouldBe "toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')"
+    ) should matchSQL("toDateTime(toStartOfMonth(toDateTime(ts / 1000), 'Etc/GMT-2'), 'Etc/GMT-2')")
   }
 
   it should "quote them correctly" in {
@@ -230,6 +249,6 @@ class ClickhouseTokenizerTest extends DslTestSpec {
     val col    = RefColumn(name)
     val select = SelectQuery(Seq(col))
     val query  = toSql(InternalQuery(select = Some(select)))
-    query should be(s"SELECT `$name` FORMAT JSON")
+    query should matchSQL(s"SELECT `$name` FORMAT JSON")
   }
 }
