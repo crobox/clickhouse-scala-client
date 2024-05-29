@@ -9,9 +9,9 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case nested: CombinedAggregatedFunction[_, _] =>
         val tokenizedCombinators = collectCombinators(nested).map(tokenizeCombinator)
         val combinators          = tokenizedCombinators.map(_._1).mkString("")
-        val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkString(ctx.vDelim)
+        val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkString(ctx.valueDelimiter)
         val (function, values)   = tokenizeInnerAggregatedFunction(extractTarget(nested))
-        val separator            = if (values.isEmpty || combinatorsValues.isEmpty) "" else ctx.fDelim
+        val separator            = if (values.isEmpty || combinatorsValues.isEmpty) "" else ctx.functionDelimiter
         s"$function$combinators($values$separator$combinatorsValues)"
       case timeSeries: TimeSeries => tokenizeTimeSeries(timeSeries)
       case aggregated: AggregateFunction[_] =>
@@ -45,25 +45,28 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case LastValue(column)           => ("last_value", tokenizeColumn(column))
       case Median(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
-        (s"median$modifierName", s"$level)(${tokenizeColumn(column)}${modifierValue.map(ctx.vDelim + _).getOrElse("")}")
+        (
+          s"median$modifierName",
+          s"$level)(${tokenizeColumn(column)}${modifierValue.map(ctx.valueDelimiter + _).getOrElse("")}"
+        )
       case Min(tableColumn) => ("min", tokenizeColumn(tableColumn))
       case Max(tableColumn) => ("max", tokenizeColumn(tableColumn))
       case Quantile(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (
           s"quantile$modifierName",
-          s"$level)(${tokenizeColumn(column)}${modifierValue.map(ctx.vDelim + _).getOrElse("")})"
+          s"$level)(${tokenizeColumn(column)}${modifierValue.map(ctx.valueDelimiter + _).getOrElse("")})"
         )
       case Quantiles(column, levels, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (
           s"quantiles$modifierName",
-          s"${levels.mkString(ctx.vDelim)})(${tokenizeColumn(column)}${modifierValue.map(ctx.vDelim + _).getOrElse("")}"
+          s"${levels.mkString(ctx.valueDelimiter)})(${tokenizeColumn(column)}${modifierValue.map(ctx.valueDelimiter + _).getOrElse("")}"
         )
       case Sum(column, modifier) => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
       case SumMap(key, value)    => (s"sumMap", tokenizeColumns(Seq(key, value)))
       case Uniq(columns, modifier) =>
-        (s"uniq${tokenizeUniqModifier(modifier)}", columns.map(tokenizeColumn).mkString(ctx.vDelim))
+        (s"uniq${tokenizeUniqModifier(modifier)}", columns.map(tokenizeColumn).mkString(ctx.valueDelimiter))
       case f: AggregateFunction[_] =>
         throw new IllegalArgumentException(s"Cannot use $f aggregated function with combinator")
     }
