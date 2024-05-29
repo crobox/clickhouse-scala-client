@@ -15,8 +15,7 @@ case class TokenizeContext(
     var joinNr: Int = 0,
     var tableAliases: Map[Table, String] = Map.empty,
     var useTableAlias: Boolean = false,
-    functionDelimiter: String = ", ",
-    valueDelimiter: String = ", "
+    delimiter: String = ", "
 ) {
 
   def incrementJoinNumber(): Unit = joinNr += 1
@@ -80,7 +79,7 @@ trait ClickhouseTokenizerModule
   }
 
   protected def tokenizeSeqCol(columns: Column*)(implicit ctx: TokenizeContext): String =
-    columns.map(tokenizeColumn).mkString(ctx.valueDelimiter)
+    columns.map(tokenizeColumn).mkString(ctx.delimiter)
 
   override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON"))(implicit
       ctx: TokenizeContext
@@ -151,7 +150,7 @@ trait ClickhouseTokenizerModule
       case alias: AliasedColumn[_] =>
         val originalColumnToken = tokenizeColumn(alias.original)
         if (originalColumnToken.isEmpty) alias.quoted else s"$originalColumnToken AS ${alias.quoted}"
-      case tuple: TupleColumn[_]    => s"(${tuple.elements.map(tokenizeColumn).mkString(ctx.valueDelimiter)})"
+      case tuple: TupleColumn[_]    => s"(${tuple.elements.map(tokenizeColumn).mkString(ctx.delimiter)})"
       case col: ExpressionColumn[_] => tokenizeExpressionColumn(col)
       case col: Column              => col.quoted
     }
