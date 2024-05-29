@@ -18,14 +18,15 @@ trait MiscellaneousFunctionTokenizer {
     case IsFinite(col: NumericCol[_])           => s"isFinite(${tokenizeColumn(col.column)})"
     case IsInfinite(col: NumericCol[_])         => s"isInfinite(${tokenizeColumn(col.column)})"
     case IsNaN(col: NumericCol[_])              => s"isNaN(${tokenizeColumn(col.column)})"
-    case Bar(col: NumericCol[_], from: NumericCol[_], to: NumericCol[_], default: Option[NumericCol[_]]) => {
-      val defaultPart = default.map(col => "," + tokenizeColumn(col.column)).getOrElse("")
+    case Bar(col: NumericCol[_], from: NumericCol[_], to: NumericCol[_], default: Option[NumericCol[_]]) =>
+      val defaultPart = default.map(col => ctx.delimiter + tokenizeColumn(col.column)).getOrElse("")
       s"bar(${tokenizeColumn(col.column)},${tokenizeColumn(from.column)},${tokenizeColumn(to.column)}${defaultPart})"
-    }
-    case Transform(col: ConstOrColMagnet[_],
-                   arrayFrom: ArrayColMagnet[_],
-                   arrayTo: ArrayColMagnet[_],
-                   default: ConstOrColMagnet[_]) =>
+    case Transform(
+          col: ConstOrColMagnet[_],
+          arrayFrom: ArrayColMagnet[_],
+          arrayTo: ArrayColMagnet[_],
+          default: ConstOrColMagnet[_]
+        ) =>
       s"transform(${tokenizeColumn(col.column)},${tokenizeColumn(arrayFrom.column)},${tokenizeColumn(arrayTo.column)},${tokenizeColumn(default.column)})"
     case FormatReadableSize(col: NumericCol[_]) => s"formatReadableSize(${tokenizeColumn(col.column)})"
     case Least(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_]) =>
@@ -49,15 +50,15 @@ trait MiscellaneousFunctionTokenizer {
       "currentDatabase()"
     case HasColumnInTable(database, table, column, hostName, userName, passWord) =>
       s"hasColumnInTable(${tokenizeColumn(database.column)},${tokenizeColumn(table.column)},${tokenizeColumn(
-        column.column
-      )}${tokenizeOpt(hostName)}${tokenizeOpt(userName)}${tokenizeOpt(passWord)})"
+          column.column
+        )}${tokenizeOpt(hostName)}${tokenizeOpt(userName)}${tokenizeOpt(passWord)})"
     case Uptime()               => "uptime()"
     case Version()              => "version()"
     case RowNumberInAllBlocks() => "rowNumberInAllBlocks()"
   }
 
   private def tokenizeOpt(col: Option[Magnet[_]])(implicit ctx: TokenizeContext): String = col match {
-    case Some(magnetizedCol) => "," + tokenizeColumn(magnetizedCol.column)
+    case Some(magnetizedCol) => ctx.delimiter + tokenizeColumn(magnetizedCol.column)
     case _                   => ""
   }
 }

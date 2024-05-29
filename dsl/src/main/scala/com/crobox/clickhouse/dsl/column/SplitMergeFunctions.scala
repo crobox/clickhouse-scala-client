@@ -1,8 +1,9 @@
 package com.crobox.clickhouse.dsl.column
 
-import com.crobox.clickhouse.dsl.{Column, ExpressionColumn}
-import scala.language.implicitConversions
 import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
+import com.crobox.clickhouse.dsl.{const, Column, ExpressionColumn}
+
+import scala.language.implicitConversions
 
 trait SplitMergeFunctions { self: Magnets =>
 
@@ -16,7 +17,8 @@ trait SplitMergeFunctions { self: Magnets =>
       extends SplitMergeFunction[String](col.column)
   case class AlphaTokens(col: StringColMagnet[_]) extends SplitMergeFunction[Iterable[String]](col.column)
 
-  def splitByChar(sep: StringColMagnet[_], col: StringColMagnet[_]): SplitByChar     = SplitByChar(sep, col)
+  def splitByChar(sep: Char, col: StringColMagnet[_]): SplitByChar               = SplitByChar(const(sep.toString), col)
+  def splitByChar(sep: StringColMagnet[_], col: StringColMagnet[_]): SplitByChar = SplitByChar(sep, col)
   def splitByString(sep: StringColMagnet[_], col: StringColMagnet[_]): SplitByString = SplitByString(sep, col)
 
   def arrayStringConcat(col: ArrayColMagnet[_], sep: StringColMagnet[_] = ""): ArrayStringConcat =

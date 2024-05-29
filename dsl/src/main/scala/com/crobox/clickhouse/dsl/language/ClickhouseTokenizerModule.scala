@@ -315,7 +315,7 @@ trait ClickhouseTokenizerModule
         if (`using`.nonEmpty) {
           // TOKENIZE USING
           if (`using`.size == 1) s"USING ${using.head.name}"
-          else s"USING (${using.map(_.name).mkString(",")})"
+          else s"USING (${using.map(_.name).mkString(ctx.delimiter)})"
         } else if (query.on.nonEmpty) {
           // TOKENIZE ON. If the fromClause is a TABLE, we need to check on aliases!
           "ON " + query.on
