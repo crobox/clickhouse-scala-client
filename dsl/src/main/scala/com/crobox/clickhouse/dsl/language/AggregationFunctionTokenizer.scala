@@ -11,7 +11,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
         val combinators          = tokenizedCombinators.map(_._1).mkString("")
         val combinatorsValues    = tokenizedCombinators.flatMap(_._2).mkString(ctx.delimiter)
         val (function, values)   = tokenizeInnerAggregatedFunction(extractTarget(nested))
-        val separator            = if (values.isEmpty || combinatorsValues.isEmpty) "" else ", "
+        val separator            = if (values.isEmpty || combinatorsValues.isEmpty) "" else ctx.delimiter
         s"$function$combinators($values$separator$combinatorsValues)"
       case timeSeries: TimeSeries => tokenizeTimeSeries(timeSeries)
       case aggregated: AggregateFunction[_] =>
