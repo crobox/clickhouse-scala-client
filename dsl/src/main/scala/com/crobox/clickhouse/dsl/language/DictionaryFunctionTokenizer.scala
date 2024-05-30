@@ -8,7 +8,7 @@ trait DictionaryFunctionTokenizer {
   private def tokenizeDictionaryGet(col: DictionaryGetFuncColumn[_],
                                     typeName: String)(implicit ctx: TokenizeContext): String = {
     val default = col.default
-      .map(col => "," + tokenizeColumn(col.column))
+      .map(col => ctx.delimiter + tokenizeColumn(col.column))
       .getOrElse("")
 
     val orDefault = col.default.map(_ => "orDefault").getOrElse("")

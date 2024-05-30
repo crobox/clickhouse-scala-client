@@ -115,10 +115,10 @@ trait QueryValueFormats {
 
   class IterableQueryValue[V](ev: QueryValue[V]) extends QueryValue[scala.Iterable[V]] {
 
-    override def apply(value: scala.Iterable[V]): String = s"[${value.map(ev.apply).mkString(",")}]"
+    override def apply(value: scala.Iterable[V]): String = s"[${value.map(ev.apply).mkString(", ")}]"
 
     override def unapply(queryRep: String): scala.Iterable[V] =
-      unquote(queryRep).split(",").toSeq.map(ev.unapply)
+      unquote(queryRep).split(", ").toSeq.map(ev.unapply)
   }
 
   private def unquote(v: String): String = v.substring(1, v.length - 2)

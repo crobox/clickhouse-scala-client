@@ -22,4 +22,10 @@ class AggregationFunctionTokenizerTest extends DslTestSpec {
       "SELECT last_value(groupArray(column_1)) AS p"
     )
   }
+
+  it should "anyIf in groupArray" in {
+    toSQL(select(aggIf(col1.isEq("abc"))(uniq(col2))), false) should matchSQL(
+      "SELECT uniqIf(column_2, column_1 = 'abc')"
+    )
+  }
 }
