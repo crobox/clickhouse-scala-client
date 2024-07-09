@@ -129,7 +129,7 @@ class ClickhouseClient(configuration: Option[Config] = None)
         ClickhouseServerVersion(cfg.getString(path))
       } else {
         Await.result(
-          query("select version")(QuerySettings(ReadQueries).copy(retries = Option(0)))
+          query("select version()")(QuerySettings(ReadQueries).copy(retries = Option(0)))
             .recover {
               case x: ClickhouseException =>
                 val key = "(version "
