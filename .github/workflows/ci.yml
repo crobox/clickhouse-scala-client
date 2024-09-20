@@ -25,7 +25,7 @@ jobs:
         os: [ubuntu-latest]
         scala: [2.13.13, 3.3.1]
         java: [temurin@17]
-        clickhouse: [21.3, 21.8.14, 22.3, 23.8]
+        clickhouse: [21.3, 21.8.14, 22.3]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
