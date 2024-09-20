@@ -34,7 +34,7 @@ jobs:
           fetch-depth: 0
 
       - name: Docker Compose Action
-        uses: isbang/compose-action@v1.0.0
+        uses: hoverkraft-tech/compose-action@v2.0.1
         env:
           CLICKHOUSE_VERSION: ${{ matrix.clickhouse }}
         with:
