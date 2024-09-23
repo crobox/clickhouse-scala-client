@@ -62,6 +62,7 @@ trait ClickhouseTokenizerModule
     with LogicalFunctionTokenizer
     with MathematicalFunctionTokenizer
     with MiscellaneousFunctionTokenizer
+    with NullableFunctionTokenizer
     with RandomFunctionTokenizer
     with RoundingFunctionTokenizer
     with SplitMergeFunctionTokenizer

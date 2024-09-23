@@ -3,9 +3,7 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue, TTL}
 
-case object EmptyColumn extends TableColumn("NULL")
-
-trait Column {
+sealed trait Column {
   val name: String
   lazy val quoted: String = ClickhouseStatement.quoteIdentifier(name)
 }
@@ -20,6 +18,8 @@ abstract class TableColumn[+V](val name: String) extends Column {
 
   def as[C <: Column](alias: C): AliasedColumn[V] = AliasedColumn(this, alias.name)
 }
+
+case object EmptyColumn extends TableColumn("NULL")
 
 case class NativeColumn[V](override val name: String,
                            clickhouseType: ColumnType = ColumnType.String,

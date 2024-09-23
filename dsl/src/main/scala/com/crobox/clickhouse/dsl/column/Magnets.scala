@@ -32,7 +32,7 @@ trait Magnets {
     val column: TableColumn[C]
   }
 
-  // ComparabeWith trait and Cast case class were members of ComparisonFunctions and TypeCastFunctions trait
+  // ComparableWith trait and Cast case class were members of ComparisonFunctions and TypeCastFunctions trait
   // respectively. But placing them in the mixin traits causes Scala 3 compiler to crash. Hence, placing these
   // constructs here is a workaround allowing for the codebase to be compiled with Scala 3.
   trait ComparableWith[M <: Magnet[_]] {
