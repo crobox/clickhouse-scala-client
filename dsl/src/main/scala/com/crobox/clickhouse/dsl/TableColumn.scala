@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.dsl.marshalling.QueryValue
 import com.crobox.clickhouse.dsl.schemabuilder.{ColumnType, DefaultValue, TTL}
 
-sealed trait Column {
+trait Column {
   val name: String
   lazy val quoted: String = ClickhouseStatement.quoteIdentifier(name)
 }
