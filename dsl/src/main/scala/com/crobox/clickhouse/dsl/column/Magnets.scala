@@ -1,11 +1,12 @@
 package com.crobox.clickhouse.dsl.column
 
-import java.util.UUID
-import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
+import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
 import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn, OperationalQuery, Table, TableColumn}
 import org.joda.time.{DateTime, LocalDate}
+
+import java.util.UUID
 import scala.language.implicitConversions
 
 trait Magnets {
@@ -15,6 +16,7 @@ trait Magnets {
     with TypeCastFunctions
     with StringFunctions
     with EmptyFunctions
+    with NullableFunctions
     with StringSearchFunctions
     with ScalaBooleanFunctions
     with ScalaStringFunctions
@@ -30,7 +32,7 @@ trait Magnets {
     val column: TableColumn[C]
   }
 
-  // ComparabeWith trait and Cast case class were members of ComparisonFunctions and TypeCastFunctions trait
+  // ComparableWith trait and Cast case class were members of ComparisonFunctions and TypeCastFunctions trait
   // respectively. But placing them in the mixin traits causes Scala 3 compiler to crash. Hence, placing these
   // constructs here is a workaround allowing for the codebase to be compiled with Scala 3.
   trait ComparableWith[M <: Magnet[_]] {
@@ -64,7 +66,7 @@ trait Magnets {
    * Any constant or column.
    * Sidenote: The current implementation doesn't represent collections.
    */
-  trait ConstOrColMagnet[+C] extends Magnet[C] with ScalaBooleanFunctionOps with InOps
+  trait ConstOrColMagnet[+C] extends Magnet[C] with ScalaBooleanFunctionOps with InOps with NullableOps
 
   implicit def constOrColMagnetFromCol[C](s: TableColumn[C]): ConstOrColMagnet[C] =
     new ConstOrColMagnet[C] {
