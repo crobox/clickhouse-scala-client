@@ -177,6 +177,7 @@ trait ClickhouseTokenizerModule
       case col: LogicalFunction              => tokenizeLogicalFunction(col)
       case col: MathFuncColumn               => tokenizeMathematicalFunction(col)
       case col: MiscellaneousFunction        => tokenizeMiscellaneousFunction(col)
+      case col: NullableFunction             => tokenizeNullableFunction(col)
       case col: RandomFunction               => tokenizeRandomFunction(col)
       case col: RoundingFunction             => tokenizeRoundingFunction(col)
       case col: SplitMergeFunction[_]        => tokenizeSplitMergeFunction(col)

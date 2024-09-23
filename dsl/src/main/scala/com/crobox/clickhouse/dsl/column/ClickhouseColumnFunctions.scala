@@ -24,6 +24,7 @@ trait ClickhouseColumnFunctions
     with LogicalFunctions
     with MathematicalFunctions
     with MiscellaneousFunctions
+    with NullableFunctions
     with RandomFunctions
     with RoundingFunctions
     with SplitMergeFunctions
