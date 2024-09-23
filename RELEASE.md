@@ -45,7 +45,7 @@ run
 sbt publishSigned
 ```
 
-If you want to publish only a single SCALA version, use `sbt ++2.11.12 publishSigned`
+If you want to publish only a single SCALA version, use `sbt ++3.3.1 publishSigned`
 
 ## Release Artifacts
 
