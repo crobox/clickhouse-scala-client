@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizeCo
 import com.crobox.clickhouse.dsl.{InternalQuery, OperationalQuery, TableColumn}
 import com.crobox.clickhouse.testkit.ClickhouseMatchers
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{Assertion, BeforeAndAfterAll}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -41,5 +41,9 @@ trait DslTestSpec
         case _              => sql.substring(0, sql.indexOf(" FORMAT")).trim
       }
     } else sql.substring(0, sql.indexOf(" FORMAT")).trim
+  }
+
+  def shouldMatch(query: OperationalQuery, expected: String): Assertion = {
+    toSql(query.internalQuery, None) should matchSQL(expected)
   }
 }
