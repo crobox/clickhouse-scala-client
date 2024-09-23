@@ -1,8 +1,11 @@
 import Build.*
+import xerial.sbt.Sonatype.sonatypeCentralHost
 
 releaseCrossBuild := true
 
 sonatypeProfileName := "com.crobox"
+
+ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 
 lazy val root = (project in file("."))
   .settings(
