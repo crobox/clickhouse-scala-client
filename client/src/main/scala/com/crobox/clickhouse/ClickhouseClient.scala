@@ -101,7 +101,7 @@ class ClickhouseClient(configuration: Option[Config] = None)
   )(implicit settings: QuerySettings = QuerySettings(ReadQueries)): Source[ByteString, NotUsed] =
     Source
       .future(hostBalancer.nextHost.flatMap { host =>
-        singleRequest(toRequest(host, sql, None, settings, None)(config))
+        singleRequest(toRequest(host, sql, None, settings, None)(config), progressEnabled = false)
       })
       .flatMapConcat(response => response.entity.withoutSizeLimit().dataBytes)
 
