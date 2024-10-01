@@ -79,14 +79,18 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       .flatMap(_ => system.terminate())
   }
 
-  protected def singleRequest(request: HttpRequest): Future[HttpResponse] = {
-    val promise = Promise[HttpResponse]()
+  protected def singleRequest(request: HttpRequest, progressEnabled: Boolean): Future[HttpResponse] = {
+    if(progressEnabled) {
+      val promise = Promise[HttpResponse]()
 
-    queue.offer(request -> promise).flatMap {
-      case QueueOfferResult.Enqueued    => promise.future
-      case QueueOfferResult.Dropped     => Future.failed(TooManyQueriesException())
-      case QueueOfferResult.QueueClosed => Future.failed(new RuntimeException(s"Queue is closed"))
-      case QueueOfferResult.Failure(e)  => Future.failed(e)
+      queue.offer(request -> promise).flatMap {
+        case QueueOfferResult.Enqueued    => promise.future
+        case QueueOfferResult.Dropped     => Future.failed(TooManyQueriesException())
+        case QueueOfferResult.QueueClosed => Future.failed(new RuntimeException(s"Queue is closed"))
+        case QueueOfferResult.Failure(e)  => Future.failed(e)
+      }
+    } else {
+      http.singleRequest(request)
     }
   }
 
@@ -115,7 +119,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
                                 progressHeaders = settings.progressHeaders.orElse(Some(progressQueue.isDefined))
                               ),
                               entity)(config)
-      processClickhouseResponse(singleRequest(request), query, actualHost, progressQueue)
+      processClickhouseResponse(singleRequest(request, progressQueue.isDefined), query, actualHost, progressQueue)
     })
   }
 
