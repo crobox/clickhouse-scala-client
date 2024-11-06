@@ -5,6 +5,13 @@ import com.crobox.clickhouse.internal.QuerySettings
 import com.crobox.clickhouse.internal.progress.QueryProgress.{Progress, QueryAccepted, QueryFinished, QueryProgress}
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import org.apache.pekko.http.scaladsl.model.headers.HttpEncodings.gzip
+import org.apache.pekko.http.scaladsl.ConnectionContext
+import java.security.KeyStore
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
+import java.io.FileInputStream
+import javax.net.ssl.KeyManagerFactory
+import java.security.SecureRandom
 
 /**
  * @author Sjoerd Mulder
@@ -17,6 +24,43 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
 
   it should "select" in {
     client
+      .query("select 1 + 2")
+      .map { f =>
+        f.trim.toInt should be(3)
+      }
+      .flatMap(
+        _ =>
+          client.query("select currentDatabase()").map { f =>
+            f.trim should be("default")
+        }
+      )
+  }
+
+  it should "support SSL certs" in {
+    def createConnectionContext() = {
+      val keyStoreResource = "../.docker/certs/keystore.jks"
+      val password = "password"
+      
+      val keyStore = KeyStore.getInstance("JKS")
+      val in = new FileInputStream(keyStoreResource)
+      keyStore.load(in, password.toCharArray)
+
+      val keyManagerFactory = KeyManagerFactory.getInstance("SunX509")
+      keyManagerFactory.init(keyStore, password.toCharArray)
+      val trustManagerFactory = TrustManagerFactory.getInstance("SunX509")
+      trustManagerFactory.init(keyStore)
+      val context = SSLContext.getInstance("TLS")
+      context.init(keyManagerFactory.getKeyManagers, trustManagerFactory.getTrustManagers, new SecureRandom())
+
+      val connectionContext = ConnectionContext.httpsClient(context)
+      connectionContext
+    }
+
+    new ClickhouseClient(
+      Some(config
+      .withValue("crobox.clickhouse.client.connection.port", ConfigValueFactory.fromAnyRef(8447))
+      .withValue("crobox.clickhouse.client.connection.host", ConfigValueFactory.fromAnyRef("https://clickhouseserver.test"))),
+      customConnectionContext = Some(createConnectionContext()))
       .query("select 1 + 2")
       .map { f =>
         f.trim.toInt should be(3)

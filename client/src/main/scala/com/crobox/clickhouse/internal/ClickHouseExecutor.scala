@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.internal
 
 import org.apache.pekko.actor.{ActorSystem, Terminated}
-import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.{Http, HttpsConnectionContext}
 import org.apache.pekko.http.scaladsl.model._
 import org.apache.pekko.http.scaladsl.settings.{ClientConnectionSettings, ConnectionPoolSettings}
 import org.apache.pekko.stream._
@@ -23,6 +23,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   protected implicit val executionContext: ExecutionContext
   protected val hostBalancer: HostBalancer
   protected val config: Config
+  protected val customConnectionContext: Option[HttpsConnectionContext]
 
   lazy val (progressQueue, progressSource) = {
     val builtSource = QueryProgress.queryProgressStream.run()
@@ -35,7 +36,8 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       ClientConnectionSettings(system).withTransport(new StreamingProgressClickhouseTransport(progressQueue))
     )
   private lazy val http              = Http()
-  private lazy val pool              = http.superPool[Promise[HttpResponse]](settings = superPoolSettings)
+  private lazy val connectionContext = customConnectionContext.getOrElse(http.defaultClientHttpsContext)
+  private lazy val pool              = http.superPool[Promise[HttpResponse]](connectionContext = connectionContext, settings = superPoolSettings)
   private lazy val bufferSize: Int   = config.getInt("buffer-size")
   private lazy val queryRetries: Int = config.getInt("retries")
 
@@ -90,7 +92,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
         case QueueOfferResult.Failure(e)  => Future.failed(e)
       }
     } else {
-      http.singleRequest(request)
+      http.singleRequest(request, connectionContext = connectionContext)
     }
   }
 

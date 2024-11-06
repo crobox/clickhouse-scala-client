@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.internal
 import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.HttpsConnectionContext
 import org.apache.pekko.http.scaladsl.model.{HttpResponse, Uri}
 import org.apache.pekko.stream.scaladsl.{Sink, SourceQueue}
 import org.apache.pekko.stream.{Materializer, StreamTcpException}
@@ -19,6 +20,7 @@ class ClickhouseExecutorTest extends ClickhouseClientAsyncSpec {
   private var response: Uri => Future[String] = _
   private lazy val executor = {
     new ClickHouseExecutor with ClickhouseResponseParser with ClickhouseQueryBuilder {
+      override protected val customConnectionContext: Option[HttpsConnectionContext] = None
       override protected implicit val system: ActorSystem                = self.system
       override protected implicit val executionContext: ExecutionContext = system.dispatcher
       override protected val config: Config                              = self.config.getConfig("crobox.clickhouse.client")

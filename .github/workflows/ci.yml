@@ -33,12 +33,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Update '/etc/hosts' file
+        run: ./.docker/update-hosts.sh
+
       - name: Docker Compose Action
         uses: hoverkraft-tech/compose-action@v2.0.1
         env:
           CLICKHOUSE_VERSION: ${{ matrix.clickhouse }}
         with:
-          compose-file: './docker-compose.yml'
+          compose-file: './.docker/docker-compose.yml'
           down-flags: '--volumes'
 
       - name: Setup Java (temurin@17)
