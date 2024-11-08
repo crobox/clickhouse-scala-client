@@ -22,3 +22,4 @@ credentials.sbt
 .bloop
 .metals
 metals.sbt
+.docker/certs
