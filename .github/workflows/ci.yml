@@ -33,20 +33,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Docker Compose Action
-        uses: hoverkraft-tech/compose-action@v2.0.1
-        env:
-          CLICKHOUSE_VERSION: ${{ matrix.clickhouse }}
-        with:
-          compose-file: './docker-compose.yml'
-          down-flags: '--volumes'
-
       - name: Setup Java (temurin@17)
         if: matrix.java == 'temurin@17'
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17
+
+      - name: Update '/etc/hosts' file
+        run: ./.docker/update-hosts.sh
+
+      - name: Generate SSL certificates
+        run: ./.docker/generate-certs.sh
+
+      - name: Docker Compose Action
+        uses: hoverkraft-tech/compose-action@v2.0.1
+        env:
+          CLICKHOUSE_VERSION: ${{ matrix.clickhouse }}
+        with:
+          compose-file: './.docker/docker-compose.yml'
+          down-flags: '--volumes'
 
       - name: Cache sbt
         uses: actions/cache@v4

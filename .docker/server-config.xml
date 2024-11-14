@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!--
+  NOTE: User and query level settings are set up in "users.xml" file.
+  If you have accidentally specified user-level settings here, server won't start.
+  You can either move the settings to the right place inside "users.xml" file
+   or add <skip_check_for_incorrect_settings>1</skip_check_for_incorrect_settings> here.
+-->
+<yandex>
+
+    <!-- HTTP API with TLS (HTTPS).
+         You have to configure certificate to enable this interface.
+         See the openSSL section below.
+    -->
+    <https_port>8447</https_port>
+
+    <!-- Used with https_port and tcp_port_secure. Full ssl options list: https://github.com/ClickHouse-Extras/poco/blob/master/NetSSL_OpenSSL/include/Poco/Net/SSLManager.h#L71 -->
+    <openSSL>
+        <server> <!-- Used for https server AND secure tcp port -->
+            <!-- openssl req -subj "/CN=localhost" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/clickhouse-server/server.key -out /etc/clickhouse-server/server.crt -->
+            <certificateFile>/etc/clickhouse-server/certs/server.crt</certificateFile>
+            <privateKeyFile>/etc/clickhouse-server/certs/server.key</privateKeyFile>
+            <caConfig>/etc/clickhouse-server/certs/ca.crt</caConfig>
+            <!-- dhparams are optional. You can delete the <dhParamsFile> element.
+                 To generate dhparams, use the following command:
+                  openssl dhparam -out /etc/clickhouse-server/dhparam.pem 4096
+                 Only file format with BEGIN DH PARAMETERS is supported.
+              -->
+            <dhParamsFile remove="remove">/etc/clickhouse-server/dhparam.pem</dhParamsFile>
+            <verificationMode>relaxed</verificationMode>
+            <cacheSessions>true</cacheSessions>
+            <preferServerCiphers>true</preferServerCiphers>
+            <loadDefaultCAFile>false</loadDefaultCAFile>
+        </server>
+    </openSSL>
+</yandex>

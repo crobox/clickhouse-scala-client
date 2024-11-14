@@ -2,6 +2,7 @@ package com.crobox.clickhouse
 
 import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.HttpsConnectionContext
 import org.apache.pekko.http.scaladsl.model._
 import org.apache.pekko.stream.scaladsl.{Framing, Source}
 import org.apache.pekko.util.ByteString
@@ -20,7 +21,8 @@ import scala.concurrent.{Await, ExecutionContext, Future}
  * @author Sjoerd Mulder
  * @since 31-03-17
  */
-class ClickhouseClient(configuration: Option[Config] = None)
+class ClickhouseClient(configuration: Option[Config] = None, 
+                        override val customConnectionContext: Option[HttpsConnectionContext] = None)
     extends ClickHouseExecutor
     with ClickhouseResponseParser
     with ClickhouseQueryBuilder {

@@ -16,3 +16,10 @@ credentials.sbt
 .scala_dependencies
 .worksheet
 .idea
+# vscode specific
+.lh
+.vscode
+.bloop
+.metals
+metals.sbt
+.docker/certs

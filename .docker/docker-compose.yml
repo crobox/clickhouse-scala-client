@@ -1,0 +1,21 @@
+version: '3'
+services:
+  clickhouse:
+      # https://docs.docker.com/compose/compose-file/#variable-substitution
+      image: "clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-22.3}"
+      volumes:
+        - ./entrypoint.sh:/custom-entrypoint.sh
+        - ./server-config.xml:/etc/clickhouse-server/config.d/server-config.xml
+        - ./certs/server.crt:/tmp/certs/server.crt
+        - ./certs/server.key:/tmp/certs/server.key
+        - ./certs/ca.crt:/tmp/certs/ca.crt
+      expose:
+        - "8123"
+        - "8447"
+      ports:
+        - "8123:8123"
+        - "8447:8447"
+        - "9000:9000"
+      entrypoint:
+        - /custom-entrypoint.sh
+      hostname: clickhouseserver.test
