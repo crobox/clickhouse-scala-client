@@ -53,6 +53,7 @@ trait ClickhouseTokenizerModule
     with ComparisonFunctionTokenizer
     with DateTimeFunctionTokenizer
     with DictionaryFunctionTokenizer
+    with DistanceFunctionTokenizer
     with EncodingFunctionTokenizer
     with HashFunctionTokenizer
     with HigherOrderFunctionTokenizer
@@ -168,6 +169,7 @@ trait ClickhouseTokenizerModule
       case col: DateTimeFunctionCol[_]       => tokenizeDateTimeColumn(col)
       case col: DateTimeConst[_]             => tokenizeDateTimeConst(col)
       case col: DictionaryFuncColumn[_]      => tokenizeDictionaryFunction(col)
+      case col: DistanceFunction             => tokenizeDistanceFunction(col)
       case col: EmptyFunction[_]             => tokenizeEmptyCol(col)
       case col: EncodingFunction[_]          => tokenizeEncodingFunction(col)
       case col: HashFunction                 => tokenizeHashFunction(col)
