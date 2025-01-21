@@ -11,17 +11,19 @@ lazy val root = (project in file("."))
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
+        homepage := Some(url("https://github.com/crobox/clickhouse-scala-client")),
         scalaVersion := "2.13.16",
         crossScalaVersions := List("2.13.16", "3.3.1"),
         javacOptions ++= Seq("-g", "-Xlint:unchecked", "-Xlint:deprecation", "-source", "11", "-target", "11"),
         scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:_", "-encoding", "UTF-8"),
-        publishTo := {
-          val nexus = "https://oss.sonatype.org/"
-          if (version.value.trim.endsWith("SNAPSHOT"))
-            Some("snapshots" at nexus + "content/repositories/snapshots")
-          else
-            Some("releases" at nexus + "service/local/staging/deploy/maven2")
-        },
+// Managed by the sbt-ci-release plugin
+//        publishTo := {
+//          val nexus = "https://oss.sonatype.org/"
+//          if (version.value.trim.endsWith("SNAPSHOT"))
+//            Some("snapshots" at nexus + "content/repositories/snapshots")
+//          else
+//            Some("releases" at nexus + "service/local/staging/deploy/maven2")
+//        },
         pomExtra := {
           <url>https://github.com/crobox/clickhouse-scala-client</url>
             <licenses>
