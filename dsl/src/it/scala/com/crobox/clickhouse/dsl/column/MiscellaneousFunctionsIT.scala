@@ -20,7 +20,6 @@ class MiscellaneousFunctionsIT extends DslITSpec {
     r(isInfinite(inf)) shouldBe "1"
     r(isNaN(0)) shouldBe "0"
     r(hasColumnInTable("system", "one", "dummy")) shouldBe "1"
-    //r(bar(1, 0, 100, None)) shouldBe "▋"
     r(transform[Int, String](1, Seq(3, 2, 1), Seq("do", "re", "mi"), "fa")) shouldBe "mi"
     r(formatReadableSize(1)) shouldBe "1.00 B"
     r(least(3, 2)) shouldBe "2"

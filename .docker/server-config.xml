@@ -32,4 +32,16 @@
             <loadDefaultCAFile>false</loadDefaultCAFile>
         </server>
     </openSSL>
+    <remote_servers>
+        <!-- Remove the default remote server to avoid people depending on its hardcoded config
+             Use test_shard_localhost instead -->
+        <test_shard_localhost>
+            <shard>
+                <replica>
+                    <host>localhost</host>
+                    <port>9000</port>
+                </replica>
+            </shard>
+        </test_shard_localhost>
+    </remote_servers>
 </yandex>
