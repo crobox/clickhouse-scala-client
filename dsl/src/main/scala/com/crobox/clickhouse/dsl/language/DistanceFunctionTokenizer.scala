@@ -6,35 +6,42 @@ trait DistanceFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
   def tokenizeDistanceFunction(col: DistanceFunction)(implicit ctx: TokenizeContext): String = col match {
-    case CosineDistance(vector1: ArrayColMagnet[_], vector2: ArrayColMagnet[_]) =>
+
+    // cosine
+    case CosineDistance(vector1, vector2) =>
       s"cosineDistance(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)})"
 
-    case L1Norm(vector: ArrayColMagnet[_]) => s"L1Norm(${tokenizeColumn(vector.column)})"
-    case L1Normalize(vector1: ArrayColMagnet[_], vector2: ArrayColMagnet[_]) =>
+    // L1
+    case L1Norm(vector) => s"L1Norm(${tokenizeColumn(vector.column)})"
+    case L1Normalize(vector1, vector2) =>
       s"L1Normalize(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)})"
-    case L1Distance(vector1: ArrayColMagnet[_], vector2: ArrayColMagnet[_]) =>
+    case L1Distance(vector1, vector2) =>
       s"L1Distance(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)})"
 
-    case L2Norm(vector: ArrayColMagnet[_]) => s"L2Norm(${tokenizeColumn(vector.column)})"
-    case L2Normalize(vector1: ArrayColMagnet[_], vector2: ArrayColMagnet[_]) =>
+    // L2
+    case L2Norm(vector) => s"L2Norm(${tokenizeColumn(vector.column)})"
+    case L2Normalize(vector1, vector2) =>
       s"L2Normalize(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)})"
-    case L2Distance(vector1: ArrayColMagnet[_], vector2: ArrayColMagnet[_]) =>
+    case L2Distance(vector1, vector2) =>
       s"L2Distance(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)})"
 
-    case L2SquaredNorm(vector: ArrayColMagnet[_]) => s"L2SquaredNorm(${tokenizeColumn(vector.column)})"
-    case L2SquaredDistance(vector1: ArrayColMagnet[_], vector2: ArrayColMagnet[_]) =>
+    // L2Squared
+    case L2SquaredNorm(vector) => s"L2SquaredNorm(${tokenizeColumn(vector.column)})"
+    case L2SquaredDistance(vector1, vector2) =>
       s"L2SquaredDistance(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)})"
 
-    case LInfNorm(vector: ArrayColMagnet[_]) => s"LInfNorm(${tokenizeColumn(vector.column)})"
-    case LInfNormalize(vector1: ArrayColMagnet[_], vector2: ArrayColMagnet[_]) =>
+    // LInf
+    case LInfNorm(vector) => s"LinfNorm(${tokenizeColumn(vector.column)})"
+    case LInfNormalize(vector1, vector2) =>
       s"LinfNormalize(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)})"
-    case LInfDistance(vector1: ArrayColMagnet[_], vector2: ArrayColMagnet[_]) =>
+    case LInfDistance(vector1, vector2) =>
       s"LinfDistance(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)})"
 
-    case LPNorm(vector: ArrayColMagnet[_], p) => s"LpNorm(${tokenizeColumn(vector.column)}, $p)"
-    case LPNormalize(vector1: ArrayColMagnet[_], vector2: ArrayColMagnet[_], p: Float) =>
+    // LP
+    case LPNorm(vector, p) => s"LpNorm(${tokenizeColumn(vector.column)}, $p)"
+    case LPNormalize(vector1, vector2, p: Float) =>
       s"LpNormalize(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)}, $p)"
-    case LPDistance(vector1: ArrayColMagnet[_], vector2: ArrayColMagnet[_], p: Float) =>
+    case LPDistance(vector1, vector2, p: Float) =>
       s"LpDistance(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)}, $p)"
   }
 }
