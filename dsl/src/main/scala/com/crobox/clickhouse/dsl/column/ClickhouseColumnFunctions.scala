@@ -14,6 +14,7 @@ trait ClickhouseColumnFunctions
     with ComparisonFunctions
     with DateTimeFunctions
     with DictionaryFunctions
+    with DistanceFunctions
     with EmptyFunctions
     with EncodingFunctions
     with HashFunctions
