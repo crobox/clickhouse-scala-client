@@ -11,17 +11,19 @@ lazy val root = (project in file("."))
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
-        scalaVersion := "2.13.13",
-        crossScalaVersions := List("2.13.13", "3.3.1"),
+        homepage := Some(url("https://github.com/crobox/clickhouse-scala-client")),
+        scalaVersion := "2.13.16",
+        crossScalaVersions := List("2.13.16", "3.3.1"),
         javacOptions ++= Seq("-g", "-Xlint:unchecked", "-Xlint:deprecation", "-source", "11", "-target", "11"),
         scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:_", "-encoding", "UTF-8"),
-        publishTo := {
-          val nexus = "https://oss.sonatype.org/"
-          if (version.value.trim.endsWith("SNAPSHOT"))
-            Some("snapshots" at nexus + "content/repositories/snapshots")
-          else
-            Some("releases" at nexus + "service/local/staging/deploy/maven2")
-        },
+// Managed by the sbt-ci-release plugin
+//        publishTo := {
+//          val nexus = "https://oss.sonatype.org/"
+//          if (version.value.trim.endsWith("SNAPSHOT"))
+//            Some("snapshots" at nexus + "content/repositories/snapshots")
+//          else
+//            Some("releases" at nexus + "service/local/staging/deploy/maven2")
+//        },
         pomExtra := {
           <url>https://github.com/crobox/clickhouse-scala-client</url>
             <licenses>
@@ -61,7 +63,7 @@ lazy val client: Project = (project in file("client"))
       "org.apache.pekko"           %% "pekko-stream"  % PekkoVersion,
       "org.apache.pekko"           %% "pekko-http"    % PekkoHttpVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
-      "joda-time"                  % "joda-time"      % "2.12.7"
+      "joda-time"                  % "joda-time"      % "2.13.0"
     ) ++ Seq("org.apache.pekko"    %% "pekko-testkit" % PekkoVersion % Test) ++ Build.testDependencies.map(_ % Test)
   )
 
@@ -73,7 +75,7 @@ lazy val dsl = (project in file("dsl"))
     name := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava" % "33.1.0-jre",
+      "com.google.guava" % "guava" % "33.4.0-jre",
       "com.typesafe" % "config" % "1.4.3"
     )
   )
