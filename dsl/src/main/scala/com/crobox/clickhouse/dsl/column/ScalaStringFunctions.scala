@@ -8,16 +8,19 @@ trait ScalaStringFunctions { self: StringFunctions with StringSearchFunctions wi
 
   trait ScalaStringFunctionOps { self: StringSearchOps with StringOps with StringColMagnet[_] =>
 
-    def startsWithAnyOf[S](others: Seq[S],
-                           caseInsensitive: Boolean)(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+    def startsWithAnyOf[S](others: Seq[S], caseInsensitive: Boolean)(implicit
+        ev: S => StringColMagnet[_]
+    ): TableColumn[Boolean] =
       if (caseInsensitive) iStartsWithAnyOf(others) else startsWithAnyOf(others)
 
-    def endsWithAnyOf[S](others: Seq[S],
-                         caseInsensitive: Boolean)(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+    def endsWithAnyOf[S](others: Seq[S], caseInsensitive: Boolean)(implicit
+        ev: S => StringColMagnet[_]
+    ): TableColumn[Boolean] =
       if (caseInsensitive) iEndsWithAnyOf(others) else endsWithAnyOf(others)
 
-    def containsAnyOf[S](others: Iterable[S],
-                         caseInsensitive: Boolean)(implicit ev: S => StringColMagnet[_]): TableColumn[Boolean] =
+    def containsAnyOf[S](others: Iterable[S], caseInsensitive: Boolean)(implicit
+        ev: S => StringColMagnet[_]
+    ): TableColumn[Boolean] =
       if (caseInsensitive) iContainsAnyOf(others) else containsAnyOf(others)
 
     def startsWith(other: StringColMagnet[_], caseInsensitive: Boolean): TableColumn[Boolean] =

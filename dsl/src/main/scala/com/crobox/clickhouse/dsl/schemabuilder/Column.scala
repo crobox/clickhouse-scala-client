@@ -3,14 +3,15 @@ package com.crobox.clickhouse.dsl.schemabuilder
 import com.crobox.clickhouse.dsl.NativeColumn
 
 /**
- * @author Sjoerd Mulder
+ * @author
+ *   Sjoerd Mulder
  * @since 30-12-16
  */
 sealed trait ColumnType
 
 object ColumnType {
 
-  //TODO infer the types based on the generic passed to the tablecolumn
+  // TODO infer the types based on the generic passed to the tablecolumn
   abstract class SimpleColumnType(value: String) extends ColumnType {
 
     override def toString: String = value
@@ -62,8 +63,10 @@ object ColumnType {
   case object DateTime extends SimpleColumnType("DateTime")
 
   case class Array(columnType: ColumnType) extends ColumnType {
-    require(!columnType.isInstanceOf[Nested] && !columnType.isInstanceOf[Array],
-            "Only simple types are allowed in Array")
+    require(
+      !columnType.isInstanceOf[Nested] && !columnType.isInstanceOf[Array],
+      "Only simple types are allowed in Array"
+    )
 
     override def toString: String = s"Array($columnType)"
   }

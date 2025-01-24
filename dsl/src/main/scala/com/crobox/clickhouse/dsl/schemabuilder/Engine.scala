@@ -5,7 +5,8 @@ import com.crobox.clickhouse.dsl.{Column, NativeColumn}
 import org.joda.time.LocalDate
 
 /**
- * @author Sjoerd Mulder
+ * @author
+ *   Sjoerd Mulder
  * @since 30-12-16
  */
 sealed trait Engine {}
@@ -28,7 +29,7 @@ object Engine {
 
   /**
    * https://clickhouse.yandex/docs/en/operations/table_engines/distributed/
-   * */
+   */
   case class DistributedEngine(cluster: String, database: String, targetTable: String, shardingKey: Option[String])
       extends Engine {
     override def toString: String =
@@ -69,75 +70,88 @@ object Engine {
       |${statements.mkString("\n")}""".stripMargin
   }
 
-  case class MergeTree(partition: Seq[String],
-                       primaryKey: Seq[Column],
-                       samplingExpression: Option[String] = None,
-                       indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
-                       ttl: Iterable[TTL] = Iterable.empty)
-      extends MergeTreeEngine("MergeTree")
+  case class MergeTree(
+      partition: Seq[String],
+      primaryKey: Seq[Column],
+      samplingExpression: Option[String] = None,
+      indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+      ttl: Iterable[TTL] = Iterable.empty
+  ) extends MergeTreeEngine("MergeTree")
 
   object MergeTree {
 
     def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column]): MergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey)
 
-    def apply(dateColumn: NativeColumn[LocalDate],
-              primaryKey: Seq[Column],
-              samplingExpression: Option[String]): MergeTree =
+    def apply(
+        dateColumn: NativeColumn[LocalDate],
+        primaryKey: Seq[Column],
+        samplingExpression: Option[String]
+    ): MergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression = samplingExpression)
 
     def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column], indexGranularity: Int): MergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, indexGranularity = indexGranularity)
 
-    def apply(dateColumn: NativeColumn[LocalDate],
-              primaryKey: Seq[Column],
-              samplingExpression: Option[String],
-              indexGranularity: Int): MergeTree =
+    def apply(
+        dateColumn: NativeColumn[LocalDate],
+        primaryKey: Seq[Column],
+        samplingExpression: Option[String],
+        indexGranularity: Int
+    ): MergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity)
   }
 
-  case class ReplacingMergeTree(partition: Seq[String],
-                                primaryKey: Seq[Column],
-                                samplingExpression: Option[String] = None,
-                                indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
-                                version: Option[Column] = None,
-                                ttl: Iterable[TTL] = Iterable.empty)
-      extends MergeTreeEngine("ReplacingMergeTree" + version.map(col => s"(${col.name})").getOrElse(""))
+  case class ReplacingMergeTree(
+      partition: Seq[String],
+      primaryKey: Seq[Column],
+      samplingExpression: Option[String] = None,
+      indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+      version: Option[Column] = None,
+      ttl: Iterable[TTL] = Iterable.empty
+  ) extends MergeTreeEngine("ReplacingMergeTree" + version.map(col => s"(${col.name})").getOrElse(""))
 
   object ReplacingMergeTree {
 
     def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column]): ReplacingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey)
 
-    def apply(dateColumn: NativeColumn[LocalDate],
-              primaryKey: Seq[Column],
-              samplingExpression: Option[String]): ReplacingMergeTree =
+    def apply(
+        dateColumn: NativeColumn[LocalDate],
+        primaryKey: Seq[Column],
+        samplingExpression: Option[String]
+    ): ReplacingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression = samplingExpression)
 
     def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column], indexGranularity: Int): ReplacingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, indexGranularity = indexGranularity)
 
-    def apply(dateColumn: NativeColumn[LocalDate],
-              primaryKey: Seq[Column],
-              samplingExpression: Option[String],
-              indexGranularity: Int): ReplacingMergeTree =
+    def apply(
+        dateColumn: NativeColumn[LocalDate],
+        primaryKey: Seq[Column],
+        samplingExpression: Option[String],
+        indexGranularity: Int
+    ): ReplacingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity, version = None)
 
-    def apply(dateColumn: NativeColumn[LocalDate],
-              primaryKey: Seq[Column],
-              samplingExpression: Option[String],
-              indexGranularity: Int,
-              version: Option[Column]): ReplacingMergeTree =
+    def apply(
+        dateColumn: NativeColumn[LocalDate],
+        primaryKey: Seq[Column],
+        samplingExpression: Option[String],
+        indexGranularity: Int,
+        version: Option[Column]
+    ): ReplacingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity, version)
   }
 
-  case class SummingMergeTree(partition: Seq[String],
-                              primaryKey: Seq[Column],
-                              summingColumns: Seq[Column] = Seq.empty,
-                              samplingExpression: Option[String] = None,
-                              indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
-                              ttl: Iterable[TTL] = Iterable.empty)
-      extends MergeTreeEngine("SummingMergeTree") {
+  case class SummingMergeTree(
+      partition: Seq[String],
+      primaryKey: Seq[Column],
+      summingColumns: Seq[Column] = Seq.empty,
+      samplingExpression: Option[String] = None,
+      indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+      ttl: Iterable[TTL] = Iterable.empty
+  ) extends MergeTreeEngine("SummingMergeTree") {
 
     override def toString: String = {
       val summingColArg =
@@ -154,45 +168,56 @@ object Engine {
     def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column]): SummingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey)
 
-    def apply(dateColumn: NativeColumn[LocalDate],
-              primaryKey: Seq[Column],
-              summingColumns: Seq[Column]): SummingMergeTree =
+    def apply(
+        dateColumn: NativeColumn[LocalDate],
+        primaryKey: Seq[Column],
+        summingColumns: Seq[Column]
+    ): SummingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, summingColumns)
 
-    def apply(dateColumn: NativeColumn[LocalDate],
-              primaryKey: Seq[Column],
-              summingColumns: Seq[Column],
-              samplingExpression: Option[String],
-              indexGranularity: Int): SummingMergeTree =
+    def apply(
+        dateColumn: NativeColumn[LocalDate],
+        primaryKey: Seq[Column],
+        summingColumns: Seq[Column],
+        samplingExpression: Option[String],
+        indexGranularity: Int
+    ): SummingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, summingColumns, samplingExpression, indexGranularity)
   }
 
-  case class AggregatingMergeTree(partition: Seq[String],
-                                  primaryKey: Seq[Column],
-                                  samplingExpression: Option[String] = None,
-                                  indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
-                                  ttl: Iterable[TTL] = Iterable.empty)
-      extends MergeTreeEngine("AggregatingMergeTree")
+  case class AggregatingMergeTree(
+      partition: Seq[String],
+      primaryKey: Seq[Column],
+      samplingExpression: Option[String] = None,
+      indexGranularity: Int = MergeTreeEngine.DefaultIndexGranularity,
+      ttl: Iterable[TTL] = Iterable.empty
+  ) extends MergeTreeEngine("AggregatingMergeTree")
 
   object AggregatingMergeTree {
 
     def apply(dateColumn: NativeColumn[LocalDate], primaryKey: Seq[Column]): AggregatingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey)
 
-    def apply(dateColumn: NativeColumn[LocalDate],
-              primaryKey: Seq[Column],
-              samplingExpression: Option[String]): AggregatingMergeTree =
+    def apply(
+        dateColumn: NativeColumn[LocalDate],
+        primaryKey: Seq[Column],
+        samplingExpression: Option[String]
+    ): AggregatingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression = samplingExpression)
 
-    def apply(dateColumn: NativeColumn[LocalDate],
-              primaryKey: Seq[Column],
-              indexGranularity: Int): AggregatingMergeTree =
+    def apply(
+        dateColumn: NativeColumn[LocalDate],
+        primaryKey: Seq[Column],
+        indexGranularity: Int
+    ): AggregatingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, indexGranularity = indexGranularity)
 
-    def apply(dateColumn: NativeColumn[LocalDate],
-              primaryKey: Seq[Column],
-              samplingExpression: Option[String],
-              indexGranularity: Int): AggregatingMergeTree =
+    def apply(
+        dateColumn: NativeColumn[LocalDate],
+        primaryKey: Seq[Column],
+        samplingExpression: Option[String],
+        indexGranularity: Int
+    ): AggregatingMergeTree =
       apply(monthPartitionCompat(dateColumn), primaryKey, samplingExpression, indexGranularity)
   }
 

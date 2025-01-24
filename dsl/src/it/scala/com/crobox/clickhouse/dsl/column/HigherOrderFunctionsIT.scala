@@ -55,7 +55,9 @@ class HigherOrderFunctionsIT extends DslITSpec {
     r(arrayFilter[Long](_ < 0L, arr1)) shouldBe "[]"
 
     r(arrayFilter[String](_.like("%World%"), Seq("Hello", "World"))) shouldBe "['World']"
-    r(arrayFilter2[String]((x, y) => x.concat(y).like("%World"), Seq("Hello", "World"), Seq("Sjoerd", "Leonard"))) shouldBe "[]"
+    r(
+      arrayFilter2[String]((x, y) => x.concat(y).like("%World"), Seq("Hello", "World"), Seq("Sjoerd", "Leonard"))
+    ) shouldBe "[]"
   }
 
   it should "HigherOrderFunctions: arrayFirst" in {
@@ -108,7 +110,9 @@ class HigherOrderFunctionsIT extends DslITSpec {
   }
 
   it should "HigherOrderFunctions: arrayReverseSplit" in {
-    r(arrayReverseSplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3, 4, 5), Iterable(1, 0, 0, 1, 0))) shouldBe "[[1],[2,3,4],[5]]"
+    r(
+      arrayReverseSplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3, 4, 5), Iterable(1, 0, 0, 1, 0))
+    ) shouldBe "[[1],[2,3,4],[5]]"
   }
 
   it should "HigherOrderFunctions: arraySort" in {
@@ -118,7 +122,9 @@ class HigherOrderFunctionsIT extends DslITSpec {
   }
 
   it should "HigherOrderFunctions: arraySplit" in {
-    r(arraySplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3, 4, 5), Iterable(1, 0, 0, 1, 0))) shouldBe "[[1,2,3],[4,5]]"
+    r(
+      arraySplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3, 4, 5), Iterable(1, 0, 0, 1, 0))
+    ) shouldBe "[[1,2,3],[4,5]]"
   }
 
   it should "HigherOrderFunctions: arraySum" in {

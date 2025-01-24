@@ -33,9 +33,12 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
       internalClient.execute(query)
     }
     Await
-      .result(result.recoverWith {
-        case e: Throwable => Future.successful(e.getMessage)
-      }(ExecutionContext.Implicits.global), clickhouseSpecTimeout)
+      .result(
+        result.recoverWith { case e: Throwable =>
+          Future.successful(e.getMessage)
+        }(ExecutionContext.Implicits.global),
+        clickhouseSpecTimeout
+      )
       .trim()
   }
 
@@ -90,9 +93,9 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
         Thread.sleep(total)
       }
       backoff = backoff + 1
-      try {
+      try
         done = predicate()
-      } catch {
+      catch {
         case _: Throwable =>
       }
     }
@@ -124,10 +127,14 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
   lazy val ClickHouseVersion: ClickhouseServerVersion = clickClient.serverVersion
 
   def assumeMinimalClickhouseVersion(version: Int): Assertion =
-    assume(ClickHouseVersion.minimalVersion(version),
-           s"ClickhouseVersion: $ClickHouseVersion >= $version does NOT hold")
+    assume(
+      ClickHouseVersion.minimalVersion(version),
+      s"ClickhouseVersion: $ClickHouseVersion >= $version does NOT hold"
+    )
 
   def assumeMinimalClickhouseVersion(version: Int, subVersion: Int): Assertion =
-    assume(ClickHouseVersion.minimalVersion(version, subVersion),
-           s"ClickhouseVersion: $ClickHouseVersion >= $version.$subVersion does NOT hold")
+    assume(
+      ClickHouseVersion.minimalVersion(version, subVersion),
+      s"ClickhouseVersion: $ClickHouseVersion >= $version.$subVersion does NOT hold"
+    )
 }

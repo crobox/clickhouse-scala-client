@@ -21,8 +21,7 @@ abstract class MultiTimeUnit(override val labels: Array[String], override val ma
 }
 
 /**
- * Represents a unit of time with a fixed length,
- * used in the multi interval functionality
+ * Represents a unit of time with a fixed length, used in the multi interval functionality
  */
 object TimeUnit {
 
@@ -53,19 +52,18 @@ object TimeUnit {
     override val asPeriod: Period = Period.months(1)
   }
 
-  case object Quarter extends MultiTimeUnit(Array("q", "quarter"), "quarter"){
+  case object Quarter extends MultiTimeUnit(Array("q", "quarter"), "quarter") {
     override val asPeriod: Period = Period.months(3)
   }
 
-  case object Year extends MultiTimeUnit(Array("y", "year"), "year"){
+  case object Year extends MultiTimeUnit(Array("y", "year"), "year") {
     override val asPeriod: Period = Period.years(1)
   }
 
   case object Total extends TimeUnit {
     override val labels: Array[String] = Array("t", "total")
-    override val mainLabel: String = "total"
+    override val mainLabel: String     = "total"
   }
-
 
   def lookup(label: String): TimeUnit = allUnits
     .find(_.labels.contains(label))

@@ -13,7 +13,7 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
     case EmptyArrayToSingle(col: ArrayColMagnet[_]) =>
       s"emptyArrayToSingle(${tokenizeColumn(col.column)})"
     case Array(columns @ _*) =>
-      s"[${tokenizeSeqCol(columns.map(_.column): _*)}]" //Array Creation Operator
+      s"[${tokenizeSeqCol(columns.map(_.column): _*)}]" // Array Creation Operator
     case ArrayConcat(col1: ArrayColMagnet[_], columns @ _*) =>
       s"arrayConcat(${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
     case ArrayElement(col: ArrayColMagnet[_], n: NumericCol[_]) =>

@@ -23,8 +23,9 @@ trait InFunctionTokenizer {
       s"${tokenizeColumn(l.column)} GLOBAL NOT IN ${tokenizeInFunRHCol(r, () => ctx)}"
   }
 
-  private def tokenizeInFunRHCol(value: InFuncRHMagnet,
-                                 fn: () => TokenizeContext)(implicit ctx: TokenizeContext): String =
+  private def tokenizeInFunRHCol(value: InFuncRHMagnet, fn: () => TokenizeContext)(implicit
+      ctx: TokenizeContext
+  ): String =
     value match {
       case col: InFuncRHMagnet if col.query.isDefined =>
         s"(${toRawSql(col.query.get.internalQuery)(fn())})"

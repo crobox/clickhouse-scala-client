@@ -15,9 +15,8 @@ class AggregationFunctionsIT extends DslITSpec with LazyLogging {
   private val delta   = 2
   override val table1Entries: Seq[Table1Entry] =
     Seq.fill(entries)(Table1Entry(UUID.randomUUID(), numbers = Seq(1, 2, 3)))
-  override val table2Entries: Seq[Table2Entry] = {
+  override val table2Entries: Seq[Table2Entry] =
     (1 to entries).map(i => Table2Entry(UUID.randomUUID(), randomString, i, randomString, None))
-  }
 
   "Combinators" should "apply for aggregations" in {
     case class Result(columnResult: String) {
@@ -40,7 +39,7 @@ class AggregationFunctionsIT extends DslITSpec with LazyLogging {
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[Float], Result](Result.apply, "result")
     val result = queryExecutor
       .execute[Result](
-        select(quantiles(col2, 0.1F, 0.2F, 0.3F, 0.4F, 0.5F, 0.99F) as ref[Seq[Float]]("result")) from TwoTestTable
+        select(quantiles(col2, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.99f) as ref[Seq[Float]]("result")) from TwoTestTable
       )
       .futureValue
     result.rows.head.result should have length 6

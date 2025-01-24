@@ -5,7 +5,8 @@ import com.crobox.clickhouse.dsl.NativeColumn
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnOperation.{AddColumn, DropColumn, ModifyColumn}
 
 /**
- * @author Sjoerd Mulder
+ * @author
+ *   Sjoerd Mulder
  * @since 2-1-17
  */
 class AlterTableTest extends DslTestSpec {

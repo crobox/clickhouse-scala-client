@@ -9,108 +9,121 @@ trait TypeCastFunctions {
   self: Magnets =>
 
   abstract class TypeCastColumn[V](val targetColumn: ConstOrColMagnet[_])
-    extends ExpressionColumn[V](targetColumn.column)
+      extends ExpressionColumn[V](targetColumn.column)
 
   case class Reinterpret[V](typeCastColumn: TypeCastColumn[_] with Reinterpretable)
-    extends TypeCastColumn[V](typeCastColumn.targetColumn)
+      extends TypeCastColumn[V](typeCastColumn.targetColumn)
 
-  //Tagging of compatible
+  // Tagging of compatible
   sealed trait Reinterpretable
 
   // @todo Unsigned types are basically not supported. For now keep the same as signed types
-  case class UInt8(tableColumn: ConstOrColMagnet[_],
-                   orZero: Boolean = false,
-                   orDefault: Option[Byte] = None,
-                   orNull: Boolean = false)
-    extends TypeCastColumn[Byte](tableColumn)
+  case class UInt8(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Byte] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[Byte](tableColumn)
       with Reinterpretable
 
-  case class UInt16(tableColumn: ConstOrColMagnet[_],
-                    orZero: Boolean = false,
-                    orDefault: Option[Short] = None,
-                    orNull: Boolean = false)
-    extends TypeCastColumn[Short](tableColumn)
+  case class UInt16(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Short] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[Short](tableColumn)
       with Reinterpretable
 
-  case class UInt32(tableColumn: ConstOrColMagnet[_],
-                    orZero: Boolean = false,
-                    orDefault: Option[Int] = None,
-                    orNull: Boolean = false)
-    extends TypeCastColumn[Int](tableColumn)
+  case class UInt32(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Int] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[Int](tableColumn)
       with Reinterpretable
 
-  case class UInt64(tableColumn: ConstOrColMagnet[_],
-                    orZero: Boolean = false,
-                    orDefault: Option[Long] = None,
-                    orNull: Boolean = false)
-    extends TypeCastColumn[Long](tableColumn)
+  case class UInt64(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Long] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[Long](tableColumn)
       with Reinterpretable
 
-  case class Int8(tableColumn: ConstOrColMagnet[_],
-                  orZero: Boolean = false,
-                  orDefault: Option[Byte] = None,
-                  orNull: Boolean = false)
-    extends TypeCastColumn[Byte](tableColumn)
+  case class Int8(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Byte] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[Byte](tableColumn)
       with Reinterpretable
 
-  case class Int16(tableColumn: ConstOrColMagnet[_],
-                   orZero: Boolean = false,
-                   orDefault: Option[Short] = None,
-                   orNull: Boolean = false)
-    extends TypeCastColumn[Short](tableColumn)
+  case class Int16(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Short] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[Short](tableColumn)
       with Reinterpretable
 
-  case class Int32(tableColumn: ConstOrColMagnet[_],
-                   orZero: Boolean = false,
-                   orDefault: Option[Int] = None,
-                   orNull: Boolean = false)
-    extends TypeCastColumn[Int](tableColumn)
+  case class Int32(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Int] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[Int](tableColumn)
       with Reinterpretable
 
-  case class Int64(tableColumn: ConstOrColMagnet[_],
-                   orZero: Boolean = false,
-                   orDefault: Option[Long] = None,
-                   orNull: Boolean = false)
-    extends TypeCastColumn[Long](tableColumn)
+  case class Int64(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Long] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[Long](tableColumn)
       with Reinterpretable
 
-  case class Float32(tableColumn: ConstOrColMagnet[_],
-                     orZero: Boolean = false,
-                     orDefault: Option[Float] = None,
-                     orNull: Boolean = false)
-    extends TypeCastColumn[Float](tableColumn)
+  case class Float32(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Float] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[Float](tableColumn)
       with Reinterpretable
 
-  case class Float64(tableColumn: ConstOrColMagnet[_],
-                     orZero: Boolean = false,
-                     orDefault: Option[Double] = None,
-                     orNull: Boolean = false)
-    extends TypeCastColumn[Double](tableColumn)
+  case class Float64(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Double] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[Double](tableColumn)
       with Reinterpretable
 
-  case class Uuid(tableColumn: ConstOrColMagnet[_],
-                  orZero: Boolean = false,
-                  orDefault: Option[Uuid] = None,
-                  orNull: Boolean = false)
-    extends TypeCastColumn[java.util.UUID](tableColumn)
+  case class Uuid(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[Uuid] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[java.util.UUID](tableColumn)
       with Reinterpretable
 
-  case class DateRep(tableColumn: ConstOrColMagnet[_],
-                     orZero: Boolean = false,
-                     orDefault: Option[DateTime] = None,
-                     orNull: Boolean = false)
-    extends TypeCastColumn[org.joda.time.LocalDate](tableColumn)
+  case class DateRep(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[DateTime] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[org.joda.time.LocalDate](tableColumn)
       with Reinterpretable
 
-  case class DateTimeRep(tableColumn: ConstOrColMagnet[_],
-                         orZero: Boolean = false,
-                         orDefault: Option[org.joda.time.DateTime] = None,
-                         orNull: Boolean = false)
-    extends TypeCastColumn[org.joda.time.DateTime](tableColumn)
+  case class DateTimeRep(
+      tableColumn: ConstOrColMagnet[_],
+      orZero: Boolean = false,
+      orDefault: Option[org.joda.time.DateTime] = None,
+      orNull: Boolean = false
+  ) extends TypeCastColumn[org.joda.time.DateTime](tableColumn)
       with Reinterpretable
 
   case class StringRep(tableColumn: ConstOrColMagnet[_])
-    extends TypeCastColumn[String](tableColumn)
+      extends TypeCastColumn[String](tableColumn)
       with Reinterpretable
 
   sealed trait CastOutBind[I, O]
@@ -273,7 +286,7 @@ trait TypeCastFunctions {
   def reinterpret[V](typeCastColumn: TypeCastColumn[_] with Reinterpretable): Reinterpret[V] =
     Reinterpret[V](typeCastColumn)
 
-  def cast[T <: SimpleColumnType, O](tableColumn: ConstOrColMagnet[_], simpleColumnType: T)(
-    implicit castOut: CastOutBind[T, O]
+  def cast[T <: SimpleColumnType, O](tableColumn: ConstOrColMagnet[_], simpleColumnType: T)(implicit
+      castOut: CastOutBind[T, O]
   ): Cast[O] = Cast[O](tableColumn, simpleColumnType)
 }

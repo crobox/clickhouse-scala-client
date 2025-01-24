@@ -121,8 +121,10 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(limit = limit))
 
   def unionAll(otherQuery: OperationalQuery): OperationalQuery = {
-    require(internalQuery.select.isDefined && otherQuery.internalQuery.select.isDefined,
-            "Trying to apply UNION ALL on non SELECT queries.")
+    require(
+      internalQuery.select.isDefined && otherQuery.internalQuery.select.isDefined,
+      "Trying to apply UNION ALL on non SELECT queries."
+    )
     require(
       otherQuery.internalQuery.select.get.columns.size == internalQuery.select.get.columns.size,
       "SELECT queries needs to have the same number of columns to perform UNION ALL."
@@ -137,18 +139,18 @@ trait OperationalQuery extends Query {
     val selectForGroupCols = selectForGroup.toSeq.flatMap(_.columns)
 
     val filteredSelectAll = if (selectForGroupCols.contains(all)) {
-      //Only keep aliased, we already select all cols
+      // Only keep aliased, we already select all cols
       newOrderingColumns.collect { case c: AliasedColumn[_] => c }
     } else {
       newOrderingColumns
     }
 
-    val filteredDuplicates = filteredSelectAll.filterNot(column => {
+    val filteredDuplicates = filteredSelectAll.filterNot(column =>
       selectForGroupCols.exists {
         case c: Column => column.name == c.name
         case _         => false
       }
-    })
+    )
 
     val selectWithOrderColumns = selectForGroupCols ++ filteredDuplicates
 
@@ -156,9 +158,11 @@ trait OperationalQuery extends Query {
     newSelect
   }
 
-  def join[TargetTable <: Table](joinType: JoinQuery.JoinType,
-                                 query: OperationalQuery,
-                                 global: Boolean): OperationalQuery =
+  def join[TargetTable <: Table](
+      joinType: JoinQuery.JoinType,
+      query: OperationalQuery,
+      global: Boolean
+  ): OperationalQuery =
     OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, InnerFromQuery(query), global = global))))
 
   def join[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable, global: Boolean): OperationalQuery =
@@ -256,11 +260,13 @@ trait OperationalQuery extends Query {
   }
 
   /**
-   * Merge with another OperationalQuery, any conflict on query parts between the 2 joins will be resolved by
-   * preferring the left querypart over the right one.
+   * Merge with another OperationalQuery, any conflict on query parts between the 2 joins will be resolved by preferring
+   * the left querypart over the right one.
    *
-   * @param other The right part to merge with this OperationalQuery
-   * @return A merge of this and other OperationalQuery
+   * @param other
+   *   The right part to merge with this OperationalQuery
+   * @return
+   *   A merge of this and other OperationalQuery
    */
   def :+>(other: OperationalQuery): OperationalQuery =
     OperationalQuery(this.internalQuery :+> other.internalQuery)
@@ -268,8 +274,10 @@ trait OperationalQuery extends Query {
   /**
    * Right associative version of the merge (:+>) operator.
    *
-   * @param other The left part to merge with this OperationalQuery
-   * @return A merge of this and other OperationalQuery
+   * @param other
+   *   The left part to merge with this OperationalQuery
+   * @return
+   *   A merge of this and other OperationalQuery
    */
 
   def <+:(other: OperationalQuery): OperationalQuery =
@@ -278,8 +286,10 @@ trait OperationalQuery extends Query {
   /**
    * Tries to merge this OperationalQuery with other
    *
-   * @param other The Query parts to merge against
-   * @return A Success on merge without conflict, or Failure of IllegalArgumentException otherwise.
+   * @param other
+   *   The Query parts to merge against
+   * @return
+   *   A Success on merge without conflict, or Failure of IllegalArgumentException otherwise.
    */
   def +(other: OperationalQuery): Try[OperationalQuery] =
     (this.internalQuery + other.internalQuery).map(OperationalQuery.apply)

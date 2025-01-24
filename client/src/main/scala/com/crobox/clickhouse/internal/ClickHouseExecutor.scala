@@ -27,7 +27,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
 
   lazy val (progressQueue, progressSource) = {
     val builtSource = QueryProgress.queryProgressStream.run()
-    builtSource._2.runWith(Sink.ignore) //ensure we have one sink draining the progress
+    builtSource._2.runWith(Sink.ignore) // ensure we have one sink draining the progress
     builtSource
   }
 
@@ -37,7 +37,8 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     )
   private lazy val http              = Http()
   private lazy val connectionContext = customConnectionContext.getOrElse(http.defaultClientHttpsContext)
-  private lazy val pool              = http.superPool[Promise[HttpResponse]](connectionContext = connectionContext, settings = superPoolSettings)
+  private lazy val pool =
+    http.superPool[Promise[HttpResponse]](connectionContext = connectionContext, settings = superPoolSettings)
   private lazy val bufferSize: Int   = config.getInt("buffer-size")
   private lazy val queryRetries: Int = config.getInt("retries")
 
@@ -50,24 +51,28 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     })(Keep.both)
     .run()
 
-  def executeRequest(query: String,
-                     settings: QuerySettings,
-                     entity: Option[RequestEntity] = None,
-                     progressQueue: Option[SourceQueueWithComplete[QueryProgress]] = None): Future[String] = {
+  def executeRequest(
+      query: String,
+      settings: QuerySettings,
+      entity: Option[RequestEntity] = None,
+      progressQueue: Option[SourceQueueWithComplete[QueryProgress]] = None
+  ): Future[String] = {
     val internalQueryIdentifier = queryIdentifier
     executeWithRetries(settings.retries.getOrElse(queryRetries), progressQueue, settings) { () =>
       executeRequestInternal(hostBalancer.nextHost, query, internalQueryIdentifier, settings, entity, progressQueue)
-    }.andThen {
-      case _ => progressQueue.foreach(_.complete())
+    }.andThen { case _ =>
+      progressQueue.foreach(_.complete())
     }
   }
 
   protected def queryIdentifier: String =
     Random.alphanumeric.take(20).mkString("")
 
-  def executeRequestWithProgress(query: String,
-                                 settings: QuerySettings,
-                                 entity: Option[RequestEntity] = None): Source[QueryProgress, Future[String]] =
+  def executeRequestWithProgress(
+      query: String,
+      settings: QuerySettings,
+      entity: Option[RequestEntity] = None
+  ): Source[QueryProgress, Future[String]] =
     Source
       .queue[QueryProgress](10, OverflowStrategy.dropHead)
       .mapMaterializedValue(queue => executeRequest(query, settings, entity, Some(queue)))
@@ -81,8 +86,8 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       .flatMap(_ => system.terminate())
   }
 
-  protected def singleRequest(request: HttpRequest, progressEnabled: Boolean): Future[HttpResponse] = {
-    if(progressEnabled) {
+  protected def singleRequest(request: HttpRequest, progressEnabled: Boolean): Future[HttpResponse] =
+    if (progressEnabled) {
       val promise = Promise[HttpResponse]()
 
       queue.offer(request -> promise).flatMap {
@@ -94,7 +99,6 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     } else {
       http.singleRequest(request, connectionContext = connectionContext)
     }
-  }
 
   protected def executeRequestInternal(
       host: Future[Uri],
@@ -104,30 +108,32 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       entity: Option[RequestEntity] = None,
       progressQueue: Option[SourceQueueWithComplete[QueryProgress]]
   ): Future[String] = {
-    progressQueue.foreach(definedProgressQueue => {
-      progressSource.runForeach(
-        progress => {
-          if (progress.identifier == queryIdentifier) {
-            definedProgressQueue.offer(progress.progress)
-          }
+    progressQueue.foreach(definedProgressQueue =>
+      progressSource.runForeach(progress =>
+        if (progress.identifier == queryIdentifier) {
+          definedProgressQueue.offer(progress.progress)
         }
       )
-    })
-    host.flatMap(actualHost => {
-      val request = toRequest(actualHost,
-                              query,
-                              Some(queryIdentifier),
-                              settings.copy(
-                                progressHeaders = settings.progressHeaders.orElse(Some(progressQueue.isDefined))
-                              ),
-                              entity)(config)
+    )
+    host.flatMap { actualHost =>
+      val request = toRequest(
+        actualHost,
+        query,
+        Some(queryIdentifier),
+        settings.copy(
+          progressHeaders = settings.progressHeaders.orElse(Some(progressQueue.isDefined))
+        ),
+        entity
+      )(config)
       processClickhouseResponse(singleRequest(request, progressQueue.isDefined), query, actualHost, progressQueue)
-    })
+    }
   }
 
-  private def executeWithRetries(retries: Int,
-                                 progressQueue: Option[SourceQueueWithComplete[QueryProgress]],
-                                 settings: QuerySettings)(
+  private def executeWithRetries(
+      retries: Int,
+      progressQueue: Option[SourceQueueWithComplete[QueryProgress]],
+      settings: QuerySettings
+  )(
       request: () => Future[String]
   ): Future[String] =
     request().recoverWith {

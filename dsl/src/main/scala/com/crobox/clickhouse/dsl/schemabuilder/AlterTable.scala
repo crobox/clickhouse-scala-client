@@ -3,7 +3,8 @@ package com.crobox.clickhouse.dsl.schemabuilder
 import com.crobox.clickhouse.dsl.{ClickhouseStatement, NativeColumn}
 
 /**
- * @author Sjoerd Mulder
+ * @author
+ *   Sjoerd Mulder
  * @since 2-1-17
  */
 case class AlterTable(tableName: String, actions: Seq[ColumnOperation]) extends ClickhouseSchemaStatement {
@@ -11,9 +12,11 @@ case class AlterTable(tableName: String, actions: Seq[ColumnOperation]) extends 
   /**
    * Returns the query string for this statement.
    *
-   * @return String containing the Clickhouse dialect SQL statement
+   * @return
+   *   String containing the Clickhouse dialect SQL statement
    */
-  override def query: String = s"ALTER TABLE ${ClickhouseStatement.quoteIdentifier(tableName)} ${actions.mkString(", ")}"
+  override def query: String =
+    s"ALTER TABLE ${ClickhouseStatement.quoteIdentifier(tableName)} ${actions.mkString(", ")}"
 
 }
 

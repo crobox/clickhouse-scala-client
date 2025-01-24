@@ -24,10 +24,12 @@ class INFunctionsTest extends DslTestSpec {
          |SELECT item_id FROM ${OneTestTable.quoted} WHERE item_id IN ('a', 'b')
          |""".stripMargin)
 
-    toSQL(select(itemId.in(Seq("a", "b")) as "l")
-            .from(OneTestTable)
-            .where(itemId.isEq("a")),
-          false) should matchSQL(s"""
+    toSQL(
+      select(itemId.in(Seq("a", "b")) as "l")
+        .from(OneTestTable)
+        .where(itemId.isEq("a")),
+      false
+    ) should matchSQL(s"""
          |SELECT item_id IN ('a', 'b') AS l FROM ${OneTestTable.quoted} WHERE item_id = 'a'
          |""".stripMargin)
   }
@@ -58,14 +60,12 @@ class INFunctionsTest extends DslTestSpec {
 
   it should "use tableAlias for IN multiple tables" in {
     toSQL(
-      (
-        select(col4)
-          .from(TwoTestTable)
-          .where(
-            col4.in(select(col4).from(ThreeTestTable)) and
+      select(col4)
+        .from(TwoTestTable)
+        .where(
+          col4.in(select(col4).from(ThreeTestTable)) and
             col2.in(select(col2).from(TwoTestTable)) and
             col2.in(select(col4).from(ThreeTestTable))
-          )
         )
     ) should matchSQL(
       s"""

@@ -31,8 +31,9 @@ trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case s: Plus[_]         => tokenizeWithOperator(s, "+")
     }
 
-  private def tokenizeWithOperator(col: ArithmeticFunctionOp[_],
-                                   operator: String)(implicit ctx: TokenizeContext): String =
+  private def tokenizeWithOperator(col: ArithmeticFunctionOp[_], operator: String)(implicit
+      ctx: TokenizeContext
+  ): String =
     tokenizeColumn(col.left.column) + " " + operator + " " + tokenizeColumn(col.right.column)
 
   private def tokenizeAsFunction(col: ArithmeticFunctionOp[_], fn: String)(implicit ctx: TokenizeContext): String =

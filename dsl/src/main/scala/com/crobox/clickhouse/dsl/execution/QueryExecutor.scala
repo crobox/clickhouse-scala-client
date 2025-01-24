@@ -15,13 +15,17 @@ trait QueryExecutor { self: TokenizerModule =>
 
   def serverVersion: ClickhouseServerVersion
 
-  def query[V: JsonReader](sql: String)(implicit executionContext: ExecutionContext,
-                                        settings: QuerySettings = QuerySettings()): Future[QueryResult[V]]
+  def query[V: JsonReader](
+      sql: String
+  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[V]]
 
-  def execute[V: JsonReader](query: Query)(implicit executionContext: ExecutionContext,
-                                           settings: QuerySettings = QuerySettings()): Future[QueryResult[V]]
+  def execute[V: JsonReader](
+      query: Query
+  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[V]]
 
-  def insert[V: JsonWriter](table: Table, values: Seq[V])(implicit executionContext: ExecutionContext,
-                                                          settings: QuerySettings = QuerySettings()): Future[String]
+  def insert[V: JsonWriter](table: Table, values: Seq[V])(implicit
+      executionContext: ExecutionContext,
+      settings: QuerySettings = QuerySettings()
+  ): Future[String]
 
 }

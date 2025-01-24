@@ -14,31 +14,31 @@ trait LogicalFunctionTokenizer {
         col.operator match {
           case And =>
             (surroundWithBrackets(left, col.operator), surroundWithBrackets(right, col.operator)) match {
-              case ("1", "1")                => "1" // LEFT & RIGHT are true, AND succeeds
+              case ("1", "1")                => "1"         // LEFT & RIGHT are true, AND succeeds
               case ("1", rightClause)        => rightClause // LEFT is true, only tokenize RIGHT
-              case ("0", _)                  => "0" // LEFT is false, AND fails
-              case (leftClause, "1")         => leftClause // RIGHT is true, only tokenize LEFT
-              case (_, "0")                  => "0" // RIGHT is false, AND fails
+              case ("0", _)                  => "0"         // LEFT is false, AND fails
+              case (leftClause, "1")         => leftClause  // RIGHT is true, only tokenize LEFT
+              case (_, "0")                  => "0"         // RIGHT is false, AND fails
               case (leftClause, rightClause) => s"$leftClause AND $rightClause"
             }
           case Or =>
             (surroundWithBrackets(left, col.operator), surroundWithBrackets(right, col.operator)) match {
-              case ("0", "0")                => "0" // LEFT & RIGHT are false, OR fails
+              case ("0", "0")                => "0"         // LEFT & RIGHT are false, OR fails
               case ("0", rightClause)        => rightClause // LEFT is false, only tokenize RIGHT
-              case ("1", _)                  => "1" // LEFT is true, OR succeeds
-              case (leftClause, "0")         => leftClause // RIGHT is false, only tokenize LEFT
-              case (_, "1")                  => "1" // RIGHT is true, OR succeeds
+              case ("1", _)                  => "1"         // LEFT is true, OR succeeds
+              case (leftClause, "0")         => leftClause  // RIGHT is false, only tokenize LEFT
+              case (_, "1")                  => "1"         // RIGHT is true, OR succeeds
               case (leftClause, rightClause) => s"$leftClause OR $rightClause"
 
             }
           case Xor =>
             (surroundWithBrackets(left, col.operator), surroundWithBrackets(right, col.operator)) match {
-              case ("0", "0")                => "0" // LEFT & RIGHT are false, XOR fails
-              case ("1", "1")                => "0" // LEFT & RIGHT are true, XOR fails
-              case ("0", rightClause)        => rightClause // LEFT is false, only tokenize RIGHT
-              case (leftClause, "0")         => leftClause // RIGHT is false, only tokenize LEFT
+              case ("0", "0")                => "0"                  // LEFT & RIGHT are false, XOR fails
+              case ("1", "1")                => "0"                  // LEFT & RIGHT are true, XOR fails
+              case ("0", rightClause)        => rightClause          // LEFT is false, only tokenize RIGHT
+              case (leftClause, "0")         => leftClause           // RIGHT is false, only tokenize LEFT
               case ("1", rightClause)        => s"not($rightClause)" // LEFT is true, RIGHT MUST BE FALSE
-              case (leftClause, "1")         => s"not($leftClause)" // RIGHT is true, LEFT MUST BE FALSE
+              case (leftClause, "1")         => s"not($leftClause)"  // RIGHT is true, LEFT MUST BE FALSE
               case (leftClause, rightClause) => s"xor($leftClause, $rightClause)"
 
             }
@@ -46,8 +46,8 @@ trait LogicalFunctionTokenizer {
         }
     }
 
-  private def surroundWithBrackets(col: TableColumn[Boolean], operator: LogicalOperator)(
-      implicit ctx: TokenizeContext
+  private def surroundWithBrackets(col: TableColumn[Boolean], operator: LogicalOperator)(implicit
+      ctx: TokenizeContext
   ): String =
     col match {
       case c: LogicalFunction if c.operator == And && operator == Or => surroundWithBrackets(tokenizeColumn(col))

@@ -78,7 +78,7 @@ class DSLImprovementsTest extends DslTestSpec {
     cols.size should be(1)
     cols should be(Seq(intCol))
 
-    //preserve index at start
+    // preserve index at start
     cols = Seq(aliased, stringCol, stringArrayCol, intArrayCol).replaceColumn("alias", intCol)
     cols.size should be(4)
     cols should be(Seq(intCol, stringCol, stringArrayCol, intArrayCol))

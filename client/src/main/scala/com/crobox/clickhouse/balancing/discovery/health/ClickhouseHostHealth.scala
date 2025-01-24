@@ -26,14 +26,15 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
   case class Dead(host: Uri, reason: Throwable) extends ClickhouseHostStatus { override val code: String = "nok" }
 
   /**
-   * Creates a source which emits the health status at most every `health-check.interval` interval.
-   * The source uses a cachedHostConnectionPool with a number of one maximum connections and one maximum open requests. This is configured on
-   * the provided actor system and assumes there is no other user of such a pool, so it will not be shared.
-   * This ensures the health checks will not affect the clients `superPool`  in any way, and it will not fill the queue if one hosts hangs when returning the response.
-   * We also set the connection idle timeout to `health-check.timeout + health-check.interval` to ensure that the pool will be blocked with on hanging request.
-   * */
-  def healthFlow(host: Uri)(
-      implicit system: ActorSystem,
+   * Creates a source which emits the health status at most every `health-check.interval` interval. The source uses a
+   * cachedHostConnectionPool with a number of one maximum connections and one maximum open requests. This is configured
+   * on the provided actor system and assumes there is no other user of such a pool, so it will not be shared. This
+   * ensures the health checks will not affect the clients `superPool` in any way, and it will not fill the queue if one
+   * hosts hangs when returning the response. We also set the connection idle timeout to
+   * `health-check.timeout + health-check.interval` to ensure that the pool will be blocked with on hanging request.
+   */
+  def healthFlow(host: Uri)(implicit
+      system: ActorSystem,
       executionContext: ExecutionContext
   ): Source[ClickhouseHostStatus, Cancellable] = {
     val healthCheckInterval: FiniteDuration =
@@ -74,12 +75,11 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
         Unmarshaller
           .stringUnmarshaller(decodeResponse(response).entity)
           .map(splitResponse)
-          .map(
-            stringResponse =>
-              if (stringResponse.equals(Seq("Ok."))) {
-                Alive(host)
-              } else {
-                Dead(host, new IllegalArgumentException(s"Got wrong result $stringResponse"))
+          .map(stringResponse =>
+            if (stringResponse.equals(Seq("Ok."))) {
+              Alive(host)
+            } else {
+              Dead(host, new IllegalArgumentException(s"Got wrong result $stringResponse"))
             }
           )
       case (Success(response), _) =>

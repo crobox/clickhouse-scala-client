@@ -4,7 +4,8 @@ import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.NativeColumn
 
 /**
- * @author Sjoerd Mulder
+ * @author
+ *   Sjoerd Mulder
  * @since 30-12-16
  */
 class ColumnTypeTest extends DslTestSpec {
@@ -15,11 +16,10 @@ class ColumnTypeTest extends DslTestSpec {
     )
   }
 
-  it should "deny double Nesting" in {
+  it should "deny double Nesting" in
     intercept[IllegalArgumentException] {
       ColumnType.Nested(NativeColumn("a", ColumnType.Nested(NativeColumn("b"))))
     }
-  }
 
   it should "support multiple arguments for AggregateFunction column" in {
     ColumnType.AggregateFunctionColumn("uniq", ColumnType.String).toString should be(

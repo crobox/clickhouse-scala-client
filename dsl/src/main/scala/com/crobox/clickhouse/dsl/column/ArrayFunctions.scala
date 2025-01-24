@@ -25,13 +25,13 @@ trait ArrayFunctions { this: Magnets =>
   case class EmptyArrayString()      extends ArrayFunctionConst[String]
   case class Range(n: NumericCol[_]) extends ArrayFunctionConst[Long]
 
-  case class EmptyArrayToSingle[V](col: ArrayColMagnet[V])                               extends ArrayFunctionOp[V]
-  case class Array[V](columns: ConstOrColMagnet[V]*)                                     extends ArrayFunctionOp[Iterable[V]]
-  case class ArrayConcat[V](col1: ArrayColMagnet[V], columns: ArrayColMagnet[V]*)        extends ArrayFunctionOp[Iterable[V]]
-  case class ArrayElement[V](col: ArrayColMagnet[_ <: Iterable[V]], n: NumericCol[_])    extends ArrayFunctionOp[V]
-  case class Has[V](col: ArrayColMagnet[V], elm: Magnet[V])                              extends ArrayFunctionOp[Boolean]
-  case class HasAll[V](col: ArrayColMagnet[V], elm: Magnet[V])                           extends ArrayFunctionOp[Boolean]
-  case class HasAny[V](col: ArrayColMagnet[V], elm: Magnet[V])                           extends ArrayFunctionOp[Boolean]
+  case class EmptyArrayToSingle[V](col: ArrayColMagnet[V])                        extends ArrayFunctionOp[V]
+  case class Array[V](columns: ConstOrColMagnet[V]*)                              extends ArrayFunctionOp[Iterable[V]]
+  case class ArrayConcat[V](col1: ArrayColMagnet[V], columns: ArrayColMagnet[V]*) extends ArrayFunctionOp[Iterable[V]]
+  case class ArrayElement[V](col: ArrayColMagnet[_ <: Iterable[V]], n: NumericCol[_]) extends ArrayFunctionOp[V]
+  case class Has[V](col: ArrayColMagnet[V], elm: Magnet[V])                           extends ArrayFunctionOp[Boolean]
+  case class HasAll[V](col: ArrayColMagnet[V], elm: Magnet[V])                        extends ArrayFunctionOp[Boolean]
+  case class HasAny[V](col: ArrayColMagnet[V], elm: Magnet[V])                        extends ArrayFunctionOp[Boolean]
   case class IndexOf[V](col: ArrayColMagnet[_ <: Iterable[V]], elm: ConstOrColMagnet[V]) extends ArrayFunctionOp[Long]
   case class CountEqual[V](col: ArrayColMagnet[_ <: Iterable[V]], elm: ConstOrColMagnet[V])
       extends ArrayFunctionOp[Long]
@@ -56,10 +56,11 @@ trait ArrayFunctions { this: Magnets =>
   case class ArrayDistinct[V](col: ArrayColMagnet[_ <: Iterable[V]])   extends ArrayFunctionOp[Iterable[V]]
   case class ArrayIntersect[V](col: ArrayColMagnet[_ <: Iterable[V]], columns: ArrayColMagnet[_ <: Iterable[V]]*)
       extends ArrayFunctionOp[Iterable[V]]
-  case class ArrayReduce[V](function: String,
-                            col: ArrayColMagnet[_ <: Iterable[V]],
-                            columns: ArrayColMagnet[_ <: Iterable[V]]*)
-      extends ArrayFunctionOp[V]
+  case class ArrayReduce[V](
+      function: String,
+      col: ArrayColMagnet[_ <: Iterable[V]],
+      columns: ArrayColMagnet[_ <: Iterable[V]]*
+  ) extends ArrayFunctionOp[V]
   case class ArrayReverse[V](col: ArrayColMagnet[_ <: Iterable[V]]) extends ArrayFunctionOp[Iterable[V]]
   // new 22-07-15
   case class ArrayEmpty(col: ArrayColMagnet[_])    extends ArrayFunctionOp[Boolean]
@@ -96,8 +97,10 @@ trait ArrayFunctions { this: Magnets =>
     CountEqual[V](col, elm)
   def arrayEnumerate[V](col: ArrayColMagnet[V]): ArrayEnumerate[V] = ArrayEnumerate(col)
 
-  def arrayEnumerateUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]],
-                            coln: ArrayColMagnet[_ <: Iterable[V]]*): ArrayEnumerateUniq[V] =
+  def arrayEnumerateUniq[V](
+      col1: ArrayColMagnet[_ <: Iterable[V]],
+      coln: ArrayColMagnet[_ <: Iterable[V]]*
+  ): ArrayEnumerateUniq[V] =
     ArrayEnumerateUniq[V](col1, coln: _*)
   def arrayPopBack[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayPopBack[V]   = ArrayPopBack[V](col)
   def arrayPopFront[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayPopFront[V] = ArrayPopFront[V](col)
@@ -108,14 +111,18 @@ trait ArrayFunctions { this: Magnets =>
   def arrayPushFront[V](col: ArrayColMagnet[_ <: Iterable[V]], elm: ConstOrColMagnet[V]): ArrayPushFront[V] =
     ArrayPushFront[V](col, elm)
 
-  def arrayResize[V](col: ArrayColMagnet[_ <: Iterable[V]],
-                     size: NumericCol[_],
-                     extender: ConstOrColMagnet[V]): ArrayResize[V] =
+  def arrayResize[V](
+      col: ArrayColMagnet[_ <: Iterable[V]],
+      size: NumericCol[_],
+      extender: ConstOrColMagnet[V]
+  ): ArrayResize[V] =
     ArrayResize[V](col, size, extender)
 
-  def arraySlice[V](col: ArrayColMagnet[_ <: Iterable[V]],
-                    offset: NumericCol[_],
-                    length: NumericCol[_] = 0): ArraySlice[V] =
+  def arraySlice[V](
+      col: ArrayColMagnet[_ <: Iterable[V]],
+      offset: NumericCol[_],
+      length: NumericCol[_] = 0
+  ): ArraySlice[V] =
     ArraySlice[V](col, offset, length)
 
   def arrayUniq[V](col1: ArrayColMagnet[_ <: Iterable[V]], coln: ArrayColMagnet[_ <: Iterable[V]]*): ArrayUniq[V] =
@@ -126,30 +133,36 @@ trait ArrayFunctions { this: Magnets =>
   def arrayDifference[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayDifference[V] = ArrayDifference[V](col)
   def arrayDistinct[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayDistinct[V]     = ArrayDistinct[V](col)
 
-  def arrayIntersect[V](col1: ArrayColMagnet[_ <: Iterable[V]],
-                        col2: ArrayColMagnet[_ <: Iterable[V]],
-                        columns: ArrayColMagnet[_ <: Iterable[V]]*): ArrayIntersect[V] =
+  def arrayIntersect[V](
+      col1: ArrayColMagnet[_ <: Iterable[V]],
+      col2: ArrayColMagnet[_ <: Iterable[V]],
+      columns: ArrayColMagnet[_ <: Iterable[V]]*
+  ): ArrayIntersect[V] =
     ArrayIntersect[V](col1, Seq(col2) ++ columns: _*)
 
-  def arrayReduce[V](function: String,
-                     col: ArrayColMagnet[_ <: Iterable[V]],
-                     columns: ArrayColMagnet[_ <: Iterable[V]]*): ArrayReduce[V] =
+  def arrayReduce[V](
+      function: String,
+      col: ArrayColMagnet[_ <: Iterable[V]],
+      columns: ArrayColMagnet[_ <: Iterable[V]]*
+  ): ArrayReduce[V] =
     ArrayReduce[V](function, col, columns: _*)
   def arrayReverse[V](col: ArrayColMagnet[_ <: Iterable[V]]): ArrayReverse[V] = ArrayReverse[V](col)
 
   /**
-   * Special function that checks if given arrays 'share' at least one element.
-   * Basically it's a wrapper around arrayIntersect (by using notEmpty)
-
+   * Special function that checks if given arrays 'share' at least one element. Basically it's a wrapper around
+   * arrayIntersect (by using notEmpty)
+   *
    * @param col1
    * @param col2
    * @param columns
    * @tparam V
    * @return
    */
-  def arrayMatch[V](col1: ArrayColMagnet[_ <: Iterable[V]],
-                    col2: ArrayColMagnet[_ <: Iterable[V]],
-                    columns: ArrayColMagnet[_ <: Iterable[V]]*): ExpressionColumn[Boolean] =
+  def arrayMatch[V](
+      col1: ArrayColMagnet[_ <: Iterable[V]],
+      col2: ArrayColMagnet[_ <: Iterable[V]],
+      columns: ArrayColMagnet[_ <: Iterable[V]]*
+  ): ExpressionColumn[Boolean] =
     notEmpty(arrayIntersect(col1, col2, columns: _*))
 
   def arrayEmpty(col: ArrayColMagnet[_]): ArrayEmpty = ArrayEmpty(col)

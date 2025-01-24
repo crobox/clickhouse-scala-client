@@ -10,16 +10,16 @@ trait DateTimeFunctions { self: Magnets =>
       extends ExpressionColumn(ddt.column)
       with DateTimeFunction
 
-  abstract class DateTimeConst[V]()                                    extends ExpressionColumn[V](EmptyColumn) with DateTimeFunction
-  case class Year(d: DateOrDateTime[_])                                extends DateTimeFunctionCol[Int](d)
-  case class YYYYMM(d: DateOrDateTime[_])                              extends DateTimeFunctionCol[String](d)
-  case class Month(d: DateOrDateTime[_])                               extends DateTimeFunctionCol[Int](d)
-  case class DayOfMonth(d: DateOrDateTime[_])                          extends DateTimeFunctionCol[Int](d)
-  case class DayOfWeek(d: DateOrDateTime[_])                           extends DateTimeFunctionCol[Int](d)
-  case class Hour(d: DateOrDateTime[_])                                extends DateTimeFunctionCol[Int](d)
-  case class Minute(d: DateOrDateTime[_])                              extends DateTimeFunctionCol[Int](d)
-  case class Second(d: DateOrDateTime[_])                              extends DateTimeFunctionCol[Int](d)
-  case class Monday[V](d: DateOrDateTime[_])                           extends DateTimeFunctionCol[V](d)
+  abstract class DateTimeConst[V]()           extends ExpressionColumn[V](EmptyColumn) with DateTimeFunction
+  case class Year(d: DateOrDateTime[_])       extends DateTimeFunctionCol[Int](d)
+  case class YYYYMM(d: DateOrDateTime[_])     extends DateTimeFunctionCol[String](d)
+  case class Month(d: DateOrDateTime[_])      extends DateTimeFunctionCol[Int](d)
+  case class DayOfMonth(d: DateOrDateTime[_]) extends DateTimeFunctionCol[Int](d)
+  case class DayOfWeek(d: DateOrDateTime[_])  extends DateTimeFunctionCol[Int](d)
+  case class Hour(d: DateOrDateTime[_])       extends DateTimeFunctionCol[Int](d)
+  case class Minute(d: DateOrDateTime[_])     extends DateTimeFunctionCol[Int](d)
+  case class Second(d: DateOrDateTime[_])     extends DateTimeFunctionCol[Int](d)
+  case class Monday[V](d: DateOrDateTime[_])  extends DateTimeFunctionCol[V](d)
   case class AddSeconds(d: DateOrDateTime[_], seconds: NumericCol[_])  extends DateTimeFunctionCol[DateTime](d)
   case class AddMinutes(d: DateOrDateTime[_], minutes: NumericCol[_])  extends DateTimeFunctionCol[DateTime](d)
   case class AddHours(d: DateOrDateTime[_], hours: NumericCol[_])      extends DateTimeFunctionCol[DateTime](d)
