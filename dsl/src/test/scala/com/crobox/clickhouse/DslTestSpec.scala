@@ -43,7 +43,6 @@ trait DslTestSpec
     } else sql.substring(0, sql.indexOf(" FORMAT")).trim
   }
 
-  def shouldMatch(query: OperationalQuery, expected: String): Assertion = {
+  def shouldMatch(query: OperationalQuery, expected: String): Assertion =
     toSql(query.internalQuery, None) should matchSQL(expected)
-  }
 }

@@ -38,7 +38,7 @@ private[clickhouse] object ClusterConnectionFlow
     Source
       .tick(0.millis, scanningInterval, {})
       .mapAsync(1)(_ => targetHost)
-      .mapAsync(1)(host => {
+      .mapAsync(1) { host =>
         val query = s"SELECT host_address FROM system.clusters WHERE cluster='$cluster'"
         val request =
           toRequest(host, query, None, QuerySettings(readOnly = ReadQueries, idempotent = Some(true)), None)(
@@ -47,16 +47,16 @@ private[clickhouse] object ClusterConnectionFlow
         processClickhouseResponse(http.singleRequest(request, settings = settings), query, host, None)
           .map(splitResponse)
           .map(_.toSet.filter(_.nonEmpty))
-          .map(result => {
+          .map { result =>
             if (result.isEmpty) {
               throw new IllegalArgumentException(
                 s"Could not determine clickhouse cluster hosts for cluster $cluster and host $host. " +
-                s"This could indicate that you are trying to use the cluster balancer to connect to a non cluster based clickhouse server. " +
-                s"Please use the `SingleHostQueryBalancer` in that case."
+                  s"This could indicate that you are trying to use the cluster balancer to connect to a non cluster based clickhouse server. " +
+                  s"Please use the `SingleHostQueryBalancer` in that case."
               )
             }
             Connections(result.map(ClickhouseHostBuilder.toHost(_, Some(8123))))
-          })
-      })
+          }
+      }
   }
 }

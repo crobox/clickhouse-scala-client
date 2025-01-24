@@ -28,7 +28,7 @@ trait LogicalFunctions { this: Magnets =>
       }
   }
 
-  //Reference with another name to allow to use it in the trait
+  // Reference with another name to allow to use it in the trait
   private def _and = and _
   private def _or  = or _
   private def _xor = xor _
@@ -65,6 +65,6 @@ trait LogicalFunctions { this: Magnets =>
     col.asOption match {
       case Some(Const(true))  => Const(false)
       case Some(Const(false)) => Const(true)
-      case _                  => LogicalFunction(col, Not, col) //Needs both right and left for the tokenizer
+      case _                  => LogicalFunction(col, Not, col) // Needs both right and left for the tokenizer
     }
 }

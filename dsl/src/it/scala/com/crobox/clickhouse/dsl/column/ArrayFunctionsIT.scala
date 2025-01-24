@@ -47,7 +47,9 @@ class ArrayFunctionsIT extends DslITSpec {
   it should "arrayFunction: intersect" in {
     execute(select(arrayIntersect(Array(1, 2), Array(1, 3), Array(2, 3)))).futureValue should be("[]")
     execute(select(arrayIntersect(Array(1, 2), Array(1, 3), Array(1, 4)))).futureValue should be("[1]")
-    execute(select(arraySort(None, arrayIntersect(Array(1, 2, 3), Array(1, 3, 4), Array(1, 3, 5))))).futureValue should be("[1,3]")
+    execute(
+      select(arraySort(None, arrayIntersect(Array(1, 2, 3), Array(1, 3, 4), Array(1, 3, 5))))
+    ).futureValue should be("[1,3]")
   }
 
   it should "arrayFunction: reduce" in {

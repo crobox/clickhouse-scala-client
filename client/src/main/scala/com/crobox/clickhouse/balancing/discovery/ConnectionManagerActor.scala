@@ -12,16 +12,18 @@ import com.typesafe.config.Config
 import scala.collection.mutable
 import scala.concurrent.duration._
 
-class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, Cancellable],
-                             optionalConfig: Option[Config])(
-    implicit materializer: Materializer
+class ConnectionManagerActor(
+    healthSource: Uri => Source[ClickhouseHostStatus, Cancellable],
+    optionalConfig: Option[Config]
+)(implicit
+    materializer: Materializer
 ) extends Actor
     with ActorLogging
     with Stash {
 
   import ConnectionManagerActor._
 
-  private val config                      = optionalConfig.getOrElse(context.system.settings.config).getConfig("connection")
+  private val config = optionalConfig.getOrElse(context.system.settings.config).getConfig("connection")
   private val fallbackToConfigurationHost = config.getBoolean("fallback-to-config-host-during-initialization")
 
   //  state
@@ -38,7 +40,7 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
   override def receive: Receive = {
     case Connections(hosts) =>
       hosts
-        .foreach(host => {
+        .foreach(host =>
           if (!currentConfiguredHosts.contains(host)) {
             log.info(s"Setting up host health checks for host $host")
             hostHealthScheduler.put(
@@ -50,7 +52,7 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
                 .run()
             )
           }
-        })
+        )
       currentConfiguredHosts = hosts
 
     case GetConnection() =>
@@ -99,8 +101,8 @@ class ConnectionManagerActor(healthSource: Uri => Source[ClickhouseHostStatus, C
       }
 
     case LogDeadConnections =>
-      val deadHosts = hostsStatus.values.collect {
-        case Dead(host, _) => host
+      val deadHosts = hostsStatus.values.collect { case Dead(host, _) =>
+        host
       }
       if (deadHosts.nonEmpty)
         log.error(s"Hosts ${deadHosts.mkString(" - ")} are still unreachable")

@@ -5,10 +5,11 @@ import com.crobox.clickhouse.dsl.ExpressionColumn
 trait StringSearchFunctions { self: Magnets =>
   abstract class StringSearchFunc[+V](val col1: StringColMagnet[_], val col2: StringColMagnet[_])
       extends ExpressionColumn[V](col1.column)
-  abstract class StringSearchReplaceFunc(col1: StringColMagnet[_],
-                                         col2: StringColMagnet[_],
-                                         val replace: StringColMagnet[_])
-      extends StringSearchFunc[String](col1, col2)
+  abstract class StringSearchReplaceFunc(
+      col1: StringColMagnet[_],
+      col2: StringColMagnet[_],
+      val replace: StringColMagnet[_]
+  ) extends StringSearchFunc[String](col1, col2)
 
   case class Position(col: StringColMagnet[_], needle: StringColMagnet[_], caseSensitive: Boolean = true)
       extends StringSearchFunc[Long](col, needle)
@@ -65,13 +66,17 @@ trait StringSearchFunctions { self: Magnets =>
   def replaceAll(col: StringColMagnet[_], pattern: StringColMagnet[_], replacement: StringColMagnet[_]): ReplaceAll =
     ReplaceAll(col, pattern, replacement)
 
-  def replaceRegexpOne(col: StringColMagnet[_],
-                       pattern: StringColMagnet[_],
-                       replacement: StringColMagnet[_]): ReplaceRegexpOne = ReplaceRegexpOne(col, pattern, replacement)
+  def replaceRegexpOne(
+      col: StringColMagnet[_],
+      pattern: StringColMagnet[_],
+      replacement: StringColMagnet[_]
+  ): ReplaceRegexpOne = ReplaceRegexpOne(col, pattern, replacement)
 
-  def replaceRegexpAll(col: StringColMagnet[_],
-                       pattern: StringColMagnet[_],
-                       replacement: StringColMagnet[_]): ReplaceRegexpAll = ReplaceRegexpAll(col, pattern, replacement)
+  def replaceRegexpAll(
+      col: StringColMagnet[_],
+      pattern: StringColMagnet[_],
+      replacement: StringColMagnet[_]
+  ): ReplaceRegexpAll = ReplaceRegexpAll(col, pattern, replacement)
 
   trait StringSearchOps { self: StringColMagnet[_] =>
 

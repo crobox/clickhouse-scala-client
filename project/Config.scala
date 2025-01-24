@@ -7,17 +7,17 @@ object Config {
   private lazy val testAll = TaskKey[Unit]("tests")
 
   private lazy val unitSettings = Seq(
-    Test / fork := true,
+    Test / fork              := true,
     Test / parallelExecution := false
   )
 
   private lazy val itSettings =
-  inConfig(CustomIntegrationTest)(Defaults.testSettings) ++
-  Seq(
-    CustomIntegrationTest / fork := false,
-    CustomIntegrationTest / parallelExecution := false,
-    CustomIntegrationTest / scalaSource := baseDirectory.value / "src/it/scala"
-  ) ++ inConfig(IntegrationTest)(Defaults.testSettings)
+    inConfig(CustomIntegrationTest)(Defaults.testSettings) ++
+      Seq(
+        CustomIntegrationTest / fork              := false,
+        CustomIntegrationTest / parallelExecution := false,
+        CustomIntegrationTest / scalaSource       := baseDirectory.value / "src/it/scala"
+      ) ++ inConfig(IntegrationTest)(Defaults.testSettings)
 
   lazy val testSettings = itSettings ++ unitSettings ++ Seq(
     testAll := (CustomIntegrationTest / test).dependsOn(Test / test).value

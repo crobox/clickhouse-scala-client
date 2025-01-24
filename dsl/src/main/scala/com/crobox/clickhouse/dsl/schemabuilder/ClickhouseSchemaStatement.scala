@@ -3,7 +3,8 @@ package com.crobox.clickhouse.dsl.schemabuilder
 import com.crobox.clickhouse.dsl.ClickhouseStatement
 
 /**
- * @author Sjoerd Mulder
+ * @author
+ *   Sjoerd Mulder
  * @since 2-1-17
  */
 abstract class ClickhouseSchemaStatement extends ClickhouseStatement {

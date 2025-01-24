@@ -8,31 +8,29 @@ import org.apache.pekko.http.scaladsl.model.headers.HttpEncoding
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
-                         authentication: Option[(String, String)] = None,
-                         progressHeaders: Option[Boolean] = None,
-                         queryId: Option[String] = None,
-                         profile: Option[String] = None,
-                         httpCompression: Option[Boolean] = None,
-                         settings: Map[String, String] = Map.empty,
-                         idempotent: Option[Boolean] = None,
-                         retries: Option[Int] = None,
-                         requestCompressionType: Option[HttpEncoding] = None) {
+case class QuerySettings(
+    readOnly: ReadOnlySetting = AllQueries,
+    authentication: Option[(String, String)] = None,
+    progressHeaders: Option[Boolean] = None,
+    queryId: Option[String] = None,
+    profile: Option[String] = None,
+    httpCompression: Option[Boolean] = None,
+    settings: Map[String, String] = Map.empty,
+    idempotent: Option[Boolean] = None,
+    retries: Option[Int] = None,
+    requestCompressionType: Option[HttpEncoding] = None
+) {
 
   def asQueryParams: Query =
     Query(
       settings ++ (Seq("readonly" -> readOnly.value.toString) ++
-      queryId.map("query_id"      -> _) ++
-      authentication.map(
-        auth => "user" -> auth._1
-      ) ++
-      authentication.map(auth => "password" -> auth._2) ++
-      profile.map("profile" -> _) ++
-      progressHeaders.map(
-        progress => "send_progress_in_http_headers" -> (if (progress) "1" else "0")
-      ) ++
-      httpCompression
-        .map(compression => "enable_http_compression" -> (if (compression) "1" else "0"))).toMap
+        queryId.map("query_id" -> _) ++
+        authentication.map(auth => "user" -> auth._1) ++
+        authentication.map(auth => "password" -> auth._2) ++
+        profile.map("profile" -> _) ++
+        progressHeaders.map(progress => "send_progress_in_http_headers" -> (if (progress) "1" else "0")) ++
+        httpCompression
+          .map(compression => "enable_http_compression" -> (if (compression) "1" else "0"))).toMap
     )
 
   def withFallback(config: Config): QuerySettings = {
@@ -42,10 +40,10 @@ case class QuerySettings(readOnly: ReadOnlySetting = AllQueries,
         val authConfig = config.getConfig(path("authentication"))
         (authConfig.getString("user"), authConfig.getString("password"))
       }.toOption),
-      profile = profile.orElse(Try { config.getString(path("profile")) }.toOption),
-      httpCompression = httpCompression.orElse(Try { config.getBoolean(path("http-compression")) }.toOption),
+      profile = profile.orElse(Try(config.getString(path("profile"))).toOption),
+      httpCompression = httpCompression.orElse(Try(config.getBoolean(path("http-compression"))).toOption),
       settings = custom.entrySet().asScala.map(u => (u.getKey, custom.getString(u.getKey))).toMap
-      ++ settings
+        ++ settings
     )
   }
 

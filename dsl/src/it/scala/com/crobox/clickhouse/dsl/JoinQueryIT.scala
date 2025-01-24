@@ -37,7 +37,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
       (JoinQuery.AntiLeftJoin, 0, 20),
       (JoinQuery.AntiRightJoin, 0, 20),
       (JoinQuery.SemiLeftJoin, 0, 20),
-      (JoinQuery.SemiRightJoin, 0, 20),
+      (JoinQuery.SemiRightJoin, 0, 20)
     )
   ) { (joinType, result, minClickhouseVersion) =>
     it should s"join correctly on: $joinType" in {
@@ -45,16 +45,15 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
 
       // TABLE -- TABLE
       var query: OperationalQuery =
-      select(shieldId as itemId)
-        .from(OneTestTable)
-        .where(notEmpty(itemId))
-        .join(joinType, TwoTestTable) using itemId
+        select(shieldId as itemId)
+          .from(OneTestTable)
+          .where(notEmpty(itemId))
+          .join(joinType, TwoTestTable) using itemId
       var resultRows = queryExecutor.execute[StringResult](query).futureValue.rows
       resultRows.length shouldBe result
 
       // TABLE -- QUERY
-      query =
-      select(shieldId as itemId)
+      query = select(shieldId as itemId)
         .from(OneTestTable)
         .where(notEmpty(itemId))
         .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
@@ -62,8 +61,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
       resultRows.length shouldBe result
 
       // QUERY -- TABLE
-      query =
-      select(dsl.all)
+      query = select(dsl.all)
         .from(
           select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
         )
@@ -73,8 +71,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
       resultRows.length shouldBe result
 
       // QUERY -- QUERY
-      query =
-      select(dsl.all)
+      query = select(dsl.all)
         .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
         .join(joinType, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
       resultRows = queryExecutor.execute[StringResult](query).futureValue.rows
@@ -86,7 +83,7 @@ class JoinQueryIT extends DslITSpec with TableDrivenPropertyChecks {
     Table(
       ("joinType", "result"),
       (JoinQuery.AsOfJoin, 0),
-      (JoinQuery.AsOfLeftJoin, 0),
+      (JoinQuery.AsOfLeftJoin, 0)
     )
   ) { (joinType, result) =>
     it should s"join correctly on: $joinType" in {

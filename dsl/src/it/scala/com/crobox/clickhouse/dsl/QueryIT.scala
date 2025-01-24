@@ -24,7 +24,10 @@ class QueryIT extends DslITSpec {
     implicit val resultFormat: RootJsonFormat[Result] =
       jsonFormat[String, Int, Result](Result.apply, "column_1", "empty")
     val results: Future[QueryResult[Result]] = queryExecutor.execute[Result](
-      select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable join (InnerJoin, TwoTestTable) using itemId
+      select(shieldId as itemId, col1, notEmpty(col1) as "empty") from OneTestTable join (
+        InnerJoin,
+        TwoTestTable
+      ) using itemId
     )
     results.futureValue.rows.map(_.columnResult) should be(table2Entries.map(_.firstColumn))
     results.futureValue.rows.map(_.empty).head should be(1)

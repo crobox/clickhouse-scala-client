@@ -19,13 +19,14 @@ sealed trait TableOperation {
 
 case class Insert(table: String, jsonRow: String) extends TableOperation
 
-case class Optimize(table: String,
-                    localTable: Option[String] = None,
-                    cluster: Option[String] = None,
-                    partition: Option[String] = None,
-                    `final`: Boolean = true,
-                    deduplicate: Option[String] = None)
-    extends TableOperation {
+case class Optimize(
+    table: String,
+    localTable: Option[String] = None,
+    cluster: Option[String] = None,
+    partition: Option[String] = None,
+    `final`: Boolean = true,
+    deduplicate: Option[String] = None
+) extends TableOperation {
 
   def toSql: String = {
     var sql = s"OPTIMIZE TABLE ${localTable.getOrElse(table)}"
@@ -40,22 +41,21 @@ case class Optimize(table: String,
 object ClickhouseSink extends LazyLogging {
 
   @deprecated("use [[#toSink()]] instead")
-  def insertSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(
-      implicit ec: ExecutionContext,
+  def insertSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(implicit
+      ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()
   ): Sink[Insert, Future[Done]] = toSink(config, client, indexerName)
 
-  def toSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(
-      implicit ec: ExecutionContext,
+  def toSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(implicit
+      ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()
   ): Sink[TableOperation, Future[Done]] = {
     val indexerGeneralConfig = config.getConfig("crobox.clickhouse.indexer")
     val mergedIndexerConfig = indexerName
-      .flatMap(
-        theIndexName =>
-          if (indexerGeneralConfig.hasPath(theIndexName))
-            Some(indexerGeneralConfig.getConfig(theIndexName).withFallback(indexerGeneralConfig))
-          else None
+      .flatMap(theIndexName =>
+        if (indexerGeneralConfig.hasPath(theIndexName))
+          Some(indexerGeneralConfig.getConfig(theIndexName).withFallback(indexerGeneralConfig))
+        else None
       )
       .getOrElse(indexerGeneralConfig)
     val batchSize     = mergedIndexerConfig.getInt("batch-size")
@@ -63,7 +63,7 @@ object ClickhouseSink extends LazyLogging {
     Flow[TableOperation]
       .groupBy(Int.MaxValue, _.table)
       .groupedWithin(batchSize, flushInterval)
-      .mapAsync(mergedIndexerConfig.getInt("concurrent-requests"))(operations => {
+      .mapAsync(mergedIndexerConfig.getInt("concurrent-requests")) { operations =>
         val table = operations.head.table
         logger.debug(
           s"Executing ${operations.size} operations on table: $table. Group Within: ($batchSize - $flushInterval)"
@@ -89,20 +89,20 @@ object ClickhouseSink extends LazyLogging {
               Future.successful("")
           }
         }
-      })
+      }
       .mergeSubstreams
       .toMat(Sink.ignore)(Keep.right)
   }
 
-  private def insertTable(client: ClickhouseClient, table: String, payload: Seq[String])(
-      implicit ec: ExecutionContext,
+  private def insertTable(client: ClickhouseClient, table: String, payload: Seq[String])(implicit
+      ec: ExecutionContext,
       settings: QuerySettings
   ): Future[String] = {
     logger.debug(s"Inserting ${payload.size} entries in table: $table.")
     client
       .execute(s"INSERT INTO $table FORMAT JSONEachRow", payload.mkString("\n"))
-      .recover {
-        case ex => throw ClickhouseIndexingException("failed to index", ex, payload, table)
+      .recover { case ex =>
+        throw ClickhouseIndexingException("failed to index", ex, payload, table)
       }
   }
 
@@ -112,11 +112,12 @@ object ClickhouseSink extends LazyLogging {
   )(implicit ec: ExecutionContext, settings: QuerySettings): Future[String] =
     client
       .execute(statement.toSql)
-      .recover {
-        case ex =>
-          throw ClickhouseIndexingException(s"failed to optimize ${statement.table}",
-                                            ex,
-                                            Seq(statement.toSql),
-                                            statement.table)
+      .recover { case ex =>
+        throw ClickhouseIndexingException(
+          s"failed to optimize ${statement.table}",
+          ex,
+          Seq(statement.toSql),
+          statement.table
+        )
       }
 }

@@ -106,7 +106,9 @@ class LogicalFunctionTokenizerTest extends DslTestSpec {
     )
   }
 
-  def conditionOr(nr: Seq[Int]): Option[TableColumn[Boolean]] = Option(nr.map(x => col2 isEq x).reduce((a, b) => (a or b)))
+  def conditionOr(nr: Seq[Int]): Option[TableColumn[Boolean]] = Option(
+    nr.map(x => col2 isEq x).reduce((a, b) => a or b)
+  )
 
   def conditionAnd(nr: Seq[Int]): Option[TableColumn[Boolean]] =
     Option(nr.map(x => col2 isEq x).reduce((a, b) => a and b))

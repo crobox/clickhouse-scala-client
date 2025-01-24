@@ -15,9 +15,9 @@ trait InFunctions { self: Magnets =>
   case class GlobalIn(_l: ConstOrColMagnet[_], _r: InFuncRHMagnet)    extends InFunctionCol(_l, _r)
   case class GlobalNotIn(_l: ConstOrColMagnet[_], _r: InFuncRHMagnet) extends InFunctionCol(_l, _r)
 
-  //FIXME: we lose types here,
+  // FIXME: we lose types here,
   // is there anything that could properly represent the inner types of these column functions?
-  //This is especially problematic when using TupleElement
+  // This is especially problematic when using TupleElement
 
   case class Tuple(coln: Seq[ConstOrColMagnet[_]]) extends ExpressionColumn[Nothing](EmptyColumn) with InFunction
   case class TupleElement[T](tuple: Tuple, index: NumericCol[_])

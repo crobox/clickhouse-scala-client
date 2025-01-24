@@ -25,7 +25,7 @@ object QueryProgress extends LazyLogging {
   def queryProgressStream: RunnableGraph[(SourceQueueWithComplete[String], Source[ClickhouseQueryProgress, NotUsed])] =
     Source
       .queue[String](1000, OverflowStrategy.dropHead)
-      .map[Option[ClickhouseQueryProgress]](queryAndProgress => {
+      .map[Option[ClickhouseQueryProgress]](queryAndProgress =>
         queryAndProgress.split("\n", 2).toList match {
           case queryId :: ProgressHeadersAsEventsStage.AcceptedMark :: Nil =>
             Some(ClickhouseQueryProgress(queryId, QueryAccepted))
@@ -60,14 +60,13 @@ object QueryProgress extends LazyLogging {
             None
 
         }
-      })
-      .collect {
-        case Some(progress) => progress
+      )
+      .collect { case Some(progress) =>
+        progress
       }
-      .withAttributes(ActorAttributes.supervisionStrategy({
-        case ex @ _ =>
-          logger.warn("Detected failure in the query progress stream, resuming operation.", ex)
-          Supervision.Resume
-      }))
+      .withAttributes(ActorAttributes.supervisionStrategy { case ex @ _ =>
+        logger.warn("Detected failure in the query progress stream, resuming operation.", ex)
+        Supervision.Resume
+      })
       .toMat(BroadcastHub.sink)(Keep.both)
 }

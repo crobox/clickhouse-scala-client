@@ -7,15 +7,17 @@ import com.crobox.clickhouse.dsl.schemabuilder.Engine.{DistributedEngine, Summin
 import org.joda.time.LocalDate
 
 /**
- * @author Sjoerd Mulder
+ * @author
+ *   Sjoerd Mulder
  * @since 30-12-16
  */
 class CreateTableTest extends DslTestSpec {
 
-  case class TestTable(override val name: String,
-                       override val columns: Seq[NativeColumn[_]],
-                       override val database: String = "default")
-      extends Table
+  case class TestTable(
+      override val name: String,
+      override val columns: Seq[NativeColumn[_]],
+      override val database: String = "default"
+  ) extends Table
 
   it should "deny creating invalid tables and columns" in {
     intercept[IllegalArgumentException](
@@ -36,13 +38,16 @@ class CreateTableTest extends DslTestSpec {
   }
 
   it should "make add IF NOT EXISTS" in {
-    CreateTable(TestTable("a",
-                          List(
-                            NativeColumn("b", ColumnType.String)
-                          ),
-                          "b"),
-                Engine.TinyLog,
-                ifNotExists = true,
+    CreateTable(
+      TestTable(
+        "a",
+        List(
+          NativeColumn("b", ColumnType.String)
+        ),
+        "b"
+      ),
+      Engine.TinyLog,
+      ifNotExists = true
     ).toString should be("""CREATE TABLE IF NOT EXISTS b.a (
         |  b String
         |) ENGINE = TinyLog""".stripMargin)
@@ -50,12 +55,16 @@ class CreateTableTest extends DslTestSpec {
   }
 
   it should "make add ON CLUSTER" in {
-    CreateTable(TestTable("a",
-                          List(
-                            NativeColumn("b", ColumnType.String)
-                          )),
-                Engine.TinyLog,
-                clusterName = Some("mycluster")).toString should be("""CREATE TABLE default.a ON CLUSTER mycluster (
+    CreateTable(
+      TestTable(
+        "a",
+        List(
+          NativeColumn("b", ColumnType.String)
+        )
+      ),
+      Engine.TinyLog,
+      clusterName = Some("mycluster")
+    ).toString should be("""CREATE TABLE default.a ON CLUSTER mycluster (
                                 |  b String
                                 |) ENGINE = TinyLog""".stripMargin)
 
@@ -63,11 +72,13 @@ class CreateTableTest extends DslTestSpec {
 
   it should "make a valid CREATE TABLE query" in {
     val result = CreateTable(
-      TestTable("tiny_log_table",
-                Seq(
-                  NativeColumn("test_column", ColumnType.String),
-                  NativeColumn("test_column2", ColumnType.Int8, Default("expr"))
-                )),
+      TestTable(
+        "tiny_log_table",
+        Seq(
+          NativeColumn("test_column", ColumnType.String),
+          NativeColumn("test_column2", ColumnType.Int8, Default("expr"))
+        )
+      ),
       Engine.TinyLog
     ).toString
 
@@ -133,9 +144,11 @@ class CreateTableTest extends DslTestSpec {
           testColumn2
         )
       ),
-      Engine.MergeTree(Seq(clientId.name, s"toYYYYMM(${date.name})"),
-                       Seq(date, clientId, hitId),
-                       Some("int64Hash(client_id)"))
+      Engine.MergeTree(
+        Seq(clientId.name, s"toYYYYMM(${date.name})"),
+        Seq(date, clientId, hitId),
+        Some("int64Hash(client_id)")
+      )
     ).toString
 
     result should be("""CREATE TABLE default.merge_tree_table (
@@ -203,10 +216,12 @@ class CreateTableTest extends DslTestSpec {
           versionColumn
         )
       ),
-      Engine.ReplacingMergeTree(Seq(s"toYYYYMM(${date.name})"),
-                                Seq(date, clientId, hitId),
-                                Some("int64Hash(client_id)"),
-                                version = Option(versionColumn))
+      Engine.ReplacingMergeTree(
+        Seq(s"toYYYYMM(${date.name})"),
+        Seq(date, clientId, hitId),
+        Some("int64Hash(client_id)"),
+        version = Option(versionColumn)
+      )
     )
   }
 
@@ -322,9 +337,11 @@ class CreateTableTest extends DslTestSpec {
         "test_table_agg",
         Seq(date, clientId, uniqHits)
       ),
-      Engine.AggregatingMergeTree(Seq(s"toYYYYMM(${date.name})"),
-                                  Seq(date, clientId),
-                                  ttl = Option(TTL(date, "3 MONTH")))
+      Engine.AggregatingMergeTree(
+        Seq(s"toYYYYMM(${date.name})"),
+        Seq(date, clientId),
+        ttl = Option(TTL(date, "3 MONTH"))
+      )
     )
 
     create.toString should be("""CREATE TABLE default.test_table_agg (
@@ -352,9 +369,11 @@ class CreateTableTest extends DslTestSpec {
       Engine.AggregatingMergeTree(
         Seq(s"toYYYYMM(${date.name})"),
         Seq(date, clientId),
-        ttl = Iterable(TTL(date, "1 MONTH [DELETE]"),
-                       TTL(date, "1 WEEK TO VOLUME 'aaa'"),
-                       TTL(date, "2 WEEK TO DISK 'bbb'"))
+        ttl = Iterable(
+          TTL(date, "1 MONTH [DELETE]"),
+          TTL(date, "1 WEEK TO VOLUME 'aaa'"),
+          TTL(date, "2 WEEK TO DISK 'bbb'")
+        )
       )
     )
 

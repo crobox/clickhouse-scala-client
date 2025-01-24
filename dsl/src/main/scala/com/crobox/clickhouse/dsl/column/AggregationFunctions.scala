@@ -11,11 +11,11 @@ trait AggregationFunctions {
     with Leveled
     with AggregationFunctionsCombiners =>
 
-  //TODO: Magnetize?
+  // TODO: Magnetize?
   // Aggregate functions are a whole different beast, they are intercompatible and type passing in a different way then
   // what most other functions work like
 
-  //https://clickhouse.yandex/docs/en/agg_functions/reference
+  // https://clickhouse.yandex/docs/en/agg_functions/reference
 
   abstract class AggregateFunction[+V](targetColumn: Column) extends ExpressionColumn[V](targetColumn)
 
@@ -54,13 +54,12 @@ trait AggregationFunctions {
   def lastValue[V](tableColumn: TableColumn[V]): LastValue[V] = LastValue(tableColumn)
 
   /**
-   * This function will push back the timestamp represented by tableColumn to the start of this interval,
-   * this happens deterministically.
+   * This function will push back the timestamp represented by tableColumn to the start of this interval, this happens
+   * deterministically.
    *
    * Meaning that as long as the duration is the same, your groups will be in the same from/to timestamps
    *
    * This is useful for aggregating results by periods of time (group by month, 2 months, days, etc.)
-   *
    */
   def timeSeries(tableColumn: TableColumn[Long], interval: MultiInterval): TimeSeries =
     TimeSeries(tableColumn, interval)
@@ -74,9 +73,10 @@ trait AggregationFunctions {
 
 trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
 
-  case class CombinedAggregatedFunction[T <: TableColumn[_], Res](combinator: Combinator[T, Res],
-                                                                  target: AggregateFunction[_])
-      extends AggregateFunction[Res](EmptyColumn)
+  case class CombinedAggregatedFunction[T <: TableColumn[_], Res](
+      combinator: Combinator[T, Res],
+      target: AggregateFunction[_]
+  ) extends AggregateFunction[Res](EmptyColumn)
 
   sealed trait StateResult[V]
 
@@ -107,7 +107,6 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
    * |[x3, y3, z3]
    *
    * if you run sumForEach(array_col) you will get an array result with the following entries: [sum(x1,x3,x3), sum(y1,y2,y3), sum(z1, z2, z3), sum(u1)]
-   *
    */
   def forEach[V, T <: TableColumn[Seq[V]], Res](
       column: T
@@ -226,16 +225,18 @@ trait Leveled { self: Magnets with AggregationFunctions =>
   }
 
   /*Works for numbers, dates, and dates with times. Returns: for numbers – Float64; for dates – a date; for dates with times – a date with time.Works for numbers, dates, and dates with times. Returns: for numbers – Float64; for dates – a date; for dates with times – a date with time.*/
-  case class Quantile[T](tableColumn: TableColumn[T],
-                         level: Float = 0.5F,
-                         modifier: LevelModifier = LevelModifier.Simple)
-      extends LeveledAggregatedFunction[T](tableColumn) {
+  case class Quantile[T](
+      tableColumn: TableColumn[T],
+      level: Float = 0.5f,
+      modifier: LevelModifier = LevelModifier.Simple
+  ) extends LeveledAggregatedFunction[T](tableColumn) {
     require(level >= 0 && level <= 1)
   }
-  case class Quantiles[T](tableColumn: TableColumn[T],
-                          levels: Seq[Float],
-                          modifier: LevelModifier = LevelModifier.Simple)
-      extends LeveledAggregatedFunction[Seq[T]](tableColumn) {
+  case class Quantiles[T](
+      tableColumn: TableColumn[T],
+      levels: Seq[Float],
+      modifier: LevelModifier = LevelModifier.Simple
+  ) extends LeveledAggregatedFunction[Seq[T]](tableColumn) {
     levels.foreach(level => require(level >= 0 && level <= 1))
   }
   case class Median[T](tableColumn: TableColumn[T], level: Float, modifier: LevelModifier = LevelModifier.Simple)
@@ -243,63 +244,65 @@ trait Leveled { self: Magnets with AggregationFunctions =>
     require(level > 0 && level < 1)
   }
 
-  def median[V](target: TableColumn[V], level: Float = 0.5F): Median[V] = Median(target, level = level)
+  def median[V](target: TableColumn[V], level: Float = 0.5f): Median[V] = Median(target, level = level)
 
-  def quantile[V](target: TableColumn[V], level: Float = 0.5F): Quantile[V] = Quantile(target, level = level)
+  def quantile[V](target: TableColumn[V], level: Float = 0.5f): Quantile[V] = Quantile(target, level = level)
 
   def quantiles[V](target: TableColumn[V], levels: Float*): Quantiles[V] = Quantiles(target, levels)
 
-  def medianExact[V](target: TableColumn[V], level: Float = 0.5F): Median[V] =
+  def medianExact[V](target: TableColumn[V], level: Float = 0.5f): Median[V] =
     Median(target, level, LevelModifier.Exact)
 
-  def quantileExact[V](target: TableColumn[V], level: Float = 0.5F): Quantile[V] =
+  def quantileExact[V](target: TableColumn[V], level: Float = 0.5f): Quantile[V] =
     Quantile(target, level, LevelModifier.Exact)
 
   def quantilesExact[V](target: TableColumn[V], levels: Float*): Quantiles[V] =
     Quantiles(target, levels, LevelModifier.Exact)
 
-  def medianExactWeighted[V](target: TableColumn[V], weight: TableColumn[Int], level: Float = 0.5F): Median[V] =
+  def medianExactWeighted[V](target: TableColumn[V], weight: TableColumn[Int], level: Float = 0.5f): Median[V] =
     Median(target, level, LevelModifier.ExactWeighted(weight))
 
-  def quantileExactWeighted[V](target: TableColumn[V], weight: TableColumn[Int], level: Float = 0.5F): Quantile[V] =
+  def quantileExactWeighted[V](target: TableColumn[V], weight: TableColumn[Int], level: Float = 0.5f): Quantile[V] =
     Quantile(target, level, LevelModifier.ExactWeighted(weight))
 
   def quantilesExactWeighted[V](target: TableColumn[V], weight: TableColumn[Int], levels: Float*): Quantiles[V] =
     Quantiles(target, levels, LevelModifier.ExactWeighted(weight))
 
-  def medianTDigest[V](target: TableColumn[V], level: Float = 0.5F): Median[V] =
+  def medianTDigest[V](target: TableColumn[V], level: Float = 0.5f): Median[V] =
     Median(target, level, LevelModifier.TDigest)
 
-  def quantileTDigest[V](target: TableColumn[V], level: Float = 0.5F): Quantile[V] =
+  def quantileTDigest[V](target: TableColumn[V], level: Float = 0.5f): Quantile[V] =
     Quantile(target, level, LevelModifier.TDigest)
 
   def quantilesTDigest[V](target: TableColumn[V], levels: Float*): Quantiles[V] =
     Quantiles(target, levels, LevelModifier.TDigest)
 
-  def medianTiming[V](target: TableColumn[V], level: Float = 0.5F): Median[V] =
+  def medianTiming[V](target: TableColumn[V], level: Float = 0.5f): Median[V] =
     Median(target, level, LevelModifier.Timing)
 
-  def quantileTiming[V](target: TableColumn[V], level: Float = 0.5F): Quantile[V] =
+  def quantileTiming[V](target: TableColumn[V], level: Float = 0.5f): Quantile[V] =
     Quantile(target, level, LevelModifier.Timing)
 
   def quantilesTiming[V](target: TableColumn[V], levels: Float*): Quantiles[V] =
     Quantiles(target, levels, LevelModifier.Timing)
 
-  def medianTimingWeighted[V](target: TableColumn[V], weight: TableColumn[Int], level: Float = 0.5F): Median[V] =
+  def medianTimingWeighted[V](target: TableColumn[V], weight: TableColumn[Int], level: Float = 0.5f): Median[V] =
     Median(target, level, LevelModifier.TimingWeighted(weight))
 
-  def quantileTimingWeighted[V](target: TableColumn[V], weight: TableColumn[Int], level: Float = 0.5F): Quantile[V] =
+  def quantileTimingWeighted[V](target: TableColumn[V], weight: TableColumn[Int], level: Float = 0.5f): Quantile[V] =
     Quantile(target, level, LevelModifier.TimingWeighted(weight))
 
   def quantilesTimingWeighted[V](target: TableColumn[V], weight: TableColumn[Int], levels: Float*): Quantiles[V] =
     Quantiles(target, levels, LevelModifier.TimingWeighted(weight))
 
-  def medianDeterministic[V, T](target: TableColumn[V], determinator: TableColumn[T], level: Float = 0.5F): Median[V] =
+  def medianDeterministic[V, T](target: TableColumn[V], determinator: TableColumn[T], level: Float = 0.5f): Median[V] =
     Median(target, level, LevelModifier.Deterministic(determinator))
 
-  def quantileDeterministic[V, T](target: TableColumn[V],
-                                  determinator: TableColumn[T],
-                                  level: Float = 0.5F): Quantile[V] =
+  def quantileDeterministic[V, T](
+      target: TableColumn[V],
+      determinator: TableColumn[T],
+      level: Float = 0.5f
+  ): Quantile[V] =
     Quantile(target, level, LevelModifier.Deterministic(determinator))
 
   def quantilesDeterministic[V, T](target: TableColumn[V], determinator: TableColumn[T], levels: Float*): Quantiles[V] =

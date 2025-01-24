@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.marshalling
 import com.crobox.clickhouse.time.IntervalStart
 import org.joda.time.format.{DateTimeFormatter, DateTimeFormatterBuilder, ISODateTimeFormat}
 import org.joda.time.{DateTime, DateTimeZone}
-import spray.json.{JsNumber, JsString, JsValue, JsonFormat, deserializationError, _}
+import spray.json.{deserializationError, JsNumber, JsString, JsValue, JsonFormat, _}
 
 import scala.util.Try
 import scala.util.matching.Regex
@@ -29,8 +29,10 @@ trait ClickhouseJsonSupport {
     private val isoFormatter: DateTimeFormatter = ISODateTimeFormat.dateTimeNoMillis
 
     val readFormatter: DateTimeFormatter = new DateTimeFormatterBuilder()
-      .append(isoFormatter.getPrinter,
-              Array(isoFormatter.getParser, ISODateTimeFormat.date().withZone(DateTimeZone.UTC).getParser))
+      .append(
+        isoFormatter.getPrinter,
+        Array(isoFormatter.getParser, ISODateTimeFormat.date().withZone(DateTimeZone.UTC).getParser)
+      )
       .toFormatter
       .withOffsetParsed()
 
@@ -48,7 +50,7 @@ trait ClickhouseJsonSupport {
                 .plusMonths(relativeMonth.toInt - RelativeMonthsSinceUnixStart)
                 .withZone(DateTimeZone.UTC)
             case date(dateOnly, timezoneId) =>
-              //should handle quarter and year grouping as it returns a date
+              // should handle quarter and year grouping as it returns a date
               formatter
                 .parseDateTime(dateOnly)
                 .withZoneRetainFields(DateTimeZone.forID(timezoneId))
@@ -65,9 +67,9 @@ trait ClickhouseJsonSupport {
 
               // continue with parsing using the formatter
               dateTime.getOrElse {
-                try {
+                try
                   formatter.parseDateTime(value)
-                } catch {
+                catch {
                   case _: IllegalArgumentException => error(s"Couldn't parse $value into valid date time")
                   case _: UnsupportedOperationException =>
                     error("Unsupported operation, programmatic misconfiguration?")

@@ -49,8 +49,8 @@ object DSLImprovements {
 
     def replaceColumn(name: String, column: Column): Seq[Column] =
       values.indexWhere(_.name == name) match {
-        case -1 => values ++ Seq(column)
-        case 0 => Seq(column) ++ values.slice(1, values.size)
+        case -1  => values ++ Seq(column)
+        case 0   => Seq(column) ++ values.slice(1, values.size)
         case idx => values.slice(0, idx) ++ Seq(column) ++ values.slice(idx + 1, values.size)
       }
   }
@@ -108,7 +108,7 @@ object DSLImprovements {
     }
 
     def selectFromTable[T <: Table](): Option[T] = query.internalQuery.from.flatMap {
-      case _: InnerFromQuery => None
+      case _: InnerFromQuery    => None
       case x: TableFromQuery[_] => Option(x.table.asInstanceOf[T])
     }
 
@@ -128,7 +128,7 @@ object DSLImprovements {
         //            case _                    =>
         //          }
         case _: TableFromQuery[_] => return query.andConstraint(condition)
-        case _ =>
+        case _                    =>
       }
       query
     }

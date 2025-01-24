@@ -11,85 +11,85 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
       select(itemId).from(select(itemId).from(TwoTestTable).join(JoinQuery.CrossJoin, ThreeTestTable))
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id FROM (SELECT item_id FROM ${TwoTestTable.quoted} AS L1 " +
-      s"CROSS JOIN (SELECT * FROM ${ThreeTestTable.quoted}) AS R1) FORMAT JSON"
+        s"CROSS JOIN (SELECT * FROM ${ThreeTestTable.quoted}) AS R1) FORMAT JSON"
     )
   }
 
   it should s"TABLE - TABLE - using" in {
     val query: OperationalQuery =
-    select(shieldId as itemId)
-      .from(OneTestTable)
-      .where(notEmpty(itemId))
-      .join(InnerJoin, TwoTestTable) using itemId
+      select(shieldId as itemId)
+        .from(OneTestTable)
+        .where(notEmpty(itemId))
+        .join(InnerJoin, TwoTestTable) using itemId
     toSql(query.internalQuery) should matchSQL(
       s"SELECT shield_id AS item_id FROM ${OneTestTable.quoted} AS L1 " +
-      s"INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
+        s"INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
 
   it should s"TABLE - QUERY - using" in {
     val query =
-    select(shieldId as itemId)
-      .from(OneTestTable)
-      .where(notEmpty(itemId))
-      .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
+      select(shieldId as itemId)
+        .from(OneTestTable)
+        .where(notEmpty(itemId))
+        .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
     toSql(query.internalQuery) should matchSQL(
       s"SELECT shield_id AS item_id FROM ${OneTestTable.quoted} AS L1 " +
-      s"INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
-      s"WHERE notEmpty(item_id)) AS R1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
+        s"INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
+        s"WHERE notEmpty(item_id)) AS R1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
 
   it should s"QUERY - TABLE - using" in {
     val query =
-    select(dsl.all)
-      .from(
-        select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
-      )
-      .join(InnerJoin, TwoTestTable)
-      .where(notEmpty(itemId)) using itemId
+      select(dsl.all)
+        .from(
+          select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId))
+        )
+        .join(InnerJoin, TwoTestTable)
+        .where(notEmpty(itemId)) using itemId
     toSql(query.internalQuery) should matchSQL(
       s"SELECT * FROM (SELECT shield_id AS item_id FROM ${OneTestTable.quoted} " +
-      s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 " +
-      s"USING item_id WHERE notEmpty(item_id) FORMAT JSON"
+        s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 " +
+        s"USING item_id WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
 
   it should s"QUERY - QUERY - using" in {
     val query =
-    select(dsl.all)
-      .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
-      .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
+      select(dsl.all)
+        .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
+        .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) using itemId
     toSql(query.internalQuery) should matchSQL(
       s"SELECT * FROM (SELECT shield_id AS item_id FROM ${OneTestTable.quoted} " +
-      s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
-      s"WHERE notEmpty(item_id)) AS R1 USING item_id FORMAT JSON"
+        s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
+        s"WHERE notEmpty(item_id)) AS R1 USING item_id FORMAT JSON"
     )
   }
 
   // ON --> check prefix per ON condition
   it should s"QUERY - QUERY - on simple" in {
     val query =
-    select(dsl.all)
-      .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
-      .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
+      select(dsl.all)
+        .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
+        .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on itemId
     toSql(query.internalQuery) should matchSQL(
       s"SELECT * FROM (SELECT shield_id AS item_id FROM ${OneTestTable.quoted} " +
-      s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
-      s"WHERE notEmpty(item_id)) AS R1 ON L1.item_id = R1.item_id FORMAT JSON"
+        s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
+        s"WHERE notEmpty(item_id)) AS R1 ON L1.item_id = R1.item_id FORMAT JSON"
     )
   }
 
   // ON --> check prefix per ON condition
   it should s"QUERY - QUERY - on complex" in {
     val query =
-    select(dsl.all)
-      .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
-      .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on ((itemId, "<=", itemId))
+      select(dsl.all)
+        .from(select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)))
+        .join(InnerJoin, select(itemId, col2).from(TwoTestTable).where(notEmpty(itemId))) on ((itemId, "<=", itemId))
     toSql(query.internalQuery) should matchSQL(
       s"SELECT * FROM (SELECT shield_id AS item_id FROM ${OneTestTable.quoted} " +
-      s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
-      s"WHERE notEmpty(item_id)) AS R1 ON L1.item_id <= R1.item_id FORMAT JSON"
+        s"WHERE notEmpty(item_id)) AS L1 INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
+        s"WHERE notEmpty(item_id)) AS R1 ON L1.item_id <= R1.item_id FORMAT JSON"
     )
   }
 
@@ -101,10 +101,10 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
 
   it should s"fail on set on and using" in {
     val query: OperationalQuery =
-    select(shieldId as itemId)
-      .from(OneTestTable)
-      .where(notEmpty(itemId))
-      .join(InnerJoin, TwoTestTable) using itemId on itemId
+      select(shieldId as itemId)
+        .from(OneTestTable)
+        .where(notEmpty(itemId))
+        .join(InnerJoin, TwoTestTable) using itemId on itemId
     an[AssertionError] shouldBe thrownBy(toSql(query.internalQuery))
   }
 

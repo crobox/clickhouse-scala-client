@@ -21,11 +21,12 @@ abstract class TableColumn[+V](val name: String) extends Column {
 
 case object EmptyColumn extends TableColumn("NULL")
 
-case class NativeColumn[V](override val name: String,
-                           clickhouseType: ColumnType = ColumnType.String,
-                           defaultValue: DefaultValue = DefaultValue.NoDefault,
-                           ttl: Option[TTL] = None)
-    extends TableColumn[V](name) {
+case class NativeColumn[V](
+    override val name: String,
+    clickhouseType: ColumnType = ColumnType.String,
+    defaultValue: DefaultValue = DefaultValue.NoDefault,
+    ttl: Option[TTL] = None
+) extends TableColumn[V](name) {
 
   def query: String = s"$quoted $clickhouseType$defaultValue${TTL.ttl(ttl).map(s => " " + s).getOrElse("")}"
 }

@@ -6,7 +6,7 @@ trait RandomFunctionTokenizer {
   self: ClickhouseTokenizerModule =>
 
   def tokenizeRandomFunction(col: RandomFunction): String = col match {
-    case Rand() => "rand()"
+    case Rand()   => "rand()"
     case Rand64() => "rand64()"
   }
 

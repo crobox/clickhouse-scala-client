@@ -16,9 +16,7 @@ class ClusterConnectionFlowTest extends ClickhouseClientAsyncSpec {
       .clusterConnectionsFlow(Future.successful(clickhouseUri), 2.seconds, "test_shard_localhost")
       .toMat(Sink.head)(Keep.both)
       .run()
-    futureResult.map(result => {
-      result.hosts should contain only ClickhouseHostBuilder.toHost("127.0.0.1", Some(8123))
-    })
+    futureResult.map(result => result.hosts should contain only ClickhouseHostBuilder.toHost("127.0.0.1", Some(8123)))
   }
 
   it should "fail for non existing cluster" in {
@@ -27,11 +25,9 @@ class ClusterConnectionFlowTest extends ClickhouseClientAsyncSpec {
       .toMat(Sink.head)(Keep.both)
       .run()
     futureResult
-      .map(_ => {
-        fail("Returned answer for non existing clsuter")
-      })
-      .recover {
-        case _: IllegalArgumentException => succeed
+      .map(_ => fail("Returned answer for non existing clsuter"))
+      .recover { case _: IllegalArgumentException =>
+        succeed
       }
   }
 

@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.dsl.parallel._
-import com.crobox.clickhouse.{DslTestSpec, dsl => CHDsl}
+import com.crobox.clickhouse.{dsl => CHDsl, DslTestSpec}
 
 import java.util.UUID
 
@@ -43,7 +43,7 @@ class QueryMergeTest extends DslTestSpec {
     val left: OperationalQuery   = select(CHDsl.all) from OneTestTable where shieldId.isEq(expectedUUID)
     val right: OperationalQuery  = select(CHDsl.all) from TwoTestTable where (col3 isEq "wompalama")
     val right2: OperationalQuery = select(CHDsl.all) from ThreeTestTable where shieldId.isEq(expectedUUID)
-    val query                    = right2 merge (right) on timestampColumn merge (left) on timestampColumn
+    val query                    = right2 merge right on timestampColumn merge left on timestampColumn
 
     // PURE SPECULATIVE / SQL ONLY
     // THE REASON WHY IT'S NOT --> ON twoTestTable.ts is that twoTestTable DOESN'T have a ts column.

@@ -14,35 +14,35 @@ import javax.net.ssl.KeyManagerFactory
 import java.security.SecureRandom
 
 /**
- * @author Sjoerd Mulder
- * @author Leonard Wolters
+ * @author
+ *   Sjoerd Mulder
+ * @author
+ *   Leonard Wolters
  * @since 31-3-17
  */
 class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
 
   val client: ClickhouseClient = new ClickhouseClient(Some(config))
 
-  it should "select" in {
+  it should "select" in
     client
       .query("select 1 + 2")
       .map { f =>
         f.trim.toInt should be(3)
       }
-      .flatMap(
-        _ =>
-          client.query("select currentDatabase()").map { f =>
-            f.trim should be("default")
+      .flatMap(_ =>
+        client.query("select currentDatabase()").map { f =>
+          f.trim should be("default")
         }
       )
-  }
 
   it should "support SSL certs" in {
     def createConnectionContext() = {
       val keyStoreResource = "../.docker/certs/keystore.jks"
-      val password = "password"
-      
+      val password         = "password"
+
       val keyStore = KeyStore.getInstance("JKS")
-      val in = new FileInputStream(keyStoreResource)
+      val in       = new FileInputStream(keyStoreResource)
       keyStore.load(in, password.toCharArray)
 
       val keyManagerFactory = KeyManagerFactory.getInstance("SunX509")
@@ -57,18 +57,23 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
     }
 
     new ClickhouseClient(
-      Some(config
-      .withValue("crobox.clickhouse.client.connection.port", ConfigValueFactory.fromAnyRef(8447))
-      .withValue("crobox.clickhouse.client.connection.host", ConfigValueFactory.fromAnyRef("https://clickhouseserver.test"))),
-      customConnectionContext = Some(createConnectionContext()))
+      Some(
+        config
+          .withValue("crobox.clickhouse.client.connection.port", ConfigValueFactory.fromAnyRef(8447))
+          .withValue(
+            "crobox.clickhouse.client.connection.host",
+            ConfigValueFactory.fromAnyRef("https://clickhouseserver.test")
+          )
+      ),
+      customConnectionContext = Some(createConnectionContext())
+    )
       .query("select 1 + 2")
       .map { f =>
         f.trim.toInt should be(3)
       }
-      .flatMap(
-        _ =>
-          client.query("select currentDatabase()").map { f =>
-            f.trim should be("default")
+      .flatMap(_ =>
+        client.query("select currentDatabase()").map { f =>
+          f.trim should be("default")
         }
       )
   }
@@ -89,39 +94,35 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
     }
   }
 
-  it should "decline execute SELECT query" in {
-    client.execute("select 1 + 2").map(_ => fail()).recover {
-      case _: IllegalArgumentException => succeed
+  it should "decline execute SELECT query" in
+    client.execute("select 1 + 2").map(_ => fail()).recover { case _: IllegalArgumentException =>
+      succeed
     }
-  }
 
   // flaky test (not possible to rerun failed tasks in GitHub Actions. Therefore -for now- ignored this test
-  ignore should "publish query progress messages" in {
+  ignore should "publish query progress messages" in
     client
       .queryWithProgress("select 1 + 2")
       .runWith(Sink.seq[QueryProgress])
       .map(progress => progress should contain theSameElementsAs Seq(QueryAccepted, QueryFinished))
-  }
 
-  it should "materialize progress source with the query result" in {
+  it should "materialize progress source with the query result" in
     client
       .queryWithProgress("select 1 + 2")
       .toMat(Sink.ignore)(Keep.left)
       .run()
       .map(result => result.shouldBe("3\n"))
-  }
 
   // This test is failing using new clickhouse server; apparently too fast?
-  ignore should "send full progress messages" in {
+  ignore should "send full progress messages" in
     client
       .queryWithProgress("select sum(number) FROM (select number from system.numbers limit 100000000)")
       .runWith(Sink.seq[QueryProgress])
-      .map(progress => {
-        progress collect {
-          case qp: Progress => qp
+      .map(progress =>
+        progress collect { case qp: Progress =>
+          qp
         } should not be empty
-      })
-  }
+      )
 
   it should "parse server version" in {
     new ClickhouseClient(

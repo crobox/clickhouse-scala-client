@@ -13,14 +13,14 @@ object QueryImprovements extends LazyLogging {
 
   implicit class QueryImpr(query: Query) {
 
-    def execute[V: JsonReader](
-        implicit executionContext: ExecutionContext,
+    def execute[V: JsonReader](implicit
+        executionContext: ExecutionContext,
         queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] =
       queryExecutor.execute(query)
 
-    def executeWithLogging[V: JsonReader](debug: Boolean)(
-        implicit executionContext: ExecutionContext,
+    def executeWithLogging[V: JsonReader](debug: Boolean)(implicit
+        executionContext: ExecutionContext,
         queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
       if (debug)
@@ -30,8 +30,8 @@ object QueryImprovements extends LazyLogging {
       queryExecutor.execute(query)
     }
 
-    def executeWithLogging[V: JsonReader](traceId: String)(
-        implicit executionContext: ExecutionContext,
+    def executeWithLogging[V: JsonReader](traceId: String)(implicit
+        executionContext: ExecutionContext,
         queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
       logger.info(
@@ -40,21 +40,20 @@ object QueryImprovements extends LazyLogging {
       queryExecutor.execute(query)
     }
 
-    def executeWithLogging[V: JsonReader](traceId: Option[String])(
-        implicit executionContext: ExecutionContext,
+    def executeWithLogging[V: JsonReader](traceId: Option[String])(implicit
+        executionContext: ExecutionContext,
         queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
-      traceId.foreach(
-        id =>
-          logger.info(
-            s"[$id] ${tokenizer.toSql(query.internalQuery)(TokenizeContext(queryExecutor.serverVersion))}"
+      traceId.foreach(id =>
+        logger.info(
+          s"[$id] ${tokenizer.toSql(query.internalQuery)(TokenizeContext(queryExecutor.serverVersion))}"
         )
       )
       queryExecutor.execute(query)
     }
 
-    def executeWithLogging[V: JsonReader](
-        implicit executionContext: ExecutionContext,
+    def executeWithLogging[V: JsonReader](implicit
+        executionContext: ExecutionContext,
         queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
       logger.info(
