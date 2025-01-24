@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.internal
 
 import org.apache.pekko.http.scaladsl.model.Uri.Query
-import org.apache.pekko.http.scaladsl.model.headers.{HttpEncodingRange, RawHeader, `Content-Encoding`}
+import org.apache.pekko.http.scaladsl.model.headers.{`Content-Encoding`, HttpEncodingRange, RawHeader}
 import org.apache.pekko.http.scaladsl.model.{HttpMethods, HttpRequest, RequestEntity, Uri}
 import com.crobox.clickhouse.internal.QuerySettings.ReadQueries
 import com.crobox.clickhouse.internal.progress.ProgressHeadersAsEventsStage
@@ -20,11 +20,13 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
   }
   private val MaxUriSize = 16 * 1024
 
-  protected def toRequest(uri: Uri,
-                          query: String,
-                          queryIdentifier: Option[String],
-                          settings: QuerySettings,
-                          entity: Option[RequestEntity])(config: Config): HttpRequest = {
+  protected def toRequest(
+      uri: Uri,
+      query: String,
+      queryIdentifier: Option[String],
+      settings: QuerySettings,
+      entity: Option[RequestEntity]
+  )(config: Config): HttpRequest = {
     val urlQuery = uri.withQuery(Query(Query("query" -> query) ++ settings.withFallback(config).asQueryParams: _*))
     entity match {
       case Some(e) =>
@@ -41,8 +43,8 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
         )
       case None
           if settings.idempotent.contains(true)
-          && settings.readOnly == ReadQueries
-          && urlQuery.toString().getBytes.length < MaxUriSize => //max url size
+            && settings.readOnly == ReadQueries
+            && urlQuery.toString().getBytes.length < MaxUriSize => // max url size
         logger.debug(s"Executing clickhouse idempotent query [$query] on host [${uri.toString()}]")
         HttpRequest(
           method = HttpMethods.GET,
@@ -51,7 +53,7 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
               .query()
               .filterNot(
                 _._1 == "readonly"
-              ) //get requests are readonly by default, if we send the readonly flag clickhouse will fail the request
+              ) // get requests are readonly by default, if we send the readonly flag clickhouse will fail the request
           ),
           headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
         )

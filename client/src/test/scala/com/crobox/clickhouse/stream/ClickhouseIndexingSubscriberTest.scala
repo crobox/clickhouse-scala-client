@@ -31,10 +31,13 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
   override protected def beforeEach(): Unit = {
     super.beforeAll()
 
-    Await.ready(for {
-      _      <- client.execute(createDb)
-      create <- client.execute(createTable)
-    } yield create, timeout.duration)
+    Await.ready(
+      for {
+        _      <- client.execute(createDb)
+        create <- client.execute(createTable)
+      } yield create,
+      timeout.duration
+    )
 
     subscriberCompletes = Promise[Unit]()
   }
@@ -45,22 +48,21 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     Await.ready(client.execute(dropDb), timeout.duration)
   }
 
-  def unparsedInserts(key: String): Seq[Map[String, Any]] = (1 to 10).map(
-    _ =>
-      Map(
-        "i" -> Random.nextInt(100),
-        "s" -> key,
-        "a" -> (1 to Random.nextInt(20)).map(_ => Random.nextInt(200))
+  def unparsedInserts(key: String): Seq[Map[String, Any]] = (1 to 10).map(_ =>
+    Map(
+      "i" -> Random.nextInt(100),
+      "s" -> key,
+      "a" -> (1 to Random.nextInt(20)).map(_ => Random.nextInt(200))
     )
   )
 
   def parsedInserts(key: String): Seq[String] = unparsedInserts(key).map(
     _.view
-      .mapValues({
+      .mapValues {
         case value: Int           => value.toString
         case value: String        => "\"" + value + "\""
         case value: IndexedSeq[_] => "[" + value.mkString(", ") + "]"
-      })
+      }
       .map { case (k, v) => s""""$k" : $v""" }
       .mkString(", ")
   )
@@ -87,8 +89,8 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     ClickhouseSink.optimizeTable(client, Optimize(table = "distributed"))(dispatcher, settings)
     statements.last should be("OPTIMIZE TABLE distributed FINAL")
 
-    ClickhouseSink.optimizeTable(client, Optimize(table = "distributed", localTable = Option("local")))(dispatcher,
-                                                                                                        settings)
+    ClickhouseSink
+      .optimizeTable(client, Optimize(table = "distributed", localTable = Option("local")))(dispatcher, settings)
     statements.last should be("OPTIMIZE TABLE local FINAL")
 
     ClickhouseSink.optimizeTable(
@@ -97,11 +99,15 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     )(dispatcher, settings)
     statements.last should be("OPTIMIZE TABLE local ON CLUSTER cluster FINAL")
 
-    ClickhouseSink.optimizeTable(client,
-                                 Optimize(table = "distributed",
-                                          localTable = Option("local"),
-                                          cluster = Option("cluster"),
-                                          partition = Option("ID abc")))(dispatcher, settings)
+    ClickhouseSink.optimizeTable(
+      client,
+      Optimize(
+        table = "distributed",
+        localTable = Option("local"),
+        cluster = Option("cluster"),
+        partition = Option("ID abc")
+      )
+    )(dispatcher, settings)
     statements.last should be("OPTIMIZE TABLE local ON CLUSTER cluster PARTITION ID abc FINAL")
   }
 

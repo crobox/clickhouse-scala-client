@@ -48,7 +48,7 @@ trait ArithmeticFunctions { self: Magnets =>
   case class Negate[T](t: NumericCol[T]) extends ArithmeticFunctionCol[T](t)
   case class Abs[T](t: NumericCol[T])    extends ArithmeticFunctionCol[T](t)
 
-  //trait ArithmeticFunctionsDsl {
+  // trait ArithmeticFunctionsDsl {
 
   sealed abstract class AritRetType[L, R, O]
   implicit object IntIntBinding        extends AritRetType[Int, Int, Int]
@@ -118,8 +118,8 @@ trait ArithmeticFunctions { self: Magnets =>
   def intDiv[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): IntDiv[O] =
     IntDiv[O](left, right)
 
-  def intDivOrZero[L, R, O](left: NumericCol[L], right: NumericCol[R])(
-      implicit ev: AritRetType[L, R, O]
+  def intDivOrZero[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit
+      ev: AritRetType[L, R, O]
   ): IntDivOrZero[O] = IntDivOrZero[O](left, right)
 
   def lcm[L, R, O](left: NumericCol[L], right: NumericCol[R])(implicit ev: AritRetType[L, R, O]): Lcm[O] =

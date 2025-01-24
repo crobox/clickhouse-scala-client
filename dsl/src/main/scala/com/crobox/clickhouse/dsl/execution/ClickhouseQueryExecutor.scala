@@ -52,9 +52,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
   )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[String] =
     Future {
       values.map(_.toJson.compactPrint).mkString("\n") + "\n"
-    }.flatMap(
-      entity => client.execute(s"INSERT INTO ${table.quoted} FORMAT JSONEachRow", entity)(settings)
-    )
+    }.flatMap(entity => client.execute(s"INSERT INTO ${table.quoted} FORMAT JSONEachRow", entity)(settings))
 }
 
 object ClickhouseQueryExecutor {

@@ -42,7 +42,7 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventual
     manager ! PoisonPill
   }
 
-  "Connection manager" should "remove connection with failed health check" in {
+  "Connection manager" should "remove connection with failed health check" in
     Future
       .sequence(
         Seq(
@@ -52,13 +52,10 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventual
           uris(host3)._1.offer(ClickhouseHostHealth.Dead(host3, new IllegalArgumentException("Got it wrong")))
         )
       )
-      .flatMap(_ => {
+      .flatMap { _ =>
         manager ! Connections(uris.keySet)
-        ensureCompleted(uris).flatMap(_ => {
-          returnsConnectionsInRoundRobinFashion(manager, uris.keySet.-(host3))
-        })
-      })
-  }
+        ensureCompleted(uris).flatMap(_ => returnsConnectionsInRoundRobinFashion(manager, uris.keySet.-(host3)))
+      }
 
   it should "add back connection when health check passes" in {
     uris(host1)._1.offer(Alive(host1))
@@ -67,11 +64,11 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventual
     manager ! Connections(uris.keySet)
     ensureCompleted(uris - host3)
       .flatMap(_ => returnsConnectionsInRoundRobinFashion(manager, uris.keySet.-(host3)))
-      .flatMap(_ => {
+      .flatMap { _ =>
         uris(host3)._1.offer(ClickhouseHostHealth.Alive(host3))
         ensureCompleted(uris.filter(_._1 == host3))
           .flatMap(_ => returnsConnectionsInRoundRobinFashion(manager, uris.keySet))
-      })
+      }
   }
 
   it should "cancel health source when connection is removed from configuration" in {
@@ -101,10 +98,14 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventual
       system.actorOf(
         ConnectionManagerActor.props(
           uri => uris(uri)._2,
-          Some(config
-            .getConfig("crobox.clickhouse.client")
-            .withValue("connection.fallback-to-config-host-during-initialization", ConfigValueFactory.fromAnyRef(true))
-            .withValue("connection.host", ConfigValueFactory.fromAnyRef(host))
+          Some(
+            config
+              .getConfig("crobox.clickhouse.client")
+              .withValue(
+                "connection.fallback-to-config-host-during-initialization",
+                ConfigValueFactory.fromAnyRef(true)
+              )
+              .withValue("connection.host", ConfigValueFactory.fromAnyRef(host))
           )
         )
       )
@@ -123,29 +124,32 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventual
     )
 
   private def statusesAsSource()
-    : (SourceQueueWithComplete[ClickhouseHostStatus], Source[ClickhouseHostStatus, Cancellable]) = {
+      : (SourceQueueWithComplete[ClickhouseHostStatus], Source[ClickhouseHostStatus, Cancellable]) = {
     val (queue, source) = Source
       .queue[ClickhouseHostStatus](10, OverflowStrategy.fail)
       .preMaterialize()
-    (queue, source.mapMaterializedValue(_ => {
-      new Cancellable {
-        override def cancel(): Boolean = {
-          queue.complete()
-          true
+    (
+      queue,
+      source.mapMaterializedValue(_ =>
+        new Cancellable {
+          override def cancel(): Boolean = {
+            queue.complete()
+            true
+          }
+          override def isCancelled: Boolean = queue.watchCompletion().isCompleted
         }
-        override def isCancelled: Boolean = queue.watchCompletion().isCompleted
-      }
-    }))
+      )
+    )
   }
 
   private def ensureCompleted(
       uris: Map[Uri, (SourceQueueWithComplete[ClickhouseHostStatus], Source[ClickhouseHostStatus, Cancellable])]
   ): Future[Iterable[Done]] =
-    Future.sequence(uris.values.map(queue => {
+    Future.sequence(uris.values.map { queue =>
       queue._1.complete()
       queue._1.watchCompletion()
-    }) ++ Seq(Future {
-      Thread.sleep(1000)//FIXME find a cleaner way to ensure the manager processes all the elements from the stream
+    } ++ Seq(Future {
+      Thread.sleep(1000) // FIXME find a cleaner way to ensure the manager processes all the elements from the stream
       Done
     }))
 

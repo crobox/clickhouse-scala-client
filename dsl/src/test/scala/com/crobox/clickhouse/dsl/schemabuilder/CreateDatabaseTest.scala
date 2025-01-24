@@ -3,16 +3,16 @@ package com.crobox.clickhouse.dsl.schemabuilder
 import com.crobox.clickhouse.DslTestSpec
 
 /**
- * @author Sjoerd Mulder
+ * @author
+ *   Sjoerd Mulder
  * @since 2-1-17
  */
 class CreateDatabaseTest extends DslTestSpec {
 
-  it should "deny creating invalid databases" in {
+  it should "deny creating invalid databases" in
     intercept[IllegalArgumentException](
       CreateDatabase("").toString
     )
-  }
 
   it should "create a database with invalid name" in {
     CreateDatabase(".Fool").toString should be("CREATE DATABASE `.Fool`")

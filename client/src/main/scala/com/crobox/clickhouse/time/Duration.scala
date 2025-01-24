@@ -7,10 +7,9 @@ sealed trait Duration {
 }
 
 /**
- * Parses a duration expressed in string to the corresponding value.
- * It accepts input in the format `{value}{label}` or `{label}`.
- * Examples: 1h, 2hours, 4day, day, month, 1M
-  **/
+ * Parses a duration expressed in string to the corresponding value. It accepts input in the format `{value}{label}` or
+ * `{label}`. Examples: 1h, 2hours, 4day, day, month, 1M
+ */
 object Duration {
   private val DurationRegex = "(\\d+)?(\\D+)".r
 
@@ -34,8 +33,8 @@ object MultiDuration {
 }
 
 /**
-  * Special duration class that indicates the whole duration; similar to Duration.Inf
-  */
+ * Special duration class that indicates the whole duration; similar to Duration.Inf
+ */
 case object TotalDuration extends Duration {
   override val unit: TimeUnit = TimeUnit.Total
 }

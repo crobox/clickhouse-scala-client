@@ -27,16 +27,18 @@ case object ASC extends OrderingDirection
 
 case object DESC extends OrderingDirection
 
-sealed case class InternalQuery(select: Option[SelectQuery] = None,
-                                from: Option[FromQuery] = None,
-                                prewhere: Option[TableColumn[Boolean]] = None,
-                                where: Option[TableColumn[Boolean]] = None,
-                                groupBy: Option[GroupByQuery] = None,
-                                having: Option[TableColumn[Boolean]] = None,
-                                join: Option[JoinQuery] = None,
-                                orderBy: Seq[(Column, OrderingDirection)] = Seq.empty,
-                                limit: Option[Limit] = None,
-                                unionAll: Seq[OperationalQuery] = Seq.empty) {
+sealed case class InternalQuery(
+    select: Option[SelectQuery] = None,
+    from: Option[FromQuery] = None,
+    prewhere: Option[TableColumn[Boolean]] = None,
+    where: Option[TableColumn[Boolean]] = None,
+    groupBy: Option[GroupByQuery] = None,
+    having: Option[TableColumn[Boolean]] = None,
+    join: Option[JoinQuery] = None,
+    orderBy: Seq[(Column, OrderingDirection)] = Seq.empty,
+    limit: Option[Limit] = None,
+    unionAll: Seq[OperationalQuery] = Seq.empty
+) {
 
   def isValid: Boolean = {
     val validGroupBy = groupBy.isEmpty && having.isEmpty || groupBy.nonEmpty
@@ -47,11 +49,13 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
   def isPartial: Boolean = !isValid
 
   /**
-   * Merge with another InternalQuery, any conflict on query parts between the 2 joins will be resolved by
-   * preferring the left querypart over the right one.
+   * Merge with another InternalQuery, any conflict on query parts between the 2 joins will be resolved by preferring
+   * the left querypart over the right one.
    *
-   * @param other The right part to merge with this InternalQuery
-   * @return A merge of this and other InternalQuery
+   * @param other
+   *   The right part to merge with this InternalQuery
+   * @return
+   *   A merge of this and other InternalQuery
    */
   def :+>(other: InternalQuery): InternalQuery =
     InternalQuery(
@@ -69,19 +73,23 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
   /**
    * Right associative version of the merge (:+>) operator.
    *
-   * @param other The left part to merge with this InternalQuery
-   * @return A merge of this and other OperationalQuery
+   * @param other
+   *   The left part to merge with this InternalQuery
+   * @return
+   *   A merge of this and other OperationalQuery
    */
   def <+:(other: InternalQuery): InternalQuery = :+>(other)
 
   /**
    * Tries to merge this InternalQuery with other
    *
-   * @param other The Query parts to merge against
-   * @return A Success on merge without conflict, or Failure of IllegalArgumentException otherwise.
+   * @param other
+   *   The Query parts to merge against
+   * @return
+   *   A Success on merge without conflict, or Failure of IllegalArgumentException otherwise.
    */
   def +(other: InternalQuery): Try[InternalQuery] = Try {
-    (0 until productArity).foreach(id => {
+    (0 until productArity).foreach(id =>
       require(
         (productElement(id), other.productElement(id)) match {
           case (ts: Option[_], tt: Option[_]) =>
@@ -93,7 +101,7 @@ sealed case class InternalQuery(select: Option[SelectQuery] = None,
         },
         s"Conflicting parts ${productElement(id)} and ${other.productElement(id)}"
       )
-    })
+    )
     :+>(other)
   }
 }

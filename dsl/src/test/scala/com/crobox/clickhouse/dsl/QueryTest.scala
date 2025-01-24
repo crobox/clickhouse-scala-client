@@ -21,19 +21,19 @@ class QueryTest extends DslTestSpec {
     val query = select(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId
     toSql(query.internalQuery) should matchSQL(
       s"SELECT column_1, shield_id FROM $database.captainAmerica AS L1 INNER JOIN (SELECT * " +
-      s"FROM $database.twoTestTable) AS R1 USING shield_id FORMAT JSON"
+        s"FROM $database.twoTestTable) AS R1 USING shield_id FORMAT JSON"
     )
   }
 
   it should "generate inner join" in {
-    val expectedUUID                     = UUID.randomUUID()
-    val innerQuery: OperationalQuery     = select(shieldId as itemId) from OneTestTable where shieldId.isEq(expectedUUID)
+    val expectedUUID                 = UUID.randomUUID()
+    val innerQuery: OperationalQuery = select(shieldId as itemId) from OneTestTable where shieldId.isEq(expectedUUID)
     val joinInnerQuery: OperationalQuery = select(itemId) from TwoTestTable where (col3 isEq "wompalama")
-    val query                            = select(col1, shieldId) from innerQuery join (InnerJoin, joinInnerQuery) using itemId
+    val query = select(col1, shieldId) from innerQuery join (InnerJoin, joinInnerQuery) using itemId
     toSql(query.internalQuery) should matchSQL(
       s"SELECT column_1, shield_id FROM (SELECT shield_id AS item_id FROM $database.captainAmerica " +
-      s"WHERE shield_id = '$expectedUUID') AS L1 INNER JOIN (SELECT item_id FROM $database.twoTestTable " +
-      s"WHERE column_3 = 'wompalama') AS R1 USING item_id FORMAT JSON"
+        s"WHERE shield_id = '$expectedUUID') AS L1 INNER JOIN (SELECT item_id FROM $database.twoTestTable " +
+        s"WHERE column_3 = 'wompalama') AS R1 USING item_id FORMAT JSON"
     )
   }
 
@@ -87,8 +87,7 @@ class QueryTest extends DslTestSpec {
     val query    = select(shieldId) from OneTestTable
     val query2   = select(itemId) from OneTestTable where col2 >= 2
     val composed = query + query2
-    composed should matchPattern {
-      case Failure(_: IllegalArgumentException) =>
+    composed should matchPattern { case Failure(_: IllegalArgumentException) =>
     }
   }
 
@@ -99,9 +98,10 @@ class QueryTest extends DslTestSpec {
 
   it should "parse column function in filter" in {
 
-    val query = select(minus(NativeColumn[LocalDate]("date"), NativeColumn[Double]("double"))) from OneTestTable where (sum(
-      col2
-    ) > 0)
+    val query =
+      select(minus(NativeColumn[LocalDate]("date"), NativeColumn[Double]("double"))) from OneTestTable where (sum(
+        col2
+      ) > 0)
     toSql(query.internalQuery) should matchSQL(
       s"SELECT date - double FROM $database.captainAmerica WHERE sum(column_2) > 0 FORMAT JSON"
     )
@@ -122,16 +122,14 @@ class QueryTest extends DslTestSpec {
     val composed  = query + query2
     val composed2 = composed + query3
 
-    composed should matchPattern {
-      case t: Success[_] =>
+    composed should matchPattern { case t: Success[_] =>
     }
 
     toSql(composed.get.internalQuery) should matchSQL(
       s"SELECT shield_id FROM $database.captainAmerica FORMAT JSON"
     )
 
-    composed2 should matchPattern {
-      case t: Success[_] =>
+    composed2 should matchPattern { case t: Success[_] =>
     }
     toSql(composed2.get.internalQuery) should matchSQL(
       s"SELECT shield_id FROM $database.captainAmerica WHERE column_2 >= 4 FORMAT JSON"
@@ -142,9 +140,8 @@ class QueryTest extends DslTestSpec {
     val query  = select(shieldId) from OneTestTable
     val query2 = select(shieldId, itemId) from OneTestTable
 
-    an[IllegalArgumentException] should be thrownBy {
-      query.unionAll(query2)
-    }
+    an[IllegalArgumentException] should be thrownBy
+    query.unionAll(query2)
   }
 
   it should "perform the union of multiple tables" in {

@@ -45,7 +45,7 @@ abstract class ClickhouseClientSpec(val config: Config = ConfigFactory.load())
 
     def ~%(percent: Int, base: Base = numeric.fromInt(5)): TripleEqualsSupport.Spread[T] = {
       import numeric._
-      value +- numeric.plus(base, numeric.fromInt(((value.toDouble / 100D) * percent).toInt))
+      value +- numeric.plus(base, numeric.fromInt(((value.toDouble / 100d) * percent).toInt))
     }
   }
 }

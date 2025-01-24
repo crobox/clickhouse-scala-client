@@ -8,7 +8,7 @@ class HashFunctionsIT extends DslITSpec {
   it should "succeed for HashFunctions" in {
     val someStringData = "fooBarBaz"
 
-    //TODO these also return the byte format, can we more properly test them?
+    // TODO these also return the byte format, can we more properly test them?
     r(halfMD5(someStringData)) shouldBe "14009637059544572277"
     r(mD5(someStringData)).nonEmpty shouldBe true
     r(sipHash64(someStringData)).nonEmpty shouldBe true

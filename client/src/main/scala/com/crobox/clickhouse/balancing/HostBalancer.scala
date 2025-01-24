@@ -30,12 +30,14 @@ object HostBalancer extends ClickhouseHostBuilder {
       case SingleHost => SingleHostBalancer(connectionHostFromConfig)
       case BalancingHosts =>
         val manager = system.actorOf(ConnectionManagerActor.props(ClickhouseHostHealth.healthFlow(_)))
-        MultiHostBalancer(connectionConfig
-                            .getConfigList("hosts")
-                            .asScala
-                            .toSet
-                            .map((config: Config) => extractHost(config)),
-                          manager)
+        MultiHostBalancer(
+          connectionConfig
+            .getConfigList("hosts")
+            .asScala
+            .toSet
+            .map((config: Config) => extractHost(config)),
+          manager
+        )
       case ClusterAware =>
         val manager = system.actorOf(ConnectionManagerActor.props(ClickhouseHostHealth.healthFlow(_)))
         ClusterAwareHostBalancer(
@@ -48,6 +50,8 @@ object HostBalancer extends ClickhouseHostBuilder {
   }
 
   def extractHost(connectionConfig: Config): Uri =
-    toHost(connectionConfig.getString("host"),
-           if (connectionConfig.hasPath("port")) Option(connectionConfig.getInt("port")) else None)
+    toHost(
+      connectionConfig.getString("host"),
+      if (connectionConfig.hasPath("port")) Option(connectionConfig.getInt("port")) else None
+    )
 }

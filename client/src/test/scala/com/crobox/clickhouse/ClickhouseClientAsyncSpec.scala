@@ -34,31 +34,28 @@ abstract class ClickhouseClientAsyncSpec(val config: Config = ConfigFactory.load
   def requestParallelHosts(balancer: HostBalancer, connections: Int = 10): Future[Seq[Uri]] =
     Future.sequence(
       (1 to connections)
-        .map(_ => {
-          balancer.nextHost
-        })
+        .map(_ => balancer.nextHost)
     )
 
   def getConnections(manager: ActorRef, connections: Int = 10): Future[Seq[Uri]] =
     Future.sequence(
       (1 to connections)
-        .map(_ => {
-          (manager ? GetConnection()).mapTo[Uri]
-        })
+        .map(_ => (manager ? GetConnection()).mapTo[Uri])
     )
 
   //  TODO change this methods to custom matchers
   def returnsConnectionsInRoundRobinFashion(manager: ActorRef, expectedConnections: Set[Uri]): Future[Assertion] = {
     val RequestConnectionsPerHost = 100
     getConnections(manager, RequestConnectionsPerHost * expectedConnections.size)
-      .map(connections => {
-        expectedConnections.foreach(
-          uri =>
-            connections
-              .count(_ == uri) shouldBe (RequestConnectionsPerHost +- RequestConnectionsPerHost / 10) //10% delta for warm-up phase
+      .map { connections =>
+        expectedConnections.foreach(uri =>
+          connections
+            .count(
+              _ == uri
+            ) shouldBe (RequestConnectionsPerHost +- RequestConnectionsPerHost / 10) // 10% delta for warm-up phase
         )
         succeed
-      })
+      }
   }
 
   def compressGzip(content: String): Array[Byte] = {

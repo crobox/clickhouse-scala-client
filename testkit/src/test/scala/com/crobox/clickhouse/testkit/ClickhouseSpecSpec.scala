@@ -5,9 +5,10 @@ import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 
 /**
-  * @author Sjoerd Mulder
-  * @since 22-10-18
-  */
+ * @author
+ *   Sjoerd Mulder
+ * @since 22-10-18
+ */
 class ClickhouseSpecSpec extends AnyFlatSpecLike with Matchers with ClickhouseSpec {
 
   override val config: Config = ConfigFactory.load()
@@ -27,9 +28,9 @@ class ClickhouseSpecSpec extends AnyFlatSpecLike with Matchers with ClickhouseSp
     blockUntilRowsInTable(2, table)
     blockUntilExactRowsInTable(3, table)
 
-    dropAllTables() should be (1)
+    dropAllTables() should be(1)
 
-    dropAllTables() should be (0)
+    dropAllTables() should be(0)
 
   }
 

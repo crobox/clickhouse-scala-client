@@ -16,7 +16,10 @@ class HostBalancerTest extends ClickhouseClientSpec {
   }
 
   it should "resolve to multi host balancer" in {
-    HostBalancer(Some(ConfigFactory.parseString("""
+    HostBalancer(
+      Some(
+        ConfigFactory
+          .parseString("""
         |    connection: {
         |        type: "balancing-hosts"
         |        hosts: [
@@ -31,14 +34,20 @@ class HostBalancerTest extends ClickhouseClientSpec {
         |        }
         |    }
         |
-      """.stripMargin).withFallback(config.getConfig("crobox.clickhouse.client")))) match {
+      """.stripMargin)
+          .withFallback(config.getConfig("crobox.clickhouse.client"))
+      )
+    ) match {
       case MultiHostBalancer(hosts, _) =>
         hosts.toSeq should contain theSameElementsInOrderAs Seq(ClickhouseHostBuilder.toHost("localhost", Some(8123)))
     }
   }
 
   it should "resolve to cluster aware host balancer" in {
-    HostBalancer(Some(ConfigFactory.parseString("""
+    HostBalancer(
+      Some(
+        ConfigFactory
+          .parseString("""
         |    connection: {
         |        type: "cluster-aware"
         |        host: "localhost"
@@ -51,7 +60,10 @@ class HostBalancerTest extends ClickhouseClientSpec {
         |        }
         |    }
         |
-      """.stripMargin).withFallback(config.getConfig("crobox.clickhouse.client")))) match {
+      """.stripMargin)
+          .withFallback(config.getConfig("crobox.clickhouse.client"))
+      )
+    ) match {
       case ClusterAwareHostBalancer(host, cluster, _, builtTimeout) =>
         host shouldEqual ClickhouseHostBuilder.toHost("localhost", Some(8123))
         cluster shouldBe "cluster"

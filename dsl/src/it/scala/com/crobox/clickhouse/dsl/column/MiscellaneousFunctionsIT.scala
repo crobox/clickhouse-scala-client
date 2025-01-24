@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.{DslITSpec, dsl => CHDsl}
+import com.crobox.clickhouse.{dsl => CHDsl, DslITSpec}
 
 class MiscellaneousFunctionsIT extends DslITSpec {
 

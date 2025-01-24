@@ -3,7 +3,8 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.DslTestSpec
 
 /**
- * @author Sjoerd Mulder
+ * @author
+ *   Sjoerd Mulder
  * @since 11-1-17
  */
 class ClickhouseStatementTest extends DslTestSpec {

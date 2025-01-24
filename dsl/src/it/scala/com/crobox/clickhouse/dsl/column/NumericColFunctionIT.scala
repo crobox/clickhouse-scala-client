@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.{DslITSpec, dsl => CHDsl}
+import com.crobox.clickhouse.{dsl => CHDsl, DslITSpec}
 
 class NumericColFunctionIT extends DslITSpec {
 
@@ -77,17 +77,17 @@ class NumericColFunctionIT extends DslITSpec {
     r(log10(123)) should startWith("2.0899")
     r(sqrt(123)) should startWith("11.090")
     r(cbrt(123)) should startWith("4.9731")
-    r(erf(123)) shouldBe ("1")
-    r(erfc(123)) shouldBe ("0")
+    r(erf(123)) shouldBe "1"
+    r(erfc(123)) shouldBe "0"
     r(lgamma(123)) should startWith("467.41")
     r(tgamma(123)) should startWith("9.8750")
     r(sin(123)) should startWith("-0.45990")
     r(cos(123)) should startWith("-0.88796")
     r(tan(123)) should startWith("0.51792747")
     r(asin(1)) should startWith("1.5707")
-    r(acos(1)) shouldBe ("0")
+    r(acos(1)) shouldBe "0"
     r(atan(1)) should startWith("0.78539")
-    r(pow(123, 2)) shouldBe ("15129")
+    r(pow(123, 2)) shouldBe "15129"
   }
 
   it should "succeed for RandomFunctions" in {

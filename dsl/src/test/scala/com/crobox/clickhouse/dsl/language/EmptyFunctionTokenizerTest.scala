@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.dsl._
-import com.crobox.clickhouse.{DslTestSpec, dsl}
+import com.crobox.clickhouse.{dsl, DslTestSpec}
 
 class EmptyFunctionTokenizerTest extends DslTestSpec {
 

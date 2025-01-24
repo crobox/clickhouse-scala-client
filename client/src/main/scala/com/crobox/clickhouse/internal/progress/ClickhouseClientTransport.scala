@@ -11,17 +11,20 @@ import org.apache.pekko.util.ByteString
 import scala.concurrent.Future
 
 /**
- * Clickhouse sends http progress headers with the name X-ClickHouse-Progress which cannot be handled in a streaming way in Pekko.
- * In the request we include our own custom header `X-Internal-Identifier` so we can send the internal query id with the progress
- * The progress headers are being intercepted by the transport and sent to an internal source as progress events with the internal query id which will be used to route them to the query progress source
- * We just proxy the request/response and do not manipulate them in any way
- * */
+ * Clickhouse sends http progress headers with the name X-ClickHouse-Progress which cannot be handled in a streaming way
+ * in Pekko. In the request we include our own custom header `X-Internal-Identifier` so we can send the internal query
+ * id with the progress The progress headers are being intercepted by the transport and sent to an internal source as
+ * progress events with the internal query id which will be used to route them to the query progress source We just
+ * proxy the request/response and do not manipulate them in any way
+ */
 class StreamingProgressClickhouseTransport(source: SourceQueue[String]) extends ClientTransport {
   override def connectTo(
       host: String,
       port: Int,
       settings: ClientConnectionSettings
-  )(implicit system: ActorSystem): Flow[
+  )(implicit
+      system: ActorSystem
+  ): Flow[
     ByteString,
     ByteString,
     Future[Http.OutgoingConnection]
@@ -60,10 +63,10 @@ class ProgressHeadersAsEventsStage(source: SourceQueue[String])
             if (queryIdHeader.isEmpty) {
               log.warning(s"Could not extract the query id from the containing $incomingString")
             }
-            queryId = queryIdHeader.map(header => {
+            queryId = queryIdHeader.map { header =>
               queryMarkedAsAccepted = false
               header.stripPrefix(InternalQueryIdentifier + ":").trim
-            })
+            }
           }
           push(serverOutput, byteString)
         }
@@ -92,31 +95,33 @@ class ProgressHeadersAsEventsStage(source: SourceQueue[String])
               progressHeaders
                 .filter(_.contains(ClickhouseProgressHeader))
                 .map(_.stripPrefix(ClickhouseProgressHeader + ":"))
-                .map(progressJson => {
-                  queryId.getOrElse("unknown") + "\n" + progressJson
-                })
-                .foreach(progress => {
-                  source.offer(progress)
-                })
+                .map(progressJson => queryId.getOrElse("unknown") + "\n" + progressJson)
+                .foreach(progress => source.offer(progress))
             }
           }
         }
       }
     )
-    setHandler(serverOutput, new OutHandler {
-      override def onPull(): Unit =
-        pull(clientInput)
-    })
-    setHandler(clientOutput, new OutHandler {
-      override def onPull(): Unit =
-        pull(serverInput)
-    })
+    setHandler(
+      serverOutput,
+      new OutHandler {
+        override def onPull(): Unit =
+          pull(clientInput)
+      }
+    )
+    setHandler(
+      clientOutput,
+      new OutHandler {
+        override def onPull(): Unit =
+          pull(serverInput)
+      }
+    )
   }
 }
 
 object ProgressHeadersAsEventsStage {
 
-  val InternalQueryIdentifier = "X-Internal-Identifier"
+  val InternalQueryIdentifier  = "X-Internal-Identifier"
   val ClickhouseProgressHeader = "X-ClickHouse-Progress"
   val AcceptedMark             = "CLICKHOUSE_ACCEPTED"
   val Crlf                     = "\r\n"

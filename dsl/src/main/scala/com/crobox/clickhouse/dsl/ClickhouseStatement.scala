@@ -3,9 +3,10 @@ package com.crobox.clickhouse.dsl
 import com.google.common.escape.Escapers
 
 /**
-  * @author Sjoerd Mulder
-  * @since 2-1-17
-  */
+ * @author
+ *   Sjoerd Mulder
+ * @since 2-1-17
+ */
 object ClickhouseStatement {
   val DefaultDatabase: String    = "default"
   private val UnquotedIdentifier = "^[a-zA-Z_][0-9a-zA-Z_]*$"
@@ -29,7 +30,7 @@ object ClickhouseStatement {
   def quoteIdentifier(input: String): String = {
     require(input != null, "Can't quote null as identifier")
     require(input != "", "Can't quote empty string as identifier")
-    if(input.matches(UnquotedIdentifier)) {
+    if (input.matches(UnquotedIdentifier)) {
       input
     } else {
       "`" + Escaper.escape(input) + "`"
@@ -40,10 +41,11 @@ object ClickhouseStatement {
 trait ClickhouseStatement {
 
   /**
-    * Returns the query string for this statement.
-    *
-    * @return String containing the Clickhouse dialect SQL statement
-    */
+   * Returns the query string for this statement.
+   *
+   * @return
+   *   String containing the Clickhouse dialect SQL statement
+   */
   def query: String
 
 }

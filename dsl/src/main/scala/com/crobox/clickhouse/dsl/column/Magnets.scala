@@ -25,8 +25,8 @@ trait Magnets {
   /**
    * Magnet pattern
    *
-   * The pattern provides implicit conversion to wrapper classes,
-   * this allows the DSL to accept multiple compatible column types in a single function.
+   * The pattern provides implicit conversion to wrapper classes, this allows the DSL to accept multiple compatible
+   * column types in a single function.
    */
   trait Magnet[+C] {
     val column: TableColumn[C]
@@ -63,8 +63,7 @@ trait Magnets {
   }
 
   /**
-   * Any constant or column.
-   * Sidenote: The current implementation doesn't represent collections.
+   * Any constant or column. Sidenote: The current implementation doesn't represent collections.
    */
   trait ConstOrColMagnet[+C] extends Magnet[C] with ScalaBooleanFunctionOps with InOps with NullableOps
 

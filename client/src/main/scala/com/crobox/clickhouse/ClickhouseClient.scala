@@ -18,12 +18,14 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 /**
  * Async clickhouse client using Pekko Http and Streams
  *
- * @author Sjoerd Mulder
+ * @author
+ *   Sjoerd Mulder
  * @since 31-03-17
  */
-class ClickhouseClient(configuration: Option[Config] = None, 
-                        override val customConnectionContext: Option[HttpsConnectionContext] = None)
-    extends ClickHouseExecutor
+class ClickhouseClient(
+    configuration: Option[Config] = None,
+    override val customConnectionContext: Option[HttpsConnectionContext] = None
+) extends ClickHouseExecutor
     with ClickhouseResponseParser
     with ClickhouseQueryBuilder {
 
@@ -42,21 +44,24 @@ class ClickhouseClient(configuration: Option[Config] = None,
   /**
    * Execute a read-only query on Clickhouse
    *
-   * @param sql a valid Clickhouse SQL string
-   * @return Future with the result that clickhouse returns
+   * @param sql
+   *   a valid Clickhouse SQL string
+   * @return
+   *   Future with the result that clickhouse returns
    */
   def query(sql: String)(implicit settings: QuerySettings = QuerySettings(ReadQueries)): Future[String] =
     executeRequest(sql, settings.copy(readOnly = ReadQueries, idempotent = settings.idempotent.orElse(Some(true))))
 
   /**
-   * Execute a read-only query on Clickhouse
-   * Experimental api, may change in the future.
+   * Execute a read-only query on Clickhouse Experimental api, may change in the future.
    *
-   * @param sql a valid Clickhouse SQL string
-   * @return stream with the query progress (started/rejected/finished/failed) which materializes with the query result
+   * @param sql
+   *   a valid Clickhouse SQL string
+   * @return
+   *   stream with the query progress (started/rejected/finished/failed) which materializes with the query result
    */
-  def queryWithProgress(sql: String)(
-      implicit settings: QuerySettings = QuerySettings(ReadQueries)
+  def queryWithProgress(sql: String)(implicit
+      settings: QuerySettings = QuerySettings(ReadQueries)
   ): Source[QueryProgress, Future[String]] =
     executeRequestWithProgress(
       sql,
@@ -64,11 +69,13 @@ class ClickhouseClient(configuration: Option[Config] = None,
     )
 
   /**
-   * Execute a query that is modifying the state of the database. e.g. INSERT, SET, CREATE TABLE.
-   * For security purposes SELECT and SHOW queries are not allowed, use the .query() method for those.
+   * Execute a query that is modifying the state of the database. e.g. INSERT, SET, CREATE TABLE. For security purposes
+   * SELECT and SHOW queries are not allowed, use the .query() method for those.
    *
-   * @param sql a valid Clickhouse SQL string
-   * @return Future with the result that clickhouse returns
+   * @param sql
+   *   a valid Clickhouse SQL string
+   * @return
+   *   Future with the result that clickhouse returns
    */
   def execute(sql: String)(implicit settings: QuerySettings = QuerySettings(AllQueries)): Future[String] =
     Future {
@@ -87,16 +94,17 @@ class ClickhouseClient(configuration: Option[Config] = None,
   /**
    * Creates a stream of the SQL query that will delimit the result from Clickhouse on new-line
    *
-   * @param sql a valid Clickhouse SQL string
+   * @param sql
+   *   a valid Clickhouse SQL string
    */
   def source(sql: String)(implicit settings: QuerySettings = QuerySettings(ReadQueries)): Source[String, NotUsed] =
     sourceByteString(sql).via(Framing.delimiter(ByteString("\n"), MaximumFrameLength)).map(_.utf8String)
 
   /**
-   * Creates a stream of the SQL query that will emit every result as a ByteString
-   * It will not retry the queries.
+   * Creates a stream of the SQL query that will emit every result as a ByteString It will not retry the queries.
    *
-   * @param sql a valid Clickhouse SQL string
+   * @param sql
+   *   a valid Clickhouse SQL string
    */
   def sourceByteString(
       sql: String
@@ -108,22 +116,24 @@ class ClickhouseClient(configuration: Option[Config] = None,
       .flatMapConcat(response => response.entity.withoutSizeLimit().dataBytes)
 
   /**
-   * Accepts a source of Strings that it will stream to Clickhouse
-   * It will not retry the query as this will run the source once for every retry and might have
-   * unexpected consequences.
+   * Accepts a source of Strings that it will stream to Clickhouse It will not retry the query as this will run the
+   * source once for every retry and might have unexpected consequences.
    *
-   * @param sql    a valid Clickhouse SQL INSERT statement
-   * @param source the Source with strings
-   * @return Future with the result that clickhouse returns
+   * @param sql
+   *   a valid Clickhouse SQL INSERT statement
+   * @param source
+   *   the Source with strings
+   * @return
+   *   Future with the result that clickhouse returns
    */
-  def sink(sql: String, source: Source[ByteString, Any])(
-      implicit settings: QuerySettings = QuerySettings(AllQueries)
+  def sink(sql: String, source: Source[ByteString, Any])(implicit
+      settings: QuerySettings = QuerySettings(AllQueries)
   ): Future[String] = {
     val entity = HttpEntity.apply(ContentTypes.`text/plain(UTF-8)`, source)
     executeRequestInternal(hostBalancer.nextHost, sql, queryIdentifier, settings, Option(entity), None)
   }
 
-  val serverVersion: ClickhouseServerVersion = {
+  val serverVersion: ClickhouseServerVersion =
     try {
       val path = "crobox.clickhouse.server.version"
       val cfg  = configuration.getOrElse(ConfigFactory.load())
@@ -132,12 +142,11 @@ class ClickhouseClient(configuration: Option[Config] = None,
       } else {
         Await.result(
           query("select version()")(QuerySettings(ReadQueries).copy(retries = Option(0)))
-            .recover {
-              case x: ClickhouseException =>
-                val key = "(version "
-                val idx = x.getMessage.indexOf(key)
-                if (idx > 0) x.getMessage.substring(idx + key.length, x.getMessage.indexOf(")", idx + key.length))
-                else "Unknown"
+            .recover { case x: ClickhouseException =>
+              val key = "(version "
+              val idx = x.getMessage.indexOf(key)
+              if (idx > 0) x.getMessage.substring(idx + key.length, x.getMessage.indexOf(")", idx + key.length))
+              else "Unknown"
             }
             .map(ClickhouseServerVersion(_)),
           5.seconds
@@ -151,5 +160,4 @@ class ClickhouseClient(configuration: Option[Config] = None,
         logger.error(s"Can't determine Clickhouse Server Version. Falling back to: $latest. Error: ${x.getMessage}", x)
         latest
     }
-  }
 }

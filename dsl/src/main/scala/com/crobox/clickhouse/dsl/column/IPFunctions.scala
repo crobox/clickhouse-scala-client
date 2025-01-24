@@ -22,5 +22,5 @@ IPv4StringToNum(s)
 IPv4NumToStringClassC(num)
 IPv6NumToString(x)
 IPv6StringToNum(s)
- */
+   */
 }

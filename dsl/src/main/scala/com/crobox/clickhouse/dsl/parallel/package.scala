@@ -7,7 +7,8 @@ package object parallel {
   implicit class ParallelizableQuery(operationalQuery: OperationalQuery) {
 
     /**
-     * Merging 2 queries will retaining all grouping and selection of both queries and join them using the grouped columns
+     * Merging 2 queries will retaining all grouping and selection of both queries and join them using the grouped
+     * columns
      */
     def merge(query: OperationalQuery): MergingQueries =
       MergingQueries(operationalQuery, query, AllLeftJoin)
@@ -16,10 +17,11 @@ package object parallel {
   /**
    * Smart joins with automated grouping, sorting and then joining on the matching columns
    */
-  case class MergingQueries(rightTableQry: OperationalQuery,
-                            leftTableQry: OperationalQuery,
-                            joinType: JoinQuery.JoinType = AllLeftJoin)
-      extends QueryFactory {
+  case class MergingQueries(
+      rightTableQry: OperationalQuery,
+      leftTableQry: OperationalQuery,
+      joinType: JoinQuery.JoinType = AllLeftJoin
+  ) extends QueryFactory {
 
     override def on(columns: Column*): OperationalQuery = {
       val rightTableQryGrouped = rightTableQry.groupBy(columns: _*).orderBy(columns: _*)
@@ -34,9 +36,11 @@ package object parallel {
     def joinWith(joinType: JoinQuery.JoinType): MergingQueries =
       this.copy(joinType = joinType)
 
-    private def _on(rightTableQry: OperationalQuery,
-                    leftTableQry: OperationalQuery,
-                    joinKeys: Seq[Column]): OperationalQuery = {
+    private def _on(
+        rightTableQry: OperationalQuery,
+        leftTableQry: OperationalQuery,
+        joinKeys: Seq[Column]
+    ): OperationalQuery = {
 
       def recursiveCollectCols(qry: InternalQuery, cols: Seq[Column] = Seq.empty): Seq[Column] = {
         val uQry = qry
@@ -60,11 +64,11 @@ package object parallel {
         }
       }
 
-      //Forcefully add the columns of the right table(s), because 'select *' on a join only returns the values of the left table in clickhouse
+      // Forcefully add the columns of the right table(s), because 'select *' on a join only returns the values of the left table in clickhouse
       val joinCols = recursiveCollectCols(rightTableQry.internalQuery)
-      //filter out cols that are already available trough grouping
+        // filter out cols that are already available trough grouping
         .filterNot(thisCol => joinKeys.exists(_.name == thisCol.name))
-        //Map to a simple column so that we just add the select to top level
+        // Map to a simple column so that we just add the select to top level
         .map(origCol => RefColumn(origCol.name))
         .toList
         .filterNot(_.name == EmptyColumn.name)

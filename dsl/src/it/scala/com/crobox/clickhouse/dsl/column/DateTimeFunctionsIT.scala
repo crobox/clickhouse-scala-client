@@ -52,7 +52,9 @@ class DateTimeFunctionsIT extends DslITSpec {
     r(chYesterday()) shouldBe dynNow.minusDays(1).printAsDate
     r(chToday()) shouldBe dynNow.withTimeAtStartOfDay().printAsDate
     r(timeSlot(now)) shouldBe now.toStartOfMin(30).printAsDateTime
-    r(timeSlots(now, toUInt32(1800))) shouldBe s"['${now.toStartOfMin(30).printAsDateTime}','${now.plusMinutes(30).toStartOfMin(30).printAsDateTime}']"
+    r(
+      timeSlots(now, toUInt32(1800))
+    ) shouldBe s"['${now.toStartOfMin(30).printAsDateTime}','${now.plusMinutes(30).toStartOfMin(30).printAsDateTime}']"
     r(toISOWeek(August_8_19)) shouldBe "32"
     r(toISOYear(August_8_19)) shouldBe "2019"
     r(toWeek(August_8_19)) shouldBe "31"
