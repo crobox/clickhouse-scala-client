@@ -57,7 +57,7 @@ lazy val dsl = (project in file("dsl"))
     name                                                              := "dsl",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
-      "com.google.guava" % "guava"  % "33.4.0-jre",
+      "com.google.guava" % "guava"  % "33.4.7-jre",
       "com.typesafe"     % "config" % "1.4.3"
     )
   )
