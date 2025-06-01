@@ -23,7 +23,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   }
 
   it should "use paging" in {
-    val select = SelectQuery(Seq(shieldId))
+    val select       = SelectQuery(Seq(shieldId))
     val generatedSql = toSql(
       InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), limit = Some(Limit(15, 30)))
     )
@@ -37,7 +37,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
 
   it should "add simple condition between columns" in {
     val select = SelectQuery(Seq(shieldId))
-    val query = toSql(
+    val query  = toSql(
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
@@ -50,7 +50,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   it should "add condition for value" in {
     val select = SelectQuery(Seq(shieldId))
     val uuid   = UUID.randomUUID()
-    val query =
+    val query  =
       toSql(
         InternalQuery(
           Some(select),
@@ -64,7 +64,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   it should "add chained condition" in {
     val select = SelectQuery(Seq(shieldId))
     val uuid   = UUID.randomUUID()
-    val query = toSql(
+    val query  = toSql(
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
@@ -79,7 +79,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   it should "group by alias if using aliased column" in {
     val alias  = shieldId as "preferable"
     val select = SelectQuery(Seq(alias))
-    val query = toSql(
+    val query  = toSql(
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
@@ -91,7 +91,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
 
   it should "group by with rollup if using group by mode" in {
     val select = SelectQuery(Seq(shieldId))
-    val query = toSql(
+    val query  = toSql(
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
@@ -105,7 +105,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
 
   it should "group by with cube if using group by mode" in {
     val select = SelectQuery(Seq(shieldId))
-    val query = toSql(
+    val query  = toSql(
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
@@ -117,7 +117,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
 
   it should "build table join using select all style" in {
     val select = SelectQuery(Seq(shieldId))
-    val query = toSql(
+    val query  = toSql(
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
@@ -136,7 +136,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
 
   it should "use functions in group by method" in {
     val select = SelectQuery(Seq(shieldId))
-    val query = toSql(
+    val query  = toSql(
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
@@ -149,7 +149,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   it should "use inner query as join" in {
     val select     = SelectQuery(Seq(shieldId))
     val joinSelect = SelectQuery(Seq(itemId as "shield_id"))
-    val query = toSql(
+    val query      = toSql(
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),

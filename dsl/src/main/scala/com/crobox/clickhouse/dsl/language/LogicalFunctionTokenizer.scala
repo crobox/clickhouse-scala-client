@@ -7,9 +7,9 @@ trait LogicalFunctionTokenizer {
 
   def tokenizeLogicalFunction(col: LogicalFunction)(implicit ctx: TokenizeContext): String =
     (col.left.asOption, col.right.asOption) match {
-      case (None, None)        => "1"
-      case (Some(left), None)  => tokenizeColumn(left)
-      case (None, Some(right)) => tokenizeColumn(right)
+      case (None, None)              => "1"
+      case (Some(left), None)        => tokenizeColumn(left)
+      case (None, Some(right))       => tokenizeColumn(right)
       case (Some(left), Some(right)) =>
         col.operator match {
           case And =>

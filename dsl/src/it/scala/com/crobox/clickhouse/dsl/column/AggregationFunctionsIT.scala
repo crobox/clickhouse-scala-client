@@ -11,8 +11,8 @@ import java.util.UUID
 
 class AggregationFunctionsIT extends DslITSpec with LazyLogging {
 
-  private val entries = 200145
-  private val delta   = 2
+  private val entries                          = 200145
+  private val delta                            = 2
   override val table1Entries: Seq[Table1Entry] =
     Seq.fill(entries)(Table1Entry(UUID.randomUUID(), numbers = Seq(1, 2, 3)))
   override val table2Entries: Seq[Table2Entry] =
@@ -23,7 +23,7 @@ class AggregationFunctionsIT extends DslITSpec with LazyLogging {
       def result = columnResult.toInt
     }
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
-    val resultSimple = queryExecutor
+    val resultSimple                                  = queryExecutor
       .execute[Result](select(uniq(shieldId) as "result") from OneTestTable)
       .futureValue
     val resultExact = queryExecutor
@@ -37,7 +37,7 @@ class AggregationFunctionsIT extends DslITSpec with LazyLogging {
   it should "run quantiles" in {
     case class Result(result: Seq[Float])
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[Float], Result](Result.apply, "result")
-    val result = queryExecutor
+    val result                                        = queryExecutor
       .execute[Result](
         select(quantiles(col2, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.99f) as ref[Seq[Float]]("result")) from TwoTestTable
       )
@@ -48,7 +48,7 @@ class AggregationFunctionsIT extends DslITSpec with LazyLogging {
   it should "run for each" in {
     case class Result(result: Seq[String])
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[String], Result](Result.apply, "result")
-    val result = queryExecutor
+    val result                                        = queryExecutor
       .execute[Result](
         select(forEach[Int, TableColumn[Seq[Int]], Double](numbers) { column =>
           sum(column)

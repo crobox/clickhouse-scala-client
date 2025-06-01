@@ -10,7 +10,7 @@ import com.google.common.escape.Escapers
 object ClickhouseStatement {
   val DefaultDatabase: String    = "default"
   private val UnquotedIdentifier = "^[a-zA-Z_][0-9a-zA-Z_]*$"
-  private val Escaper = Escapers.builder
+  private val Escaper            = Escapers.builder
     .addEscape('\\', "\\\\")
     .addEscape('\n', "\\n")
     .addEscape('\t', "\\t")

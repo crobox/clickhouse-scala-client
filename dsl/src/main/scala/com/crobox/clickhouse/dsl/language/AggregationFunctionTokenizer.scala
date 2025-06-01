@@ -13,7 +13,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
         val (function, values)   = tokenizeInnerAggregatedFunction(extractTarget(nested))
         val separator            = if (values.isEmpty || combinatorsValues.isEmpty) "" else ctx.delimiter
         s"$function$combinators($values$separator$combinatorsValues)"
-      case timeSeries: TimeSeries => tokenizeTimeSeries(timeSeries)
+      case timeSeries: TimeSeries           => tokenizeTimeSeries(timeSeries)
       case aggregated: AggregateFunction[_] =>
         val (function, values) = tokenizeInnerAggregatedFunction(aggregated)
         s"$function($values)"
@@ -35,22 +35,22 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       agg: AggregateFunction[_]
   )(implicit ctx: TokenizeContext): (String, String) =
     agg match {
-      case AnyResult(column, modifier) => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
-      case Avg(column)                 => ("avg", tokenizeColumn(column))
-      case Count(column)               => ("count", tokenizeColumn(column.getOrElse(EmptyColumn)))
-      case FirstValue(column)          => ("first_value", tokenizeColumn(column))
+      case AnyResult(column, modifier)        => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
+      case Avg(column)                        => ("avg", tokenizeColumn(column))
+      case Count(column)                      => ("count", tokenizeColumn(column.getOrElse(EmptyColumn)))
+      case FirstValue(column)                 => ("first_value", tokenizeColumn(column))
       case GroupArray(tableColumn, maxValues) =>
         ("groupArray", s"${maxValues.map(_.toString + ")(").getOrElse("")}${tokenizeColumn(tableColumn)}")
-      case GroupUniqArray(tableColumn) => ("groupUniqArray", tokenizeColumn(tableColumn))
-      case LastValue(column)           => ("last_value", tokenizeColumn(column))
+      case GroupUniqArray(tableColumn)     => ("groupUniqArray", tokenizeColumn(tableColumn))
+      case LastValue(column)               => ("last_value", tokenizeColumn(column))
       case Median(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (
           s"median$modifierName",
           s"$level)(${tokenizeColumn(column)}${modifierValue.map(ctx.delimiter + _).getOrElse("")}"
         )
-      case Min(tableColumn) => ("min", tokenizeColumn(tableColumn))
-      case Max(tableColumn) => ("max", tokenizeColumn(tableColumn))
+      case Min(tableColumn)                  => ("min", tokenizeColumn(tableColumn))
+      case Max(tableColumn)                  => ("max", tokenizeColumn(tableColumn))
       case Quantile(column, level, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (
@@ -63,8 +63,8 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
           s"quantiles$modifierName",
           s"${levels.mkString(ctx.delimiter)})(${tokenizeColumn(column)}${modifierValue.map(ctx.delimiter + _).getOrElse("")}"
         )
-      case Sum(column, modifier) => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
-      case SumMap(key, value)    => (s"sumMap", tokenizeColumns(Seq(key, value)))
+      case Sum(column, modifier)   => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
+      case SumMap(key, value)      => (s"sumMap", tokenizeColumns(Seq(key, value)))
       case Uniq(columns, modifier) =>
         (s"uniq${tokenizeUniqModifier(modifier)}", columns.map(tokenizeColumn).mkString(ctx.delimiter))
       case f: AggregateFunction[_] =>

@@ -135,8 +135,8 @@ class ClickhouseClient(
 
   val serverVersion: ClickhouseServerVersion =
     try {
-      val path = "crobox.clickhouse.server.version"
-      val cfg  = configuration.getOrElse(ConfigFactory.load())
+      val path    = "crobox.clickhouse.server.version"
+      val cfg     = configuration.getOrElse(ConfigFactory.load())
       val version = if (cfg.hasPath(path)) {
         ClickhouseServerVersion(cfg.getString(path))
       } else {

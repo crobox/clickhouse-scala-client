@@ -69,7 +69,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
 
   it should "index items" in {
     val inserts = parsedInserts("two")
-    val res = Source
+    val res     = Source
       .fromIterator(() => inserts.iterator)
       .map(data => Insert("test.insert", "{" + data + "}"))
       .runWith(ClickhouseSink.toSink(config, client, Some("no-overrides")))
@@ -80,7 +80,7 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
   it should "optimize items" in {
     var statements = Seq.empty[String]
     val settings   = QuerySettings()
-    val client = new ClickhouseClient(Some(config)) {
+    val client     = new ClickhouseClient(Some(config)) {
       override def execute(sql: String)(implicit settings: QuerySettings): Future[String] = {
         statements ++= Seq(sql)
         Future.successful("")

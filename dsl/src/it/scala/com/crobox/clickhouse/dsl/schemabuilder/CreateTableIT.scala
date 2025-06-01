@@ -15,7 +15,7 @@ class CreateTableIT extends DslITSpec {
     val userId    = NativeColumn[Long]("user_id", ColumnType.UInt64)
     val comment   = NativeColumn[String]("comment", ColumnType.String)
     val db        = database
-    val create = CreateTable(
+    val create    = CreateTable(
       table = new Table {
         override val database: String              = db
         override val name: String                  = "table_with_ttl"

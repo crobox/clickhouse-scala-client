@@ -28,7 +28,7 @@ private[clickhouse] object ClusterConnectionFlow
       scanningInterval: FiniteDuration,
       cluster: String
   )(implicit system: ActorSystem, ec: ExecutionContext): Source[Connections, Cancellable] = {
-    val http = Http(system)
+    val http     = Http(system)
     val settings = ConnectionPoolSettings(system)
       .withMaxConnections(1)
       .withMinConnections(1)
@@ -39,7 +39,7 @@ private[clickhouse] object ClusterConnectionFlow
       .tick(0.millis, scanningInterval, {})
       .mapAsync(1)(_ => targetHost)
       .mapAsync(1) { host =>
-        val query = s"SELECT host_address FROM system.clusters WHERE cluster='$cluster'"
+        val query   = s"SELECT host_address FROM system.clusters WHERE cluster='$cluster'"
         val request =
           toRequest(host, query, None, QuerySettings(readOnly = ReadQueries, idempotent = Some(true)), None)(
             system.settings.config

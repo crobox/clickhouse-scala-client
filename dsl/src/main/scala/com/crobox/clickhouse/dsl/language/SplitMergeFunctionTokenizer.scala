@@ -10,7 +10,7 @@ trait SplitMergeFunctionTokenizer {
       // Some small optimizations
       val separator = sep.column match {
         case c: Const[_] => c.const.asInstanceOf[String]
-        case _ =>
+        case _           =>
           var s = tokenizeColumn(sep.column)
           if (s.startsWith("`")) s = s.tail
           if (s.endsWith("`")) s = s.init

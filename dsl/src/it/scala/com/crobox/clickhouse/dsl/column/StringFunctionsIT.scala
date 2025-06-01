@@ -7,7 +7,7 @@ import com.crobox.clickhouse.{dsl, DslITSpec}
 import java.util.UUID
 
 class StringFunctionsIT extends DslITSpec {
-  private val columnString = "oneem,twoem,threeem"
+  private val columnString                     = "oneem,twoem,threeem"
   override val table2Entries: Seq[Table2Entry] =
     Seq(Table2Entry(UUID.randomUUID(), columnString, randomInt, randomString, None))
 
