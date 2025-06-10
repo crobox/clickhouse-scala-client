@@ -148,7 +148,7 @@ trait ClickhouseTokenizerModule
   protected def tokenizeColumn(column: Column)(implicit ctx: TokenizeContext): String = {
     require(column != null)
     column match {
-      case EmptyColumn => ""
+      case EmptyColumn             => ""
       case alias: AliasedColumn[_] =>
         val originalColumnToken = tokenizeColumn(alias.original)
         if (originalColumnToken.isEmpty) alias.quoted else s"$originalColumnToken AS ${alias.quoted}"
@@ -160,36 +160,36 @@ trait ClickhouseTokenizerModule
 
   private def tokenizeExpressionColumn(inCol: ExpressionColumn[_])(implicit ctx: TokenizeContext): String =
     inCol match {
-      case agg: AggregateFunction[_]         => tokenizeAggregateFunction(agg)
-      case col: ArithmeticFunctionCol[_]     => tokenizeArithmeticFunctionColumn(col)
-      case col: ArithmeticFunctionOp[_]      => tokenizeArithmeticFunctionOperator(col)
-      case col: ArrayFunction                => tokenizeArrayFunction(col)
-      case col: BitFunction                  => tokenizeBitFunction(col)
-      case col: ComparisonColumn             => tokenizeComparisonColumn(col)
-      case col: DateTimeFunctionCol[_]       => tokenizeDateTimeColumn(col)
-      case col: DateTimeConst[_]             => tokenizeDateTimeConst(col)
-      case col: DictionaryFuncColumn[_]      => tokenizeDictionaryFunction(col)
-      case col: DistanceFunction             => tokenizeDistanceFunction(col)
-      case col: EmptyFunction[_]             => tokenizeEmptyCol(col)
-      case col: EncodingFunction[_]          => tokenizeEncodingFunction(col)
-      case col: HashFunction                 => tokenizeHashFunction(col)
-      case col: HigherOrderFunction[_, _, _] => tokenizeHigherOrderFunction(col)
-      case col: IPFunction[_]                => tokenizeIPFunction(col)
-      case col: InFunction                   => tokenizeInFunction(col)
-      case col: JsonFunction[_]              => tokenizeJsonFunction(col)
-      case col: LogicalFunction              => tokenizeLogicalFunction(col)
-      case col: MathFuncColumn               => tokenizeMathematicalFunction(col)
-      case col: MiscellaneousFunction        => tokenizeMiscellaneousFunction(col)
-      case col: NullableFunction             => tokenizeNullableFunction(col)
-      case col: RandomFunction               => tokenizeRandomFunction(col)
-      case col: RoundingFunction             => tokenizeRoundingFunction(col)
-      case col: SplitMergeFunction[_]        => tokenizeSplitMergeFunction(col)
-      case col: StringFunctionCol[_]         => tokenizeStringCol(col)
-      case col: StringSearchFunc[_]          => tokenizeStringSearchFunction(col)
-      case col: TypeCastColumn[_]            => tokenizeTypeCastColumn(col)
-      case col: URLFunction[_]               => tokenizeURLFunction(col)
-      case All()                             => "*"
-      case RawColumn(rawSql)                 => rawSql
+      case agg: AggregateFunction[_]            => tokenizeAggregateFunction(agg)
+      case col: ArithmeticFunctionCol[_]        => tokenizeArithmeticFunctionColumn(col)
+      case col: ArithmeticFunctionOp[_]         => tokenizeArithmeticFunctionOperator(col)
+      case col: ArrayFunction                   => tokenizeArrayFunction(col)
+      case col: BitFunction                     => tokenizeBitFunction(col)
+      case col: ComparisonColumn                => tokenizeComparisonColumn(col)
+      case col: DateTimeFunctionCol[_]          => tokenizeDateTimeColumn(col)
+      case col: DateTimeConst[_]                => tokenizeDateTimeConst(col)
+      case col: DictionaryFuncColumn[_]         => tokenizeDictionaryFunction(col)
+      case col: DistanceFunction                => tokenizeDistanceFunction(col)
+      case col: EmptyFunction[_]                => tokenizeEmptyCol(col)
+      case col: EncodingFunction[_]             => tokenizeEncodingFunction(col)
+      case col: HashFunction                    => tokenizeHashFunction(col)
+      case col: HigherOrderFunction[_, _, _]    => tokenizeHigherOrderFunction(col)
+      case col: IPFunction[_]                   => tokenizeIPFunction(col)
+      case col: InFunction                      => tokenizeInFunction(col)
+      case col: JsonFunction[_]                 => tokenizeJsonFunction(col)
+      case col: LogicalFunction                 => tokenizeLogicalFunction(col)
+      case col: MathFuncColumn                  => tokenizeMathematicalFunction(col)
+      case col: MiscellaneousFunction           => tokenizeMiscellaneousFunction(col)
+      case col: NullableFunction                => tokenizeNullableFunction(col)
+      case col: RandomFunction                  => tokenizeRandomFunction(col)
+      case col: RoundingFunction                => tokenizeRoundingFunction(col)
+      case col: SplitMergeFunction[_]           => tokenizeSplitMergeFunction(col)
+      case col: StringFunctionCol[_]            => tokenizeStringCol(col)
+      case col: StringSearchFunc[_]             => tokenizeStringSearchFunction(col)
+      case col: TypeCastColumn[_]               => tokenizeTypeCastColumn(col)
+      case col: URLFunction[_]                  => tokenizeURLFunction(col)
+      case All()                                => "*"
+      case RawColumn(rawSql)                    => rawSql
       case Conditional(cases, default, multiIf) =>
         if (multiIf) {
           s"${if (cases.size > 1) "multiIf" else "if"}(${cases
@@ -201,7 +201,7 @@ trait ClickhouseTokenizerModule
               .mkString(" ")} ELSE ${tokenizeColumn(default)} END"
         }
       case c: Const[_] => c.parsed
-      case a @ _ =>
+      case a @ _       =>
         throw new NotImplementedError(
           a.getClass.getCanonicalName + " with superclass " + a.getClass.getSuperclass.getCanonicalName + " could not be matched."
         )
@@ -232,7 +232,7 @@ trait ClickhouseTokenizerModule
       case MultiDuration(1, TimeUnit.Hour)    => convert("toStartOfHour")
       case MultiDuration(1, TimeUnit.Minute)  => convert("toStartOfMinute")
       case MultiDuration(1, TimeUnit.Second)  => toDateTime(s"$column / 1000")
-      case MultiDuration(nth, TimeUnit.Year) =>
+      case MultiDuration(nth, TimeUnit.Year)  =>
         toDateTime(s"subtractYears(${convert("toStartOfYear")}, ${convert("toRelativeYearNum")} % $nth)")
       case MultiDuration(nth, TimeUnit.Quarter) =>
         toDateTime(s"subtractMonths(${convert("toStartOfQuarter")}, (${convert("toRelativeQuarterNum")} % $nth) * 3)")
@@ -256,9 +256,9 @@ trait ClickhouseTokenizerModule
   // We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries
   // (probably default to failing)
   private def determineZoneId(start: DateTime): String = {
-    val provider = DateTimeZone.getProvider
-    val zones    = provider.getAvailableIDs.asScala.map(provider.getZone)
-    val zone     = start.getZone
+    val provider   = DateTimeZone.getProvider
+    val zones      = provider.getAvailableIDs.asScala.map(provider.getZone)
+    val zone       = start.getZone
     val targetZone = zones
       .find(_.getID == zone.getID)
       .orElse(

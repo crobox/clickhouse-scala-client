@@ -70,7 +70,7 @@ trait ClickhouseJsonSupport {
                 try
                   formatter.parseDateTime(value)
                 catch {
-                  case _: IllegalArgumentException => error(s"Couldn't parse $value into valid date time")
+                  case _: IllegalArgumentException      => error(s"Couldn't parse $value into valid date time")
                   case _: UnsupportedOperationException =>
                     error("Unsupported operation, programmatic misconfiguration?")
                 }

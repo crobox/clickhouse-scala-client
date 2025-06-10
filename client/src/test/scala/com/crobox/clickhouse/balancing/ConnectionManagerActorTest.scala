@@ -92,8 +92,8 @@ class ConnectionManagerActorTest extends ClickhouseClientAsyncSpec with Eventual
     }
   }
   it should "return config connection when no connections were received yet" in {
-    val client = TestProbe()
-    val host   = "default-mega-host"
+    val client  = TestProbe()
+    val host    = "default-mega-host"
     val manager =
       system.actorOf(
         ConnectionManagerActor.props(

@@ -19,7 +19,7 @@ package object execution {
 
     implicit def format[V: JsonReader]: JsonReader[QueryResult[V]] = (json: JsValue) => {
       val jsObject = json.asJsObject
-      val rows = jsObject.getFields("data") match {
+      val rows     = jsObject.getFields("data") match {
         case Seq(JsArray(results)) => results.map(_.convertTo[V])
       }
       val meta: Option[ResultMeta] = jsObject.fields.get("meta").flatMap {

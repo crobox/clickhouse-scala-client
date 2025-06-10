@@ -52,7 +52,7 @@ object Engine {
     val ttl: Iterable[TTL]
 
     private val partitionArgument: Option[String] = Option(partition.mkString(", ")).filter(_.nonEmpty)
-    private val orderByArgument: Option[String] = Option(
+    private val orderByArgument: Option[String]   = Option(
       (primaryKey.map(col => Option(col.quoted)) ++ Seq(samplingExpression)).flatten.mkString(", ")
     ).filter(_.nonEmpty).orElse(Option("tuple()"))
     private val settingsArgument: String = s"index_granularity=$indexGranularity"

@@ -96,7 +96,7 @@ class CreateTableTest extends DslTestSpec {
     val testColumn2 = NativeColumn("test_column2", ColumnType.Int8, Default("2"))
     val testColumn3 = NativeColumn("test_column3", ColumnType.LowCardinality(ColumnType.String), Default("<default>"))
     val testColumn4 = NativeColumn("test_column4", ColumnType.Nullable(ColumnType.UUID))
-    val result = CreateTable(
+    val result      = CreateTable(
       TestTable(
         "merge_tree_table",
         Seq(
@@ -133,7 +133,7 @@ class CreateTableTest extends DslTestSpec {
     val hitId       = NativeColumn("hit_id", ColumnType.FixedString(16))
     val testColumn  = NativeColumn("test_column", ColumnType.String)
     val testColumn2 = NativeColumn("test_column2", ColumnType.Int8, Default("2"))
-    val result = CreateTable(
+    val result      = CreateTable(
       TestTable(
         "merge_tree_table",
         Seq(
@@ -170,7 +170,7 @@ class CreateTableTest extends DslTestSpec {
     val hitId       = NativeColumn("hit_id", ColumnType.FixedString(16))
     val testColumn  = NativeColumn("test_column", ColumnType.String)
     val testColumn2 = NativeColumn("test_column2", ColumnType.Int8, Default("2"))
-    val result = CreateTable(
+    val result      = CreateTable(
       TestTable(
         "merge_tree_table",
         Seq(
@@ -313,7 +313,7 @@ class CreateTableTest extends DslTestSpec {
   }
 
   "Distributed" should "create table with distributed engine" in {
-    val date = NativeColumn[LocalDate]("date", ColumnType.Date)
+    val date   = NativeColumn[LocalDate]("date", ColumnType.Date)
     val create = CreateTable(
       TestTable("distributed_table", Seq(date)),
       DistributedEngine("target_table_cluster", "target_database", "target_table", Some("sipHash(gig)")),

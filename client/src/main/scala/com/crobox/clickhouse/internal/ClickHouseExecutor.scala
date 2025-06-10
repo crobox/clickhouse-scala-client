@@ -37,7 +37,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     )
   private lazy val http              = Http()
   private lazy val connectionContext = customConnectionContext.getOrElse(http.defaultClientHttpsContext)
-  private lazy val pool =
+  private lazy val pool              =
     http.superPool[Promise[HttpResponse]](connectionContext = connectionContext, settings = superPoolSettings)
   private lazy val bufferSize: Int   = config.getInt("buffer-size")
   private lazy val queryRetries: Int = config.getInt("retries")

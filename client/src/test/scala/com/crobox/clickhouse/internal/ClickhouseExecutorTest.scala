@@ -18,12 +18,12 @@ class ClickhouseExecutorTest extends ClickhouseClientAsyncSpec {
   private val hosts          = new CircularIteratorSet(balancingHosts)
   private lazy val self      = this
   private var response: Uri => Future[String] = _
-  private lazy val executor =
+  private lazy val executor                   =
     new ClickHouseExecutor with ClickhouseResponseParser with ClickhouseQueryBuilder {
       override protected val customConnectionContext: Option[HttpsConnectionContext] = None
       override protected implicit val system: ActorSystem                            = self.system
       override protected implicit val executionContext: ExecutionContext             = system.dispatcher
-      override protected val config: Config = self.config.getConfig("crobox.clickhouse.client")
+      override protected val config: Config             = self.config.getConfig("crobox.clickhouse.client")
       override protected val hostBalancer: HostBalancer = new HostBalancer {
         override def nextHost: Future[Uri] = Future.successful(hosts.next())
       }

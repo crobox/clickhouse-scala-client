@@ -7,15 +7,15 @@ trait DateTimeFunctionTokenizer {
 
   protected def tokenizeDateTimeColumn(col: DateTimeFunctionCol[_])(implicit ctx: TokenizeContext): String =
     col match {
-      case Year(d: DateOrDateTime[_])       => s"toYear(${tokenizeColumn(d.column)})"
-      case YYYYMM(d: DateOrDateTime[_])     => s"toYYYYMM(${tokenizeColumn(d.column)})"
-      case Month(d: DateOrDateTime[_])      => s"toMonth(${tokenizeColumn(d.column)})"
-      case DayOfMonth(d: DateOrDateTime[_]) => s"toDayOfMonth(${tokenizeColumn(d.column)})"
-      case DayOfWeek(d: DateOrDateTime[_])  => s"toDayOfWeek(${tokenizeColumn(d.column)})"
-      case Hour(d: DateOrDateTime[_])       => s"toHour(${tokenizeColumn(d.column)})"
-      case Minute(d: DateOrDateTime[_])     => s"toMinute(${tokenizeColumn(d.column)})"
-      case Second(d: DateOrDateTime[_])     => s"toSecond(${tokenizeColumn(d.column)})"
-      case Monday(d: DateOrDateTime[_])     => s"toMonday(${tokenizeColumn(d.column)})"
+      case Year(d: DateOrDateTime[_])                               => s"toYear(${tokenizeColumn(d.column)})"
+      case YYYYMM(d: DateOrDateTime[_])                             => s"toYYYYMM(${tokenizeColumn(d.column)})"
+      case Month(d: DateOrDateTime[_])                              => s"toMonth(${tokenizeColumn(d.column)})"
+      case DayOfMonth(d: DateOrDateTime[_])                         => s"toDayOfMonth(${tokenizeColumn(d.column)})"
+      case DayOfWeek(d: DateOrDateTime[_])                          => s"toDayOfWeek(${tokenizeColumn(d.column)})"
+      case Hour(d: DateOrDateTime[_])                               => s"toHour(${tokenizeColumn(d.column)})"
+      case Minute(d: DateOrDateTime[_])                             => s"toMinute(${tokenizeColumn(d.column)})"
+      case Second(d: DateOrDateTime[_])                             => s"toSecond(${tokenizeColumn(d.column)})"
+      case Monday(d: DateOrDateTime[_])                             => s"toMonday(${tokenizeColumn(d.column)})"
       case AddSeconds(d: DateOrDateTime[_], seconds: NumericCol[_]) =>
         s"addSeconds(${tokenizeColumn(d.column)},${tokenizeColumn(seconds.column)})"
       case AddMinutes(d: DateOrDateTime[_], minutes: NumericCol[_]) =>

@@ -51,7 +51,7 @@ object ClickhouseSink extends LazyLogging {
       settings: QuerySettings = QuerySettings()
   ): Sink[TableOperation, Future[Done]] = {
     val indexerGeneralConfig = config.getConfig("crobox.clickhouse.indexer")
-    val mergedIndexerConfig = indexerName
+    val mergedIndexerConfig  = indexerName
       .flatMap(theIndexName =>
         if (indexerGeneralConfig.hasPath(theIndexName))
           Some(indexerGeneralConfig.getConfig(theIndexName).withFallback(indexerGeneralConfig))
@@ -71,7 +71,7 @@ object ClickhouseSink extends LazyLogging {
 
         // split operations based on their type
         var optimize: Option[Optimize] = None
-        val payload = operations.flatMap {
+        val payload                    = operations.flatMap {
           case op: Insert   => Option(op.jsonRow)
           case op: Optimize => optimize = Option(op); None
         }
@@ -84,7 +84,7 @@ object ClickhouseSink extends LazyLogging {
         } else {
           optimize match {
             case Some(statement) => optimizeTable(client, statement)
-            case _ =>
+            case _               =>
               logger.warn(s"No insert or optimize statements for table: $table")
               Future.successful("")
           }

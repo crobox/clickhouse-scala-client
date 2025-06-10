@@ -14,7 +14,7 @@ class QueryIT extends DslITSpec {
 
   implicit val clickhouseClient: ClickhouseClient = clickClient
   private val oneId                               = UUID.randomUUID()
-  override val table1Entries =
+  override val table1Entries                      =
     Seq(Table1Entry(oneId), Table1Entry(randomUUID), Table1Entry(randomUUID), Table1Entry(randomUUID))
   override val table2Entries = Seq(Table2Entry(oneId, randomString, Random.nextInt(1000) + 1, randomString, None))
 

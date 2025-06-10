@@ -12,7 +12,7 @@ lazy val root = (project in file("."))
       List(
         organization := "com.crobox.clickhouse",
         homepage     := Some(url("https://github.com/crobox/clickhouse-scala-client")),
-        licenses := List(
+        licenses     := List(
           "The GNU Lesser General Public License, Version 3.0" -> url("http://www.gnu.org/licenses/lgpl-3.0.txt")
         ),
         developers := List(

@@ -28,7 +28,7 @@ trait MiscellaneousFunctionTokenizer {
           default: ConstOrColMagnet[_]
         ) =>
       s"transform(${tokenizeColumn(col.column)},${tokenizeColumn(arrayFrom.column)},${tokenizeColumn(arrayTo.column)},${tokenizeColumn(default.column)})"
-    case FormatReadableSize(col: NumericCol[_]) => s"formatReadableSize(${tokenizeColumn(col.column)})"
+    case FormatReadableSize(col: NumericCol[_])                => s"formatReadableSize(${tokenizeColumn(col.column)})"
     case Least(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_]) =>
       s"least(${tokenizeColumn(a.column)},${tokenizeColumn(b.column)})"
     case Greatest(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_]) =>

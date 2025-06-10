@@ -27,7 +27,7 @@ object HostBalancer extends ClickhouseHostBuilder {
     val connectionType           = ConnectionType(connectionConfig.getString("type"))
     val connectionHostFromConfig = extractHost(connectionConfig)
     connectionType match {
-      case SingleHost => SingleHostBalancer(connectionHostFromConfig)
+      case SingleHost     => SingleHostBalancer(connectionHostFromConfig)
       case BalancingHosts =>
         val manager = system.actorOf(ConnectionManagerActor.props(ClickhouseHostHealth.healthFlow(_)))
         MultiHostBalancer(

@@ -16,7 +16,7 @@ trait TypeCastFunctionTokenizer {
         defaultValue: Option[T]
     ): String = {
       val postfix = if (orNull) "OrNull" else if (orZero) "OrZero" else ""
-      val value = defaultValue match {
+      val value   = defaultValue match {
         case Some(value) =>
           s"to${valueType}OrDefault(${tokenizeColumn(column)}, ${tokenizeTypeCastColumn(Cast(value.toString, valueType))})"
         case _ =>
