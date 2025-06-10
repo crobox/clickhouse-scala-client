@@ -51,7 +51,7 @@ jobs:
       - name: Upload target directories
         uses: actions/upload-artifact@v4
         with:
-          name: target-${{ matrix.scala }}
+          name: target-${{ matrix.scala }}-${{ matrix.clickhouse }}
           path: targets.tar
 
   publish:
@@ -76,7 +76,7 @@ jobs:
       - name: Download target directories (${{ matrix.scala }})
         uses: actions/download-artifact@v4
         with:
-          name: target-${{ matrix.scala }}
+          name: target-${{ matrix.scala }}-23.8
 
       - name: Inflate target directories (${{ matrix.scala }})
         run: |
