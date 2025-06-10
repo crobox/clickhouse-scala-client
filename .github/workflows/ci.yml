@@ -56,7 +56,7 @@ jobs:
 #        run: sbt ++${{ matrix.scala }} githubWorkflowCheck
 
       - name: Build project
-        run: sbt ++${{ matrix.scala }} test it:test
+        run: sbt ++${{ matrix.scala }} test IntegrationTest/test
 
       - name: Compress target directories
         run: tar cf targets.tar target client/target dsl/target testkit/target project/target
@@ -95,12 +95,12 @@ jobs:
             ~/Library/Caches/Coursier/v1
           key: sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
-      - name: Download target directories (3.3.1)
+      - name: Download target directories (3.3.6)
         uses: actions/download-artifact@v4
         with:
-          name: target-3.3.1
+          name: target-3.3.6
 
-      - name: Inflate target directories (3.3.1)
+      - name: Inflate target directories (3.3.6)
         run: |
           tar xf targets.tar
           rm targets.tar
