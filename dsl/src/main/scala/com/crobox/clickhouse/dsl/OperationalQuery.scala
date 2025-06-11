@@ -23,8 +23,9 @@ trait OperationalQuery extends Query {
   }
 
   def distinctOn(distinctColumns: Column*)(columns: Column*): OperationalQuery = {
-    val distinctExpr = s"DISTINCT ON (${distinctColumns.map(_.name).mkString(", ")})"
-    val newSelect    = Some(SelectQuery(columns, distinctExpr))
+    val escapedColumns = distinctColumns.map(c => escapeIdentifier(c.name))
+    val distinctExpr   = s"DISTINCT ON (${escapedColumns.mkString(", ")})"
+    val newSelect      = Some(SelectQuery(columns, distinctExpr))
     OperationalQuery(internalQuery.copy(select = newSelect))
   }
 

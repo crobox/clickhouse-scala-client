@@ -220,9 +220,18 @@ class QueryTest extends DslTestSpec {
       )
     toSql(query.internalQuery) should matchSQL(s"""
                                                   |SELECT * FROM
-                                                  |(SELECT DISTINCT ON (column_1) column_1, shield_id FROM $database.captainAmerica AS L1
+                                                  |(SELECT DISTINCT ON (`column_1`) column_1, shield_id FROM $database.captainAmerica AS L1
                                                   |  INNER JOIN (SELECT * FROM $database.twoTestTable) AS R1
                                                   |  USING shield_id)
                                                   |FORMAT JSON""".stripMargin)
+  }
+
+  it should "use distinct on in select with harmful injected sql" in {
+    val col1SqlInjected = NativeColumn[String](s"); DROP TABLE $database.captainAmerica;(")
+    intercept[IllegalArgumentException](
+      select(dsl.all).from(
+        distinctOn(col1SqlInjected)(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId
+      )
+    )
   }
 }
