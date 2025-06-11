@@ -22,6 +22,12 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(select = newSelect))
   }
 
+  def distinctOn(distinctColumns: Column*)(columns: Column*): OperationalQuery = {
+    val distinctExpr = s"DISTINCT ON (${distinctColumns.map(_.name).mkString(", ")})"
+    val newSelect    = Some(SelectQuery(columns, distinctExpr))
+    OperationalQuery(internalQuery.copy(select = newSelect))
+  }
+
   def prewhere(condition: TableColumn[Boolean]): OperationalQuery = {
     val comparison = internalQuery.prewhere.map(_.and(condition)).getOrElse(condition)
     OperationalQuery(internalQuery.copy(prewhere = Some(comparison)))
