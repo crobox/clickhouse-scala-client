@@ -125,8 +125,17 @@ trait ClickhouseTokenizerModule
 
   private def tokenizeSelect(select: Option[SelectQuery])(implicit ctx: TokenizeContext): String =
     select match {
-      case Some(s) => s"SELECT ${s.modifier} ${tokenizeColumns(s.columns)}"
-      case _       => ""
+      case Some(s) =>
+        val modifierPart = s.distinctColumns match {
+          case Some(distinctColumns) if s.modifier.toUpperCase == "DISTINCT ON" =>
+            s"${s.modifier} (${tokenizeColumns(distinctColumns)}) "
+          case _ =>
+            s.modifier
+        }
+
+        val columnsPart = tokenizeColumns(s.columns)
+        s"SELECT $modifierPart $columnsPart".trim
+      case None => ""
     }
 
   private def tokenizeFrom(from: Option[FromQuery], withPrefix: Boolean = true)(implicit

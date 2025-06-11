@@ -201,4 +201,42 @@ class QueryTest extends DslTestSpec {
          |FORMAT JSON""".stripMargin
     )
   }
+
+  it should "use distinct in select" in {
+    val query =
+      select(dsl.all).from(distinct(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId)
+    toSql(query.internalQuery) should matchSQL(s"""
+                                                  |SELECT * FROM
+                                                  |(SELECT DISTINCT column_1, shield_id FROM $database.captainAmerica AS L1
+                                                  |  INNER JOIN (SELECT * FROM $database.twoTestTable) AS R1
+                                                  |  USING shield_id)
+                                                  |FORMAT JSON""".stripMargin)
+  }
+
+  it should "use distinct on in select" in {
+    val query =
+      select(dsl.all).from(
+        distinctOn(col1)(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId
+      )
+    toSql(query.internalQuery) should matchSQL(s"""
+                                                  |SELECT * FROM
+                                                  |(SELECT DISTINCT ON (column_1) column_1, shield_id FROM $database.captainAmerica AS L1
+                                                  |  INNER JOIN (SELECT * FROM $database.twoTestTable) AS R1
+                                                  |  USING shield_id)
+                                                  |FORMAT JSON""".stripMargin)
+  }
+
+  it should "use distinct on in select tokenize injected sql" in {
+    val col1SqlInjected = NativeColumn[String](s"); DROP TABLE $database.captainAmerica;(")
+    val query           =
+      select(dsl.all).from(
+        distinctOn(col1SqlInjected)(col1, shieldId).from(OneTestTable).join(InnerJoin, TwoTestTable) using shieldId
+      )
+    toSql(query.internalQuery) should matchSQL(s"""
+                                                  |SELECT * FROM
+                                                  |(SELECT DISTINCT ON (`); DROP TABLE test.captainAmerica;(`) column_1, shield_id FROM $database.captainAmerica AS L1
+                                                  |  INNER JOIN (SELECT * FROM $database.twoTestTable) AS R1
+                                                  |  USING shield_id)
+                                                  |FORMAT JSON""".stripMargin)
+  }
 }

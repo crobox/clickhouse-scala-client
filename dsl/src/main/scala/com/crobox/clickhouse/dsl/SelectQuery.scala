@@ -1,6 +1,8 @@
 package com.crobox.clickhouse.dsl
 
-case class SelectQuery(columns: Seq[Column], modifier: String = "") extends Query with OperationalQuery {
+case class SelectQuery(columns: Seq[Column], modifier: String = "", distinctColumns: Option[Seq[Column]] = None)
+    extends Query
+    with OperationalQuery {
   override val internalQuery = InternalQuery(Some(this))
 
   def addColumn(column: Column): SelectQuery =
