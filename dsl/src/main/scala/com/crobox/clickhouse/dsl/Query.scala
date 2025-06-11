@@ -17,13 +17,6 @@ trait Table {
 
 trait Query {
   val internalQuery: InternalQuery
-
-  def escapeIdentifier(identifier: String): String = {
-    // Use backtick to escape characters other than safe characters
-    // Also, do not escape those that are already escaped again
-    if (identifier.matches("""^[a-zA-Z_][a-zA-Z0-9_]*$""")) s"`$identifier`"
-    else throw new IllegalArgumentException(s"Invalid column name: $identifier")
-  }
 }
 
 case class Limit(size: Long = 100, offset: Long = 0)
