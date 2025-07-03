@@ -33,8 +33,17 @@ trait ArithmeticFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
   private def tokenizeWithOperator(col: ArithmeticFunctionOp[_], operator: String)(implicit
       ctx: TokenizeContext
-  ): String =
-    tokenizeColumn(col.left.column) + " " + operator + " " + tokenizeColumn(col.right.column)
+  ): String = {
+    val left = col.left.column match {
+      case afo: ArithmeticFunctionOp[_] => s"(${tokenizeArithmeticFunctionOperator(afo)})"
+      case numericCol => tokenizeColumn(numericCol)
+    }
+    val right = col.right.column match {
+      case afo: ArithmeticFunctionOp[_] => s"(${tokenizeArithmeticFunctionOperator(afo)})"
+      case numericCol => tokenizeColumn(numericCol)
+    }
+    left + " " + operator + " " + right
+  }
 
   private def tokenizeAsFunction(col: ArithmeticFunctionOp[_], fn: String)(implicit ctx: TokenizeContext): String =
     s"$fn(${tokenizeColumn(col.left.column)}, ${tokenizeColumn(col.right.column)})"
