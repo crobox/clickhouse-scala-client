@@ -2,15 +2,13 @@ import Build.*
 
 releaseCrossBuild := true
 
-sonatypeProfileName := "com.crobox"
-
 lazy val root = (project in file("."))
   .settings(
     publish         := {},
     publishArtifact := false,
     inThisBuild(
       List(
-        organization := "com.crobox.clickhouse",
+        organization := "com.crobox",
         homepage     := Some(url("https://github.com/crobox/clickhouse-scala-client")),
         licenses     := List(
           "The GNU Lesser General Public License, Version 3.0" -> url("http://www.gnu.org/licenses/lgpl-3.0.txt")
