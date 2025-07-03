@@ -8,7 +8,7 @@ lazy val root = (project in file("."))
     publishArtifact := false,
     inThisBuild(
       List(
-        organization := "com.crobox",
+        organization := "com.crobox.clickhouse",
         homepage     := Some(url("https://github.com/crobox/clickhouse-scala-client")),
         licenses     := List(
           "The GNU Lesser General Public License, Version 3.0" -> url("http://www.gnu.org/licenses/lgpl-3.0.txt")
