@@ -20,6 +20,8 @@ class ArithmeticFunctionTokenizerTest extends DslTestSpec {
   it should "tokenize functions with precedence" in {
     toSQL(select(plus(plus(1, 2), 3)), false) should matchSQL("SELECT (1 + 2) + 3")
     toSQL(select(plus(plus(1, 2), divide(3, 4))), false) should matchSQL("SELECT (1 + 2) + (3 / 4)")
-    toSQL(select(divide(multiply(minus(1, 0.9), 100.0), 0.2)), false) should matchSQL("SELECT ((1 - 0.9) * 100.0) / 0.2")
+    toSQL(select(divide(multiply(minus(1, 0.9), 100.0), 0.2)), false) should matchSQL(
+      "SELECT ((1 - 0.9) * 100.0) / 0.2"
+    )
   }
 }
