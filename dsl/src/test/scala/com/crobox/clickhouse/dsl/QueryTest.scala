@@ -239,4 +239,46 @@ class QueryTest extends DslTestSpec {
                                                   |  USING shield_id)
                                                   |FORMAT JSON""".stripMargin)
   }
+
+  it should "generate LIMIT BY with single column" in {
+    val query = select(shieldId, col1) from OneTestTable limitBy (2, shieldId)
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT shield_id, column_1 FROM $database.captainAmerica LIMIT 2 BY shield_id FORMAT JSON"
+    )
+  }
+
+  it should "generate LIMIT BY with multiple columns" in {
+    val query = select(shieldId, col1, col2) from OneTestTable limitBy (3, shieldId, col1)
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT shield_id, column_1, column_2 FROM $database.captainAmerica LIMIT 3 BY shield_id, column_1 FORMAT JSON"
+    )
+  }
+
+  it should "generate LIMIT BY with offset" in {
+    val query = select(shieldId, col1) from OneTestTable limitBy (5, 2, shieldId)
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT shield_id, column_1 FROM $database.captainAmerica LIMIT 2, 5 BY shield_id FORMAT JSON"
+    )
+  }
+
+  it should "generate LIMIT BY with complex query" in {
+    val query = select(shieldId, col1, col2)
+      .from(OneTestTable)
+      .where(col2 > 10)
+      .orderBy(col1)
+      .limitBy(2, shieldId)
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT shield_id, column_1, column_2 FROM $database.captainAmerica WHERE column_2 > 10 ORDER BY column_1 ASC LIMIT 2 BY shield_id FORMAT JSON"
+    )
+  }
+
+  it should "generate LIMIT BY with LIMIT clause" in {
+    val query = select(shieldId, col1)
+      .from(OneTestTable)
+      .limit(Some(Limit(100, 10)))
+      .limitBy(2, shieldId)
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT shield_id, column_1 FROM $database.captainAmerica LIMIT 2 BY shield_id LIMIT 10, 100 FORMAT JSON"
+    )
+  }
 }
