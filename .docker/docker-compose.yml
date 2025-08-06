@@ -1,7 +1,7 @@
 services:
   clickhouse:
       # https://docs.docker.com/compose/compose-file/#variable-substitution
-      image: "clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-23.8}"
+      image: "clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-24.8}"
       volumes:
         - ./entrypoint.sh:/custom-entrypoint.sh
         - ./server-config.xml:/etc/clickhouse-server/config.d/server-config.xml

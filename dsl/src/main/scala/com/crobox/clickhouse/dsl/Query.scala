@@ -15,6 +15,7 @@ trait Table {
   }
 }
 
+
 trait Query {
   val internalQuery: InternalQuery
 }
@@ -22,6 +23,12 @@ trait Query {
 case class Limit(size: Long = 100, offset: Long = 0)
 
 case class LimitBy(limit: Long, offset: Long = 0, expressions: Seq[Column])
+
+case class WithExpression(name: String, expression: Column, isSubquery: Boolean = false)
+
+case class WithQuery(expressions: Seq[WithExpression]) extends Query with OperationalQuery {
+  override val internalQuery = InternalQuery(withQuery = Some(this))
+}
 
 trait OrderingDirection
 
@@ -40,7 +47,8 @@ sealed case class InternalQuery(
     orderBy: Seq[(Column, OrderingDirection)] = Seq.empty,
     limit: Option[Limit] = None,
     limitBy: Option[LimitBy] = None,
-    unionAll: Seq[OperationalQuery] = Seq.empty
+    unionAll: Seq[OperationalQuery] = Seq.empty,
+    withQuery: Option[WithQuery] = None
 ) {
 
   def isValid: Boolean = {
@@ -71,7 +79,9 @@ sealed case class InternalQuery(
       join.orElse(other.join),
       if (orderBy.nonEmpty) orderBy else other.orderBy,
       limit.orElse(other.limit),
-      limitBy.orElse(other.limitBy)
+      limitBy.orElse(other.limitBy),
+      unionAll,
+      withQuery.orElse(other.withQuery)
     )
 
   /**

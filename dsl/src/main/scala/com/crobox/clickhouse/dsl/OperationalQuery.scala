@@ -144,6 +144,27 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(unionAll = internalQuery.unionAll :+ otherQuery))
   }
 
+  def withExpression(name: String, expression: Column): OperationalQuery = {
+    val existingExpressions = internalQuery.withQuery.map(_.expressions).getOrElse(Seq.empty)
+    val newExpressions = existingExpressions :+ WithExpression(name, expression, isSubquery = false)
+    val newWithQuery = Some(WithQuery(newExpressions))
+    OperationalQuery(internalQuery.copy(withQuery = newWithQuery))
+  }
+
+  def withSubquery(name: String, subquery: Column): OperationalQuery = {
+    val existingExpressions = internalQuery.withQuery.map(_.expressions).getOrElse(Seq.empty)
+    val newExpressions = existingExpressions :+ WithExpression(name, subquery, isSubquery = true)
+    val newWithQuery = Some(WithQuery(newExpressions))
+    OperationalQuery(internalQuery.copy(withQuery = newWithQuery))
+  }
+
+  def withExpressions(expressions: (String, Column)*): OperationalQuery = {
+    val existingExpressions = internalQuery.withQuery.map(_.expressions).getOrElse(Seq.empty)
+    val newExpressions = existingExpressions ++ expressions.map { case (name, expr) => WithExpression(name, expr, isSubquery = false) }
+    val newWithQuery = Some(WithQuery(newExpressions))
+    OperationalQuery(internalQuery.copy(withQuery = newWithQuery))
+  }
+
   private def mergeOperationalColumns(newOrderingColumns: Seq[Column]): Option[SelectQuery] = {
     val selectForGroup = internalQuery.select
 
