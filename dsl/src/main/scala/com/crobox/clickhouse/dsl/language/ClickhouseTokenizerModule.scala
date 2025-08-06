@@ -106,8 +106,9 @@ trait ClickhouseTokenizerModule
 
   private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
     query match {
-      case InternalQuery(select, from, prewhere, where, groupBy, having, join, orderBy, limit, limitBy, union) =>
+      case InternalQuery(select, from, prewhere, where, groupBy, having, join, orderBy, limit, limitBy, union, withQuery) =>
         s"""
+           |${tokenizeWith(withQuery)}
            |${tokenizeSelect(select)}
            | ${tokenizeFrom(from)}
            | ${tokenizeJoin(select, from, join)}
@@ -123,6 +124,16 @@ trait ClickhouseTokenizerModule
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
     if (unions.nonEmpty) unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString else ""
+
+  private def tokenizeWith(withQuery: Option[WithQuery])(implicit ctx: TokenizeContext): String =
+    withQuery match {
+      case Some(WithQuery(expressions)) =>
+        val withExpressions = expressions.map { expr =>
+          s"${ClickhouseStatement.quoteIdentifier(expr.name)} AS (${tokenizeColumn(expr.expression)})"
+        }.mkString(", ")
+        s"WITH $withExpressions"
+      case None => ""
+    }
 
   private def tokenizeSelect(select: Option[SelectQuery])(implicit ctx: TokenizeContext): String =
     select match {
