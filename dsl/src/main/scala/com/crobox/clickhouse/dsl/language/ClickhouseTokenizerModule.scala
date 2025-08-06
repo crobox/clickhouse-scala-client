@@ -106,7 +106,7 @@ trait ClickhouseTokenizerModule
 
   private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
     query match {
-      case InternalQuery(select, from, prewhere, where, groupBy, having, join, orderBy, limit, union) =>
+      case InternalQuery(select, from, prewhere, where, groupBy, having, join, orderBy, limit, limitBy, union) =>
         s"""
            |${tokenizeSelect(select)}
            | ${tokenizeFrom(from)}
@@ -116,6 +116,7 @@ trait ClickhouseTokenizerModule
            | ${tokenizeGroupBy(groupBy)}
            | ${tokenizeFiltering(having, "HAVING")}
            | ${tokenizeOrderBy(orderBy)}
+           | ${tokenizeLimitBy(limitBy)}
            | ${tokenizeLimit(limit)}
            | ${tokenizeUnionAll(union)}""".stripMargin
     }
@@ -435,6 +436,18 @@ trait ClickhouseTokenizerModule
     limit match {
       case None                      => ""
       case Some(Limit(size, offset)) => s"LIMIT $offset, $size"
+    }
+
+  private def tokenizeLimitBy(limitBy: Option[LimitBy])(implicit ctx: TokenizeContext): String =
+    limitBy match {
+      case None => ""
+      case Some(LimitBy(limit, offset, expressions)) =>
+        val expr = expressions.map(tokenizeColumn).mkString(", ")
+        if (offset > 0) {
+          s"LIMIT $offset, $limit BY $expr"
+        } else {
+          s"LIMIT $limit BY $expr"
+        }
     }
 
   private def tokenizeColumnsAliased(columns: Seq[Column]): String =

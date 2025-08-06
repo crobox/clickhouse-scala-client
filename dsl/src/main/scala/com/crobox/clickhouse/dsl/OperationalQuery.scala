@@ -125,6 +125,12 @@ trait OperationalQuery extends Query {
   def limit(limit: Option[Limit]): OperationalQuery =
     OperationalQuery(internalQuery.copy(limit = limit))
 
+  def limitBy(limit: Long, expressions: Column*): OperationalQuery =
+    OperationalQuery(internalQuery.copy(limitBy = Some(LimitBy(limit, 0, expressions))))
+
+  def limitBy(limit: Long, offset: Long, expressions: Column*): OperationalQuery =
+    OperationalQuery(internalQuery.copy(limitBy = Some(LimitBy(limit, offset, expressions))))
+
   def unionAll(otherQuery: OperationalQuery): OperationalQuery = {
     require(
       internalQuery.select.isDefined && otherQuery.internalQuery.select.isDefined,

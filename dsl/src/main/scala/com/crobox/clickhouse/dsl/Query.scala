@@ -21,6 +21,8 @@ trait Query {
 
 case class Limit(size: Long = 100, offset: Long = 0)
 
+case class LimitBy(limit: Long, offset: Long = 0, expressions: Seq[Column])
+
 trait OrderingDirection
 
 case object ASC extends OrderingDirection
@@ -37,6 +39,7 @@ sealed case class InternalQuery(
     join: Option[JoinQuery] = None,
     orderBy: Seq[(Column, OrderingDirection)] = Seq.empty,
     limit: Option[Limit] = None,
+    limitBy: Option[LimitBy] = None,
     unionAll: Seq[OperationalQuery] = Seq.empty
 ) {
 
@@ -67,7 +70,8 @@ sealed case class InternalQuery(
       having.orElse(other.having),
       join.orElse(other.join),
       if (orderBy.nonEmpty) orderBy else other.orderBy,
-      limit.orElse(other.limit)
+      limit.orElse(other.limit),
+      limitBy.orElse(other.limitBy)
     )
 
   /**
