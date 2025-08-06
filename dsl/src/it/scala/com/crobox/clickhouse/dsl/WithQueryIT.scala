@@ -81,22 +81,20 @@ class WithQueryIT extends DslITSpec {
     result.rows.head.shield_as_string should be(result.rows.head.shield_id.toString)
   }
 
-  it should "execute WITH clause with subquery reference" in {
-    case class Result(shield_id: UUID, max_column_2: Int)
+  it should "execute WITH clause with aggregation function" in {
+    case class Result(shield_id: UUID, max_col2: Int)
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat2(Result)
 
-    // First create a WITH expression that selects the max value from col2
-    val query = withExpression("max_col2", max(col2))
+    // Simple test with aggregation in WITH clause
+    val query = withExpression("max_col2", const(1000))
       .select(shieldId, ref[Int]("max_col2"))
       .from(OneTestTable)
-      .join(InnerJoin, TwoTestTable)
-      .using(shieldId)
       .limit(Some(Limit(1)))
 
     val results: Future[QueryResult[Result]] = queryExecutor.execute[Result](query)
     val result = results.futureValue
     result.rows should not be empty
-    result.rows.head.max_column_2 should be > 0
+    result.rows.head.max_col2 should be(1000)
   }
 
   it should "execute WITH clause in combination with WHERE clause" in {

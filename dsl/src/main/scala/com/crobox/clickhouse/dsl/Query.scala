@@ -15,6 +15,7 @@ trait Table {
   }
 }
 
+
 trait Query {
   val internalQuery: InternalQuery
 }
@@ -23,7 +24,7 @@ case class Limit(size: Long = 100, offset: Long = 0)
 
 case class LimitBy(limit: Long, offset: Long = 0, expressions: Seq[Column])
 
-case class WithExpression(name: String, expression: Column)
+case class WithExpression(name: String, expression: Column, isSubquery: Boolean = false)
 
 case class WithQuery(expressions: Seq[WithExpression]) extends Query with OperationalQuery {
   override val internalQuery = InternalQuery(withQuery = Some(this))

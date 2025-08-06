@@ -129,11 +129,22 @@ trait ClickhouseTokenizerModule
     withQuery match {
       case Some(WithQuery(expressions)) =>
         val withExpressions = expressions.map { expr =>
-          s"${ClickhouseStatement.quoteIdentifier(expr.name)} AS (${tokenizeColumn(expr.expression)})"
+          val tokenizedExpr = tokenizeColumn(expr.expression)
+          if (expr.isSubquery || isSubqueryExpression(tokenizedExpr)) {
+            s"${ClickhouseStatement.quoteIdentifier(expr.name)} AS (${tokenizedExpr})"
+          } else {
+            // For scalar expressions, don't wrap in parentheses
+            s"${ClickhouseStatement.quoteIdentifier(expr.name)} AS ${tokenizedExpr}"
+          }
         }.mkString(", ")
         s"WITH $withExpressions"
       case None => ""
     }
+
+  private def isSubqueryExpression(tokenizedExpression: String): Boolean = {
+    val upperExpr = tokenizedExpression.trim.toUpperCase
+    upperExpr.startsWith("SELECT ") || upperExpr.contains(" SELECT ")
+  }
 
   private def tokenizeSelect(select: Option[SelectQuery])(implicit ctx: TokenizeContext): String =
     select match {
