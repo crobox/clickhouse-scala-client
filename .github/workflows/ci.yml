@@ -54,34 +54,34 @@ jobs:
           name: target-${{ matrix.scala }}-${{ matrix.clickhouse }}
           path: targets.tar
 
-  publish:
-    name: Publish Artifacts
-    needs: [build]
-    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main')
-    strategy:
-      matrix:
-        scala: [2.13.16, 3.3.6]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: 'sbt'
-      - uses: sbt/setup-sbt@v1
+  # publish:
+  #   name: Publish Artifacts
+  #   needs: [build]
+  #   if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main')
+  #   strategy:
+  #     matrix:
+  #       scala: [2.13.16, 3.3.6]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #     - uses: actions/setup-java@v4
+  #       with:
+  #         distribution: temurin
+  #         java-version: 17
+  #         cache: 'sbt'
+  #     - uses: sbt/setup-sbt@v1
 
-      - name: Download target directories (${{ matrix.scala }})
-        uses: actions/download-artifact@v4
-        with:
-          name: target-${{ matrix.scala }}-23.8
+  #     - name: Download target directories (${{ matrix.scala }})
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: target-${{ matrix.scala }}-23.8
 
-      - name: Inflate target directories (${{ matrix.scala }})
-        run: |
-          tar xf targets.tar
-          rm targets.tar
+  #     - name: Inflate target directories (${{ matrix.scala }})
+  #       run: |
+  #         tar xf targets.tar
+  #         rm targets.tar
 
-      - name: Publish project
-        run: sbt ++${{ matrix.scala }} +publish
+  #     - name: Publish project
+  #       run: sbt ++${{ matrix.scala }} +publish
