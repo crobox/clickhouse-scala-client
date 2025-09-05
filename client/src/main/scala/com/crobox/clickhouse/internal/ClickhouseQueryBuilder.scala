@@ -27,7 +27,8 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
       settings: QuerySettings,
       entity: Option[RequestEntity]
   )(config: Config): HttpRequest = {
-    val urlQuery = uri.withQuery(Query(Query("query" -> query) ++ settings.withFallback(config).asQueryParams: _*))
+    val settingsWithFallback = settings.withFallback(config)
+    val urlQuery = uri.withQuery(Query(Query("query" -> query) ++ settingsWithFallback.asQueryParams: _*))
     entity match {
       case Some(e) =>
         logger.debug(
@@ -39,7 +40,11 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
           entity = e,
           headers = Headers ++
             queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _)) ++
-            settings.requestCompressionType.map(`Content-Encoding`(_))
+            settings.requestCompressionType.map(`Content-Encoding`(_)) ++
+            (if (settingsWithFallback.sslCertAuth.contains(true))
+              Seq(RawHeader("X-ClickHouse-SSL-Certificate-Auth", "on")) ++
+                settingsWithFallback.authentication.map(auth => RawHeader("X-ClickHouse-User", auth._1))
+            else Seq.empty)
         )
       case None
           if settings.idempotent.contains(true)
@@ -55,13 +60,17 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
                 _._1 == "readonly"
               ) // get requests are readonly by default, if we send the readonly flag clickhouse will fail the request
           ),
-          headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
+          headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _)) ++
+            (if (settingsWithFallback.sslCertAuth.contains(true))
+              Seq(RawHeader("X-ClickHouse-SSL-Certificate-Auth", "on")) ++
+                settingsWithFallback.authentication.map(auth => RawHeader("X-ClickHouse-User", auth._1))
+            else Seq.empty)
         )
       case None =>
         logger.debug(s"Executing clickhouse query [$query] on host [${uri.toString()}]")
         HttpRequest(
           method = HttpMethods.POST,
-          uri = uri.withQuery(settings.withFallback(config).asQueryParams),
+          uri = uri.withQuery(settingsWithFallback.asQueryParams),
           entity = query,
           headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _))
         )
