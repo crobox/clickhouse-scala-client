@@ -18,15 +18,16 @@ case class QuerySettings(
     settings: Map[String, String] = Map.empty,
     idempotent: Option[Boolean] = None,
     retries: Option[Int] = None,
-    requestCompressionType: Option[HttpEncoding] = None
+    requestCompressionType: Option[HttpEncoding] = None,
+    sslCertAuth: Option[Boolean] = None
 ) {
 
   def asQueryParams: Query =
     Query(
       settings ++ (Seq("readonly" -> readOnly.value.toString) ++
         queryId.map("query_id" -> _) ++
-        authentication.map(auth => "user" -> auth._1) ++
-        authentication.map(auth => "password" -> auth._2) ++
+        authentication.filterNot(_ => sslCertAuth.contains(true)).map(auth => "user" -> auth._1) ++
+        authentication.filterNot(_ => sslCertAuth.contains(true)).map(auth => "password" -> auth._2) ++
         profile.map("profile" -> _) ++
         progressHeaders.map(progress => "send_progress_in_http_headers" -> (if (progress) "1" else "0")) ++
         httpCompression
@@ -42,8 +43,11 @@ case class QuerySettings(
       }.toOption),
       profile = profile.orElse(Try(config.getString(path("profile"))).toOption),
       httpCompression = httpCompression.orElse(Try(config.getBoolean(path("http-compression"))).toOption),
-      settings = custom.entrySet().asScala.map(u => (u.getKey, custom.getString(u.getKey))).toMap
-        ++ settings
+      settings = custom.entrySet().asScala.map(u => (u.getKey, custom.getString(u.getKey))).toMap ++ settings,
+      sslCertAuth = sslCertAuth.orElse(Try {
+        val authConfig = config.getConfig(path("authentication"))
+        authConfig.getBoolean("ssl-cert-auth")
+      }.toOption)
     )
   }
 
