@@ -102,7 +102,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
       .limit(Some(Limit(10)))
 
     toSql(query.internalQuery) should matchSQL(
-      s"SELECT item_id, numbers FROM $testTableOne ARRAY JOIN numbers LIMIT 10 FORMAT JSON"
+      s"SELECT item_id, numbers FROM $testTableOne ARRAY JOIN numbers LIMIT 0, 10 FORMAT JSON"
     )
   }
 
@@ -177,7 +177,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
         s"GROUP BY item_id, expanded_nums " +
         s"HAVING count() > 1 " +
         s"ORDER BY count() DESC " +
-        s"LIMIT 50 FORMAT JSON"
+        s"LIMIT 0, 50 FORMAT JSON"
     )
   }
 

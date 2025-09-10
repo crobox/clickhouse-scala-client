@@ -464,9 +464,8 @@ trait ClickhouseTokenizerModule
 
   private def tokenizeLimit(limit: Option[Limit]): String =
     limit match {
-      case None                       => ""
-      case Some(Limit(size, 0))       => s"LIMIT $size"
-      case Some(Limit(size, offset))  => s"LIMIT $offset, $size"
+      case None                      => ""
+      case Some(Limit(size, offset)) => s"LIMIT $offset, $size"
     }
 
   private def tokenizeLimitBy(limitBy: Option[LimitBy])(implicit ctx: TokenizeContext): String =
