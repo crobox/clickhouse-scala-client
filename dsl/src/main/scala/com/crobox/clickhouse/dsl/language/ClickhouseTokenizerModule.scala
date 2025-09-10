@@ -397,40 +397,10 @@ trait ClickhouseTokenizerModule
       case SemiRightJoin => "SEMI RIGHT JOIN"
     }
 
-  private def tokenizeArrayJoinWithAliasing(from: Option[FromQuery], arrayJoin: Option[ArrayJoinQuery], join: Option[JoinQuery])(implicit ctx: TokenizeContext): String =
-    arrayJoin match {
-      case None => ""
-      case Some(ArrayJoinQuery(joinType, columns)) =>
-        // Add left alias when there's also a regular JOIN (like existing JOIN behavior)
-        val needsAlias = join.isDefined && from.flatMap(_.alias).isEmpty
-        val leftAlias = if (needsAlias) {
-          ctx.incrementJoinNumber()
-          s"AS ${ctx.leftAlias(from.flatMap(_.alias))}"
-        } else ""
-        
-        val joinTypeStr = joinType match {
-          case ArrayJoinQuery.ArrayJoin     => "ARRAY JOIN"
-          case ArrayJoinQuery.LeftArrayJoin => "LEFT ARRAY JOIN"
-        }
-        val columnsStr = columns.map(tokenizeColumn).mkString(", ")
-        s"$leftAlias $joinTypeStr $columnsStr".trim
-    }
-
   private def tokenizeArrayJoinWithSubqueryHandling(from: Option[FromQuery], arrayJoin: Option[ArrayJoinQuery], join: Option[JoinQuery])(implicit ctx: TokenizeContext): String =
     arrayJoin match {
       case None => ""
       case Some(ArrayJoinQuery(joinType, columns)) =>
-        // Validation: certain combinations of ARRAY JOIN with regular JOIN may be incompatible
-        // This is designed to match the test expectation that some orderings should fail
-        if (join.isDefined) {
-          // The test "should fail when trying to combine ARRAY JOIN with regular JOIN in incompatible way"
-          // suggests that not all ARRAY JOIN + regular JOIN combinations are valid
-          // Since we can't detect call order, we need another way to determine incompatibility
-          
-          // For now, let's not throw an exception here and let both tests work
-          // The failing test might need to be reconsidered
-        }
-        
         // Handle aliasing logic:
         // 1. For subqueries with ARRAY JOIN only: add alias here
         // 2. For regular JOIN + ARRAY JOIN: add alias here (before ARRAY JOIN) and prevent tokenizeJoin from adding it
@@ -452,18 +422,6 @@ trait ClickhouseTokenizerModule
         }
         val columnsStr = columns.map(tokenizeColumn).mkString(", ")
         s"$leftAlias $joinTypeStr $columnsStr".trim
-    }
-
-  private def tokenizeArrayJoin(from: Option[FromQuery], arrayJoin: Option[ArrayJoinQuery])(implicit ctx: TokenizeContext): String =
-    arrayJoin match {
-      case None => ""
-      case Some(ArrayJoinQuery(joinType, columns)) =>
-        val joinTypeStr = joinType match {
-          case ArrayJoinQuery.ArrayJoin     => "ARRAY JOIN"
-          case ArrayJoinQuery.LeftArrayJoin => "LEFT ARRAY JOIN"
-        }
-        val columnsStr = columns.map(tokenizeColumn).mkString(", ")
-        s"$joinTypeStr $columnsStr"
     }
 
   private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]], keyword: String)(implicit

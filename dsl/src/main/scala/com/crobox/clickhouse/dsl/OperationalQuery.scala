@@ -271,15 +271,6 @@ trait OperationalQuery extends Query {
   }
 
   /**
-   * Merge with another OperationalQuery, any conflict on query parts between the 2 joins will be resolved by preferring
-   * the left querypart over the right one.
-   *
-   * @param other
-   *   The right part to merge with this OperationalQuery
-   * @return
-   *   A merge of this and other OperationalQuery
-   */
-  /**
    * Perform ARRAY JOIN on the specified array columns
    *
    * @param columns Array columns to join
@@ -301,6 +292,15 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(arrayJoin = Some(arrayJoinQuery)))
   }
 
+  /**
+   * Merge with another OperationalQuery, any conflict on query parts between the 2 joins will be resolved by preferring
+   * the left querypart over the right one.
+   *
+   * @param other
+   *   The right part to merge with this OperationalQuery
+   * @return
+   *   A merge of this and other OperationalQuery
+   */
   def :+>(other: OperationalQuery): OperationalQuery =
     OperationalQuery(this.internalQuery :+> other.internalQuery)
 
