@@ -37,6 +37,7 @@ sealed case class InternalQuery(
     groupBy: Option[GroupByQuery] = None,
     having: Option[TableColumn[Boolean]] = None,
     join: Option[JoinQuery] = None,
+    arrayJoin: Option[ArrayJoinQuery] = None,
     orderBy: Seq[(Column, OrderingDirection)] = Seq.empty,
     limit: Option[Limit] = None,
     limitBy: Option[LimitBy] = None,
@@ -69,6 +70,7 @@ sealed case class InternalQuery(
       groupBy.orElse(other.groupBy),
       having.orElse(other.having),
       join.orElse(other.join),
+      arrayJoin.orElse(other.arrayJoin),
       if (orderBy.nonEmpty) orderBy else other.orderBy,
       limit.orElse(other.limit),
       limitBy.orElse(other.limitBy)

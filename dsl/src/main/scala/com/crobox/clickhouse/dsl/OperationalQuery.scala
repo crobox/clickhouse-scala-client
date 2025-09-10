@@ -279,6 +279,28 @@ trait OperationalQuery extends Query {
    * @return
    *   A merge of this and other OperationalQuery
    */
+  /**
+   * Perform ARRAY JOIN on the specified array columns
+   *
+   * @param columns Array columns to join
+   * @return OperationalQuery with ARRAY JOIN applied
+   */
+  def withArrayJoin(columns: Column*): OperationalQuery = {
+    val arrayJoinQuery = ArrayJoinQuery(ArrayJoinQuery.ArrayJoin, columns)
+    OperationalQuery(internalQuery.copy(arrayJoin = Some(arrayJoinQuery)))
+  }
+
+  /**
+   * Perform LEFT ARRAY JOIN on the specified array columns
+   *
+   * @param columns Array columns to join
+   * @return OperationalQuery with LEFT ARRAY JOIN applied
+   */
+  def withLeftArrayJoin(columns: Column*): OperationalQuery = {
+    val arrayJoinQuery = ArrayJoinQuery(ArrayJoinQuery.LeftArrayJoin, columns)
+    OperationalQuery(internalQuery.copy(arrayJoin = Some(arrayJoinQuery)))
+  }
+
   def :+>(other: OperationalQuery): OperationalQuery =
     OperationalQuery(this.internalQuery :+> other.internalQuery)
 

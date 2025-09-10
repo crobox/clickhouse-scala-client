@@ -8,7 +8,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
   it should "perform ARRAY JOIN on a single array column" in {
     val query = select(itemId, numbers)
       .from(OneTestTable)
-      .arrayJoin(numbers)
+      .withArrayJoin(numbers)
     
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id, numbers FROM ${OneTestTable.quoted} ARRAY JOIN numbers FORMAT JSON"
@@ -18,7 +18,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
   it should "perform LEFT ARRAY JOIN on a single array column" in {
     val query = select(itemId, numbers)
       .from(OneTestTable)
-      .leftArrayJoin(numbers)
+      .withLeftArrayJoin(numbers)
     
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id, numbers FROM ${OneTestTable.quoted} LEFT ARRAY JOIN numbers FORMAT JSON"
@@ -29,7 +29,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
     val aliasColumn = numbers as "num"
     val query = select(itemId, aliasColumn)
       .from(OneTestTable)
-      .arrayJoin(aliasColumn)
+      .withArrayJoin(aliasColumn)
     
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id, numbers AS num FROM ${OneTestTable.quoted} ARRAY JOIN numbers AS num FORMAT JSON"
@@ -40,7 +40,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
     val aliasColumn = numbers as "num"
     val query = select(itemId, aliasColumn)
       .from(OneTestTable)
-      .leftArrayJoin(aliasColumn)
+      .withLeftArrayJoin(aliasColumn)
     
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id, numbers AS num FROM ${OneTestTable.quoted} LEFT ARRAY JOIN numbers AS num FORMAT JSON"
@@ -52,7 +52,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
     val numbersAlias = numbers as "nums1"
     val query = select(itemId, numbersAlias, numbers)
       .from(OneTestTable)
-      .arrayJoin(numbersAlias, numbers)
+      .withArrayJoin(numbersAlias, numbers)
     
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id, numbers AS nums1, numbers FROM ${OneTestTable.quoted} ARRAY JOIN numbers AS nums1, numbers FORMAT JSON"
@@ -63,7 +63,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
     val numbersAlias = numbers as "nums1"
     val query = select(itemId, numbersAlias, numbers)
       .from(OneTestTable)
-      .leftArrayJoin(numbersAlias, numbers)
+      .withLeftArrayJoin(numbersAlias, numbers)
     
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id, numbers AS nums1, numbers FROM ${OneTestTable.quoted} LEFT ARRAY JOIN numbers AS nums1, numbers FORMAT JSON"
@@ -74,7 +74,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
     val query = select(itemId, numbers)
       .from(OneTestTable)
       .where(itemId === "test")
-      .arrayJoin(numbers)
+      .withArrayJoin(numbers)
     
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id, numbers FROM ${OneTestTable.quoted} ARRAY JOIN numbers WHERE item_id = 'test' FORMAT JSON"
@@ -84,7 +84,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
   it should "perform ARRAY JOIN combined with ORDER BY" in {
     val query = select(itemId, numbers)
       .from(OneTestTable)
-      .arrayJoin(numbers)
+      .withArrayJoin(numbers)
       .orderByWithDirection((itemId, ASC), (numbers, DESC))
     
     toSql(query.internalQuery) should matchSQL(
@@ -95,8 +95,8 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
   it should "perform ARRAY JOIN combined with LIMIT" in {
     val query = select(itemId, numbers)
       .from(OneTestTable)
-      .arrayJoin(numbers)
-      .limit(10)
+      .withArrayJoin(numbers)
+      .limit(Some(Limit(10)))
     
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id, numbers FROM ${OneTestTable.quoted} ARRAY JOIN numbers LIMIT 10 FORMAT JSON"
@@ -107,7 +107,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
     val subQuery = select(itemId, numbers).from(OneTestTable).where(notEmpty(numbers))
     val query = select(itemId, numbers)
       .from(subQuery)
-      .arrayJoin(numbers)
+      .withArrayJoin(numbers)
     
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id, numbers FROM (SELECT item_id, numbers FROM ${OneTestTable.quoted} WHERE notEmpty(numbers)) AS L1 ARRAY JOIN numbers FORMAT JSON"
@@ -117,7 +117,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
   it should "perform ARRAY JOIN with GROUP BY on expanded elements" in {
     val query = select(itemId, count())
       .from(OneTestTable)
-      .arrayJoin(numbers)
+      .withArrayJoin(numbers)
       .groupBy(itemId)
     
     toSql(query.internalQuery) should matchSQL(
@@ -128,7 +128,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
   it should "perform ARRAY JOIN combined with JOIN on another table" in {
     val query = select(shieldId, numbers, col2)
       .from(OneTestTable)
-      .arrayJoin(numbers)
+      .withArrayJoin(numbers)
       .join(JoinQuery.InnerJoin, TwoTestTable)
       .on((shieldId, "=", itemId))
     
@@ -144,7 +144,7 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
       .from(OneTestTable)
       .join(JoinQuery.InnerJoin, TwoTestTable)
       .on((shieldId, "=", itemId))
-      .arrayJoin(numbers)
+      .withArrayJoin(numbers)
     
     // This should fail during SQL generation due to incorrect clause ordering
     an[Exception] shouldBe thrownBy(toSql(query.internalQuery))
@@ -155,11 +155,11 @@ class ArrayJoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
     val query = select(itemId, numbersWithAlias, count())
       .from(OneTestTable)
       .where(notEmpty(numbers))
-      .arrayJoin(numbersWithAlias)
+      .withArrayJoin(numbersWithAlias)
       .groupBy(itemId, numbersWithAlias)
       .having(count() > 1)
       .orderByWithDirection((count(), DESC))
-      .limit(50)
+      .limit(Some(Limit(50)))
     
     toSql(query.internalQuery) should matchSQL(
       s"SELECT item_id, numbers AS expanded_nums, count() FROM ${OneTestTable.quoted} " +
