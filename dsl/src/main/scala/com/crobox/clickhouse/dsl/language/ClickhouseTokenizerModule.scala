@@ -440,7 +440,7 @@ trait ClickhouseTokenizerModule
 
   private def tokenizeLimitBy(limitBy: Option[LimitBy])(implicit ctx: TokenizeContext): String =
     limitBy match {
-      case None => ""
+      case None                                      => ""
       case Some(LimitBy(limit, offset, expressions)) =>
         val expr = expressions.map(tokenizeColumn).mkString(", ")
         if (offset > 0) {
