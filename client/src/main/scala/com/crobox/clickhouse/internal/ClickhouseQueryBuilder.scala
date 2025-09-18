@@ -28,7 +28,7 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
       entity: Option[RequestEntity]
   )(config: Config): HttpRequest = {
     val settingsWithFallback = settings.withFallback(config)
-    val urlQuery = uri.withQuery(Query(Query("query" -> query) ++ settingsWithFallback.asQueryParams: _*))
+    val urlQuery             = uri.withQuery(Query(Query("query" -> query) ++ settingsWithFallback.asQueryParams: _*))
     entity match {
       case Some(e) =>
         logger.debug(
@@ -42,9 +42,9 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
             queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _)) ++
             settings.requestCompressionType.map(`Content-Encoding`(_)) ++
             (if (settingsWithFallback.sslCertAuth.contains(true))
-              Seq(RawHeader("X-ClickHouse-SSL-Certificate-Auth", "on")) ++
-                settingsWithFallback.authentication.map(auth => RawHeader("X-ClickHouse-User", auth._1))
-            else Seq.empty)
+               Seq(RawHeader("X-ClickHouse-SSL-Certificate-Auth", "on")) ++
+               settingsWithFallback.authentication.map(auth => RawHeader("X-ClickHouse-User", auth._1))
+             else Seq.empty)
         )
       case None
           if settings.idempotent.contains(true)
@@ -60,11 +60,12 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
                 _._1 == "readonly"
               ) // get requests are readonly by default, if we send the readonly flag clickhouse will fail the request
           ),
-          headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _)) ++
-            (if (settingsWithFallback.sslCertAuth.contains(true))
-              Seq(RawHeader("X-ClickHouse-SSL-Certificate-Auth", "on")) ++
-                settingsWithFallback.authentication.map(auth => RawHeader("X-ClickHouse-User", auth._1))
-            else Seq.empty)
+          headers =
+            Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _)) ++
+              (if (settingsWithFallback.sslCertAuth.contains(true))
+                 Seq(RawHeader("X-ClickHouse-SSL-Certificate-Auth", "on")) ++
+                 settingsWithFallback.authentication.map(auth => RawHeader("X-ClickHouse-User", auth._1))
+               else Seq.empty)
         )
       case None =>
         logger.debug(s"Executing clickhouse query [$query] on host [${uri.toString()}]")
