@@ -73,11 +73,12 @@ private[clickhouse] trait ClickhouseQueryBuilder extends LazyLogging {
           method = HttpMethods.POST,
           uri = uri.withQuery(settingsWithFallback.asQueryParams),
           entity = query,
-          headers = Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _)) ++
-            (if (settingsWithFallback.sslCertAuth.contains(true))
-              Seq(RawHeader("X-ClickHouse-SSL-Certificate-Auth", "on")) ++
-                settingsWithFallback.authentication.map(auth => RawHeader("X-ClickHouse-User", auth._1))
-            else Seq.empty)
+          headers =
+            Headers ++ queryIdentifier.map(RawHeader(ProgressHeadersAsEventsStage.InternalQueryIdentifier, _)) ++
+              (if (settingsWithFallback.sslCertAuth.contains(true))
+                 Seq(RawHeader("X-ClickHouse-SSL-Certificate-Auth", "on")) ++
+                 settingsWithFallback.authentication.map(auth => RawHeader("X-ClickHouse-User", auth._1))
+               else Seq.empty)
         )
     }
   }
