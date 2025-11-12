@@ -115,7 +115,7 @@ class LogicalFunctionTokenizerTest extends DslTestSpec {
 
   it should "tokenize numbers OR with NONE" in {
     toSQL(None and conditionOr(Seq(1, 3)) and None and conditionOr(Seq(3, 4)) and None) should matchSQL(
-      s"column_2 = 1 OR column_2 = 3 AND (column_2 = 3 OR column_2 = 4)"
+      s"(column_2 = 1 OR column_2 = 3) AND (column_2 = 3 OR column_2 = 4)"
     )
   }
 
@@ -233,5 +233,43 @@ class LogicalFunctionTokenizerTest extends DslTestSpec {
     toSQL(None.and(None).and(shieldId.isEq("b") or shieldId.isEq("c"))) should matchSQL(
       "shield_id = 'b' OR shield_id = 'c'"
     )
+  }
+
+  it should "handle deeply nested OR without stack overflow" in {
+    // This test would have caused StackOverflowError before the fix
+    // Creates a deeply nested structure: (a OR (b OR (c OR (d OR ...))))
+    val lotsOfConditions = (1 to 2000).map(i => col2 isEq i)
+    val nestedOr = lotsOfConditions.reduce[ExpressionColumn[Boolean]](_ or _)
+
+    val sql = toSQL(nestedOr)
+    sql should include("column_2 = 1")
+    sql should include("column_2 = 100")
+    sql should include(" OR ")
+  }
+
+  it should "handle deeply nested AND without stack overflow" in {
+    // This test would have caused StackOverflowError before the fix
+    // Creates a deeply nested structure: (a AND (b AND (c AND (d AND ...))))
+    val lotsOfConditions = (1 to 2000).map(i => col2 isEq i)
+    val nestedAnd = lotsOfConditions.reduce[ExpressionColumn[Boolean]](_ and _)
+
+    val sql = toSQL(nestedAnd)
+    sql should include("column_2 = 1")
+    sql should include("column_2 = 100")
+    sql should include(" AND ")
+  }
+
+  it should "handle deeply nested mixed operators without stack overflow" in {
+    // This test verifies mixed operators also work with deep nesting
+    val conditions = (1 to 1000).map(i => col2 isEq i)
+    val orConditions = conditions.take(500).reduce[ExpressionColumn[Boolean]](_ or _)
+    val andConditions = conditions.drop(500).reduce[ExpressionColumn[Boolean]](_ and _)
+    val mixed = orConditions and andConditions
+
+    val sql = toSQL(mixed)
+    sql should include("column_2 = 1")
+    sql should include("column_2 = 50")
+    sql should include(" OR ")
+    sql should include(" AND ")
   }
 }
