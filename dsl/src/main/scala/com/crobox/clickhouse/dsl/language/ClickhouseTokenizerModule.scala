@@ -106,11 +106,12 @@ trait ClickhouseTokenizerModule
 
   private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
     query match {
-      case InternalQuery(select, from, prewhere, where, groupBy, having, join, orderBy, limit, limitBy, union) =>
+      case InternalQuery(select, from, prewhere, where, groupBy, having, join, arrayJoin, orderBy, limit, limitBy, union) =>
         s"""
            |${tokenizeSelect(select)}
            | ${tokenizeFrom(from)}
-           | ${tokenizeJoin(select, from, join)}
+           | ${tokenizeArrayJoinWithSubqueryHandling(from, arrayJoin, join)}
+           | ${tokenizeJoin(select, from, join, arrayJoin)}
            | ${tokenizeFiltering(prewhere, "PREWHERE")}
            | ${tokenizeFiltering(where, "WHERE")}
            | ${tokenizeGroupBy(groupBy)}
@@ -283,12 +284,13 @@ trait ClickhouseTokenizerModule
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
-  private def tokenizeJoin(select: Option[SelectQuery], from: Option[FromQuery], join: Option[JoinQuery])(implicit
+  private def tokenizeJoin(select: Option[SelectQuery], from: Option[FromQuery], join: Option[JoinQuery], arrayJoin: Option[ArrayJoinQuery] = None)(implicit
       ctx: TokenizeContext
   ): String =
     join match {
       case Some(query) =>
-        ctx.incrementJoinNumber()
+        // Only increment if ARRAY JOIN didn't already do it
+        if (arrayJoin.isEmpty) ctx.incrementJoinNumber()
 
         // we always need to provide an alias to the RIGHT side
         val right = query.other match {
@@ -296,7 +298,8 @@ trait ClickhouseTokenizerModule
           case query: InnerFromQuery    => tokenizeFrom(Some(query), withPrefix = false)
         }
 
-        val leftAlias  = if (from.flatMap(_.alias).isEmpty) s"AS ${ctx.leftAlias(from.flatMap(_.alias))}" else ""
+        // Don't add left alias if ARRAY JOIN is present - it will have already added it
+        val leftAlias  = if (from.flatMap(_.alias).isEmpty && arrayJoin.isEmpty) s"AS ${ctx.leftAlias(from.flatMap(_.alias))}" else ""
         val rightAlias = s"AS ${ctx.rightAlias(query.other.alias)}"
 
         s""" $leftAlias
@@ -392,6 +395,33 @@ trait ClickhouseTokenizerModule
       case AsOfLeftJoin  => "ASOF LEFT JOIN"
       case SemiLeftJoin  => "SEMI LEFT JOIN"
       case SemiRightJoin => "SEMI RIGHT JOIN"
+    }
+
+  private def tokenizeArrayJoinWithSubqueryHandling(from: Option[FromQuery], arrayJoin: Option[ArrayJoinQuery], join: Option[JoinQuery])(implicit ctx: TokenizeContext): String =
+    arrayJoin match {
+      case None => ""
+      case Some(ArrayJoinQuery(joinType, columns)) =>
+        // Handle aliasing logic:
+        // 1. For subqueries with ARRAY JOIN only: add alias here
+        // 2. For regular JOIN + ARRAY JOIN: add alias here (before ARRAY JOIN) and prevent tokenizeJoin from adding it
+        val leftAlias = if (from.flatMap(_.alias).isEmpty) {
+          if (join.isDefined || from.exists(_.isInstanceOf[InnerFromQuery])) {
+            // Either regular JOIN is present OR it's a subquery - add the alias
+            ctx.incrementJoinNumber()
+            s"AS ${ctx.leftAlias(from.flatMap(_.alias))}"
+          } else {
+            ""
+          }
+        } else {
+          ""
+        }
+        
+        val joinTypeStr = joinType match {
+          case ArrayJoinQuery.ArrayJoin     => "ARRAY JOIN"
+          case ArrayJoinQuery.LeftArrayJoin => "LEFT ARRAY JOIN"
+        }
+        val columnsStr = columns.map(tokenizeColumn).mkString(", ")
+        s"$leftAlias $joinTypeStr $columnsStr".trim
     }
 
   private def tokenizeFiltering(maybeCondition: Option[TableColumn[Boolean]], keyword: String)(implicit
