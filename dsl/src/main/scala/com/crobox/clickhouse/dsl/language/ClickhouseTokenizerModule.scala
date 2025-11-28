@@ -116,7 +116,7 @@ trait ClickhouseTokenizerModule
     }
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
-    if (unions.nonEmpty) unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString else ""
+    if (unions.nonEmpty) unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString(" ") else ""
 
   private def tokenizeSelect(select: Option[SelectQuery])(implicit ctx: TokenizeContext): String =
     select match {
