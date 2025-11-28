@@ -239,7 +239,7 @@ class LogicalFunctionTokenizerTest extends DslTestSpec {
     // This test would have caused StackOverflowError before the fix
     // Creates a deeply nested structure: (a OR (b OR (c OR (d OR ...))))
     val lotsOfConditions = (1 to 2000).map(i => col2 isEq i)
-    val nestedOr = lotsOfConditions.reduce[ExpressionColumn[Boolean]](_ or _)
+    val nestedOr         = lotsOfConditions.reduce[ExpressionColumn[Boolean]](_ or _)
 
     val sql = toSQL(nestedOr)
     sql should include("column_2 = 1")
@@ -251,7 +251,7 @@ class LogicalFunctionTokenizerTest extends DslTestSpec {
     // This test would have caused StackOverflowError before the fix
     // Creates a deeply nested structure: (a AND (b AND (c AND (d AND ...))))
     val lotsOfConditions = (1 to 2000).map(i => col2 isEq i)
-    val nestedAnd = lotsOfConditions.reduce[ExpressionColumn[Boolean]](_ and _)
+    val nestedAnd        = lotsOfConditions.reduce[ExpressionColumn[Boolean]](_ and _)
 
     val sql = toSQL(nestedAnd)
     sql should include("column_2 = 1")
@@ -261,10 +261,10 @@ class LogicalFunctionTokenizerTest extends DslTestSpec {
 
   it should "handle deeply nested mixed operators without stack overflow" in {
     // This test verifies mixed operators also work with deep nesting
-    val conditions = (1 to 1000).map(i => col2 isEq i)
-    val orConditions = conditions.take(500).reduce[ExpressionColumn[Boolean]](_ or _)
+    val conditions    = (1 to 1000).map(i => col2 isEq i)
+    val orConditions  = conditions.take(500).reduce[ExpressionColumn[Boolean]](_ or _)
     val andConditions = conditions.drop(500).reduce[ExpressionColumn[Boolean]](_ and _)
-    val mixed = orConditions and andConditions
+    val mixed         = orConditions and andConditions
 
     val sql = toSQL(mixed)
     sql should include("column_2 = 1")
