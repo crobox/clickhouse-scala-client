@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala: [2.13.17, 3.3.7]
+        scala: [2.13.18, 3.3.7]
         clickhouse: [22.8, 23.3, 23.8] # 24.3 has issues because of join change https://clickhouse.com/docs/en/operations/analyzer#join-using-column-from-projection
     runs-on: ubuntu-latest
     steps:
@@ -60,7 +60,7 @@ jobs:
   #   if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main')
   #   strategy:
   #     matrix:
-  #       scala: [2.13.17, 3.3.7]
+  #       scala: [2.13.18, 3.3.7]
   #   runs-on: ubuntu-latest
   #   steps:
   #     - uses: actions/checkout@v4

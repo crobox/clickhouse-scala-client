@@ -21,8 +21,8 @@ lazy val root = (project in file("."))
             url("https://crobox.com")
           )
         ),
-        scalaVersion       := "2.13.17",
-        crossScalaVersions := List("2.13.17", "3.3.7"),
+        scalaVersion       := "2.13.18",
+        crossScalaVersions := List("2.13.18", "3.3.7"),
         javacOptions ++= Seq("-g", "-Xlint:unchecked", "-Xlint:deprecation", "-source", "11", "-target", "11"),
         scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:_", "-encoding", "UTF-8")
       )
