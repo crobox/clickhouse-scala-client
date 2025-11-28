@@ -70,7 +70,7 @@ class DateTimeConditionTest extends DslTestSpec with TableDrivenPropertyChecks {
           )
         ).internalQuery,
         None
-      ) shouldBe s"SELECT $expected"
+      ) should matchSQL(s"SELECT $expected")
     }
   }
 

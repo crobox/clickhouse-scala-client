@@ -47,7 +47,7 @@ class NumericColFunctionIT extends DslITSpec {
     toSql(
       select(exp).internalQuery,
       None
-    ) shouldBe "SELECT 1"
+    ) should matchSQL("SELECT 1")
   }
 
   it should "properly reduce any constant result of LogicalFunctions" in {
@@ -56,14 +56,14 @@ class NumericColFunctionIT extends DslITSpec {
         CHDsl.not(true and None) and true or false xor None
       ).internalQuery,
       None
-    ) shouldBe "SELECT not(1)"
+    ) should matchSQL("SELECT not(1)")
 
     toSql(
       select(
         Some(false) or CHDsl.not(ref[Boolean]("mazaa") and None) and true or false xor None
       ).internalQuery,
       None
-    ) shouldBe "SELECT not(mazaa)"
+    ) should matchSQL("SELECT not(mazaa)")
   }
 
   it should "succeed for MathFunctions" in {

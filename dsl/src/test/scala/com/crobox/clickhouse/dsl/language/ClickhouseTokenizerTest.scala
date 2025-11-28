@@ -12,12 +12,12 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   it should "build select statement" in {
     val select       = SelectQuery(Seq(shieldId))
     val generatedSql = toSql(InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable))))
-    generatedSql should be(s"SELECT shield_id FROM ${OneTestTable.quoted} FORMAT JSON")
+    generatedSql should matchSQL(s"SELECT shield_id FROM ${OneTestTable.quoted} FORMAT JSON")
   }
 
   it should "build select with alias" in {
     val select = SelectQuery(Seq(shieldId as "preferable"))
-    toSql(InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)))) should be(
+    toSql(InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)))) should matchSQL(
       s"SELECT shield_id AS preferable FROM ${OneTestTable.quoted} FORMAT JSON"
     )
   }
@@ -27,12 +27,12 @@ class ClickhouseTokenizerTest extends DslTestSpec {
     val generatedSql = toSql(
       InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), limit = Some(Limit(15, 30)))
     )
-    generatedSql should be(s"SELECT shield_id FROM ${OneTestTable.quoted} LIMIT 30, 15 FORMAT JSON")
+    generatedSql should matchSQL(s"SELECT shield_id FROM ${OneTestTable.quoted} LIMIT 30, 15 FORMAT JSON")
 
     val generatedSql2 = toSql(
       InternalQuery(Some(select), Some(TableFromQuery[OneTestTable.type](OneTestTable)), limit = Some(Limit(45)))
     )
-    generatedSql2 should be(s"SELECT shield_id FROM ${OneTestTable.quoted} LIMIT 0, 45 FORMAT JSON")
+    generatedSql2 should matchSQL(s"SELECT shield_id FROM ${OneTestTable.quoted} LIMIT 0, 45 FORMAT JSON")
   }
 
   it should "add simple condition between columns" in {
@@ -44,7 +44,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
         where = Some(shieldId < itemId)
       )
     )
-    query should be(s"SELECT shield_id FROM ${OneTestTable.quoted} WHERE shield_id < item_id FORMAT JSON")
+    query should matchSQL(s"SELECT shield_id FROM ${OneTestTable.quoted} WHERE shield_id < item_id FORMAT JSON")
   }
 
   it should "add condition for value" in {
@@ -58,7 +58,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
           where = Some(shieldId < uuid)
         )
       )
-    query should be(s"SELECT shield_id FROM ${OneTestTable.quoted} WHERE shield_id < '$uuid' FORMAT JSON")
+    query should matchSQL(s"SELECT shield_id FROM ${OneTestTable.quoted} WHERE shield_id < '$uuid' FORMAT JSON")
   }
 
   it should "add chained condition" in {
@@ -71,7 +71,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
         where = Some(shieldId < uuid and shieldId < itemId)
       )
     )
-    query should be(
+    query should matchSQL(
       s"SELECT shield_id FROM ${OneTestTable.quoted} WHERE shield_id < '$uuid' AND shield_id < item_id FORMAT JSON"
     )
   }
@@ -86,7 +86,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
         groupBy = Some(GroupByQuery(Seq(alias)))
       )
     )
-    query should be(s"SELECT shield_id AS preferable FROM ${OneTestTable.quoted} GROUP BY preferable FORMAT JSON")
+    query should matchSQL(s"SELECT shield_id AS preferable FROM ${OneTestTable.quoted} GROUP BY preferable FORMAT JSON")
   }
 
   it should "group by with rollup if using group by mode" in {
@@ -98,7 +98,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
         groupBy = Some(GroupByQuery(Seq(shieldId), mode = Some(GroupByQuery.WithRollup), withTotals = true))
       )
     )
-    query should be(
+    query should matchSQL(
       s"SELECT shield_id FROM ${OneTestTable.quoted} GROUP BY shield_id WITH ROLLUP WITH TOTALS FORMAT JSON"
     )
   }
@@ -112,7 +112,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
         groupBy = Some(GroupByQuery(mode = Some(GroupByQuery.WithCube)))
       )
     )
-    query should be(s"SELECT shield_id FROM ${OneTestTable.quoted} WITH CUBE FORMAT JSON")
+    query should matchSQL(s"SELECT shield_id FROM ${OneTestTable.quoted} WITH CUBE FORMAT JSON")
   }
 
   it should "build table join using select all style" in {
@@ -250,5 +250,14 @@ class ClickhouseTokenizerTest extends DslTestSpec {
     val select = SelectQuery(Seq(col))
     val query  = toSql(InternalQuery(select = Some(select)))
     query should matchSQL(s"SELECT `$name` FORMAT JSON")
+  }
+
+  it should "do it exactly" in {
+    val name   = "props.key"
+    val col    = RefColumn[String](name).isEq("some  thing is  off")
+    val select = SelectQuery(Seq(col))
+    val query  = toSql(InternalQuery(select = Some(select)))
+    val expected = "SELECT  `props.key` = 'some  thing is  off'"
+    query.slice(0, expected.length) should be(expected)
   }
 }
