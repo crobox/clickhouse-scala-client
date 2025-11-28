@@ -7,11 +7,14 @@ trait LogicalFunctionTokenizer {
 
   // Flatten nested LogicalFunctions with the same operator to avoid stack overflow
   // Uses iterative approach with a stack to handle deeply nested structures (e.g., 2000+ levels)
-  private def flattenLogicalOperator(col: TableColumn[Boolean], operator: LogicalOperator): Seq[TableColumn[Boolean]] = {
+  private def flattenLogicalOperator(
+      col: TableColumn[Boolean],
+      operator: LogicalOperator
+  ): Seq[TableColumn[Boolean]] = {
     val result = scala.collection.mutable.ArrayBuffer[TableColumn[Boolean]]()
-    val stack = scala.collection.mutable.Stack[TableColumn[Boolean]](col)
+    val stack  = scala.collection.mutable.Stack[TableColumn[Boolean]](col)
 
-    while (stack.nonEmpty) {
+    while (stack.nonEmpty)
       stack.pop() match {
         case lf: LogicalFunction if lf.operator == operator =>
           // Push right first so left is processed first (maintains left-to-right order)
@@ -20,7 +23,6 @@ trait LogicalFunctionTokenizer {
         case other =>
           result += other
       }
-    }
 
     result.toSeq
   }
@@ -38,15 +40,15 @@ trait LogicalFunctionTokenizer {
             val tokenized = flattened.map { c =>
               c match {
                 case lf: LogicalFunction if lf.operator == Or => surroundWithBrackets(tokenizeColumn(lf))
-                case _ => tokenizeColumn(c)
+                case _                                        => tokenizeColumn(c)
               }
             }
 
             // Apply optimization rules
-            if (tokenized.contains("0")) "0"  // Any false makes AND fail
+            if (tokenized.contains("0")) "0" // Any false makes AND fail
             else {
-              val filtered = tokenized.filterNot(_ == "1")  // Remove true values
-              if (filtered.isEmpty) "1"  // All were true
+              val filtered = tokenized.filterNot(_ == "1") // Remove true values
+              if (filtered.isEmpty) "1" // All were true
               else filtered.mkString(" AND ")
             }
           case Or =>
@@ -55,15 +57,15 @@ trait LogicalFunctionTokenizer {
             val tokenized = flattened.map { c =>
               c match {
                 case lf: LogicalFunction if lf.operator == And => surroundWithBrackets(tokenizeColumn(lf))
-                case _ => tokenizeColumn(c)
+                case _                                         => tokenizeColumn(c)
               }
             }
 
             // Apply optimization rules
-            if (tokenized.contains("1")) "1"  // Any true makes OR succeed
+            if (tokenized.contains("1")) "1" // Any true makes OR succeed
             else {
-              val filtered = tokenized.filterNot(_ == "0")  // Remove false values
-              if (filtered.isEmpty) "0"  // All were false
+              val filtered = tokenized.filterNot(_ == "0") // Remove false values
+              if (filtered.isEmpty) "0" // All were false
               else filtered.mkString(" OR ")
             }
           case Xor =>
@@ -87,7 +89,7 @@ trait LogicalFunctionTokenizer {
     col match {
       case c: LogicalFunction if c.operator == And && operator == Or => surroundWithBrackets(tokenizeColumn(col))
       case c: LogicalFunction if c.operator == Or && operator == And => surroundWithBrackets(tokenizeColumn(col))
-      case c: LogicalFunction if c.operator == operator => tokenizeLogicalFunction(c)
+      case c: LogicalFunction if c.operator == operator              => tokenizeLogicalFunction(c)
       case _                                                         => tokenizeColumn(col)
     }
 
