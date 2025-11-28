@@ -87,7 +87,7 @@ trait ClickhouseTokenizerModule
       ctx: TokenizeContext
   ): String = {
     val formatSql = formatting.map(fmt => " FORMAT " + fmt).getOrElse("")
-    val sql       = removeRedundantWhitespaces(toRawSql(query) + formatSql)
+    val sql       = toRawSql(query) + formatSql
     logger.debug(s"Generated sql [$sql]")
     sql
   }
@@ -97,28 +97,22 @@ trait ClickhouseTokenizerModule
       value.substring(1, value.length - 1)
     } else value
 
-  private def removeRedundantWhitespaces(value: String): String =
-    value
-      .replaceAll("\\s+", " ")
-      .replace(" ( ", " (")
-      .replace(" )", ")")
-      .trim
-
   private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
     query match {
       case InternalQuery(select, from, prewhere, where, groupBy, having, join, orderBy, limit, limitBy, union) =>
-        s"""
-           |${tokenizeSelect(select)}
-           | ${tokenizeFrom(from)}
-           | ${tokenizeJoin(select, from, join)}
-           | ${tokenizeFiltering(prewhere, "PREWHERE")}
-           | ${tokenizeFiltering(where, "WHERE")}
-           | ${tokenizeGroupBy(groupBy)}
-           | ${tokenizeFiltering(having, "HAVING")}
-           | ${tokenizeOrderBy(orderBy)}
-           | ${tokenizeLimitBy(limitBy)}
-           | ${tokenizeLimit(limit)}
-           | ${tokenizeUnionAll(union)}""".stripMargin
+        Seq(
+          tokenizeSelect(select),
+          tokenizeFrom(from),
+          tokenizeJoin(select, from, join),
+          tokenizeFiltering(prewhere, "PREWHERE"),
+          tokenizeFiltering(where, "WHERE"),
+          tokenizeGroupBy(groupBy),
+          tokenizeFiltering(having, "HAVING"),
+          tokenizeOrderBy(orderBy),
+          tokenizeLimitBy(limitBy),
+          tokenizeLimit(limit),
+          tokenizeUnionAll(union)
+        ).filter(_.nonEmpty).mkString(" ")
     }
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
