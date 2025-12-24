@@ -253,10 +253,10 @@ class ClickhouseTokenizerTest extends DslTestSpec {
   }
 
   it should "do it exactly" in {
-    val name   = "props.key"
-    val col    = RefColumn[String](name).isEq("some  thing is  off")
-    val select = SelectQuery(Seq(col))
-    val query  = toSql(InternalQuery(select = Some(select)))
+    val name     = "props.key"
+    val col      = RefColumn[String](name).isEq("some  thing is  off")
+    val select   = SelectQuery(Seq(col))
+    val query    = toSql(InternalQuery(select = Some(select)))
     val expected = "SELECT  `props.key` = 'some  thing is  off'"
     query.slice(0, expected.length) should be(expected)
   }
