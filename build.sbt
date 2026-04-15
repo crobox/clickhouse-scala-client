@@ -43,7 +43,7 @@ lazy val client: Project = (project in file("client"))
       "org.apache.pekko"           %% "pekko-stream"  % PekkoVersion,
       "org.apache.pekko"           %% "pekko-http"    % PekkoHttpVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6",
-      "joda-time"                   % "joda-time"     % "2.14.0"
+      "joda-time"                   % "joda-time"     % "2.14.1"
     ) ++ Seq("org.apache.pekko" %% "pekko-testkit" % PekkoVersion % Test) ++ Build.testDependencies.map(_ % Test)
   )
 
