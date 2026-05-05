@@ -56,7 +56,7 @@ lazy val dsl = (project in file("dsl"))
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     libraryDependencies ++= Seq(
       "com.google.guava" % "guava"  % "33.6.0-jre",
-      "com.typesafe"     % "config" % "1.4.7"
+      "com.typesafe"     % "config" % "1.4.8"
     )
   )
 //  .settings(excludeDependencies ++= Seq(ExclusionRule("org.apache.pekko")))
