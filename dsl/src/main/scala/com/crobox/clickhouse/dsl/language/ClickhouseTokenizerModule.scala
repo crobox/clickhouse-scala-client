@@ -15,7 +15,8 @@ case class TokenizeContext(
     var joinNr: Int = 0,
     var tableAliases: Map[Table, String] = Map.empty,
     var useTableAlias: Boolean = false,
-    delimiter: String = ", "
+    delimiter: String = ", ",
+    var joinOnScope: Option[(String, String)] = None
 ) {
 
   def incrementJoinNumber(): Unit = joinNr += 1
@@ -156,6 +157,14 @@ trait ClickhouseTokenizerModule
       case alias: AliasedColumn[_] =>
         val originalColumnToken = tokenizeColumn(alias.original)
         if (originalColumnToken.isEmpty) alias.quoted else s"$originalColumnToken AS ${alias.quoted}"
+      case q: JoinSideQualified[_] =>
+        val (leftAlias, rightAlias) = ctx.joinOnScope
+          .getOrElse(throw new AssertionError("leftCol/rightCol only valid inside JoinQuery.on"))
+        val alias = q.side match {
+          case Left  => leftAlias
+          case Right => rightAlias
+        }
+        s"$alias.${tokenizeColumn(q.inner)}"
       case tuple: TupleColumn[_]    => s"(${tuple.elements.map(tokenizeColumn).mkString(ctx.delimiter)})"
       case col: ExpressionColumn[_] => tokenizeExpressionColumn(col)
       case col: Column              => col.quoted
@@ -322,17 +331,45 @@ trait ClickhouseTokenizerModule
 
         if (`using`.nonEmpty) {
           // TOKENIZE USING
+          assert(
+            !using.exists(_.isInstanceOf[JoinSideQualified[_]]),
+            "leftCol/rightCol not valid in JoinQuery.using"
+          )
           if (`using`.size == 1) s"USING ${using.head.name}"
           else s"USING (${using.map(_.name).mkString(ctx.delimiter)})"
         } else if (query.on.nonEmpty) {
           // TOKENIZE ON. If the fromClause is a TABLE, we need to check on aliases!
-          "ON " + query.on
-            .map { cond =>
-              val left = verifyOnCondition(select, from, cond.left)
-              s"${ctx.leftAlias(from.alias)}.$left ${cond.operator} ${ctx.rightAlias(query.other.alias)}.${cond.right.name}"
-            }
-            .mkString(" AND ")
+          ctx.joinOnScope = Some((ctx.leftAlias(from.alias), ctx.rightAlias(query.other.alias)))
+          try
+            "ON " + query.on
+              .map { cond =>
+                val left  = tokenizeJoinSide(Left, select, from, cond.left)
+                val right = tokenizeJoinSide(Right, select, from, cond.right)
+                s"$left ${cond.operator} $right"
+              }
+              .mkString(" AND ")
+          finally ctx.joinOnScope = None
         } else ""
+    }
+  }
+
+  private def tokenizeJoinSide(side: JoinSide, select: Option[SelectQuery], from: FromQuery, col: Column)(implicit
+      ctx: TokenizeContext
+  ): String = {
+    val (leftA, rightA) = ctx.joinOnScope.get
+    val sideAlias       = side match {
+      case Left  => leftA
+      case Right => rightA
+    }
+    col match {
+      case _: JoinSideQualified[_]  => tokenizeColumn(col)
+      case _: ExpressionColumn[_]   => tokenizeColumn(col)
+      case _: Column                =>
+        val name = side match {
+          case Left  => verifyOnCondition(select, from, col)
+          case Right => col.name
+        }
+        s"$sideAlias.$name"
     }
   }
 

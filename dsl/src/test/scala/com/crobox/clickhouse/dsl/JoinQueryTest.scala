@@ -171,4 +171,80 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
          |FORMAT JSON""".stripMargin
     )
   }
+
+  it should "reject leftCol/rightCol in single-arg JoinCondition" in {
+    an[IllegalArgumentException] shouldBe thrownBy(JoinCondition(leftCol(itemId)))
+    an[IllegalArgumentException] shouldBe thrownBy(JoinCondition(rightCol(itemId)))
+  }
+
+  it should "fail when leftCol/rightCol is used outside JoinQuery.on (SELECT)" in {
+    val query = select(leftCol(itemId)).from(OneTestTable)
+    an[AssertionError] shouldBe thrownBy(toSql(query.internalQuery))
+  }
+
+  it should "fail when leftCol/rightCol is used outside JoinQuery.on (WHERE)" in {
+    val query = select(itemId).from(OneTestTable).where(leftCol(itemId).isEq(itemId))
+    an[AssertionError] shouldBe thrownBy(toSql(query.internalQuery))
+  }
+
+  it should "emit arrayJoin(leftCol(...)) verbatim on LEFT, plain column on RIGHT" in {
+    val query =
+      select(dsl.all)
+        .from(OneTestTable)
+        .join(AllLeftJoin, TwoTestTable)
+        .on((arrayJoin(leftCol(numbers)), "=", col2))
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM ${OneTestTable.quoted} AS L1 " +
+        s"ALL LEFT JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 " +
+        s"ON arrayJoin(L1.numbers) = R1.column_2 FORMAT JSON"
+    )
+  }
+
+  it should "qualify same-named columns with leftCol/rightCol" in {
+    val query =
+      select(dsl.all)
+        .from(OneTestTable)
+        .join(InnerJoin, TwoTestTable)
+        .on((leftCol(itemId), "=", rightCol(itemId)))
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM ${OneTestTable.quoted} AS L1 " +
+        s"INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 " +
+        s"ON L1.item_id = R1.item_id FORMAT JSON"
+    )
+  }
+
+  it should "honour custom from-alias when using leftCol" in {
+    val query =
+      select(dsl.all)
+        .from(OneTestTable)
+        .as("ott_alias")
+        .join(InnerJoin, TwoTestTable)
+        .on((leftCol(itemId), "=", rightCol(itemId)))
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM ${OneTestTable.quoted} AS ott_alias " +
+        s"INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 " +
+        s"ON ott_alias.item_id = R1.item_id FORMAT JSON"
+    )
+  }
+
+  it should "fail when leftCol/rightCol is used in JoinQuery.using" in {
+    val query =
+      select(itemId)
+        .from(OneTestTable)
+        .join(InnerJoin, TwoTestTable) using leftCol(itemId)
+    an[AssertionError] shouldBe thrownBy(toSql(query.internalQuery))
+  }
+
+  it should "recurse through double-wrapped leftCol(rightCol(col))" in {
+    val query =
+      select(dsl.all)
+        .from(OneTestTable)
+        .join(InnerJoin, TwoTestTable)
+        .on((leftCol(rightCol(itemId)), "=", itemId))
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT * FROM ${OneTestTable.quoted} AS L1 " +
+        s"INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 " +
+        s"ON L1.R1.item_id = R1.item_id FORMAT JSON"
+    )
+  }
 }

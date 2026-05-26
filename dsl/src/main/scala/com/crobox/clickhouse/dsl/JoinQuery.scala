@@ -45,7 +45,17 @@ object JoinQuery {
   case object AsOfLeftJoin  extends JoinType
   case object SemiLeftJoin  extends JoinType
   case object SemiRightJoin extends JoinType
+
+  sealed trait JoinSide
+  case object Left  extends JoinSide
+  case object Right extends JoinSide
 }
+
+/**
+ * Qualifies a column with the LEFT or RIGHT side of the enclosing `JoinQuery.on`. Constructed via `leftCol` / `rightCol`
+ * in `package object dsl`; only valid inside `JoinQuery.on` — used outside an ON, tokenization throws `AssertionError`.
+ */
+case class JoinSideQualified[V](side: JoinSide, inner: TableColumn[V]) extends TableColumn[V](inner.name)
 
 /**
  * @param joinType
@@ -76,6 +86,12 @@ case class JoinCondition(left: Column, operator: String, right: Column) {
 object JoinCondition {
   val SupportedOperators = Set(">", ">=", "<", "<=", "=")
 
-  def apply(column: Column): JoinCondition                   = JoinCondition(column, "=", column)
+  def apply(column: Column): JoinCondition = {
+    require(
+      !column.isInstanceOf[JoinSideQualified[_]],
+      "leftCol/rightCol cannot be used as a single-arg JoinCondition"
+    )
+    JoinCondition(column, "=", column)
+  }
   def apply(triple: (Column, String, Column)): JoinCondition = JoinCondition(triple._1, triple._2, triple._3)
 }
