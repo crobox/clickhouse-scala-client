@@ -1,5 +1,6 @@
 package com.crobox.clickhouse
 
+import com.crobox.clickhouse.dsl.JoinQuery.{Left, Right}
 import com.crobox.clickhouse.dsl.column.ClickhouseColumnFunctions
 import com.crobox.clickhouse.dsl.execution.{QueryExecutor, QueryResult}
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
@@ -93,4 +94,10 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
     case Nil => defaultValue
     case _   => Conditional(cases, defaultValue, multiIf = true)
   }
+
+  /** Qualifies a column with the LEFT side of the enclosing `JoinQuery.on`. Only valid inside `JoinQuery.on`. */
+  def leftCol[V](col: TableColumn[V]): JoinSideQualified[V] = JoinSideQualified(Left, col)
+
+  /** Qualifies a column with the RIGHT side of the enclosing `JoinQuery.on`. Only valid inside `JoinQuery.on`. */
+  def rightCol[V](col: TableColumn[V]): JoinSideQualified[V] = JoinSideQualified(Right, col)
 }
