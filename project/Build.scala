@@ -5,6 +5,6 @@ object Build {
   val PekkoVersion     = "1.6.0"
   val PekkoHttpVersion = "1.3.0"
 
-  val testDependencies = Seq("org.scalatest" %% "scalatest" % "3.2.20", "ch.qos.logback" % "logback-classic" % "1.5.32")
+  val testDependencies = Seq("org.scalatest" %% "scalatest" % "3.2.20", "ch.qos.logback" % "logback-classic" % "1.5.33")
 
 }
