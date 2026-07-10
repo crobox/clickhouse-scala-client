@@ -37,10 +37,12 @@ case class QuerySettings(
   def withFallback(config: Config): QuerySettings = {
     val custom = config.getConfig(path("custom"))
     this.copy(
-      authentication = authentication.orElse(Try {
-        val authConfig = config.getConfig(path("authentication"))
-        (authConfig.getString("user"), authConfig.getString("password"))
-      }.toOption),
+      authentication = authentication.orElse(
+        Try {
+          val authConfig = config.getConfig(path("authentication"))
+          (authConfig.getString("user"), authConfig.getString("password"))
+        }.toOption
+      ),
       profile = profile.orElse(Try(config.getString(path("profile"))).toOption),
       httpCompression = httpCompression.orElse(Try(config.getBoolean(path("http-compression"))).toOption),
       settings = custom.entrySet().asScala.map(u => (u.getKey, custom.getString(u.getKey))).toMap ++ settings,
