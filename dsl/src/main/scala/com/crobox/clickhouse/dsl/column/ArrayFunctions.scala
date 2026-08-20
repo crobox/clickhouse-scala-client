@@ -85,6 +85,15 @@ trait ArrayFunctions { this: Magnets =>
   def emptyArrayToSingle[V](col: ArrayColMagnet[V]): EmptyArrayToSingle[V] = EmptyArrayToSingle[V](col)
   def range(n: NumericCol[_]): Range                                       = Range(n)
 
+  /**
+   * Array literal: `arrayOf(a, b)` tokenizes to `[a, b]`.
+   *
+   * Named `arrayOf` rather than `array` because `array` is already the aggregate-function combinator
+   * (`AggregationFunctions.array`), and `Array` collides with `scala.Array`. Without this, building a single-element
+   * array meant `arrayPushBack(emptyArrayString, x)`.
+   */
+  def arrayOf[V](columns: ConstOrColMagnet[V]*): Array[V] = Array(columns: _*)
+
   def arrayConcat[V](col1: ArrayColMagnet[V], columns: ArrayColMagnet[V]*): ArrayConcat[V] =
     ArrayConcat(col1, columns: _*)
   def arrayElement[V](col: ArrayColMagnet[_ <: Iterable[V]], n: NumericCol[_]): ArrayElement[V] = ArrayElement(col, n)

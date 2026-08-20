@@ -20,7 +20,16 @@ trait InFunctions { self: Magnets =>
   // This is especially problematic when using TupleElement
 
   case class Tuple(coln: Seq[ConstOrColMagnet[_]]) extends ExpressionColumn[Nothing](EmptyColumn) with InFunction
-  case class TupleElement[T](tuple: Tuple, index: NumericCol[_])
+
+  /**
+   * Positional access into anything that evaluates to a tuple, not just a literal [[Tuple]].
+   *
+   * ClickHouse returns tuples from more than the tuple constructor -- the map aggregates (`sumMap`, `maxMap`, ...)
+   * return `(keys, values)`, and a higher-order function's lambda parameter can be bound to one. Requiring the concrete
+   * `Tuple` made both of those unreachable: there was no way to project `sumMap(...).2`, and casting a lambda parameter
+   * compiled but then threw at runtime, because the tokenizer binds lambda parameters to a `RefColumn`.
+   */
+  case class TupleElement[T](tuple: ConstOrColMagnet[_], index: NumericCol[_])
       extends ExpressionColumn[T](EmptyColumn)
       with InFunction
 
@@ -54,6 +63,8 @@ trait InFunctions { self: Magnets =>
   def notIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet, global: Boolean): ExpressionColumn[Boolean] =
     if (global) globalNotIn(l, r) else notIn(l, r)
 
-  def tuple(coln: ConstOrColMagnet[_]*): Tuple                             = Tuple(coln)
-  def tupleElement[T](tuple: Tuple, index: NumericCol[_]): TupleElement[T] = TupleElement[T](tuple, index)
+  def tuple(coln: ConstOrColMagnet[_]*): Tuple = Tuple(coln)
+
+  def tupleElement[T](tuple: ConstOrColMagnet[_], index: NumericCol[_]): TupleElement[T] =
+    TupleElement[T](tuple, index)
 }
