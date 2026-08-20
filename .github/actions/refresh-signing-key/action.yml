@@ -1,0 +1,109 @@
+name: Refresh PGP signing key
+description: >-
+  Imports the release signing key from PGP_SECRET and pushes its expiry date
+  forward inside the runner's keyring, so a key that has expired since it was
+  stored can still sign. Optionally republishes the refreshed public key to the
+  keyservers that Maven Central and downstream consumers verify against.
+
+inputs:
+  pgp-secret:
+    description: Armored or base64-encoded private signing key (the PGP_SECRET secret).
+    required: true
+  pgp-passphrase:
+    description: Passphrase protecting that key (the PGP_PASSPHRASE secret).
+    required: true
+  expire:
+    description: 'New expiry in gpg syntax: 2y, 18m, 0 for never.'
+    required: false
+    default: '2y'
+  publish:
+    description: Send the refreshed public key to the keyservers.
+    required: false
+    default: 'false'
+
+outputs:
+  fingerprint:
+    description: Fingerprint of the signing key that was refreshed.
+    value: ${{ steps.refresh.outputs.fingerprint }}
+
+runs:
+  using: composite
+  steps:
+    - id: refresh
+      shell: bash
+      env:
+        PGP_SECRET: ${{ inputs.pgp-secret }}
+        PGP_PASSPHRASE: ${{ inputs.pgp-passphrase }}
+        EXPIRE: ${{ inputs.expire }}
+        PUBLISH: ${{ inputs.publish }}
+      run: |
+        set -euo pipefail
+
+        : "${PGP_SECRET:?PGP_SECRET is empty - is the secret set on this repository?}"
+        : "${PGP_PASSPHRASE:?PGP_PASSPHRASE is empty - is the secret set on this repository?}"
+        EXPIRE="${EXPIRE:-2y}"
+        PUBLISH="${PUBLISH:-false}"
+
+        umask 077
+        workdir="$(mktemp -d)"
+        trap 'rm -rf "$workdir"' EXIT
+
+        # sbt-ci-release accepts PGP_SECRET either base64-encoded or as raw ASCII armor.
+        if printf '%s' "$PGP_SECRET" | base64 --decode >"$workdir/key.asc" 2>/dev/null &&
+          grep -q 'BEGIN PGP PRIVATE KEY BLOCK' "$workdir/key.asc"; then
+          echo "PGP_SECRET is base64-encoded"
+        else
+          printf '%s' "$PGP_SECRET" >"$workdir/key.asc"
+          grep -q 'BEGIN PGP PRIVATE KEY BLOCK' "$workdir/key.asc" ||
+            { echo "::error::PGP_SECRET is neither base64-encoded nor an armored private key"; exit 1; }
+          echo "PGP_SECRET is ASCII-armored"
+        fi
+
+        gpg --batch --yes --import "$workdir/key.asc"
+
+        primary="$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')"
+        [ -n "$primary" ] ||
+          { echo "::error::no secret key present after importing PGP_SECRET"; exit 1; }
+        echo "signing key: $primary"
+
+        # gpg's '*' subkey wildcard silently skips subkeys that have already expired,
+        # so enumerate them and name each one explicitly.
+        mapfile -t subkeys < <(gpg --list-keys --with-colons "$primary" |
+          awk -F: '$1 == "sub" { want = 1; next } want && $1 == "fpr" { print $10; want = 0 }')
+
+        gpgb=(gpg --batch --yes --pinentry-mode loopback --passphrase "$PGP_PASSPHRASE")
+        extend() {
+          "${gpgb[@]}" --quick-set-expire "$@" ||
+            { echo "::error::could not re-date the key - is PGP_PASSPHRASE correct?"; exit 1; }
+        }
+
+        extend "$primary" "$EXPIRE"
+        if [ "${#subkeys[@]}" -gt 0 ]; then
+          extend "$primary" "$EXPIRE" "${subkeys[@]}"
+          echo "extended primary key + ${#subkeys[@]} subkey(s) to +$EXPIRE"
+        else
+          echo "extended primary key to +$EXPIRE (no subkeys)"
+        fi
+
+        # Fail here, with a clear message, rather than 30s deep into signedArtifacts.
+        echo signing-smoke-test |
+          "${gpgb[@]}" --detach-sign --armor --output /dev/null - ||
+          { echo "::error::key still cannot sign after extending expiry - check PGP_PASSPHRASE"; exit 1; }
+        echo "signing smoke test passed"
+
+        if [ "$PUBLISH" = "true" ]; then
+          published=0
+          for keyserver in hkps://keyserver.ubuntu.com hkps://keys.openpgp.org; do
+            if gpg --batch --keyserver "$keyserver" --send-keys "$primary"; then
+              echo "published refreshed public key to $keyserver"
+              published=1
+            else
+              echo "::warning::could not publish to $keyserver"
+            fi
+          done
+          [ "$published" = 1 ] ||
+            { echo "::error::failed to publish the refreshed public key to any keyserver"; exit 1; }
+        fi
+
+        gpg --list-keys --keyid-format=long "$primary"
+        echo "fingerprint=$primary" >>"$GITHUB_OUTPUT"

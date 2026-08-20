@@ -1,0 +1,28 @@
+name: Refresh signing key
+
+# The release signing key is stored as an expired blob in the PGP_SECRET secret, and
+# its private half is no longer available anywhere else, so the expiry can only be
+# pushed forward from inside CI. Release runs do that in their own keyring; this
+# workflow additionally republishes the refreshed public key, so that Maven Central
+# and anyone verifying our signatures see a key that is still valid.
+#
+# Run it after bumping the expiry, or any time the keyservers need to catch up.
+on:
+  workflow_dispatch:
+    inputs:
+      expire:
+        description: 'New expiry (gpg syntax: 2y, 18m, 0 = never)'
+        required: false
+        default: '2y'
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/refresh-signing-key
+        with:
+          pgp-secret: ${{ secrets.PGP_SECRET }}
+          pgp-passphrase: ${{ secrets.PGP_PASSPHRASE }}
+          expire: ${{ inputs.expire }}
+          publish: 'true'

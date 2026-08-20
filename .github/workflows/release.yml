@@ -15,6 +15,14 @@ jobs:
           java-version: 17
           cache: sbt
       - uses: sbt/setup-sbt@v1
+
+      # The stored signing key has expired and its private half is lost, so push the
+      # expiry forward in this runner's keyring before anything tries to sign. Runs
+      # before the docker steps so a broken key fails in seconds, not minutes.
+      - uses: ./.github/actions/refresh-signing-key
+        with:
+          pgp-secret: ${{ secrets.PGP_SECRET }}
+          pgp-passphrase: ${{ secrets.PGP_PASSPHRASE }}
       - name: Update '/etc/hosts' file
         run: ./.docker/update-hosts.sh
 
