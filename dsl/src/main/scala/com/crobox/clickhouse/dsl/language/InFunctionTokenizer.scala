@@ -7,8 +7,10 @@ trait InFunctionTokenizer {
 
   def tokenizeInFunction(col: InFunction)(implicit ctx: TokenizeContext): String = col match {
     case t: Tuple => s"(${t.coln.map(col => tokenizeColumn(col.column)).mkString(", ")})" // Tuple Creation Operator
+    // Access operator. The operand is parenthesised because it is not always a bare identifier -- for a map aggregate
+    // it is a whole function call, and `sumMap(a, b).2` is a syntax error where `(sumMap(a, b)).2` is not.
     case t: TupleElement[_] =>
-      s"${tokenizeColumn(t.tuple.column)}.${tokenizeColumn(t.index.column)})" // Access Operators
+      s"(${tokenizeColumn(t.tuple.column)}).${tokenizeColumn(t.index.column)}"
     case col: InFunctionCol[_] => tokenizeInFunctionCol(col)
   }
 

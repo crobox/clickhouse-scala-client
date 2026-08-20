@@ -64,7 +64,10 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
           s"${levels.mkString(ctx.delimiter)})(${tokenizeColumn(column)}${modifierValue.map(ctx.delimiter + _).getOrElse("")}"
         )
       case Sum(column, modifier)   => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
-      case SumMap(key, value)      => (s"sumMap", tokenizeColumns(Seq(key, value)))
+      case SumMap(key, value)      => ("sumMap", tokenizeColumns(Seq(key.column, value.column)))
+      case MinMap(key, value)      => ("minMap", tokenizeColumns(Seq(key.column, value.column)))
+      case MaxMap(key, value)      => ("maxMap", tokenizeColumns(Seq(key.column, value.column)))
+      case AvgMap(key, value)      => ("avgMap", tokenizeColumns(Seq(key.column, value.column)))
       case Uniq(columns, modifier) =>
         (s"uniq${tokenizeUniqModifier(modifier)}", columns.map(tokenizeColumn).mkString(ctx.delimiter))
       case f: AggregateFunction[_] =>

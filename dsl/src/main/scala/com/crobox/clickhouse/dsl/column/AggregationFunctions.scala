@@ -189,8 +189,28 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
   case class Sum[T](tableColumn: TableColumn[T], modifier: SumModifier = SumModifier.Simple)
       extends AggregateFunction[Double](tableColumn)
 
-  case class SumMap[T, V](key: TableColumn[Seq[T]], value: TableColumn[Seq[V]])
-      extends AggregateFunction[(Seq[T], Seq[V])](key)
+  /**
+   * The `*Map` aggregates: given parallel key and value arrays, aggregate the values per key and return
+   * `(keys, values)`.
+   *
+   * The arrays are taken as [[ArrayColMagnet]] rather than `TableColumn[Seq[_]]` so that an array *expression* can be
+   * passed. `TableColumn` is covariant and the array functions produce `Iterable`, so an `arrayPushBack(...)` or
+   * `arrayOf(...)` is a `TableColumn[Iterable[T]]` and was rejected where a `TableColumn[Seq[T]]` was demanded -- you
+   * could only ever pass a stored column.
+   *
+   * Project the result with [[tupleElement]], or the [[mapKeys]] / [[mapValues]] shorthands.
+   */
+  case class SumMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]])
+      extends AggregateFunction[(Seq[T], Seq[V])](key.column)
+
+  case class MinMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]])
+      extends AggregateFunction[(Seq[T], Seq[V])](key.column)
+
+  case class MaxMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]])
+      extends AggregateFunction[(Seq[T], Seq[V])](key.column)
+
+  case class AvgMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]])
+      extends AggregateFunction[(Seq[T], Seq[V])](key.column)
 
   sealed trait SumModifier
 
@@ -204,7 +224,23 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
 
   def sumOverflown[T](tableColumn: TableColumn[T]): Sum[T] = Sum(tableColumn, SumModifier.WithOverflow)
 
-  def sumMap[T, V](key: TableColumn[Seq[T]], value: TableColumn[Seq[V]]): SumMap[T, V] = SumMap(key, value)
+  def sumMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]]): SumMap[T, V] =
+    SumMap(key, value)
+
+  def minMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]]): MinMap[T, V] =
+    MinMap(key, value)
+
+  def maxMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]]): MaxMap[T, V] =
+    MaxMap(key, value)
+
+  def avgMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]]): AvgMap[T, V] =
+    AvgMap(key, value)
+
+  /** The keys array of a `*Map` aggregate, i.e. `(sumMap(k, v)).1`. */
+  def mapKeys[T, V](map: AggregateFunction[(Seq[T], Seq[V])]): TupleElement[Seq[T]] = tupleElement[Seq[T]](map, 1)
+
+  /** The values array of a `*Map` aggregate, i.e. `(sumMap(k, v)).2`. */
+  def mapValues[T, V](map: AggregateFunction[(Seq[T], Seq[V])]): TupleElement[Seq[V]] = tupleElement[Seq[V]](map, 2)
 }
 
 trait Leveled { self: Magnets with AggregationFunctions =>
