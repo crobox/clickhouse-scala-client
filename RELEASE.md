@@ -1,61 +1,54 @@
-from http://www.scala-sbt.org/release/docs/Using-Sonatype.html
+# Releasing
 
-The credentials for your Sonatype OSSRH account need to be stored somewhere safe (e.g. NOT in the repository).
-Common convention is a ~/.sbt/1.0/sonatype.sbt or (~/.sbt/.credentials) file with the following:
+Releases are driven entirely by git tags. `sbt-ci-release` derives the version from the tag via sbt-dynver — there is no
+`version.sbt` to edit and no `sbt release` step to run.
 
-```
-credentials += Credentials("Sonatype Nexus Repository Manager",
-                           "oss.sonatype.org",
-                           "<your username>",
-                           "<your password>")
-```
+## Cutting a release
 
-If not done already, generate a key and upload it to a keyserver.
-
-```
-$ gpg --gen-key
-$ gpg --list-secret-keys
-$ gpg --keyserver keyserver.ubuntu.com --send-keys 2BE.......E804D85663F
+```bash
+git tag v1.3.0
+git push origin v1.3.0
 ```
 
-Release the client is done using the following three steps:
+That is the whole procedure. Pushing a tag triggers
+[`.github/workflows/release.yml`](.github/workflows/release.yml), which runs `sbt ci-release` to cross-build, sign and
+publish `client`, `dsl` and `testkit` for every version in `crossScalaVersions`.
 
-```
-1. Release Code
-2. Publish Artifacts
-3. Releese Artifacts 
-```
+Between tags, `sbt-dynver` produces snapshot versions of the form `1.3.0+3-abc1234-SNAPSHOT`. Snapshot publishing is
+disabled, so those are local-only.
 
-## Release Code
+Verify the result on Maven Central:
 
-To release and publish a version to oss.sonatype for both scala 2.12 and scala 2.13 run:
+- https://mvnrepository.com/artifact/com.crobox.clickhouse/client_2.13
+- https://mvnrepository.com/artifact/com.crobox.clickhouse/client_3
 
-```
-sbt release 
-```
-It's likely that *after* pushing all artifacts to the online repository you'll see an error complaining that the
-tag already exists. That's ok.
+Central sync typically trails the publish by 15–30 minutes, so a 404 immediately afterwards is expected.
 
-## Publish Artifacts
+## Release notes
 
-To only publish a certain version after f.e. the tags has been build, but your PGP was not correctly unlocked you can
-run
+The generated notes are a list of PR titles, which does not tell a consumer what breaks. Write them by hand for anything
+with user-visible consequences — changed SQL output, changed defaults, removed functions, dropped transitive
+dependencies. See the [v1.3.0 notes](https://github.com/crobox/clickhouse-scala-client/releases/tag/v1.3.0) for the
+shape: what changed, who it affects, and how to opt out.
 
-```
-sbt publishSigned
-```
+## Credentials
 
-If you want to publish only a single SCALA version, use `sbt ++3.3.1 publishSigned`
+`release.yml` needs four repository or organisation secrets:
 
-## Release Artifacts
+| Secret | Purpose |
+|---|---|
+| `PGP_SECRET` | base64-encoded private key used to sign artifacts |
+| `PGP_PASSPHRASE` | passphrase for that key |
+| `SONATYPE_USERNAME` | Sonatype Central user token name |
+| `SONATYPE_PASSWORD` | Sonatype Central user token |
 
-To close and release the staging repository on Sonatype you can either go to the web interface or use
+The signing key is refreshed by
+[`.github/workflows/refresh-signing-key.yml`](.github/workflows/refresh-signing-key.yml).
 
-```
-sbt sonatypeRelease
-```
+Nothing needs to be configured on a developer machine; releasing does not happen locally.
 
-If something goes wrong and you want to cleanup/rollback, use `sbt sonatypeDropAll`
+## If a release fails
 
-You can verify if all has been published correctly by visiting the following url:<br>
-https://oss.sonatype.org/#nexus-search;quick~clickhouse%20crobox
+The publish is not reliably one-shot — a transient Sonatype or Maven Central error can fail the run. Re-run the failed
+job from the Actions tab. The tag does not need moving, and `ci-release` is safe to retry: a version that already
+published will fail rather than overwrite.

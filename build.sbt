@@ -1,7 +1,5 @@
 import Build.*
 
-releaseCrossBuild := true
-
 lazy val root = (project in file("."))
   .settings(
     publish         := {},
@@ -32,11 +30,10 @@ lazy val root = (project in file("."))
   .aggregate(client, dsl, testkit)
 
 lazy val client: Project = (project in file("client"))
-  .configs(Config.CustomIntegrationTest)
+  .configs(Config.IntegrationTest)
   .settings(Config.testSettings: _*)
   .settings(
-    name                                                              := "client",
-    sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    name := "client",
     libraryDependencies ++= Seq(
       "io.spray"                   %% "spray-json"    % "1.3.6",
       "org.apache.pekko"           %% "pekko-actor"   % PekkoVersion,
@@ -50,19 +47,17 @@ lazy val client: Project = (project in file("client"))
 
 lazy val dsl = (project in file("dsl"))
   .dependsOn(client, client % "test->test", testkit % Test)
-  .configs(Config.CustomIntegrationTest)
+  .configs(Config.IntegrationTest)
   .settings(Config.testSettings: _*)
   .settings(
-    name                                                              := "dsl",
-    sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value
+    name := "dsl"
   )
 //  .settings(excludeDependencies ++= Seq(ExclusionRule("org.apache.pekko")))
 
 lazy val testkit = (project in file("testkit"))
   .dependsOn(client)
   .settings(
-    name                                                              := "testkit",
-    sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    name := "testkit",
     // scalatest is part of the published API (ClickhouseSpec extends SuiteMixin); logback is only the backend our own
     // tests log through, and must not land on a consumer's compile classpath.
     libraryDependencies ++= Seq(Build.scalaTest, Build.logback % Test)

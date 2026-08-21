@@ -17,23 +17,16 @@ jobs:
       - uses: sbt/setup-sbt@v1
 
       # The stored signing key has expired and its private half is lost, so push the
-      # expiry forward in this runner's keyring before anything tries to sign. Runs
-      # before the docker steps so a broken key fails in seconds, not minutes.
+      # expiry forward in this runner's keyring before anything tries to sign.
       - uses: ./.github/actions/refresh-signing-key
         with:
           pgp-secret: ${{ secrets.PGP_SECRET }}
           pgp-passphrase: ${{ secrets.PGP_PASSPHRASE }}
-      - name: Update '/etc/hosts' file
-        run: ./.docker/update-hosts.sh
 
-      - name: Generate SSL certificates
-        run: ./.docker/generate-certs.sh
-
-      - name: Docker Compose Action
-        uses: hoverkraft-tech/compose-action@v3
-        with:
-          compose-file: './.docker/docker-compose.yml'
-          down-flags: '--volumes'
+      # No ClickHouse here: `ci-release` cross-builds, signs and publishes, and runs no tests. The v1.3.0 release log
+      # confirms it -- zero tests executed, and the only output was POMs, API docs and uploads. Bringing up a server,
+      # generating certificates and patching /etc/hosts added minutes and three failure surfaces to every release for
+      # nothing. Testing happens in ci.yml, before the tag.
       - run: sbt ci-release
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
