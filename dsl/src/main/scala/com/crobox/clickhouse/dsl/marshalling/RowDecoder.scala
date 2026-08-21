@@ -31,81 +31,226 @@ object RowDecoder {
     catch {
       case cause: ColumnDecodingException =>
         val name = names.lift(index).getOrElse(s"column ${index + 1}")
-        throw RowDecodingException(s"Could not decode column '$name' (position ${index + 1}): ${cause.getMessage}", cause)
+        throw RowDecodingException(
+          s"Could not decode column '$name' (position ${index + 1}): ${cause.getMessage}",
+          cause
+        )
     }
 
   /** A single-column result decodes to the value itself rather than to a Tuple1. */
   implicit def single[A](implicit decoder: ColumnDecoder[A]): RowDecoder[A] =
     new RowDecoder[A] {
-      val arity                                                    = 1
+      val arity                                                  = 1
       def decode(row: Vector[JsValue], names: Vector[String]): A = at[A](row, names, 0)
     }
 
   implicit def tuple2[A: ColumnDecoder, B: ColumnDecoder]: RowDecoder[(A, B)] =
     new RowDecoder[(A, B)] {
-      val arity = 2
+      val arity                                                       = 2
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B) =
         (at[A](row, names, 0), at[B](row, names, 1))
     }
   implicit def tuple3[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder]: RowDecoder[(A, B, C)] =
     new RowDecoder[(A, B, C)] {
-      val arity = 3
+      val arity                                                          = 3
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B, C) =
         (at[A](row, names, 0), at[B](row, names, 1), at[C](row, names, 2))
     }
-  implicit def tuple4[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder]: RowDecoder[(A, B, C, D)] =
+  implicit def tuple4[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder]
+      : RowDecoder[(A, B, C, D)] =
     new RowDecoder[(A, B, C, D)] {
-      val arity = 4
+      val arity                                                             = 4
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B, C, D) =
         (at[A](row, names, 0), at[B](row, names, 1), at[C](row, names, 2), at[D](row, names, 3))
     }
-  implicit def tuple5[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder]: RowDecoder[(A, B, C, D, E)] =
+  implicit def tuple5[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder]
+      : RowDecoder[(A, B, C, D, E)] =
     new RowDecoder[(A, B, C, D, E)] {
-      val arity = 5
+      val arity                                                                = 5
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B, C, D, E) =
         (at[A](row, names, 0), at[B](row, names, 1), at[C](row, names, 2), at[D](row, names, 3), at[E](row, names, 4))
     }
-  implicit def tuple6[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder]: RowDecoder[(A, B, C, D, E, F)] =
+  implicit def tuple6[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder
+  ]: RowDecoder[(A, B, C, D, E, F)] =
     new RowDecoder[(A, B, C, D, E, F)] {
-      val arity = 6
+      val arity                                                                   = 6
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B, C, D, E, F) =
-        (at[A](row, names, 0), at[B](row, names, 1), at[C](row, names, 2), at[D](row, names, 3), at[E](row, names, 4), at[F](row, names, 5))
+        (
+          at[A](row, names, 0),
+          at[B](row, names, 1),
+          at[C](row, names, 2),
+          at[D](row, names, 3),
+          at[E](row, names, 4),
+          at[F](row, names, 5)
+        )
     }
-  implicit def tuple7[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder]: RowDecoder[(A, B, C, D, E, F, G)] =
+  implicit def tuple7[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder
+  ]: RowDecoder[(A, B, C, D, E, F, G)] =
     new RowDecoder[(A, B, C, D, E, F, G)] {
-      val arity = 7
+      val arity                                                                      = 7
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B, C, D, E, F, G) =
-        (at[A](row, names, 0), at[B](row, names, 1), at[C](row, names, 2), at[D](row, names, 3), at[E](row, names, 4), at[F](row, names, 5), at[G](row, names, 6))
+        (
+          at[A](row, names, 0),
+          at[B](row, names, 1),
+          at[C](row, names, 2),
+          at[D](row, names, 3),
+          at[E](row, names, 4),
+          at[F](row, names, 5),
+          at[G](row, names, 6)
+        )
     }
-  implicit def tuple8[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder, H: ColumnDecoder]: RowDecoder[(A, B, C, D, E, F, G, H)] =
+  implicit def tuple8[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder,
+      H: ColumnDecoder
+  ]: RowDecoder[(A, B, C, D, E, F, G, H)] =
     new RowDecoder[(A, B, C, D, E, F, G, H)] {
-      val arity = 8
+      val arity                                                                         = 8
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B, C, D, E, F, G, H) =
-        (at[A](row, names, 0), at[B](row, names, 1), at[C](row, names, 2), at[D](row, names, 3), at[E](row, names, 4), at[F](row, names, 5), at[G](row, names, 6), at[H](row, names, 7))
+        (
+          at[A](row, names, 0),
+          at[B](row, names, 1),
+          at[C](row, names, 2),
+          at[D](row, names, 3),
+          at[E](row, names, 4),
+          at[F](row, names, 5),
+          at[G](row, names, 6),
+          at[H](row, names, 7)
+        )
     }
-  implicit def tuple9[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder, H: ColumnDecoder, I: ColumnDecoder]: RowDecoder[(A, B, C, D, E, F, G, H, I)] =
+  implicit def tuple9[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder,
+      H: ColumnDecoder,
+      I: ColumnDecoder
+  ]: RowDecoder[(A, B, C, D, E, F, G, H, I)] =
     new RowDecoder[(A, B, C, D, E, F, G, H, I)] {
-      val arity = 9
+      val arity                                                                            = 9
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B, C, D, E, F, G, H, I) =
-        (at[A](row, names, 0), at[B](row, names, 1), at[C](row, names, 2), at[D](row, names, 3), at[E](row, names, 4), at[F](row, names, 5), at[G](row, names, 6), at[H](row, names, 7), at[I](row, names, 8))
+        (
+          at[A](row, names, 0),
+          at[B](row, names, 1),
+          at[C](row, names, 2),
+          at[D](row, names, 3),
+          at[E](row, names, 4),
+          at[F](row, names, 5),
+          at[G](row, names, 6),
+          at[H](row, names, 7),
+          at[I](row, names, 8)
+        )
     }
-  implicit def tuple10[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder, H: ColumnDecoder, I: ColumnDecoder, J: ColumnDecoder]: RowDecoder[(A, B, C, D, E, F, G, H, I, J)] =
+  implicit def tuple10[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder,
+      H: ColumnDecoder,
+      I: ColumnDecoder,
+      J: ColumnDecoder
+  ]: RowDecoder[(A, B, C, D, E, F, G, H, I, J)] =
     new RowDecoder[(A, B, C, D, E, F, G, H, I, J)] {
-      val arity = 10
+      val arity                                                                               = 10
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B, C, D, E, F, G, H, I, J) =
-        (at[A](row, names, 0), at[B](row, names, 1), at[C](row, names, 2), at[D](row, names, 3), at[E](row, names, 4), at[F](row, names, 5), at[G](row, names, 6), at[H](row, names, 7), at[I](row, names, 8), at[J](row, names, 9))
+        (
+          at[A](row, names, 0),
+          at[B](row, names, 1),
+          at[C](row, names, 2),
+          at[D](row, names, 3),
+          at[E](row, names, 4),
+          at[F](row, names, 5),
+          at[G](row, names, 6),
+          at[H](row, names, 7),
+          at[I](row, names, 8),
+          at[J](row, names, 9)
+        )
     }
-  implicit def tuple11[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder, H: ColumnDecoder, I: ColumnDecoder, J: ColumnDecoder, K: ColumnDecoder]: RowDecoder[(A, B, C, D, E, F, G, H, I, J, K)] =
+  implicit def tuple11[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder,
+      H: ColumnDecoder,
+      I: ColumnDecoder,
+      J: ColumnDecoder,
+      K: ColumnDecoder
+  ]: RowDecoder[(A, B, C, D, E, F, G, H, I, J, K)] =
     new RowDecoder[(A, B, C, D, E, F, G, H, I, J, K)] {
-      val arity = 11
+      val arity                                                                                  = 11
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B, C, D, E, F, G, H, I, J, K) =
-        (at[A](row, names, 0), at[B](row, names, 1), at[C](row, names, 2), at[D](row, names, 3), at[E](row, names, 4), at[F](row, names, 5), at[G](row, names, 6), at[H](row, names, 7), at[I](row, names, 8), at[J](row, names, 9), at[K](row, names, 10))
+        (
+          at[A](row, names, 0),
+          at[B](row, names, 1),
+          at[C](row, names, 2),
+          at[D](row, names, 3),
+          at[E](row, names, 4),
+          at[F](row, names, 5),
+          at[G](row, names, 6),
+          at[H](row, names, 7),
+          at[I](row, names, 8),
+          at[J](row, names, 9),
+          at[K](row, names, 10)
+        )
     }
-  implicit def tuple12[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder, H: ColumnDecoder, I: ColumnDecoder, J: ColumnDecoder, K: ColumnDecoder, L: ColumnDecoder]: RowDecoder[(A, B, C, D, E, F, G, H, I, J, K, L)] =
+  implicit def tuple12[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder,
+      H: ColumnDecoder,
+      I: ColumnDecoder,
+      J: ColumnDecoder,
+      K: ColumnDecoder,
+      L: ColumnDecoder
+  ]: RowDecoder[(A, B, C, D, E, F, G, H, I, J, K, L)] =
     new RowDecoder[(A, B, C, D, E, F, G, H, I, J, K, L)] {
-      val arity = 12
+      val arity                                                                                     = 12
       def decode(row: Vector[JsValue], names: Vector[String]): (A, B, C, D, E, F, G, H, I, J, K, L) =
-        (at[A](row, names, 0), at[B](row, names, 1), at[C](row, names, 2), at[D](row, names, 3), at[E](row, names, 4), at[F](row, names, 5), at[G](row, names, 6), at[H](row, names, 7), at[I](row, names, 8), at[J](row, names, 9), at[K](row, names, 10), at[L](row, names, 11))
+        (
+          at[A](row, names, 0),
+          at[B](row, names, 1),
+          at[C](row, names, 2),
+          at[D](row, names, 3),
+          at[E](row, names, 4),
+          at[F](row, names, 5),
+          at[G](row, names, 6),
+          at[H](row, names, 7),
+          at[I](row, names, 8),
+          at[J](row, names, 9),
+          at[K](row, names, 10),
+          at[L](row, names, 11)
+        )
     }
 }
 

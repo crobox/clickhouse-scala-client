@@ -53,18 +53,17 @@ object ColumnDecoder {
 
   /** ClickHouse has no Bool in older versions and renders it as 0/1; accept both that and a real JSON boolean. */
   implicit val booleanDecoder: ColumnDecoder[Boolean] = instance("Boolean") {
-    case JsBoolean(b)           => b
-    case JsNumber(n)            => n != 0
-    case JsString("true")       => true
-    case JsString("false")      => false
-    case JsString("1")          => true
-    case JsString("0")          => false
+    case JsBoolean(b)      => b
+    case JsNumber(n)       => n != 0
+    case JsString("true")  => true
+    case JsString("false") => false
+    case JsString("1")     => true
+    case JsString("0")     => false
   }
 
-  implicit val uuidDecoder: ColumnDecoder[UUID] = instance("UUID") {
-    case JsString(s) =>
-      try UUID.fromString(s)
-      catch { case _: IllegalArgumentException => throw ColumnDecodingException("UUID", JsString(s)) }
+  implicit val uuidDecoder: ColumnDecoder[UUID] = instance("UUID") { case JsString(s) =>
+    try UUID.fromString(s)
+    catch { case _: IllegalArgumentException => throw ColumnDecodingException("UUID", JsString(s)) }
   }
 
   /** `Nullable(T)` arrives as `null`. */

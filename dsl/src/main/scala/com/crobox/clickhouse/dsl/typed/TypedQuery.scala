@@ -9,8 +9,9 @@ import com.crobox.clickhouse.dsl.marshalling.RowDecoder
  * A wrapper around [[OperationalQuery]] rather than a change to it: the untyped API, its ~350 functions and the whole
  * tokenizer stay exactly as they are, and the two can be mixed freely through [[transform]] and [[underlying]].
  *
- * Only the combinators that cannot change the row type are forwarded. Anything that selects -- joins, unions, `distinct`
- * -- would invalidate the decoder, so it is reached through [[transform]] deliberately rather than by accident.
+ * Only the combinators that cannot change the row type are forwarded. Anything that selects -- joins, unions,
+ * `distinct` -- would invalidate the decoder, so it is reached through [[transform]] deliberately rather than by
+ * accident.
  */
 final case class TypedQuery[R](underlying: OperationalQuery, decoder: RowDecoder[R]) {
 
@@ -33,8 +34,8 @@ final case class TypedQuery[R](underlying: OperationalQuery, decoder: RowDecoder
   def limit(size: Long): TypedQuery[R]           = copy(underlying = underlying.limit(Option(Limit(size))))
 
   /**
-   * Apply any untyped combinator this does not forward -- joins, unions, `limitBy`, `final`. The row type is asserted to
-   * be unchanged, so do not use it to alter the select list.
+   * Apply any untyped combinator this does not forward -- joins, unions, `limitBy`, `final`. The row type is asserted
+   * to be unchanged, so do not use it to alter the select list.
    */
   def transform(f: OperationalQuery => OperationalQuery): TypedQuery[R] = copy(underlying = f(underlying))
 

@@ -25,7 +25,7 @@ class CompactRowParserTest extends AnyFlatSpec with Matchers {
       RowDecoder[(Long, String)]
     )
     parsed.meta.map(_.columnTypes.map(c => c.name -> c.columnType)) shouldBe
-      Some(Seq("n" -> "UInt64", "t" -> "DateTime"))
+    Some(Seq("n" -> "UInt64", "t" -> "DateTime"))
   }
 
   it should "decode a 64-bit integer whether ClickHouse quoted it or not" in {
@@ -41,7 +41,7 @@ class CompactRowParserTest extends AnyFlatSpec with Matchers {
   it should "decode an integer-valued column into Double, as the Sum phantom type requires" in {
     // sum(intColumn) is declared AggregateFunction[Double] but ClickHouse returns UInt64.
     CompactRowParser.parse(body("""["s"]""", """["UInt64"]""", """["123"]"""), RowDecoder[Double]).rows shouldBe
-      Seq(123.0d)
+    Seq(123.0d)
   }
 
   it should "decode Nullable as Option" in {
@@ -68,8 +68,10 @@ class CompactRowParserTest extends AnyFlatSpec with Matchers {
 
   it should "say which column failed, by name" in {
     val failure = intercept[RowDecodingException](
-      CompactRowParser.parse(body("""["a", "count"]""", """["String", "UInt64"]""", """["x", "abc"]"""),
-                             RowDecoder[(String, Long)])
+      CompactRowParser.parse(
+        body("""["a", "count"]""", """["String", "UInt64"]""", """["x", "abc"]"""),
+        RowDecoder[(String, Long)]
+      )
     )
     failure.getMessage should include("'count'")
     failure.getMessage should include("position 2")
@@ -78,13 +80,15 @@ class CompactRowParserTest extends AnyFlatSpec with Matchers {
   it should "refuse a decoder whose arity disagrees with the select list" in {
     // The failure the string-keyed JsonReader approach could not produce at all.
     val failure = intercept[ResultParsingException](
-      CompactRowParser.parse(body("""["a", "b", "c"]""", """["String", "String", "String"]"""), RowDecoder[(String, String)])
+      CompactRowParser.parse(
+        body("""["a", "b", "c"]""", """["String", "String", "String"]"""),
+        RowDecoder[(String, String)]
+      )
     )
     failure.getMessage should include("3 column(s)")
     failure.getMessage should include("expects 2")
   }
 
-  it should "reject a truncated response rather than returning an empty result" in {
+  it should "reject a truncated response rather than returning an empty result" in
     intercept[ResultParsingException](CompactRowParser.parse("""["a"]""", RowDecoder[String]))
-  }
 }

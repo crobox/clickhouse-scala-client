@@ -52,7 +52,8 @@ private[dsl] object CompactRowParser {
       case JsArray(elements) =>
         elements.map {
           case JsString(s) => s
-          case other       => throw ResultParsingException(s"Expected a string in the $what header, got ${other.compactPrint}")
+          case other       =>
+            throw ResultParsingException(s"Expected a string in the $what header, got ${other.compactPrint}")
         }.toVector
       case other => throw ResultParsingException(s"Expected the $what header to be an array, got ${other.compactPrint}")
     }

@@ -58,7 +58,7 @@ class TypedQueryIT extends DslITSpec {
   it should "carry the declared ClickHouse types through as meta" in {
     val meta = queryExecutor.executeTyped(typed.select(itemId, col2) from TwoTestTable).futureValue.meta
     meta.map(_.columnTypes.map(c => c.name -> c.columnType)) shouldBe
-      Some(Seq("item_id" -> "String", "column_2" -> "UInt32"))
+    Some(Seq("item_id" -> "String", "column_2" -> "UInt32"))
   }
 
   it should "compose with the untyped combinators it does not forward" in {

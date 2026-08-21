@@ -3,9 +3,9 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.dsl.marshalling.{ColumnDecoder, RowDecoder}
 
 /**
- * The typed entry point: `select` here returns a [[typed.TypedQuery]] carrying a decoder for its own rows, so the result
- * type follows from the select list instead of from a hand-written `JsonReader` whose field names have to match your
- * aliases by hand.
+ * The typed entry point: `select` here returns a [[typed.TypedQuery]] carrying a decoder for its own rows, so the
+ * result type follows from the select list instead of from a hand-written `JsonReader` whose field names have to match
+ * your aliases by hand.
  *
  * Qualify it as `typed.select`. `typed` is a subpackage of `dsl`, so after the usual `import
  * com.crobox.clickhouse.dsl._` no further import is needed:
@@ -34,24 +34,185 @@ package object typed {
     TypedQuery(SelectQuery(Seq(c1)), RowDecoder[A])
   def select[A: ColumnDecoder, B: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B]): TypedQuery[(A, B)] =
     TypedQuery(SelectQuery(Seq(c1, c2)), RowDecoder[(A, B)])
-  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B], c3: TableColumn[C]): TypedQuery[(A, B, C)] =
+  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder](
+      c1: TableColumn[A],
+      c2: TableColumn[B],
+      c3: TableColumn[C]
+  ): TypedQuery[(A, B, C)] =
     TypedQuery(SelectQuery(Seq(c1, c2, c3)), RowDecoder[(A, B, C)])
-  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B], c3: TableColumn[C], c4: TableColumn[D]): TypedQuery[(A, B, C, D)] =
+  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder](
+      c1: TableColumn[A],
+      c2: TableColumn[B],
+      c3: TableColumn[C],
+      c4: TableColumn[D]
+  ): TypedQuery[(A, B, C, D)] =
     TypedQuery(SelectQuery(Seq(c1, c2, c3, c4)), RowDecoder[(A, B, C, D)])
-  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B], c3: TableColumn[C], c4: TableColumn[D], c5: TableColumn[E]): TypedQuery[(A, B, C, D, E)] =
+  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder](
+      c1: TableColumn[A],
+      c2: TableColumn[B],
+      c3: TableColumn[C],
+      c4: TableColumn[D],
+      c5: TableColumn[E]
+  ): TypedQuery[(A, B, C, D, E)] =
     TypedQuery(SelectQuery(Seq(c1, c2, c3, c4, c5)), RowDecoder[(A, B, C, D, E)])
-  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B], c3: TableColumn[C], c4: TableColumn[D], c5: TableColumn[E], c6: TableColumn[F]): TypedQuery[(A, B, C, D, E, F)] =
+  def select[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder
+  ](
+      c1: TableColumn[A],
+      c2: TableColumn[B],
+      c3: TableColumn[C],
+      c4: TableColumn[D],
+      c5: TableColumn[E],
+      c6: TableColumn[F]
+  ): TypedQuery[(A, B, C, D, E, F)] =
     TypedQuery(SelectQuery(Seq(c1, c2, c3, c4, c5, c6)), RowDecoder[(A, B, C, D, E, F)])
-  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B], c3: TableColumn[C], c4: TableColumn[D], c5: TableColumn[E], c6: TableColumn[F], c7: TableColumn[G]): TypedQuery[(A, B, C, D, E, F, G)] =
+  def select[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder
+  ](
+      c1: TableColumn[A],
+      c2: TableColumn[B],
+      c3: TableColumn[C],
+      c4: TableColumn[D],
+      c5: TableColumn[E],
+      c6: TableColumn[F],
+      c7: TableColumn[G]
+  ): TypedQuery[(A, B, C, D, E, F, G)] =
     TypedQuery(SelectQuery(Seq(c1, c2, c3, c4, c5, c6, c7)), RowDecoder[(A, B, C, D, E, F, G)])
-  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder, H: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B], c3: TableColumn[C], c4: TableColumn[D], c5: TableColumn[E], c6: TableColumn[F], c7: TableColumn[G], c8: TableColumn[H]): TypedQuery[(A, B, C, D, E, F, G, H)] =
+  def select[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder,
+      H: ColumnDecoder
+  ](
+      c1: TableColumn[A],
+      c2: TableColumn[B],
+      c3: TableColumn[C],
+      c4: TableColumn[D],
+      c5: TableColumn[E],
+      c6: TableColumn[F],
+      c7: TableColumn[G],
+      c8: TableColumn[H]
+  ): TypedQuery[(A, B, C, D, E, F, G, H)] =
     TypedQuery(SelectQuery(Seq(c1, c2, c3, c4, c5, c6, c7, c8)), RowDecoder[(A, B, C, D, E, F, G, H)])
-  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder, H: ColumnDecoder, I: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B], c3: TableColumn[C], c4: TableColumn[D], c5: TableColumn[E], c6: TableColumn[F], c7: TableColumn[G], c8: TableColumn[H], c9: TableColumn[I]): TypedQuery[(A, B, C, D, E, F, G, H, I)] =
+  def select[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder,
+      H: ColumnDecoder,
+      I: ColumnDecoder
+  ](
+      c1: TableColumn[A],
+      c2: TableColumn[B],
+      c3: TableColumn[C],
+      c4: TableColumn[D],
+      c5: TableColumn[E],
+      c6: TableColumn[F],
+      c7: TableColumn[G],
+      c8: TableColumn[H],
+      c9: TableColumn[I]
+  ): TypedQuery[(A, B, C, D, E, F, G, H, I)] =
     TypedQuery(SelectQuery(Seq(c1, c2, c3, c4, c5, c6, c7, c8, c9)), RowDecoder[(A, B, C, D, E, F, G, H, I)])
-  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder, H: ColumnDecoder, I: ColumnDecoder, J: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B], c3: TableColumn[C], c4: TableColumn[D], c5: TableColumn[E], c6: TableColumn[F], c7: TableColumn[G], c8: TableColumn[H], c9: TableColumn[I], c10: TableColumn[J]): TypedQuery[(A, B, C, D, E, F, G, H, I, J)] =
+  def select[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder,
+      H: ColumnDecoder,
+      I: ColumnDecoder,
+      J: ColumnDecoder
+  ](
+      c1: TableColumn[A],
+      c2: TableColumn[B],
+      c3: TableColumn[C],
+      c4: TableColumn[D],
+      c5: TableColumn[E],
+      c6: TableColumn[F],
+      c7: TableColumn[G],
+      c8: TableColumn[H],
+      c9: TableColumn[I],
+      c10: TableColumn[J]
+  ): TypedQuery[(A, B, C, D, E, F, G, H, I, J)] =
     TypedQuery(SelectQuery(Seq(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10)), RowDecoder[(A, B, C, D, E, F, G, H, I, J)])
-  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder, H: ColumnDecoder, I: ColumnDecoder, J: ColumnDecoder, K: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B], c3: TableColumn[C], c4: TableColumn[D], c5: TableColumn[E], c6: TableColumn[F], c7: TableColumn[G], c8: TableColumn[H], c9: TableColumn[I], c10: TableColumn[J], c11: TableColumn[K]): TypedQuery[(A, B, C, D, E, F, G, H, I, J, K)] =
-    TypedQuery(SelectQuery(Seq(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11)), RowDecoder[(A, B, C, D, E, F, G, H, I, J, K)])
-  def select[A: ColumnDecoder, B: ColumnDecoder, C: ColumnDecoder, D: ColumnDecoder, E: ColumnDecoder, F: ColumnDecoder, G: ColumnDecoder, H: ColumnDecoder, I: ColumnDecoder, J: ColumnDecoder, K: ColumnDecoder, L: ColumnDecoder](c1: TableColumn[A], c2: TableColumn[B], c3: TableColumn[C], c4: TableColumn[D], c5: TableColumn[E], c6: TableColumn[F], c7: TableColumn[G], c8: TableColumn[H], c9: TableColumn[I], c10: TableColumn[J], c11: TableColumn[K], c12: TableColumn[L]): TypedQuery[(A, B, C, D, E, F, G, H, I, J, K, L)] =
-    TypedQuery(SelectQuery(Seq(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12)), RowDecoder[(A, B, C, D, E, F, G, H, I, J, K, L)])
+  def select[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder,
+      H: ColumnDecoder,
+      I: ColumnDecoder,
+      J: ColumnDecoder,
+      K: ColumnDecoder
+  ](
+      c1: TableColumn[A],
+      c2: TableColumn[B],
+      c3: TableColumn[C],
+      c4: TableColumn[D],
+      c5: TableColumn[E],
+      c6: TableColumn[F],
+      c7: TableColumn[G],
+      c8: TableColumn[H],
+      c9: TableColumn[I],
+      c10: TableColumn[J],
+      c11: TableColumn[K]
+  ): TypedQuery[(A, B, C, D, E, F, G, H, I, J, K)] =
+    TypedQuery(
+      SelectQuery(Seq(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11)),
+      RowDecoder[(A, B, C, D, E, F, G, H, I, J, K)]
+    )
+  def select[
+      A: ColumnDecoder,
+      B: ColumnDecoder,
+      C: ColumnDecoder,
+      D: ColumnDecoder,
+      E: ColumnDecoder,
+      F: ColumnDecoder,
+      G: ColumnDecoder,
+      H: ColumnDecoder,
+      I: ColumnDecoder,
+      J: ColumnDecoder,
+      K: ColumnDecoder,
+      L: ColumnDecoder
+  ](
+      c1: TableColumn[A],
+      c2: TableColumn[B],
+      c3: TableColumn[C],
+      c4: TableColumn[D],
+      c5: TableColumn[E],
+      c6: TableColumn[F],
+      c7: TableColumn[G],
+      c8: TableColumn[H],
+      c9: TableColumn[I],
+      c10: TableColumn[J],
+      c11: TableColumn[K],
+      c12: TableColumn[L]
+  ): TypedQuery[(A, B, C, D, E, F, G, H, I, J, K, L)] =
+    TypedQuery(
+      SelectQuery(Seq(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12)),
+      RowDecoder[(A, B, C, D, E, F, G, H, I, J, K, L)]
+    )
 }
