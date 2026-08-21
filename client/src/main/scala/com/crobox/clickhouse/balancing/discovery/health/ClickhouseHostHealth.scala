@@ -13,6 +13,7 @@ import com.crobox.clickhouse.internal.ClickhouseResponseParser
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+import com.crobox.clickhouse.internal.ConfigDuration
 
 object ClickhouseHostHealth extends ClickhouseResponseParser {
 
@@ -38,15 +39,9 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
       executionContext: ExecutionContext
   ): Source[ClickhouseHostStatus, Cancellable] = {
     val healthCheckInterval: FiniteDuration =
-      system.settings.config
-        .getDuration("connection.health-check.interval")
-        .toMillis
-        .seconds
+      ConfigDuration(system.settings.config, "connection.health-check.interval")
     val healthCheckTimeout: FiniteDuration =
-      system.settings.config
-        .getDuration("connection.health-check.timeout")
-        .toMillis
-        .seconds
+      ConfigDuration(system.settings.config, "connection.health-check.timeout")
 
     val healthCachedPool = Http(system).cachedHostConnectionPool[Int](
       host.authority.host.address(),

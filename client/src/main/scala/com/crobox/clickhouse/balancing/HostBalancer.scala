@@ -4,6 +4,7 @@ import com.crobox.clickhouse.balancing.Connection.{BalancingHosts, ClusterAware,
 import com.crobox.clickhouse.balancing.discovery.ConnectionManagerActor
 import com.crobox.clickhouse.balancing.discovery.health.ClickhouseHostHealth
 import com.crobox.clickhouse.internal.ClickhouseHostBuilder
+import com.crobox.clickhouse.internal.ConfigDuration
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.pekko.actor.ActorSystem
@@ -44,7 +45,7 @@ object HostBalancer extends ClickhouseHostBuilder {
           connectionHostFromConfig,
           connectionConfig.getString("cluster"),
           manager,
-          connectionConfig.getDuration("scanning-interval").toMillis.millis
+          ConfigDuration(connectionConfig, "scanning-interval")
         )(system, hostRetrievalTimeout(config), ec)
     }
   }
@@ -54,8 +55,7 @@ object HostBalancer extends ClickhouseHostBuilder {
    * is absent, so a balancer built against a bare ActorSystem keeps working.
    */
   private[balancing] def hostRetrievalTimeout(config: Config): FiniteDuration =
-    if (config.hasPath("host-retrieval-timeout")) config.getDuration("host-retrieval-timeout").toMillis.millis
-    else 5.seconds
+    ConfigDuration.orElse(config, "host-retrieval-timeout", 5.seconds)
 
   def extractHost(connectionConfig: Config): Uri =
     toHost(

@@ -9,6 +9,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import com.crobox.clickhouse.internal.ConfigDuration
 
 case class ClickhouseIndexingException(msg: String, cause: Throwable, payload: Seq[String], table: String)
     extends RuntimeException(msg, cause)
@@ -59,7 +60,7 @@ object ClickhouseSink extends LazyLogging {
       )
       .getOrElse(indexerGeneralConfig)
     val batchSize     = mergedIndexerConfig.getInt("batch-size")
-    val flushInterval = mergedIndexerConfig.getDuration("flush-interval").toMillis.millis
+    val flushInterval = ConfigDuration(mergedIndexerConfig, "flush-interval")
     Flow[TableOperation]
       .groupBy(Int.MaxValue, _.table)
       .groupedWithin(batchSize, flushInterval)
