@@ -105,6 +105,20 @@ class CompactRowParserTest extends AnyFlatSpec with Matchers {
     row.get(dt64) shouldBe Some(new DateTime(2026, 8, 21, 21, 48, 17, 250, DateTimeZone.UTC))
   }
 
+  it should "decode every DateTime64 precision ClickHouse can send" in {
+    // DateTime64(n) allows n up to 9: (0) has no fractional part at all, (3)/(6)/(9) have 3, 6 and 9 digits. Taken from
+    // a live server rather than assumed.
+    val dt                 = NativeColumn[DateTime]("dt", ColumnType.DateTime)
+    def one(value: String) =
+      CompactRowParser.parse(body("""["dt"]""", """["DateTime64(9)"]""", s"""["$value"]""")).rows.head.get(dt)
+
+    val expected = new DateTime(2026, 8, 21, 22, 0, 33, 250, DateTimeZone.UTC)
+    one("2026-08-21 22:00:33") shouldBe Some(expected.withMillisOfSecond(0))
+    one("2026-08-21 22:00:33.250") shouldBe Some(expected)
+    one("2026-08-21 22:00:33.250000") shouldBe Some(expected)
+    one("2026-08-21 22:00:33.250000000") shouldBe Some(expected)
+  }
+
   it should "hand over the raw value for a type this layer has no decoder for" in {
     val row = CompactRowParser.parse(body("""["m"]""", """["Map(String, UInt8)"]""", """[{"a":1}]""")).rows.head
     row.raw("m") shouldBe Some(JsObject("a" -> JsNumber(1)))

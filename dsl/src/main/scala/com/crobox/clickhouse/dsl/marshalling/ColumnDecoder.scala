@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.marshalling
 
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
+import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.{DateTime, DateTimeZone, LocalDate}
 import spray.json._
 
@@ -83,22 +83,25 @@ object ColumnDecoder {
     seqDecoder(inner).decode(_)
 
   /**
-   * `Date` arrives as `2026-08-21`, `DateTime` as `2026-08-21 21:48:17` and `DateTime64(n)` with a fractional part -- a
-   * space rather than the ISO `T`, and no offset.
+   * `Date` arrives as `2026-08-21`, `DateTime` as `2026-08-21 21:48:17` and `DateTime64(n)` with `n` fractional digits
+   * -- a space rather than the ISO `T`, and no offset. Everything after the date is optional, because `n` runs from 0
+   * to 9: `DateTime64(0)` carries no fractional part at all and `DateTime64(9)` carries nine digits.
    *
-   * The absence of an offset is the catch: the server renders a `DateTime` in that column's own timezone, which the
-   * declared type carries (`DateTime('Europe/Amsterdam')`) but the value does not. These read as UTC, which is right
-   * for the default server configuration and wrong for a column declared with an explicit zone. Reading the zone off
-   * the declared type needs the decoder to see it, which this signature does not allow -- see #326.
+   * Two things this cannot do. joda carries milliseconds, so anything finer than `DateTime64(3)` is truncated rather
+   * than represented -- java.time would carry it (#326). And the absence of an offset means the server renders a
+   * `DateTime` in that column's own timezone, which the declared type carries (`DateTime('Europe/Amsterdam')`) but the
+   * value does not; these read as UTC, which is right for a default server and wrong for a column declared with an
+   * explicit zone. Reading the zone off the declared type needs the decoder to see it, which this signature does not
+   * allow.
    */
   private val dateTimeParser = new DateTimeFormatterBuilder()
-    .append(
-      DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").getPrinter,
-      Array(
-        DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").getParser,
-        DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").getParser,
-        DateTimeFormat.forPattern("yyyy-MM-dd").getParser
-      )
+    .appendPattern("yyyy-MM-dd")
+    .appendOptional(
+      new DateTimeFormatterBuilder()
+        .appendLiteral(' ')
+        .appendPattern("HH:mm:ss")
+        .appendOptional(new DateTimeFormatterBuilder().appendLiteral('.').appendFractionOfSecond(1, 9).toParser)
+        .toParser
     )
     .toFormatter
     .withZoneUTC()
