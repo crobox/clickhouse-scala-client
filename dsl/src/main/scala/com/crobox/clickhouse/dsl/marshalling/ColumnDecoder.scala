@@ -1,5 +1,7 @@
 package com.crobox.clickhouse.dsl.marshalling
 
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatterBuilder}
+import org.joda.time.{DateTime, DateTimeZone, LocalDate}
 import spray.json._
 
 import java.util.UUID
@@ -79,6 +81,37 @@ object ColumnDecoder {
 
   implicit def iterableDecoder[A](implicit inner: ColumnDecoder[A]): ColumnDecoder[Iterable[A]] =
     seqDecoder(inner).decode(_)
+
+  /**
+   * `Date` arrives as `2026-08-21`, `DateTime` as `2026-08-21 21:48:17` and `DateTime64(n)` with a fractional part -- a
+   * space rather than the ISO `T`, and no offset.
+   *
+   * The absence of an offset is the catch: the server renders a `DateTime` in that column's own timezone, which the
+   * declared type carries (`DateTime('Europe/Amsterdam')`) but the value does not. These read as UTC, which is right
+   * for the default server configuration and wrong for a column declared with an explicit zone. Reading the zone off
+   * the declared type needs the decoder to see it, which this signature does not allow -- see #326.
+   */
+  private val dateTimeParser = new DateTimeFormatterBuilder()
+    .append(
+      DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").getPrinter,
+      Array(
+        DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").getParser,
+        DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").getParser,
+        DateTimeFormat.forPattern("yyyy-MM-dd").getParser
+      )
+    )
+    .toFormatter
+    .withZoneUTC()
+
+  implicit val dateTimeDecoder: ColumnDecoder[DateTime] = instance("DateTime") { case JsString(s) =>
+    try dateTimeParser.parseDateTime(s)
+    catch { case _: IllegalArgumentException => throw ColumnDecodingException("DateTime", JsString(s)) }
+  }
+
+  implicit val localDateDecoder: ColumnDecoder[LocalDate] = instance("Date") { case JsString(s) =>
+    try dateTimeParser.withZone(DateTimeZone.UTC).parseLocalDate(s)
+    catch { case _: IllegalArgumentException => throw ColumnDecodingException("Date", JsString(s)) }
+  }
 
   /** Escape hatch for a column this layer has no instance for. */
   implicit val jsValueDecoder: ColumnDecoder[JsValue] = (value: JsValue) => value

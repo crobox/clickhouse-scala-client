@@ -1,6 +1,5 @@
 package com.crobox.clickhouse.dsl.execution
 
-import com.crobox.clickhouse.dsl.marshalling.RowDecoder
 import spray.json._
 
 /**
@@ -8,15 +7,16 @@ import spray.json._
  * JSON array per row.
  *
  * Chosen over `FORMAT JSON` for three reasons. It is line-delimited, so it can eventually be consumed incrementally
- * rather than buffered whole (see #75). It is positional, which is what removes the string coupling between a query's
- * aliases and its decoder's field names. And it states each column's declared type, so decoding no longer has to guess
- * how a value was spelled -- which is what makes pinning `output_format_json_quote_64bit_integers` unnecessary here.
+ * rather than buffered whole (see #75). It states each column's declared type, so a decoder no longer has to guess how
+ * a value was spelled -- which is what makes pinning `output_format_json_quote_64bit_integers` unnecessary here. And it
+ * names each column once for the whole result rather than on every row, which is what `FORMAT JSON` spends most of a
+ * large response on.
  */
 private[dsl] object CompactRowParser {
 
   val Format: String = "JSONCompactEachRowWithNamesAndTypes"
 
-  def parse[R](body: String, decoder: RowDecoder[R]): QueryResult[R] = {
+  def parse(body: String): QueryResult[Row] = {
     val lines = body.linesIterator.filter(_.trim.nonEmpty).toVector
 
     if (lines.size < 2)
@@ -24,14 +24,9 @@ private[dsl] object CompactRowParser {
         s"Expected a header of column names and types from $Format, got ${lines.size} non-empty line(s)"
       )
 
-    val names = stringsOf(lines.head, "names")
-    val types = stringsOf(lines(1), "types")
-
-    if (decoder.arity != names.size)
-      throw ResultParsingException(
-        s"Query returns ${names.size} column(s) ${names.mkString("[", ", ", "]")} but the decoder expects " +
-          s"${decoder.arity}. The select list and the result type have to agree."
-      )
+    val names  = stringsOf(lines.head, "names")
+    val types  = stringsOf(lines(1), "types")
+    val header = new ResultHeader(names, types)
 
     val rows = lines.drop(2).map { line =>
       val values = line.parseJson match {
@@ -40,7 +35,7 @@ private[dsl] object CompactRowParser {
       }
       if (values.size != names.size)
         throw ResultParsingException(s"Row has ${values.size} value(s), header declares ${names.size}")
-      decoder.decode(values, names)
+      new Row(header, values)
     }
 
     // No statistic: unlike FORMAT JSON's envelope, this format carries no `rows_before_limit_at_least`.
