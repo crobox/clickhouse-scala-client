@@ -58,12 +58,30 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       progressQueue: Option[SourceQueueWithComplete[QueryProgress]] = None
   ): Future[String] = {
     val internalQueryIdentifier = queryIdentifier
-    executeWithRetries(settings.retries.getOrElse(queryRetries), progressQueue, settings) { () =>
+    val totalRetries            = settings.retries.getOrElse(queryRetries)
+
+    // Subscribed once per query and cancelled when the query settles. This used to happen inside
+    // executeRequestInternal via a bare runForeach, which materialised a BroadcastHub consumer that nothing ever
+    // cancelled -- one per request plus one per retry, each retained for the lifetime of the hub.
+    val progressSubscription = progressQueue.map(subscribeToProgress(internalQueryIdentifier, _))
+
+    executeWithRetries(totalRetries, totalRetries, progressQueue, settings) { () =>
       executeRequestInternal(hostBalancer.nextHost, query, internalQueryIdentifier, settings, entity, progressQueue)
     }.andThen { case _ =>
+      progressSubscription.foreach(_.shutdown())
       progressQueue.foreach(_.complete())
     }
   }
+
+  private def subscribeToProgress(
+      internalQueryIdentifier: String,
+      target: SourceQueueWithComplete[QueryProgress]
+  ): UniqueKillSwitch =
+    progressSource
+      .collect { case progress if progress.identifier == internalQueryIdentifier => progress.progress }
+      .viaMat(KillSwitches.single)(Keep.right)
+      .toMat(Sink.foreach(progress => target.offer(progress)))(Keep.left)
+      .run()
 
   protected def queryIdentifier: String =
     Random.alphanumeric.take(20).mkString("")
@@ -107,14 +125,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       settings: QuerySettings,
       entity: Option[RequestEntity] = None,
       progressQueue: Option[SourceQueueWithComplete[QueryProgress]]
-  ): Future[String] = {
-    progressQueue.foreach(definedProgressQueue =>
-      progressSource.runForeach(progress =>
-        if (progress.identifier == queryIdentifier) {
-          definedProgressQueue.offer(progress.progress)
-        }
-      )
-    )
+  ): Future[String] =
     host.flatMap { actualHost =>
       val request = toRequest(
         actualHost,
@@ -127,33 +138,37 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
       )(config)
       processClickhouseResponse(singleRequest(request, progressQueue.isDefined), query, actualHost, progressQueue)
     }
-  }
 
   private def executeWithRetries(
       retries: Int,
+      totalRetries: Int,
       progressQueue: Option[SourceQueueWithComplete[QueryProgress]],
       settings: QuerySettings
   )(
       request: () => Future[String]
-  ): Future[String] =
+  ): Future[String] = {
+    // Against totalRetries, not the config value: settings.retries can override it per query, and reporting
+    // "retry 1 of 3" for a query configured with one retry is misleading.
+    val attempt = (totalRetries - retries) + 1
     request().recoverWith {
       case clickException: ClickhouseExecutionException if !clickException.retryable =>
         // TODO use more fine grained exceptions in the client and remove the match on `Exception`
         Future.failed(clickException)
       case e: StreamTcpException if retries > 0 =>
-        progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
+        progressQueue.foreach(_.offer(QueryRetry(e, attempt)))
         logger.warn(s"Stream exception, retries left: $retries", e)
-        executeWithRetries(retries - 1, progressQueue, settings)(request)
+        executeWithRetries(retries - 1, totalRetries, progressQueue, settings)(request)
       case e: RuntimeException
           if e.getMessage.contains("The http server closed the connection unexpectedly") && retries > 0 =>
         logger.warn(s"Unexpected connection closure, retries left: $retries", e)
-        progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
-        executeWithRetries(retries - 1, progressQueue, settings)(request)
+        progressQueue.foreach(_.offer(QueryRetry(e, attempt)))
+        executeWithRetries(retries - 1, totalRetries, progressQueue, settings)(request)
       case e: Exception if settings.idempotent.contains(true) && retries > 0 =>
         logger.warn(s"Query execution exception while executing idempotent query, retries left: $retries", e)
-        progressQueue.foreach(_.offer(QueryRetry(e, (queryRetries - retries) + 1)))
-        executeWithRetries(retries - 1, progressQueue, settings)(request)
+        progressQueue.foreach(_.offer(QueryRetry(e, attempt)))
+        executeWithRetries(retries - 1, totalRetries, progressQueue, settings)(request)
     }
+  }
 }
 
 object ClickHouseExecutor {}

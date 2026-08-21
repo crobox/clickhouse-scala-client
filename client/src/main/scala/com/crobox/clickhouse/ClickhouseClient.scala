@@ -133,7 +133,12 @@ class ClickhouseClient(
     executeRequestInternal(hostBalancer.nextHost, sql, queryIdentifier, settings, Option(entity), None)
   }
 
-  val serverVersion: ClickhouseServerVersion =
+  /**
+   * Resolved on first use, not at construction. This blocks on a query to the server, and doing that eagerly meant a
+   * client could not be constructed without a reachable ClickHouse -- it stalled the constructing thread for up to five
+   * seconds and then carried on with a guessed version. Callers that want it resolved up front can still touch it.
+   */
+  lazy val serverVersion: ClickhouseServerVersion =
     try {
       val path    = "crobox.clickhouse.server.version"
       val cfg     = configuration.getOrElse(ConfigFactory.load())
@@ -156,8 +161,12 @@ class ClickhouseClient(
       version
     } catch {
       case x: Throwable =>
-        val latest = ClickhouseServerVersion.latest
-        logger.error(s"Can't determine Clickhouse Server Version. Falling back to: $latest. Error: ${x.getMessage}", x)
-        latest
+        val assumed = ClickhouseServerVersion.fallback
+        logger.error(
+          s"Can't determine Clickhouse Server Version. Assuming: $assumed. Set `crobox.clickhouse.server.version` to " +
+            s"avoid guessing. Error: ${x.getMessage}",
+          x
+        )
+        assumed
     }
 }

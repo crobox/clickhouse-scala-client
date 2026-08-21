@@ -40,12 +40,12 @@ object ClickhouseHostHealth extends ClickhouseResponseParser {
     val healthCheckInterval: FiniteDuration =
       system.settings.config
         .getDuration("connection.health-check.interval")
-        .getSeconds
+        .toMillis
         .seconds
     val healthCheckTimeout: FiniteDuration =
       system.settings.config
         .getDuration("connection.health-check.timeout")
-        .getSeconds
+        .toMillis
         .seconds
 
     val healthCachedPool = Http(system).cachedHostConnectionPool[Int](

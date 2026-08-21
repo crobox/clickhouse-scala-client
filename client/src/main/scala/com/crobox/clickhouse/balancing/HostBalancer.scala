@@ -44,10 +44,18 @@ object HostBalancer extends ClickhouseHostBuilder {
           connectionHostFromConfig,
           connectionConfig.getString("cluster"),
           manager,
-          connectionConfig.getDuration("scanning-interval").getSeconds.seconds
-        )(system, config.getDuration("host-retrieval-timeout").getSeconds.seconds, ec)
+          connectionConfig.getDuration("scanning-interval").toMillis.millis
+        )(system, hostRetrievalTimeout(config), ec)
     }
   }
+
+  /**
+   * Timeout for asking the connection manager for a host. Falls back to the previous hardcoded value when the setting
+   * is absent, so a balancer built against a bare ActorSystem keeps working.
+   */
+  private[balancing] def hostRetrievalTimeout(config: Config): FiniteDuration =
+    if (config.hasPath("host-retrieval-timeout")) config.getDuration("host-retrieval-timeout").toMillis.millis
+    else 5.seconds
 
   def extractHost(connectionConfig: Config): Uri =
     toHost(

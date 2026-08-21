@@ -55,7 +55,9 @@ private[clickhouse] object ClusterConnectionFlow
                   s"Please use the `SingleHostQueryBalancer` in that case."
               )
             }
-            Connections(result.map(ClickhouseHostBuilder.toHost(_, Some(8123))))
+            // The configured port, not a hardcoded 8123: `system.clusters` reports the native port, which is not the
+            // HTTP port we speak, so the only sensible assumption is that every node exposes HTTP where this one does.
+            Connections(result.map(ClickhouseHostBuilder.toHost(_, Some(host.effectivePort))))
           }
       }
   }

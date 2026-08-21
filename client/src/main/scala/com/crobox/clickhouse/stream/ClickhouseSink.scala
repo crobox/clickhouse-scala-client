@@ -59,7 +59,7 @@ object ClickhouseSink extends LazyLogging {
       )
       .getOrElse(indexerGeneralConfig)
     val batchSize     = mergedIndexerConfig.getInt("batch-size")
-    val flushInterval = mergedIndexerConfig.getDuration("flush-interval").getSeconds.seconds
+    val flushInterval = mergedIndexerConfig.getDuration("flush-interval").toMillis.millis
     Flow[TableOperation]
       .groupBy(Int.MaxValue, _.table)
       .groupedWithin(batchSize, flushInterval)
