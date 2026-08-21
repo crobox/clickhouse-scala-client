@@ -11,6 +11,11 @@ object Connection {
         case "single-host"     => SingleHost
         case "balancing-hosts" => BalancingHosts
         case "cluster-aware"   => ClusterAware
+        case unknown           =>
+          throw new IllegalArgumentException(
+            s"Unknown crobox.clickhouse.client.connection.type [$unknown]; " +
+              "expected one of single-host, balancing-hosts, cluster-aware"
+          )
       }
   }
 

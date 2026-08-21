@@ -16,7 +16,10 @@ case class MultiHostBalancer(hosts: Set[Uri], manager: ActorRef)(implicit system
     extends HostBalancer
     with ClickhouseHostBuilder {
 
-  private implicit val timeout: Timeout = durationToTimeout(5.seconds)
+  // Was a hardcoded 5 seconds, while ClusterAwareHostBalancer used `host-retrieval-timeout` -- one second by default
+  // -- for the very same ask. Both now read the same setting.
+  private implicit val timeout: Timeout =
+    durationToTimeout(HostBalancer.hostRetrievalTimeout(system.settings.config))
 
   manager ! ConnectionManagerActor.Connections(hosts)
 

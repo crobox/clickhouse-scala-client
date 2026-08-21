@@ -12,7 +12,23 @@ import com.crobox.clickhouse.{ClickhouseChunkedException, ClickhouseException}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
+private[clickhouse] object ClickhouseResponseParser {
+
+  /**
+   * ClickHouse cannot report a failure in the status line once it has started streaming: a query that fails part way
+   * through its result still returns 200, without an `X-ClickHouse-Exception-Code` header, and appends the exception to
+   * the body. So the body is the only place that failure can be seen, and it has to be inspected.
+   *
+   * Matched on the shape ClickHouse actually appends -- `Code: <n>. DB::Exception` -- rather than a bare
+   * "DB::Exception" substring, so that a result row which merely contains that text is not mistaken for a failure. That
+   * was the concern recorded in https://github.com/ClickHouse/ClickHouse/issues/2999. Matching the whole body rather
+   * than a trailing window, since an exception message has no bounded length.
+   */
+  private[internal] val StreamedExceptionMarker = """Code: (\d+)\. DB::Exception""".r
+}
+
 private[clickhouse] trait ClickhouseResponseParser {
+  import ClickhouseResponseParser.StreamedExceptionMarker
 
   protected def processClickhouseResponse(
       responseFuture: Future[HttpResponse],
@@ -29,9 +45,9 @@ private[clickhouse] trait ClickhouseResponseParser {
           Unmarshaller
             .stringUnmarshaller(entity)
             .map { content =>
-              if (content.contains("DB::Exception")) { // FIXME this is quite a fragile way to detect failures, hopefully nobody will have a valid exception string in the result. Check https://github.com/yandex/ClickHouse/issues/2999
+              StreamedExceptionMarker.findFirstMatchIn(content).foreach { marker =>
                 throw ClickhouseException(
-                  "Found exception in the query return body",
+                  s"Query failed after the response had started streaming; ClickHouse error code ${marker.group(1)}",
                   query,
                   ClickhouseChunkedException(content),
                   StatusCodes.OK
