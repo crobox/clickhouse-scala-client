@@ -16,7 +16,9 @@ jobs:
       fail-fast: false
       matrix:
         scala: [2.13.18, 3.3.8]
-        clickhouse: [22.8, 23.3, 23.8] # 24.3 has issues because of join change https://clickhouse.com/docs/en/operations/analyzer#join-using-column-from-projection
+        # The last three ClickHouse LTS releases. LTS ships twice a year, as the .3 and .8 releases, so this list
+        # moves forward roughly every six months.
+        clickhouse: [25.3, 25.8, 26.3]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -41,6 +43,9 @@ jobs:
         with:
           compose-file: './.docker/docker-compose.yml'
           down-flags: '--volumes'
+
+      - name: Check formatting
+        run: sbt ++${{ matrix.scala }} scalafmtCheckAll scalafmtSbtCheck
 
       - name: Build project
         run: sbt ++${{ matrix.scala }} test IntegrationTest/test

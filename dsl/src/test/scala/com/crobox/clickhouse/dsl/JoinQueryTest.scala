@@ -21,9 +21,13 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
         .from(OneTestTable)
         .where(notEmpty(itemId))
         .join(InnerJoin, TwoTestTable) using itemId
+    // ON, not USING: `item_id` here is only a SELECT-list alias for `shield_id`, and a USING key must resolve against
+    // the left table expression. ClickHouse's analyzer (default since 24.3) rejects `USING item_id` on this shape with
+    // UNKNOWN_IDENTIFIER, so the tokenizer resolves the alias and emits the equivalent ON condition.
     toSql(query.internalQuery) should matchSQL(
       s"SELECT shield_id AS item_id FROM ${OneTestTable.quoted} AS L1 " +
-        s"INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
+        s"INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R1 ON L1.shield_id = R1.item_id " +
+        s"WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
 
@@ -36,7 +40,7 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
     toSql(query.internalQuery) should matchSQL(
       s"SELECT shield_id AS item_id FROM ${OneTestTable.quoted} AS L1 " +
         s"INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} " +
-        s"WHERE notEmpty(item_id)) AS R1 USING item_id WHERE notEmpty(item_id) FORMAT JSON"
+        s"WHERE notEmpty(item_id)) AS R1 ON L1.shield_id = R1.item_id WHERE notEmpty(item_id) FORMAT JSON"
     )
   }
 
@@ -96,7 +100,7 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
   it should s"fail on empty on and using" in {
     val query: OperationalQuery =
       select(shieldId as itemId).from(OneTestTable).where(notEmpty(itemId)).join(InnerJoin, TwoTestTable)
-    an[AssertionError] shouldBe thrownBy(toSql(query.internalQuery))
+    an[IllegalArgumentException] shouldBe thrownBy(toSql(query.internalQuery))
   }
 
   it should s"fail on set on and using" in {
@@ -105,7 +109,7 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
         .from(OneTestTable)
         .where(notEmpty(itemId))
         .join(InnerJoin, TwoTestTable) using itemId on itemId
-    an[AssertionError] shouldBe thrownBy(toSql(query.internalQuery))
+    an[IllegalArgumentException] shouldBe thrownBy(toSql(query.internalQuery))
   }
 
   it should s"triple complex join query" in {

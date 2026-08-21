@@ -10,10 +10,6 @@ import scala.util.Try
 
 package object dsl extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats {
 
-  // Naive union type context bound
-  trait Contra[-A]
-  type Union[A, B] = Contra[A] <:< Contra[B]
-
   @deprecated("Please use QueryImpr")
   implicit class QueryExecution(query: Query) {
 

@@ -33,10 +33,9 @@ trait MiscellaneousFunctionTokenizer {
       s"least(${tokenizeColumn(a.column)},${tokenizeColumn(b.column)})"
     case Greatest(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_]) =>
       s"greatest(${tokenizeColumn(a.column)},${tokenizeColumn(b.column)})"
-    case RunningDifference(col: ConstOrColMagnet[_]) => s"runningDifference(${tokenizeColumn(col.column)})"
-    case MACNumToString(col: NumericCol[_])          => s"MACNumToString(${tokenizeColumn(col.column)})"
-    case MACStringToNum(col: StringColMagnet[_])     => s"MACStringToNum(${tokenizeColumn(col.column)})"
-    case MACStringToOUI(col: StringColMagnet[_])     => s"MACStringToOUI(${tokenizeColumn(col.column)})"
+    case MACNumToString(col: NumericCol[_])      => s"MACNumToString(${tokenizeColumn(col.column)})"
+    case MACStringToNum(col: StringColMagnet[_]) => s"MACStringToNum(${tokenizeColumn(col.column)})"
+    case MACStringToOUI(col: StringColMagnet[_]) => s"MACStringToOUI(${tokenizeColumn(col.column)})"
   }
 
   def tokenizeMiscConst(const: MiscellaneousConst[_])(implicit ctx: TokenizeContext): String = const match {

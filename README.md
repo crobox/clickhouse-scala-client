@@ -1,7 +1,6 @@
 # Clickhouse Scala Client
 
 [![Build Status](https://github.com/crobox/clickhouse-scala-client/actions/workflows/ci.yml/badge.svg)](https://github.com/crobox/clickhouse-scala-client/actions/workflows/)
-[![Gitter](https://img.shields.io/gitter/room/clickhouse-scala-client/lobby.svg)](https://gitter.im/clickhouse-scala-client/lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![Maven Central Version](https://img.shields.io/maven-central/v/com.crobox.clickhouse/client_2.13)
 
 
@@ -18,20 +17,23 @@ Features:
 
 *We do not guarantee api-backwards compatibility, although the API has been very stable over the last years.*  
 
-Scala version: 
+Scala versions:
 - 2.13
-- 2.12
+- 3.3
 
-Artifacts:
-https://mvnrepository.com/artifact/com.crobox.clickhouse/client_2.12
-https://oss.sonatype.org/content/repositories/snapshots/com/crobox/clickhouse
+Tested against the last three ClickHouse LTS releases: 25.3, 25.8 and 26.3.
 
-for sbt you can use
+Artifacts (Maven Central):
+- https://mvnrepository.com/artifact/com.crobox.clickhouse/client_2.13
+- https://mvnrepository.com/artifact/com.crobox.clickhouse/client_3
 
+```scala
+libraryDependencies += "com.crobox.clickhouse" %% "client" % "<latest_version>"
+// the DSL is a separate artifact and depends on the client
+libraryDependencies += "com.crobox.clickhouse" %% "dsl" % "<latest_version>"
 ```
-// https://mvnrepository.com/artifact/com.crobox/clickhouse-scala-client_2.12 
-libraryDependencies += "com.crobox.clickhouse" %% "client" % "0.9.0"
-```
+
+See the Maven Central badge above for the latest version.
 
 ## Documentation
 - [Quick Setup](#quick-setup)
@@ -59,27 +61,35 @@ When in doubt about the documentation please read the tests to find the truth.
 
 ### Client
 
+The client creates and owns its own `ActorSystem`, named `clickhouse-client` and configured from the
+`crobox.clickhouse.client` section of the config you pass. Call `shutdown()` to terminate it.
+
 ```scala
+import com.crobox.clickhouse.ClickhouseClient
+import com.typesafe.config.{Config, ConfigFactory}
 
-val config: Config
-val queryDatabase: String = "default"
-implicit val system:ActorSystem
+val config: Config = ConfigFactory.load()
+val client         = new ClickhouseClient(Some(config))
 
-val client = new ClickhouseClient(config, queryDatabase)
-client.query("SELECT 1 + 1").map(result => {
-    println(s"Got query result $result")
-})
+client.query("SELECT 1 + 1").map { result =>
+  println(s"Got query result $result")
+}
 ```
 
 ### Indexer
 
 ```scala
+import com.crobox.clickhouse.stream.{ClickhouseSink, Insert}
+import org.apache.pekko.stream.scaladsl.Source
+
 val config: Config
 val client: ClickhouseClient
 
-val sink = ClickhouseSink.insertSink(config, client)
-sink.runWith(Source.single(Insert("clicks", "{some_column: 3 }")))
+val sink = ClickhouseSink.toSink(config, client)
+Source.single(Insert("clicks", """{"some_column": 3}""")).runWith(sink)
 ```
+
+`toSink` accepts any `TableOperation` -- `Insert(table, jsonRow)` for rows, and `Optimize(...)` to trigger a merge.
 
 ## Configuration
 
@@ -88,7 +98,7 @@ sink.runWith(Source.single(Insert("clicks", "{some_column: 3 }")))
 
 ### Client configuration
 
-You can find all the configuration options in the [reference file](https://github.com/crobox/clickhouse-scala-client/blob/master/client/src/main/resources/reference.conf), with explanatory comments about their usage.
+You can find all the configuration options in the [reference file](https://github.com/crobox/clickhouse-scala-client/blob/main/client/src/main/resources/reference.conf), with explanatory comments about their usage.
 
 ### Connection configuration
 Three different connection modes are supported.
@@ -313,11 +323,10 @@ For more information see [the wiki](https://github.com/crobox/clickhouse-scala-c
 
 We also expose an utility test kit which provider a helpful spec with testing utilities. It automatically creates a single use database before all tests and drops it afterwards.
 
-```
-// https://mvnrepository.com/artifact/com.crobox/clickhouse-scala-client_2.12 
-libraryDependencies += "com.crobox.clickhouse" %% "testkit" % <latest_version>
+```scala
+libraryDependencies += "com.crobox.clickhouse" %% "testkit" % "<latest_version>" % Test
 ```
 
-Check [the spec](https://github.com/crobox/clickhouse-scala-client/blob/master/testkit/src/main/scala/com/crobox/clickhouse/testkit/ClickhouseSpec.scala) for more details.
+Check [the spec](https://github.com/crobox/clickhouse-scala-client/blob/main/testkit/src/main/scala/com/crobox/clickhouse/testkit/ClickhouseSpec.scala) for more details.
 
 

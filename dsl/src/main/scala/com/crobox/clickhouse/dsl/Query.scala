@@ -61,17 +61,21 @@ sealed case class InternalQuery(
    *   A merge of this and other InternalQuery
    */
   def :+>(other: InternalQuery): InternalQuery =
+    // Named arguments deliberately: this was positional and passed only 10 of the 11 fields, so `unionAll` silently
+    // defaulted to empty and every merge discarded unions. Named arguments make the next added field a compile error
+    // here rather than a silent drop.
     InternalQuery(
-      select.orElse(other.select),
-      from.orElse(other.from),
-      prewhere.orElse(other.prewhere),
-      where.orElse(other.where),
-      groupBy.orElse(other.groupBy),
-      having.orElse(other.having),
-      join.orElse(other.join),
-      if (orderBy.nonEmpty) orderBy else other.orderBy,
-      limit.orElse(other.limit),
-      limitBy.orElse(other.limitBy)
+      select = select.orElse(other.select),
+      from = from.orElse(other.from),
+      prewhere = prewhere.orElse(other.prewhere),
+      where = where.orElse(other.where),
+      groupBy = groupBy.orElse(other.groupBy),
+      having = having.orElse(other.having),
+      join = join.orElse(other.join),
+      orderBy = if (orderBy.nonEmpty) orderBy else other.orderBy,
+      limit = limit.orElse(other.limit),
+      limitBy = limitBy.orElse(other.limitBy),
+      unionAll = if (unionAll.nonEmpty) unionAll else other.unionAll
     )
 
   /**
@@ -93,19 +97,27 @@ sealed case class InternalQuery(
    *   A Success on merge without conflict, or Failure of IllegalArgumentException otherwise.
    */
   def +(other: InternalQuery): Try[InternalQuery] = Try {
-    (0 until productArity).foreach(id =>
-      require(
-        (productElement(id), other.productElement(id)) match {
-          case (ts: Option[_], tt: Option[_]) =>
-            ts.isEmpty || tt.isEmpty
-          case (ts: Iterable[_], tt: Iterable[_]) =>
-            ts.isEmpty || tt.isEmpty
-          case (ts: Boolean, tt: Boolean) =>
-            true
-        },
-        s"Conflicting parts ${productElement(id)} and ${other.productElement(id)}"
-      )
-    )
+    // Checked field by field rather than reflectively over `productElement`. The reflective version matched only
+    // Option/Iterable/Boolean against `Any`, so its Boolean arm was dead and any future field of another type would
+    // have thrown a MatchError from inside a `require`.
+    def noConflict(part: String, left: Option[_], right: Option[_]): Unit =
+      require(left.isEmpty || right.isEmpty, s"Conflicting $part parts $left and $right")
+
+    def noSeqConflict(part: String, left: Iterable[_], right: Iterable[_]): Unit =
+      require(left.isEmpty || right.isEmpty, s"Conflicting $part parts $left and $right")
+
+    noConflict("select", select, other.select)
+    noConflict("from", from, other.from)
+    noConflict("prewhere", prewhere, other.prewhere)
+    noConflict("where", where, other.where)
+    noConflict("groupBy", groupBy, other.groupBy)
+    noConflict("having", having, other.having)
+    noConflict("join", join, other.join)
+    noSeqConflict("orderBy", orderBy, other.orderBy)
+    noConflict("limit", limit, other.limit)
+    noConflict("limitBy", limitBy, other.limitBy)
+    noSeqConflict("unionAll", unionAll, other.unionAll)
+
     :+>(other)
   }
 }

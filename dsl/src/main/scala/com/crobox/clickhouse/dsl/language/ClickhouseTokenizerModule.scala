@@ -31,14 +31,11 @@ case class TokenizeContext(
       )
     } else ""
 
-  def setTableAlias(value: Boolean): TokenizeContext =
-    // change this object since we want to maintain all tableAliases over all joins
-    if (true) {
-      useTableAlias = value
-      this
-    } else {
-      copy(useTableAlias = value)
-    }
+  /** Mutates in place rather than copying, so that `tableAliases` accumulated so far survives across joins. */
+  def setTableAlias(value: Boolean): TokenizeContext = {
+    useTableAlias = value
+    this
+  }
 
   def leftAlias(alias: Option[String]): String  = ClickhouseStatement.quoteIdentifier(alias.getOrElse("L" + joinNr))
   def rightAlias(alias: Option[String]): String = ClickhouseStatement.quoteIdentifier(alias.getOrElse("R" + joinNr))
@@ -313,22 +310,39 @@ trait ClickhouseTokenizerModule
     }
     query.joinType match {
       case CrossJoin =>
-        assert(`using`.isEmpty, "When using CrossJoin, no using columns should be provided")
-        assert(query.on.isEmpty, "When using CrossJoin, no on conditions should be provided")
+        require(`using`.isEmpty, "When using CrossJoin, no using columns should be provided")
+        require(query.on.isEmpty, "When using CrossJoin, no on conditions should be provided")
         ""
       case _ =>
-        assert(`using`.nonEmpty || query.on.nonEmpty, s"No USING or ON provided for joinType: ${query.joinType}")
-        assert(!(`using`.nonEmpty && query.on.nonEmpty), s"Both USING and ON provided for joinType: ${query.joinType}")
+        require(`using`.nonEmpty || query.on.nonEmpty, s"No USING or ON provided for joinType: ${query.joinType}")
+        require(!(`using`.nonEmpty && query.on.nonEmpty), s"Both USING and ON provided for joinType: ${query.joinType}")
 
         if (`using`.nonEmpty) {
-          // TOKENIZE USING
-          if (`using`.size == 1) s"USING ${using.head.name}"
+          // A USING key has to resolve against the left *table expression*. Where the left side is a table and the key
+          // exists only as a SELECT-list alias, ClickHouse's analyzer -- the default since 24.3 -- rejects it:
+          //   SELECT shield_id AS item_id FROM t AS L1 JOIN (...) AS R1 USING item_id
+          //   Code 47, UNKNOWN_IDENTIFIER: using identifier 'item_id' cannot be resolved from left table expression
+          // The old analyzer resolved such an identifier from the projection. Rather than depend on the
+          // analyzer_compatibility_join_using_top_level_identifier shim, express it as ON with the alias resolved back
+          // to the underlying column, which both analyzers accept.
+          //
+          // This holds whether the left side is a table or a subquery -- an alias in this query's own projection is
+          // not part of its FROM's table expression in either case. An alias defined *inside* the left subquery is one
+          // of its output columns and needs no rewrite, and correctly does not match here.
+          if (`using`.exists(key => underlyingLeftColumn(select, key).isDefined)) {
+            "ON " + `using`
+              .map { key =>
+                val left = underlyingLeftColumn(select, key).getOrElse(key.name)
+                s"${ctx.leftAlias(from.alias)}.$left = ${ctx.rightAlias(query.other.alias)}.${key.name}"
+              }
+              .mkString(" AND ")
+          } else if (`using`.size == 1) s"USING ${using.head.name}"
           else s"USING (${using.map(_.name).mkString(ctx.delimiter)})"
         } else if (query.on.nonEmpty) {
           // TOKENIZE ON. If the fromClause is a TABLE, we need to check on aliases!
           "ON " + query.on
             .map { cond =>
-              val left = verifyOnCondition(select, from, cond.left)
+              val left = underlyingLeftColumn(select, cond.left).getOrElse(cond.left.name)
               s"${ctx.leftAlias(from.alias)}.$left ${cond.operator} ${ctx.rightAlias(query.other.alias)}.${cond.right.name}"
             }
             .mkString(" AND ")
@@ -336,21 +350,26 @@ trait ClickhouseTokenizerModule
     }
   }
 
-  private def verifyOnCondition(select: Option[SelectQuery], from: FromQuery, joinKey: Column): String =
-    from match {
-      case _: TableFromQuery[_] =>
-        // check if joinKey is an existing DB field or an alias!
-        select
-          .map(_.columns)
-          .getOrElse(Seq.empty)
-          .flatMap {
-            case x: AliasedColumn[_] => if (x.alias == joinKey.name) Option(x.original.name) else None
-            case _                   => None
-          }
-          .headOption
-          .getOrElse(joinKey.name)
-      case _ => joinKey.name
-    }
+  /**
+   * The column a join key actually refers to on the left side, when the key names an alias introduced by *this* query's
+   * SELECT list rather than something the left table expression exposes.
+   *
+   * Deliberately independent of whether the left side is a table or a subquery. An alias in this query's projection is
+   * never part of its own FROM's table expression either way -- for
+   * `SELECT shield_id AS item_id FROM (SELECT shield_id FROM t) AS L1`, the subquery outputs `shield_id`, so `item_id`
+   * is no more resolvable there than it would be over a bare table. Only an alias defined *inside* the left subquery
+   * becomes one of its output columns, and that one does not appear in this select list, so it correctly yields `None`.
+   *
+   * `None` means no rewrite is needed and USING (or a bare `L.key`) is right as-is.
+   */
+  private def underlyingLeftColumn(select: Option[SelectQuery], joinKey: Column): Option[String] =
+    select
+      .map(_.columns)
+      .getOrElse(Seq.empty)
+      .collectFirst {
+        case aliased: AliasedColumn[_] if aliased.alias == joinKey.name && aliased.original.name != joinKey.name =>
+          aliased.original.name
+      }
 
   private[language] def tokenizeColumns(columns: Seq[Column])(implicit ctx: TokenizeContext): String =
     columns
