@@ -43,6 +43,7 @@ lazy val client: Project = (project in file("client"))
       "org.apache.pekko"           %% "pekko-stream"  % PekkoVersion,
       "org.apache.pekko"           %% "pekko-http"    % PekkoHttpVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6",
+      "com.typesafe"                % "config"        % "1.4.9",
       "joda-time"                   % "joda-time"     % "2.14.3"
     ) ++ Seq("org.apache.pekko" %% "pekko-testkit" % PekkoVersion % Test) ++ Build.testDependencies.map(_ % Test)
   )
@@ -53,11 +54,7 @@ lazy val dsl = (project in file("dsl"))
   .settings(Config.testSettings: _*)
   .settings(
     name                                                              := "dsl",
-    sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    libraryDependencies ++= Seq(
-      "com.google.guava" % "guava"  % "33.7.1-jre",
-      "com.typesafe"     % "config" % "1.4.9"
-    )
+    sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value
   )
 //  .settings(excludeDependencies ++= Seq(ExclusionRule("org.apache.pekko")))
 
@@ -66,5 +63,7 @@ lazy val testkit = (project in file("testkit"))
   .settings(
     name                                                              := "testkit",
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    libraryDependencies ++= Build.testDependencies
+    // scalatest is part of the published API (ClickhouseSpec extends SuiteMixin); logback is only the backend our own
+    // tests log through, and must not land on a consumer's compile classpath.
+    libraryDependencies ++= Seq(Build.scalaTest, Build.logback % Test)
   )

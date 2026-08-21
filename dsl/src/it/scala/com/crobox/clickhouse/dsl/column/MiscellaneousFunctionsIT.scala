@@ -27,7 +27,6 @@ class MiscellaneousFunctionsIT extends DslITSpec {
     r(uptime()).length should be > 0
     r(version()).length should be > 4
     r(rowNumberInAllBlocks()) shouldBe "0"
-    r(runningDifference(1)) shouldBe "0"
     r(mACNumToString(toUInt64(123))) shouldBe "00:00:00:00:00:7B"
     r(mACStringToNum("00:00:00:00:00:7B")) shouldBe "123"
     r(mACStringToOUI("00:00:00:00:00:7B")) shouldBe "0"

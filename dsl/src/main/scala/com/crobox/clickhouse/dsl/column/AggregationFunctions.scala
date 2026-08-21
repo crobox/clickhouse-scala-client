@@ -193,6 +193,9 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
    * The `*Map` aggregates: given parallel key and value arrays, aggregate the values per key and return
    * `(keys, values)`.
    *
+   * Only sum, min and max exist -- ClickHouse rejects the rest with "Aggregation 'xMap' is not implemented for mapped
+   * arrays", so there is no avgMap, countMap or anyMap to add here.
+   *
    * The arrays are taken as [[ArrayColMagnet]] rather than `TableColumn[Seq[_]]` so that an array *expression* can be
    * passed. `TableColumn` is covariant and the array functions produce `Iterable`, so an `arrayPushBack(...)` or
    * `arrayOf(...)` is a `TableColumn[Iterable[T]]` and was rejected where a `TableColumn[Seq[T]]` was demanded -- you
@@ -207,9 +210,6 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
       extends AggregateFunction[(Seq[T], Seq[V])](key.column)
 
   case class MaxMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]])
-      extends AggregateFunction[(Seq[T], Seq[V])](key.column)
-
-  case class AvgMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]])
       extends AggregateFunction[(Seq[T], Seq[V])](key.column)
 
   sealed trait SumModifier
@@ -232,9 +232,6 @@ trait SumFunctions { self: Magnets with AggregationFunctions =>
 
   def maxMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]]): MaxMap[T, V] =
     MaxMap(key, value)
-
-  def avgMap[T, V](key: ArrayColMagnet[_ <: Iterable[T]], value: ArrayColMagnet[_ <: Iterable[V]]): AvgMap[T, V] =
-    AvgMap(key, value)
 
   /** The keys array of a `*Map` aggregate, i.e. `(sumMap(k, v)).1`. */
   def mapKeys[T, V](map: AggregateFunction[(Seq[T], Seq[V])]): TupleElement[Seq[T]] = tupleElement[Seq[T]](map, 1)

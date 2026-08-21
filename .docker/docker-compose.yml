@@ -1,7 +1,11 @@
 services:
   clickhouse:
       # https://docs.docker.com/compose/compose-file/#variable-substitution
-      image: "clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-23.8}"
+      image: "clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-26.3}"
+      environment:
+        # From 24.x the image's entrypoint generates a random password for `default` unless told not to, and we mount
+        # only config.d, no users.d, so every query would fail with AUTHENTICATION_FAILED.
+        CLICKHOUSE_SKIP_USER_SETUP: 1
       volumes:
         - ./entrypoint.sh:/custom-entrypoint.sh
         - ./server-config.xml:/etc/clickhouse-server/config.d/server-config.xml

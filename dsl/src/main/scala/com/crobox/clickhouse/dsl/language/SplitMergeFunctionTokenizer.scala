@@ -9,8 +9,10 @@ trait SplitMergeFunctionTokenizer {
     case SplitByChar(sep: StringColMagnet[_], col: StringColMagnet[_]) =>
       // Some small optimizations
       val separator = sep.column match {
-        case c: Const[_] => c.const.asInstanceOf[String]
-        case _           =>
+        // Matched on the extracted value rather than as `Const[_]` + asInstanceOf[String]: StringColMagnet also lifts
+        // UUID (see Magnets.stringColMagnetFromUUID), so a Const[UUID] reached that cast and threw ClassCastException.
+        case Const(value: String) => value
+        case _                    =>
           var s = tokenizeColumn(sep.column)
           if (s.startsWith("`")) s = s.tail
           if (s.endsWith("`")) s = s.init

@@ -17,10 +17,9 @@ class MapAggregationTokenizerTest extends DslTestSpec {
     )
   }
 
-  it should "tokenize minMap, maxMap and avgMap" in {
+  it should "tokenize minMap and maxMap" in {
     toSQL(select(minMap(numbers, numbers) as "m"), false) should matchSQL("SELECT minMap(numbers, numbers) AS m")
     toSQL(select(maxMap(numbers, numbers) as "m"), false) should matchSQL("SELECT maxMap(numbers, numbers) AS m")
-    toSQL(select(avgMap(numbers, numbers) as "m"), false) should matchSQL("SELECT avgMap(numbers, numbers) AS m")
   }
 
   it should "accept an array expression, not only a stored column" in {
