@@ -2,7 +2,7 @@ import sbt._
 
 object Build {
 
-  val PekkoVersion     = "1.6.0"
+  val PekkoVersion     = "1.7.0"
   val PekkoHttpVersion = "1.4.0"
 
   val scalaTest = "org.scalatest" %% "scalatest"       % "3.2.20"
