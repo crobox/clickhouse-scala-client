@@ -3,6 +3,7 @@ package com.crobox.clickhouse.dsl.execution
 import com.crobox.clickhouse
 import com.crobox.clickhouse.ClickhouseClient
 import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizeContext, TokenizerModule}
+import com.crobox.clickhouse.dsl.typed.TypedQuery
 import com.crobox.clickhouse.dsl.{Query, Table}
 import com.crobox.clickhouse.internal.QuerySettings
 import spray.json.{JsonReader, _}
@@ -45,6 +46,15 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
   //      client.queryWithProgress(toSql(query.internalQuery)(ctx = TokenizeContext(client.serverVersion)))
   //    queryResult.mapMaterializedValue(_.map(_.parseJson.convertTo[QueryResult[V]]))
   //  }
+
+  override def executeTyped[R](
+      query: TypedQuery[R]
+  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[R]] = {
+    val sql = toSql(query.internalQuery, formatting = Option(CompactRowParser.Format))(
+      ctx = TokenizeContext(client.serverVersion)
+    )
+    client.query(sql).map(CompactRowParser.parse(_, query.decoder))
+  }
 
   override def insert[V: JsonWriter](
       table: Table,
