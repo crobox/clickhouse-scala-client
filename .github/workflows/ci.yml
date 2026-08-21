@@ -3,8 +3,17 @@ name: Continuous Integration
 on:
   pull_request:
     branches: ['**']
+  # Only the default branch: a pull_request event already covers every other branch, and running both meant the whole
+  # matrix twice per commit. With several PRs open that was enough concurrent dependency resolution to get rate-limited
+  # by Maven Central (HTTP 429).
   push:
-    branches: ['**']
+    branches: [main]
+
+concurrency:
+  # A superseded run is six jobs, each starting a ClickHouse container, so cancel it. Not on main, where every commit's
+  # result is worth keeping.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -50,43 +59,3 @@ jobs:
       - name: Build project
         run: sbt ++${{ matrix.scala }} test IntegrationTest/test
 
-      - name: Compress target directories
-        run: tar cf targets.tar target client/target dsl/target testkit/target project/target
-
-      - name: Upload target directories
-        uses: actions/upload-artifact@v7
-        with:
-          name: target-${{ matrix.scala }}-${{ matrix.clickhouse }}
-          path: targets.tar
-
-  # publish:
-  #   name: Publish Artifacts
-  #   needs: [build]
-  #   if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main')
-  #   strategy:
-  #     matrix:
-  #       scala: [2.13.18, 3.3.8]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v7
-  #       with:
-  #         fetch-depth: 0
-  #     - uses: actions/setup-java@v5
-  #       with:
-  #         distribution: temurin
-  #         java-version: 17
-  #         cache: 'sbt'
-  #     - uses: sbt/setup-sbt@v1
-
-  #     - name: Download target directories (${{ matrix.scala }})
-  #       uses: actions/download-artifact@v8
-  #       with:
-  #         name: target-${{ matrix.scala }}-23.8
-
-  #     - name: Inflate target directories (${{ matrix.scala }})
-  #       run: |
-  #         tar xf targets.tar
-  #         rm targets.tar
-
-  #     - name: Publish project
-  #       run: sbt ++${{ matrix.scala }} +publish
