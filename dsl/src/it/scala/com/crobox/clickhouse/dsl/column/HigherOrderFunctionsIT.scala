@@ -103,8 +103,10 @@ class HigherOrderFunctionsIT extends DslITSpec {
   }
 
   it should "HigherOrderFunctions: arrayReverseSort" in {
-    r(arrayReverseSort[Long, Int](Some(_ % 3), arr1)) shouldBe "[2,1,3]"
-    r(arrayReverseSort[Long, Int](None, arr1)) shouldBe "[3,2,1]"
+    // [Long, Long], not [Long, Int]: ClickHouse's `modulo(Int64, Int32)` is Int64 (verified with toTypeName), and the
+    // AritRetType table now agrees -- it used to narrow Long % Int to Int, which is what this line was written against.
+    r(arrayReverseSort[Long, Long](Some(_ % 3), arr1)) shouldBe "[2,1,3]"
+    r(arrayReverseSort[Long, Long](None, arr1)) shouldBe "[3,2,1]"
 
     r(arrayReverseSort2[Int, Int]((x, y) => x * y, Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "[3,3,1,0]"
   }
