@@ -55,6 +55,18 @@ class TypedQueryIT extends DslITSpec {
     }
   }
 
+  it should "group by a column outside the select list without widening the row" in {
+    // The untyped groupBy appends the grouping column to the select list; if that leaked through, this would come back
+    // as (Long, String) against an arity-1 decoder and fail to parse.
+    val query: TypedQuery[Long] = typed.select(count()) from TwoTestTable groupBy col3
+    queryExecutor.executeTyped(query).futureValue.rows shouldBe Seq(2L)
+  }
+
+  it should "order by a column outside the select list without widening the row" in {
+    val query: TypedQuery[String] = typed.select(itemId) from TwoTestTable orderBy col2
+    queryExecutor.executeTyped(query).futureValue.rows shouldBe Seq(idA.toString, idB.toString)
+  }
+
   it should "carry the declared ClickHouse types through as meta" in {
     val meta = queryExecutor.executeTyped(typed.select(itemId, col2) from TwoTestTable).futureValue.meta
     meta.map(_.columnTypes.map(c => c.name -> c.columnType)) shouldBe

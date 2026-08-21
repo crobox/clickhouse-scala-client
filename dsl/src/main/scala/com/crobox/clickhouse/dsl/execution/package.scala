@@ -30,13 +30,15 @@ package object execution {
       }
       val meta: Option[ResultMeta] = jsObject.fields.get("meta").flatMap {
         case JsArray(columnDefinitions) =>
-          Option(ResultMeta(columnDefinitions.map(_.asJsObject.getFields("name", "type") match {
-            case Seq(JsString(name), JsString(colType)) => ResultColumnType(name, colType)
-            case _                                      =>
-              throw ResultParsingException(
-                s"Expected `name` and `type` strings in a `meta` entry, got ${jsObject.compactPrint.take(200)}"
-              )
-          })))
+          Option(ResultMeta(columnDefinitions.map { definition =>
+            definition.asJsObject.getFields("name", "type") match {
+              case Seq(JsString(name), JsString(colType)) => ResultColumnType(name, colType)
+              case _                                      =>
+                throw ResultParsingException(
+                  s"Expected `name` and `type` strings in a `meta` entry, got ${definition.compactPrint.take(200)}"
+                )
+            }
+          }))
         case _ => None
       }
       val statistic = jsObject.getFields("rows_before_limit_at_least", "rows") match {
