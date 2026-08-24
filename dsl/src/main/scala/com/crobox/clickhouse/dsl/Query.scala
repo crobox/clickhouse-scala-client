@@ -51,7 +51,10 @@ sealed case class InternalQuery(
     unionAll: Seq[OperationalQuery] = Seq.empty,
     // Ordered rather than a Map: map iteration order is unspecified, which would make the emitted SQL vary between
     // runs for the same query.
-    settings: Seq[(String, String)] = Seq.empty
+    settings: Seq[(String, String)] = Seq.empty,
+    // Last despite rendering first: several call sites construct InternalQuery positionally, and clause order is the
+    // tokenizer's business rather than this list's.
+    withEntries: Seq[WithEntry] = Seq.empty
 ) {
 
   def isValid: Boolean = {
@@ -89,7 +92,8 @@ sealed case class InternalQuery(
       limit = limit.orElse(other.limit),
       limitBy = limitBy.orElse(other.limitBy),
       unionAll = if (unionAll.nonEmpty) unionAll else other.unionAll,
-      settings = if (settings.nonEmpty) settings else other.settings
+      settings = if (settings.nonEmpty) settings else other.settings,
+      withEntries = if (withEntries.nonEmpty) withEntries else other.withEntries
     )
 
   /**
@@ -133,6 +137,7 @@ sealed case class InternalQuery(
     noConflict("limitBy", limitBy, other.limitBy)
     noSeqConflict("unionAll", unionAll, other.unionAll)
     noSeqConflict("settings", settings, other.settings)
+    noSeqConflict("withEntries", withEntries, other.withEntries)
 
     :+>(other)
   }

@@ -41,6 +41,31 @@ class QueryIT extends DslITSpec {
     queryExecutor.execute[Totals](query).futureValue.totals should be(None)
   }
 
+  // #142's shape: a scalar subquery named in WITH, then used in the projection.
+  it should "compute a share against a total named in a WITH clause" in {
+    case class Share(itemId: String, share: Double)
+    implicit val shareFormat: RootJsonFormat[Share] =
+      jsonFormat[String, Double, Share](Share.apply, "item_id", "share")
+
+    val total = WithScalarQuery(select(toInt32(count())).from(TwoTestTable), "total")
+    val query = select(itemId, (toInt32(count()) / ref[Int]("total")) as "share")
+      .from(TwoTestTable)
+      .groupBy(itemId)
+      .withCte(total)
+
+    val shares = queryExecutor.execute[Share](query).futureValue.rows
+    shares.map(_.share).sum shouldBe 1.0 +- 0.0001
+  }
+
+  it should "select from a CTE declared in a WITH clause" in {
+    case class Row(itemId: String)
+    implicit val rowFormat: RootJsonFormat[Row] = jsonFormat[String, Row](Row.apply, "item_id")
+
+    val recent = WithTable("recent", select(itemId).from(TwoTestTable))
+    val rows   = queryExecutor.execute[Row](select(itemId).from(recent).withCte(recent)).futureValue.rows
+    rows.map(_.itemId) should contain theSameElementsAs table2Entries.map(_.itemId.toString)
+  }
+
   it should "map as result" in {
 
     case class Result(columnResult: String, empty: Int)
