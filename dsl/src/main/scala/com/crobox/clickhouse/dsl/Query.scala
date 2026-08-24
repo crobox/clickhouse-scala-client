@@ -62,8 +62,9 @@ sealed case class InternalQuery(
    */
   def :+>(other: InternalQuery): InternalQuery =
     // Named arguments deliberately: this was positional and passed only 10 of the 11 fields, so `unionAll` silently
-    // defaulted to empty and every merge discarded unions. Named arguments make the next added field a compile error
-    // here rather than a silent drop.
+    // defaulted to empty and every merge discarded unions. Naming them stops that particular slip recurring, but it
+    // does NOT make a newly added field a compile error here -- an unmentioned field just takes its default and
+    // disappears from every merge. `InternalQueryFieldsTest` is what catches that.
     InternalQuery(
       select = select.orElse(other.select),
       from = from.orElse(other.from),
