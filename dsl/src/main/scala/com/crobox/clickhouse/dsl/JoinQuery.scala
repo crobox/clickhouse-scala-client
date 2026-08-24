@@ -16,6 +16,9 @@ object JoinQuery {
   case object FullOuterJoin  extends JoinType
   case object CrossJoin      extends JoinType
 
+  /** Concatenates by row position rather than by key, so it takes neither ON nor USING. */
+  case object PasteJoin extends JoinType
+
   // CUSTOM CLICKHOUSE JOIN
   case object AllInnerJoin  extends JoinType
   case object AllLeftJoin   extends JoinType

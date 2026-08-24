@@ -130,11 +130,31 @@ trait ClickhouseTokenizerModule
 
   private[language] def toRawSql(query: InternalQuery)(implicit ctx: TokenizeContext): String =
     query match {
-      case InternalQuery(select, from, prewhere, where, groupBy, having, join, orderBy, limit, limitBy, union) =>
+      // Clause order follows https://clickhouse.com/docs/sql-reference/statements/select -- SAMPLE is rendered by
+      // tokenizeFrom, since it belongs to the table expression alongside FINAL.
+      case InternalQuery(
+            select,
+            from,
+            prewhere,
+            where,
+            groupBy,
+            having,
+            join,
+            arrayJoin,
+            orderBy,
+            limit,
+            limitBy,
+            union,
+            settings
+          ) =>
+        // The left table's alias is emitted by tokenizeJoin, and ARRAY JOIN has to land between that alias and the
+        // JOIN keyword, so it is threaded through rather than placed here. Without a join there is no alias to follow.
+        val arrayJoinSql = tokenizeArrayJoin(arrayJoin)
         Seq(
           tokenizeSelect(select),
           tokenizeFrom(from),
-          tokenizeJoin(select, from, join),
+          if (join.isDefined) "" else arrayJoinSql,
+          tokenizeJoin(select, from, join, arrayJoinSql),
           tokenizeFiltering(prewhere, "PREWHERE"),
           tokenizeFiltering(where, "WHERE"),
           tokenizeGroupBy(groupBy),
@@ -142,9 +162,28 @@ trait ClickhouseTokenizerModule
           tokenizeOrderBy(orderBy),
           tokenizeLimitBy(limitBy),
           tokenizeLimit(limit),
+          tokenizeSettings(settings),
           tokenizeUnionAll(union)
         ).filter(_.nonEmpty).mkString(" ")
     }
+
+  private def tokenizeArrayJoin(arrayJoin: Option[ArrayJoinQuery])(implicit ctx: TokenizeContext): String =
+    arrayJoin match {
+      case Some(ArrayJoinQuery(columns, _)) if columns.isEmpty => ""
+      case Some(ArrayJoinQuery(columns, left))                 =>
+        val keyword = if (left) "LEFT ARRAY JOIN" else "ARRAY JOIN"
+        // tokenizeColumns, not tokenizeColumnsAliased: ARRAY JOIN introduces the alias rather than referring to one.
+        s"$keyword ${tokenizeColumns(columns)}"
+      case None => ""
+    }
+
+  /**
+   * Query-level `SETTINGS`, which is what makes a setting expressible per subquery -- `QuerySettings` can only apply to
+   * a whole HTTP request. Values are emitted verbatim, so a string setting has to arrive already quoted.
+   */
+  private def tokenizeSettings(settings: Seq[(String, String)]): String =
+    if (settings.isEmpty) ""
+    else settings.map { case (key, value) => s"$key = $value" }.mkString("SETTINGS ", Tokens.Delimiter, "")
 
   private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
     if (unions.nonEmpty) unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString(" ") else ""
@@ -177,7 +216,15 @@ trait ClickhouseTokenizerModule
     val prefix = if (withPrefix) "FROM" else ""
     val alias  = from.flatMap(_.alias.map(s => " AS " + ClickhouseStatement.quoteIdentifier(s))).getOrElse("")
     val asF    = if (from.exists(_.finalized)) " FINAL" else ""
-    s"$prefix $fromClause $alias $asF".trim
+    // After FINAL, not before: `SAMPLE 0.5 FINAL` is a syntax error.
+    val sample = from.flatMap(_.sampling).map(tokenizeSample).getOrElse("")
+    s"$prefix $fromClause $alias $asF $sample".trim
+  }
+
+  private def tokenizeSample(sample: Sample): String = {
+    def number(value: Double): String =
+      if (value == value.floor && value.abs < 1e15) value.toLong.toString else value.toString
+    s"SAMPLE ${number(sample.rate)}" + sample.offset.map(offset => s" OFFSET ${number(offset)}").getOrElse("")
   }
 
   protected def tokenizeColumn(column: Column)(implicit ctx: TokenizeContext): String = {
@@ -308,7 +355,12 @@ trait ClickhouseTokenizerModule
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
-  private def tokenizeJoin(select: Option[SelectQuery], from: Option[FromQuery], join: Option[JoinQuery])(implicit
+  private def tokenizeJoin(
+      select: Option[SelectQuery],
+      from: Option[FromQuery],
+      join: Option[JoinQuery],
+      arrayJoin: String
+  )(implicit
       ctx: TokenizeContext
   ): String =
     join match {
@@ -327,6 +379,7 @@ trait ClickhouseTokenizerModule
         val rightAlias = s"AS ${ctx.rightAlias(query.other.alias, joinNr)}"
 
         s""" $leftAlias
+           | $arrayJoin
            | ${if (query.global) "GLOBAL " else ""}
            | ${tokenizeJoinType(query.joinType)}
            | $right $rightAlias
@@ -345,9 +398,10 @@ trait ClickhouseTokenizerModule
       case _           => false
     }
     query.joinType match {
-      case CrossJoin =>
-        require(`using`.isEmpty, "When using CrossJoin, no using columns should be provided")
-        require(query.on.isEmpty, "When using CrossJoin, no on conditions should be provided")
+      case CrossJoin | PasteJoin =>
+        val name = if (query.joinType == PasteJoin) "PasteJoin" else "CrossJoin"
+        require(`using`.isEmpty, s"When using $name, no using columns should be provided")
+        require(query.on.isEmpty, s"When using $name, no on conditions should be provided")
         ""
       case _ =>
         require(`using`.nonEmpty || query.on.nonEmpty, s"No USING or ON provided for joinType: ${query.joinType}")
@@ -427,6 +481,7 @@ trait ClickhouseTokenizerModule
       case RightOuterJoin => "RIGHT OUTER JOIN"
       case FullOuterJoin  => "FULL OUTER JOIN"
       case CrossJoin      => "CROSS JOIN"
+      case PasteJoin      => "PASTE JOIN"
 
       // custom clickhouse
       case AllInnerJoin  => "ALL INNER JOIN"

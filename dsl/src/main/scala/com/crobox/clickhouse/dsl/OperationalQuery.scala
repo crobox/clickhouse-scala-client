@@ -75,6 +75,55 @@ trait OperationalQuery extends Query {
 
   def asFinal(`final`: Boolean): OperationalQuery = if (`final`) asFinal else this
 
+  /**
+   * `SAMPLE rate [OFFSET offset]`, where `rate` is a fraction in (0, 1] or a row count above 1.
+   *
+   * Only valid on a table whose engine declares a `SAMPLE BY` expression; the server rejects it otherwise. Rejected
+   * here on a subquery for the same reason [[asFinal]] is -- there is no sampling key to read.
+   */
+  def sample(rate: Double, offset: Option[Double] = None): OperationalQuery =
+    OperationalQuery(
+      internalQuery.from
+        .map {
+          case _: InnerFromQuery =>
+            throw new IllegalArgumentException("It's ILLEGAL to set SAMPLE on a (sub)query FROM query")
+          case table: TableFromQuery[_] =>
+            internalQuery.copy(from = Option(table.copy(sampling = Option(Sample(rate, offset)))))
+        }
+        .getOrElse(internalQuery)
+    )
+
+  /**
+   * `ARRAY JOIN`, unfolding each array column into one row per element. Rows with an empty array are dropped.
+   *
+   * Named `withArrayJoin` rather than `arrayJoin`, matching [[withRollup]] and [[withTotals]]: an inherited member
+   * shadows an imported one, so an `arrayJoin` here would hide the `arrayJoin` *function* from every subclass of this
+   * trait.
+   */
+  def withArrayJoin(columns: Column*): OperationalQuery =
+    addArrayJoin(columns, left = false)
+
+  /** `LEFT ARRAY JOIN`, which keeps a row whose array is empty rather than dropping it. */
+  def withLeftArrayJoin(columns: Column*): OperationalQuery =
+    addArrayJoin(columns, left = true)
+
+  private def addArrayJoin(columns: Seq[Column], left: Boolean): OperationalQuery = {
+    val existing = internalQuery.arrayJoin.map(_.columns).getOrElse(Seq.empty)
+    OperationalQuery(
+      internalQuery.copy(arrayJoin = Option(ArrayJoinQuery(existing ++ columns, left)))
+    )
+  }
+
+  /**
+   * Query-level `SETTINGS`, which unlike `QuerySettings` applies to this query alone rather than the whole HTTP
+   * request, and so can differ per subquery. Values are emitted verbatim: a string setting has to arrive quoted, as in
+   * `settings("log_comment" -> "'hi'")`.
+   */
+  def settings(setting: (String, String), settings: (String, String)*): OperationalQuery =
+    OperationalQuery(
+      internalQuery.copy(settings = internalQuery.settings ++ (setting +: settings))
+    )
+
   def groupBy(columns: Column*): OperationalQuery = {
     val internalGroupBy = internalQuery.groupBy.getOrElse(GroupByQuery())
     val newGroupBy      = Some(internalGroupBy.copy(usingColumns = internalGroupBy.usingColumns ++ columns))

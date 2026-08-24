@@ -18,6 +18,29 @@ class QueryIT extends DslITSpec {
     Seq(Table1Entry(oneId), Table1Entry(randomUUID), Table1Entry(randomUUID), Table1Entry(randomUUID))
   override val table2Entries = Seq(Table2Entry(oneId, randomString, Random.nextInt(1000) + 1, randomString, None))
 
+  // The clause has always rendered; until QueryResult carried `totals` the extra row the server sends was discarded.
+  it should "read back the row GROUP BY WITH TOTALS adds" in {
+    case class Totals(itemId: String, total: Int)
+    implicit val totalsFormat: RootJsonFormat[Totals] =
+      jsonFormat[String, Int, Totals](Totals.apply, "item_id", "total")
+
+    // toInt32, because count() is a UInt64 and this client pins output_format_json_quote_64bit_integers = 1, so a
+    // bare count() arrives as a JSON string.
+    val query  = select(itemId, toInt32(count()) as "total").from(TwoTestTable).groupBy(itemId).withTotals
+    val result = queryExecutor.execute[Totals](query).futureValue
+
+    result.totals.map(_.total) should be(Some(result.rows.map(_.total).sum))
+  }
+
+  it should "leave totals empty for a query that did not ask for them" in {
+    case class Totals(itemId: String, total: Int)
+    implicit val totalsFormat: RootJsonFormat[Totals] =
+      jsonFormat[String, Int, Totals](Totals.apply, "item_id", "total")
+
+    val query = select(itemId, toInt32(count()) as "total").from(TwoTestTable).groupBy(itemId)
+    queryExecutor.execute[Totals](query).futureValue.totals should be(None)
+  }
+
   it should "map as result" in {
 
     case class Result(columnResult: String, empty: Int)
