@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl.execution
 
 import com.crobox.clickhouse.ClickhouseClient
 import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizeContext, TokenizerModule}
-import com.crobox.clickhouse.dsl.{Query, Table}
+import com.crobox.clickhouse.dsl.{ExplainKind, Query, Table}
 import com.crobox.clickhouse.internal.QuerySettings
 import spray.json.{JsonReader, _}
 
@@ -42,6 +42,35 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
   //      client.queryWithProgress(toSql(query.internalQuery)(ctx = TokenizeContext()))
   //    queryResult.mapMaterializedValue(_.map(_.parseJson.convertTo[QueryResult[V]]))
   //  }
+
+  /** Every EXPLAIN kind but ESTIMATE reports a single column under this name. */
+  private val ExplainColumn = "explain"
+
+  override def explain(
+      kind: ExplainKind,
+      query: Query,
+      options: Seq[(String, String)] = Seq.empty
+  )(implicit
+      executionContext: ExecutionContext,
+      settings: QuerySettings = QuerySettings()
+  ): Future[Seq[String]] =
+    explainRows(kind, query, options).map(_.rows.flatMap(_.getByName[String](ExplainColumn)))
+
+  override def explainRows(
+      kind: ExplainKind,
+      query: Query,
+      options: Seq[(String, String)] = Seq.empty
+  )(implicit
+      executionContext: ExecutionContext,
+      settings: QuerySettings = QuerySettings()
+  ): Future[QueryResult[Row]] = {
+    val explainSql = toExplainSql(kind, query.internalQuery, options)(ctx = TokenizeContext())
+    // Selected from as a subquery rather than given a trailing FORMAT. EXPLAIN AST reports the whole parsed statement,
+    // so a `FORMAT` after it becomes part of what it explains and the result comes back in the default format instead;
+    // wrapping sidesteps that and reads identically for every kind.
+    val sql = s"SELECT * FROM ($explainSql) FORMAT ${CompactRowParser.Format}"
+    client.query(sql)(settings).map(CompactRowParser.parse)
+  }
 
   override def executeRows(
       query: Query

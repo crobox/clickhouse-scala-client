@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.execution
 
 import com.crobox.clickhouse.dsl.language.TokenizerModule
-import com.crobox.clickhouse.dsl.{Query, Table}
+import com.crobox.clickhouse.dsl.{ExplainKind, Query, Table}
 import com.crobox.clickhouse.internal.QuerySettings
 import spray.json._
 
@@ -31,6 +31,26 @@ trait QueryExecutor { self: TokenizerModule =>
    */
   def executeRows(
       query: Query
+  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[Row]]
+
+  /**
+   * `EXPLAIN`, as the lines of text it reports. Empty for [[ExplainKind.Estimate]], whose result is a set of columns
+   * rather than a single `explain` one -- use [[explainRows]] for that.
+   */
+  def explain(
+      kind: ExplainKind,
+      query: Query,
+      options: Seq[(String, String)] = Seq.empty
+  )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[Seq[String]]
+
+  /**
+   * `EXPLAIN` read by column, for kinds whose result is not a single `explain` column. Mirrors [[executeRows]]: the
+   * column set depends on the kind, so there is nothing to declare up front.
+   */
+  def explainRows(
+      kind: ExplainKind,
+      query: Query,
+      options: Seq[(String, String)] = Seq.empty
   )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[Row]]
 
   def insert[V: JsonWriter](table: Table, values: Seq[V])(implicit

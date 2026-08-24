@@ -123,6 +123,19 @@ trait ClickhouseTokenizerModule
     sql
   }
 
+  override def toExplainSql(
+      kind: ExplainKind,
+      query: InternalQuery,
+      options: Seq[(String, String)] = Seq.empty
+  )(implicit ctx: TokenizeContext): String = {
+    // Same `key = value` form as query-level SETTINGS, but positioned before the query rather than after it.
+    val optionsSql =
+      if (options.isEmpty) "" else options.map { case (k, v) => s"$k = $v" }.mkString(" ", Tokens.Delimiter, "")
+    val sql = s"EXPLAIN ${kind.keyword}$optionsSql ${toRawSql(query)}"
+    logger.debug(s"Generated sql [$sql]")
+    sql
+  }
+
   private def removeSurroundingBrackets(value: String): String =
     if (value.startsWith("(") && value.endsWith(")") && value.count(_ == '(') == 1 && value.count(_ == ')') == 1) {
       value.substring(1, value.length - 1)
