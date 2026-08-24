@@ -123,10 +123,4 @@ class ClickhouseClientTest extends ClickhouseClientAsyncSpec {
           qp
         } should not be empty
       )
-
-  it should "parse server version" in {
-    new ClickhouseClient(
-      Some(config.withValue("crobox.clickhouse.server.version", ConfigValueFactory.fromAnyRef("21.99.98")))
-    ).serverVersion should be(ClickhouseServerVersion(Seq(21, 99, 98)))
-  }
 }

@@ -12,8 +12,7 @@ import com.crobox.clickhouse.internal._
 import com.crobox.clickhouse.internal.progress.QueryProgress.QueryProgress
 import com.typesafe.config.{Config, ConfigFactory}
 
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Async clickhouse client using Pekko Http and Streams
@@ -132,41 +131,4 @@ class ClickhouseClient(
     val entity = HttpEntity.apply(ContentTypes.`text/plain(UTF-8)`, source)
     executeRequestInternal(hostBalancer.nextHost, sql, queryIdentifier, settings, Option(entity), None)
   }
-
-  /**
-   * Resolved on first use, not at construction. This blocks on a query to the server, and doing that eagerly meant a
-   * client could not be constructed without a reachable ClickHouse -- it stalled the constructing thread for up to five
-   * seconds and then carried on with a guessed version. Callers that want it resolved up front can still touch it.
-   */
-  lazy val serverVersion: ClickhouseServerVersion =
-    try {
-      val path    = "crobox.clickhouse.server.version"
-      val cfg     = configuration.getOrElse(ConfigFactory.load())
-      val version = if (cfg.hasPath(path)) {
-        ClickhouseServerVersion(cfg.getString(path))
-      } else {
-        Await.result(
-          query("select version()")(QuerySettings(ReadQueries).copy(retries = Option(0)))
-            .recover { case x: ClickhouseException =>
-              val key = "(version "
-              val idx = x.getMessage.indexOf(key)
-              if (idx > 0) x.getMessage.substring(idx + key.length, x.getMessage.indexOf(")", idx + key.length))
-              else "Unknown"
-            }
-            .map(ClickhouseServerVersion(_)),
-          5.seconds
-        )
-      }
-      logger.info(s"Clickhouse Server Version set to: $version")
-      version
-    } catch {
-      case x: Throwable =>
-        val assumed = ClickhouseServerVersion.fallback
-        logger.error(
-          s"Can't determine Clickhouse Server Version. Assuming: $assumed. Set `crobox.clickhouse.server.version` to " +
-            s"avoid guessing. Error: ${x.getMessage}",
-          x
-        )
-        assumed
-    }
 }

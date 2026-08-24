@@ -20,7 +20,6 @@ class UUIDFunctionsIT extends DslITSpec {
   }
 
   it should "handle toUUID" in {
-    assumeMinimalClickhouseVersion(21, 8)
     r(dsl.empty(toUUID("00000000-0000-0000-0000-000000000000")) as "result") shouldBe "1"
     r(toUUID("00000000-0000-0000-0000-000000000000")) shouldBe "00000000-0000-0000-0000-000000000000"
   }

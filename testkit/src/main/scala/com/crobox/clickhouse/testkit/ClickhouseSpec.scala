@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.testkit
 
-import com.crobox.clickhouse.{ClickhouseClient, ClickhouseServerVersion}
+import com.crobox.clickhouse.ClickhouseClient
 import com.typesafe.config.Config
 import org.scalatest._
 
@@ -122,19 +122,4 @@ trait ClickhouseSpec extends SuiteMixin with BeforeAndAfter with BeforeAndAfterA
       }
       Await.result(internalClient.shutdown(), clickhouseSpecTimeout)
     }
-
-  // Returns the Clickhouse Version. DEFAUlT VALUE *must* equal the one set in .travis.yml AND docker-compose.xml
-  lazy val ClickHouseVersion: ClickhouseServerVersion = clickClient.serverVersion
-
-  def assumeMinimalClickhouseVersion(version: Int): Assertion =
-    assume(
-      ClickHouseVersion.minimalVersion(version),
-      s"ClickhouseVersion: $ClickHouseVersion >= $version does NOT hold"
-    )
-
-  def assumeMinimalClickhouseVersion(version: Int, subVersion: Int): Assertion =
-    assume(
-      ClickHouseVersion.minimalVersion(version, subVersion),
-      s"ClickhouseVersion: $ClickHouseVersion >= $version.$subVersion does NOT hold"
-    )
 }

@@ -18,11 +18,10 @@ trait DslTestSpec
     with ClickhouseMatchers
     with ClickhouseTokenizerModule {
 
-  val config: Config                         = ConfigFactory.load()
-  val serverVersion: ClickhouseServerVersion = ClickhouseServerVersion(Seq(22, 3))
-  override val database: String              = "test"
+  val config: Config            = ConfigFactory.load()
+  override val database: String = "test"
 
-  implicit def ctx: TokenizeContext = TokenizeContext(serverVersion)
+  implicit def ctx: TokenizeContext = TokenizeContext()
 
   def toSQL(condition: TableColumn[Boolean]): String = toSQL(Option(condition))
 

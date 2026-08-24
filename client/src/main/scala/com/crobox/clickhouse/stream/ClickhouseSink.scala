@@ -41,12 +41,6 @@ case class Optimize(
 
 object ClickhouseSink extends LazyLogging {
 
-  @deprecated("use [[#toSink()]] instead")
-  def insertSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(implicit
-      ec: ExecutionContext,
-      settings: QuerySettings = QuerySettings()
-  ): Sink[Insert, Future[Done]] = toSink(config, client, indexerName)
-
   def toSink(config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(implicit
       ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()

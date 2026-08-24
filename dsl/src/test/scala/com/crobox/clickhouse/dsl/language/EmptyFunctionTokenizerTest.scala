@@ -6,48 +6,29 @@ import com.crobox.clickhouse.{dsl, DslTestSpec}
 class EmptyFunctionTokenizerTest extends DslTestSpec {
 
   it should "UUID empty" in {
-    val result = toSQL(dsl.empty(nativeUUID))
-    if (serverVersion.minimalVersion(21, 8)) {
-      result should matchSQL("empty(uuid)")
-    } else {
-      result should matchSQL("uuid == 0")
-    }
+    toSQL(dsl.empty(nativeUUID)) should matchSQL("empty(uuid)")
   }
 
   it should "UUID notEmpty" in {
-    val result = toSQL(dsl.notEmpty(nativeUUID))
-    if (serverVersion.minimalVersion(21, 8)) {
-      result should matchSQL("notEmpty(uuid)")
-    } else {
-      result should matchSQL("uuid != 0")
-    }
+    toSQL(dsl.notEmpty(nativeUUID)) should matchSQL("notEmpty(uuid)")
   }
 
-  it should "rewrite empty to empty(0)" in {
-    val query  = select(All()).from(TwoTestTable).where(nativeUUID.empty())
-    val result = toSql(query.internalQuery, None)
-    if (serverVersion.minimalVersion(21, 8)) {
-      result should matchSQL(s"SELECT * FROM $database.twoTestTable WHERE empty(uuid)")
-    } else {
-      result should matchSQL(s"SELECT * FROM $database.twoTestTable WHERE uuid == 0")
-    }
+  it should "tokenize empty as empty()" in {
+    val query = select(All()).from(TwoTestTable).where(nativeUUID.empty())
+    toSql(query.internalQuery, None) should matchSQL(
+      s"SELECT * FROM $database.twoTestTable WHERE empty(uuid)"
+    )
   }
 
-  it should "rewrite notEmpty to notEquals(0)" in {
-    val query  = select(All()).from(TwoTestTable).where(nativeUUID.notEmpty())
-    val result = toSql(query.internalQuery, None)
-    if (serverVersion.minimalVersion(21, 8)) {
-      result should matchSQL(s"SELECT * FROM $database.twoTestTable WHERE notEmpty(uuid)")
-    } else {
-      result should matchSQL(s"SELECT * FROM $database.twoTestTable WHERE uuid != 0")
-    }
+  it should "tokenize notEmpty as notEmpty()" in {
+    val query = select(All()).from(TwoTestTable).where(nativeUUID.notEmpty())
+    toSql(query.internalQuery, None) should matchSQL(
+      s"SELECT * FROM $database.twoTestTable WHERE notEmpty(uuid)"
+    )
 
-    val query2  = select(All()).from(TwoTestTable).where(notEmpty(nativeUUID))
-    val result2 = toSql(query2.internalQuery, None)
-    if (serverVersion.minimalVersion(21, 8)) {
-      result2 should matchSQL(s"SELECT * FROM $database.twoTestTable WHERE notEmpty(uuid)")
-    } else {
-      result2 should matchSQL(s"SELECT * FROM $database.twoTestTable WHERE uuid != 0")
-    }
+    val query2 = select(All()).from(TwoTestTable).where(notEmpty(nativeUUID))
+    toSql(query2.internalQuery, None) should matchSQL(
+      s"SELECT * FROM $database.twoTestTable WHERE notEmpty(uuid)"
+    )
   }
 }

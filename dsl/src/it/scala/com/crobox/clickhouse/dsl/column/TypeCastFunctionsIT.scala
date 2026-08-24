@@ -153,9 +153,7 @@ class TypeCastFunctionsIT extends DslITSpec {
   }
 
   it should "handle Int32OrDefault" in {
-    // orNull only accept STRING (and only available in version 22.3 and upwards)
-    assumeMinimalClickhouseVersion(22, 3)
-
+    // orNull only accepts STRING
     r(toInt32OrDefault("1", 123)) should be("1")
     r(toInt32OrDefault(Byte.MaxValue.toString, 123)) should be("127")
     r(toInt32OrDefault(Byte.MinValue.toString, 123)) should be("-128")

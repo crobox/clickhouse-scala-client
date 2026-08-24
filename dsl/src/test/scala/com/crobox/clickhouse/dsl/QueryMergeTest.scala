@@ -16,6 +16,9 @@ class QueryMergeTest extends DslTestSpec {
 
     // PURE SPECULATIVE / SQL ONLY
     // THE REASON WHY IT'S NOT --> ON twoTestTable.ts is that twoTestTable DOESN'T have a ts column.
+    // The outer join is L1/R1 and the one nested in its right-hand side is L2/R2. This used to read L2/R2 at both
+    // levels: the join number was read back after the right side had been tokenized, by which point the nested join
+    // had already advanced it.
     toSql(query.internalQuery) should matchSQL(
       s"""
          |SELECT shield_id,
@@ -47,6 +50,9 @@ class QueryMergeTest extends DslTestSpec {
 
     // PURE SPECULATIVE / SQL ONLY
     // THE REASON WHY IT'S NOT --> ON twoTestTable.ts is that twoTestTable DOESN'T have a ts column.
+    // The outer join is L1/R1 and the one nested in its right-hand side is L2/R2. This used to read L2/R2 at both
+    // levels: the join number was read back after the right side had been tokenized, by which point the nested join
+    // had already advanced it.
     toSql(query.internalQuery) should matchSQL(
       s"""
          |SELECT item_id,
@@ -63,7 +69,7 @@ class QueryMergeTest extends DslTestSpec {
          |   FROM ${OneTestTable.quoted}
          |   WHERE shield_id = '$expectedUUID'
          |   GROUP BY ts
-         |   ORDER BY ts ASC) AS L2 ALL
+         |   ORDER BY ts ASC) AS L1 ALL
          |LEFT JOIN
          |  (SELECT item_id,
          |          column_2,
@@ -84,7 +90,7 @@ class QueryMergeTest extends DslTestSpec {
          |      GROUP BY ts
          |      ORDER BY ts ASC) AS R2 USING ts
          |   GROUP BY ts
-         |   ORDER BY ts ASC) AS R2 USING ts
+         |   ORDER BY ts ASC) AS R1 USING ts
          |FORMAT JSON""".stripMargin
     )
   }

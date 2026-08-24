@@ -203,7 +203,7 @@ trait OperationalQuery extends Query {
   def allRightJoin(query: OperationalQuery): OperationalQuery =
     join(JoinQuery.AllRightJoin, query)
 
-  @deprecated("Please use join(JoinQuery.AllInnerJoin)", "Clickhouse v20")
+  @deprecated("Please use join(JoinQuery.AnyInnerJoin)")
   def anyInnerJoin(query: OperationalQuery): OperationalQuery =
     join(JoinQuery.AnyInnerJoin, query)
 
@@ -211,7 +211,7 @@ trait OperationalQuery extends Query {
   def anyLeftJoin(query: OperationalQuery): OperationalQuery =
     join(JoinQuery.AnyLeftJoin, query)
 
-  @deprecated("Please use join(JoinQuery.AllRightJoin)", "Clickhouse v20")
+  @deprecated("Please use join(JoinQuery.AnyRightJoin)")
   def anyRightJoin(query: OperationalQuery): OperationalQuery =
     join(JoinQuery.AnyRightJoin, query)
 
@@ -227,7 +227,7 @@ trait OperationalQuery extends Query {
   def globalAllRightJoin(query: OperationalQuery): OperationalQuery =
     globalJoin(JoinQuery.AllRightJoin, query)
 
-  @deprecated("Please use globalJoin(JoinQuery.AllInnerJoin)", "Clickhouse v20")
+  @deprecated("Please use globalJoin(JoinQuery.AnyInnerJoin)")
   def globalAnyInnerJoin(query: OperationalQuery): OperationalQuery =
     globalJoin(JoinQuery.AnyInnerJoin, query)
 
@@ -235,7 +235,7 @@ trait OperationalQuery extends Query {
   def globalAnyLeftJoin(query: OperationalQuery): OperationalQuery =
     globalJoin(JoinQuery.AnyLeftJoin, query)
 
-  @deprecated("Please use globalJoin(JoinQuery.AllRightJoin)", "Clickhouse v20")
+  @deprecated("Please use globalJoin(JoinQuery.AnyRightJoin)")
   def globalAnyRightJoin(query: OperationalQuery): OperationalQuery =
     globalJoin(JoinQuery.AnyRightJoin, query)
 

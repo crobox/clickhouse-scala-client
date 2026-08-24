@@ -46,6 +46,21 @@ class INFunctionsTest extends DslTestSpec {
          |""".stripMargin)
   }
 
+  // `useTableAlias` used to latch: a plain IN turned it on and nothing turned it back off, so a GLOBAL IN sharing the
+  // WHERE clause picked up an alias it does not get on its own.
+  it should "SKIP tableAlias for GLOBAL IN regardless of a preceding IN" in {
+    toSQL(
+      select(col4)
+        .from(OneTestTable)
+        .where((col4 in select(col4).from(ThreeTestTable)) and col4.globalIn(TwoTestTable))
+    ) should matchSQL(
+      s"""
+         |WHERE column_4 IN (SELECT column_4 FROM ${ThreeTestTable.quoted} AS T1)
+         |  AND column_4 GLOBAL IN ${TwoTestTable.quoted}
+         |""".stripMargin
+    )
+  }
+
   it should "use tableAlias for nested IN" in {
     toSQL(
       shieldId.in(select(itemId).from(OneTestTable).join(InnerJoin, select(itemId).from(TwoTestTable)).using(itemId))

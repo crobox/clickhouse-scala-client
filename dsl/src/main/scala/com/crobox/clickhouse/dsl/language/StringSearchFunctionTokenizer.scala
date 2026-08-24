@@ -24,9 +24,9 @@ trait StringSearchFunctionTokenizer {
     }
 
     val maybeReplaceParam = col match {
-      case r: StringSearchReplaceFunc => ctx.delimiter + tokenizeColumn(r.replace.column)
+      case r: StringSearchReplaceFunc => Tokens.Delimiter + tokenizeColumn(r.replace.column)
       case _                          => ""
     }
-    s"$command(${tokenizeColumn(col.col1.column)}${ctx.delimiter}${tokenizeColumn(col.col2.column)}$maybeReplaceParam)"
+    s"$command(${tokenizeColumn(col.col1.column)}${Tokens.Delimiter}${tokenizeColumn(col.col2.column)}$maybeReplaceParam)"
   }
 }
