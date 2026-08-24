@@ -46,6 +46,18 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
   //    queryResult.mapMaterializedValue(_.map(_.parseJson.convertTo[QueryResult[V]]))
   //  }
 
+  override def executeRows(
+      query: Query
+  )(implicit
+      executionContext: ExecutionContext,
+      settings: QuerySettings = QuerySettings()
+  ): Future[QueryResult[Row]] = {
+    val sql = toSql(query.internalQuery, formatting = Option(CompactRowParser.Format))(
+      ctx = TokenizeContext(client.serverVersion)
+    )
+    client.query(sql)(settings).map(CompactRowParser.parse)
+  }
+
   override def insert[V: JsonWriter](
       table: Table,
       values: Seq[V]

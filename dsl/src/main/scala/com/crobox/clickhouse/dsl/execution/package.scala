@@ -19,14 +19,26 @@ package object execution {
 
     implicit def format[V: JsonReader]: JsonReader[QueryResult[V]] = (json: JsValue) => {
       val jsObject = json.asJsObject
-      val rows     = jsObject.getFields("data") match {
+      // Both of these used to be non-exhaustive matches, so an unexpected response shape surfaced as a bare
+      // MatchError with nothing identifying what came back.
+      val rows = jsObject.getFields("data") match {
         case Seq(JsArray(results)) => results.map(_.convertTo[V])
+        case _                     =>
+          throw ResultParsingException(
+            s"Expected a `data` array in the FORMAT JSON response, got ${jsObject.compactPrint.take(200)}"
+          )
       }
       val meta: Option[ResultMeta] = jsObject.fields.get("meta").flatMap {
         case JsArray(columnDefinitions) =>
-          Option(ResultMeta(columnDefinitions.map(_.asJsObject.getFields("name", "type") match {
-            case Seq(JsString(name), JsString(colType)) => ResultColumnType(name, colType)
-          })))
+          Option(ResultMeta(columnDefinitions.map { definition =>
+            definition.asJsObject.getFields("name", "type") match {
+              case Seq(JsString(name), JsString(colType)) => ResultColumnType(name, colType)
+              case _                                      =>
+                throw ResultParsingException(
+                  s"Expected `name` and `type` strings in a `meta` entry, got ${definition.compactPrint.take(200)}"
+                )
+            }
+          }))
         case _ => None
       }
       val statistic = jsObject.getFields("rows_before_limit_at_least", "rows") match {
