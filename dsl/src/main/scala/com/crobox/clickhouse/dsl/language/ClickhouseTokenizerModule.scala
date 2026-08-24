@@ -1,6 +1,5 @@
 package com.crobox.clickhouse.dsl.language
 
-import com.crobox.clickhouse.ClickhouseServerVersion
 import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.time.{MultiDuration, TimeUnit, TotalDuration}
@@ -11,7 +10,6 @@ import org.slf4j.LoggerFactory
 import scala.jdk.CollectionConverters._
 
 case class TokenizeContext(
-    version: ClickhouseServerVersion,
     var joinNr: Int = 0,
     var tableAliases: Map[Table, String] = Map.empty,
     var useTableAlias: Boolean = false,

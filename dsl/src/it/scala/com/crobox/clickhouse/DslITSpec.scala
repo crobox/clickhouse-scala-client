@@ -17,7 +17,7 @@ trait DslITSpec extends ClickhouseClientSpec with ClickhouseSpec with TestSchema
   this: Suite =>
 
   implicit lazy val queryExecutor: QueryExecutor = ClickhouseQueryExecutor.default(clickClient)
-  implicit def ctx: TokenizeContext              = TokenizeContext(clickClient.serverVersion)
+  implicit def ctx: TokenizeContext              = TokenizeContext()
 
   val table1Entries: Seq[Table1Entry] = Seq()
   val table2Entries: Seq[Table2Entry] = Seq()

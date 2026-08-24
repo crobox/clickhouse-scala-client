@@ -1,6 +1,5 @@
 package com.crobox.clickhouse.dsl.execution
 
-import com.crobox.clickhouse
 import com.crobox.clickhouse.ClickhouseClient
 import com.crobox.clickhouse.dsl.language.{ClickhouseTokenizerModule, TokenizeContext, TokenizerModule}
 import com.crobox.clickhouse.dsl.{Query, Table}
@@ -13,13 +12,11 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
   self: TokenizerModule =>
   implicit val client: ClickhouseClient
 
-  override lazy val serverVersion: clickhouse.ClickhouseServerVersion = client.serverVersion
-
   override def execute[V: JsonReader](
       query: Query
   )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[V]] = {
     import QueryResult._
-    val queryResult = client.query(toSql(query.internalQuery)(ctx = TokenizeContext(client.serverVersion)))(settings)
+    val queryResult = client.query(toSql(query.internalQuery)(ctx = TokenizeContext()))(settings)
     queryResult.map(_.parseJson.convertTo[QueryResult[V]])
   }
 
@@ -42,7 +39,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
   //    settings: QuerySettings = QuerySettings()): Source[QueryProgress, Future[QueryResult[V]]] = {
   //    import QueryResult._
   //    val queryResult =
-  //      client.queryWithProgress(toSql(query.internalQuery)(ctx = TokenizeContext(client.serverVersion)))
+  //      client.queryWithProgress(toSql(query.internalQuery)(ctx = TokenizeContext()))
   //    queryResult.mapMaterializedValue(_.map(_.parseJson.convertTo[QueryResult[V]]))
   //  }
 
@@ -52,9 +49,7 @@ trait ClickhouseQueryExecutor extends QueryExecutor {
       executionContext: ExecutionContext,
       settings: QuerySettings = QuerySettings()
   ): Future[QueryResult[Row]] = {
-    val sql = toSql(query.internalQuery, formatting = Option(CompactRowParser.Format))(
-      ctx = TokenizeContext(client.serverVersion)
-    )
+    val sql = toSql(query.internalQuery, formatting = Option(CompactRowParser.Format))(ctx = TokenizeContext())
     client.query(sql)(settings).map(CompactRowParser.parse)
   }
 

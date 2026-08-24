@@ -161,22 +161,13 @@ class SqlValidationITSpec extends DslITSpec {
 
   private val constructs: Seq[Construct] = astConstructs ++ joinShapes
 
-  /** `EXPLAIN QUERY TREE` needs the analyzer, which is only the default from 24.3. */
-  private lazy val semanticChecksAvailable: Boolean = clickClient.serverVersion.minimalVersion(24, 3)
-
+  /** `EXPLAIN QUERY TREE` needs the analyzer, the default since 24.3 and so on every supported server. */
   private def explainOf(level: ValidationLevel): String = level match {
-    case Semantic if semanticChecksAvailable => "EXPLAIN QUERY TREE "
-    case _                                   => "EXPLAIN AST "
+    case Semantic => "EXPLAIN QUERY TREE "
+    case _        => "EXPLAIN AST "
   }
 
   it should "emit SQL that ClickHouse parses, for every registered construct" in {
-    if (!semanticChecksAvailable) {
-      alert(
-        s"Server is ${clickClient.serverVersion}; EXPLAIN QUERY TREE needs 24.3+, so every construct is only " +
-          "syntax-checked in this run."
-      )
-    }
-
     // One at a time. Firing all of them concurrently overruns the client's connection pool
     // (pekko.http.host-connection-pool.max-open-requests, 32 by default) and every result becomes a pool rejection
     // rather than a verdict on the SQL.

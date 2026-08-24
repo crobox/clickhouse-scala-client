@@ -12,14 +12,12 @@ class StringSearchFunctionsIT extends DslITSpec {
   }
 
   it should "iContains" in {
-    assumeMinimalClickhouseVersion(21)
     execute(select("women,unisex".iContains("MeN"))).futureValue should be("1")
     execute(select("women,unisex".iContains("men"))).futureValue should be("1")
     execute(select("women,unisex".iContains("n,UNIs"))).futureValue should be("1")
   }
 
   it should "iLike" in {
-    assumeMinimalClickhouseVersion(21)
     execute(select(iLike("women,unisex", "womEn,unisex"))).futureValue should be("1")
     execute(select(iLike("women,unisex", "wOmen,unISEx"))).futureValue should be("1")
     execute(select(iLike("women,unisex", "women,UNIsex"))).futureValue should be("1")

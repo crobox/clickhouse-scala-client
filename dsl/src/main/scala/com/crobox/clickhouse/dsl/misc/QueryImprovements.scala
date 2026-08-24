@@ -24,9 +24,7 @@ object QueryImprovements extends LazyLogging {
         queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
       if (debug)
-        logger.info(
-          s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(queryExecutor.serverVersion))}"
-        )
+        logger.info(s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext())}")
       queryExecutor.execute(query)
     }
 
@@ -34,9 +32,7 @@ object QueryImprovements extends LazyLogging {
         executionContext: ExecutionContext,
         queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
-      logger.info(
-        s"[$traceId] ${tokenizer.toSql(query.internalQuery)(TokenizeContext(queryExecutor.serverVersion))}"
-      )
+      logger.info(s"[$traceId] ${tokenizer.toSql(query.internalQuery)(TokenizeContext())}")
       queryExecutor.execute(query)
     }
 
@@ -44,11 +40,7 @@ object QueryImprovements extends LazyLogging {
         executionContext: ExecutionContext,
         queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
-      traceId.foreach(id =>
-        logger.info(
-          s"[$id] ${tokenizer.toSql(query.internalQuery)(TokenizeContext(queryExecutor.serverVersion))}"
-        )
-      )
+      traceId.foreach(id => logger.info(s"[$id] ${tokenizer.toSql(query.internalQuery)(TokenizeContext())}"))
       queryExecutor.execute(query)
     }
 
@@ -56,9 +48,7 @@ object QueryImprovements extends LazyLogging {
         executionContext: ExecutionContext,
         queryExecutor: QueryExecutor
     ): Future[QueryResult[V]] = {
-      logger.info(
-        s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext(queryExecutor.serverVersion))}"
-      )
+      logger.info(s"SQL: ${tokenizer.toSql(query.internalQuery)(TokenizeContext())}")
       queryExecutor.execute(query)
     }
   }
