@@ -204,6 +204,44 @@ class SqlValidationITSpec extends DslITSpec {
         .withCte(WithExpression(const(1), "one"))
         .unionAll(select(ref[Int]("two")).from(OneTestTable).withCte(WithExpression(const(2), "two")))
     ),
+    Construct(
+      "order by with fill",
+      select(col2).from(TwoTestTable).orderByColumns(OrderingColumn(col2, ASC, Option(WithFill())))
+    ),
+    Construct(
+      "order by with fill, bounded",
+      select(col2)
+        .from(TwoTestTable)
+        .orderByColumns(
+          OrderingColumn(
+            col2,
+            ASC,
+            Option(WithFill(from = Option(const(1)), to = Option(const(6)), step = Option(const(1))))
+          )
+        )
+    ),
+    Construct(
+      "order by with fill and staleness, which cannot be combined with FROM",
+      select(col2)
+        .from(TwoTestTable)
+        .orderByColumns(
+          OrderingColumn(col2, ASC, Option(WithFill(to = Option(const(6)), staleness = Option(const(3)))))
+        )
+    ),
+    Construct(
+      "interpolate, naming a column",
+      select(col2, col3)
+        .from(TwoTestTable)
+        .orderByColumns(OrderingColumn(col2, ASC, Option(WithFill())))
+        .interpolate(InterpolateColumn(col3))
+    ),
+    Construct(
+      "interpolate, bare",
+      select(col2, col3)
+        .from(TwoTestTable)
+        .orderByColumns(OrderingColumn(col2, ASC, Option(WithFill())))
+        .interpolate()
+    ),
     Construct("sample", select(shieldId).from(OneTestTable).sample(0.1), Syntax),
     Construct("sample with an offset", select(shieldId).from(OneTestTable).sample(0.1, Option(0.5)), Syntax)
   )

@@ -45,7 +45,7 @@ sealed case class InternalQuery(
     having: Option[TableColumn[Boolean]] = None,
     join: Option[JoinQuery] = None,
     arrayJoin: Option[ArrayJoinQuery] = None,
-    orderBy: Seq[(Column, OrderingDirection)] = Seq.empty,
+    orderBy: Seq[OrderingColumn] = Seq.empty,
     limit: Option[Limit] = None,
     limitBy: Option[LimitBy] = None,
     unionAll: Seq[OperationalQuery] = Seq.empty,
@@ -54,7 +54,9 @@ sealed case class InternalQuery(
     settings: Seq[(String, String)] = Seq.empty,
     // Last despite rendering first: several call sites construct InternalQuery positionally, and clause order is the
     // tokenizer's business rather than this list's.
-    withEntries: Seq[WithEntry] = Seq.empty
+    withEntries: Seq[WithEntry] = Seq.empty,
+    // Only meaningful alongside a WITH FILL in `orderBy`; the server rejects it on a plain ORDER BY.
+    interpolate: Option[Interpolate] = None
 ) {
 
   def isValid: Boolean = {
@@ -93,7 +95,8 @@ sealed case class InternalQuery(
       limitBy = limitBy.orElse(other.limitBy),
       unionAll = if (unionAll.nonEmpty) unionAll else other.unionAll,
       settings = if (settings.nonEmpty) settings else other.settings,
-      withEntries = if (withEntries.nonEmpty) withEntries else other.withEntries
+      withEntries = if (withEntries.nonEmpty) withEntries else other.withEntries,
+      interpolate = interpolate.orElse(other.interpolate)
     )
 
   /**
@@ -138,6 +141,7 @@ sealed case class InternalQuery(
     noSeqConflict("unionAll", unionAll, other.unionAll)
     noSeqConflict("settings", settings, other.settings)
     noSeqConflict("withEntries", withEntries, other.withEntries)
+    noConflict("interpolate", interpolate, other.interpolate)
 
     :+>(other)
   }

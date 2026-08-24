@@ -146,7 +146,8 @@ trait ClickhouseTokenizerModule
             limitBy,
             union,
             settings,
-            withEntries
+            withEntries,
+            interpolate
           ) =>
         // The left table's alias is emitted by tokenizeJoin, and ARRAY JOIN has to land between that alias and the
         // JOIN keyword, so it is threaded through rather than placed here. Without a join there is no alias to follow.
@@ -162,6 +163,7 @@ trait ClickhouseTokenizerModule
           tokenizeGroupBy(groupBy),
           tokenizeFiltering(having, "HAVING"),
           tokenizeOrderBy(orderBy),
+          tokenizeInterpolate(interpolate),
           tokenizeLimitBy(limitBy),
           tokenizeLimit(limit),
           tokenizeSettings(settings),
@@ -547,11 +549,34 @@ trait ClickhouseTokenizerModule
     (groupByColumns ++ groupByMode ++ groupByWithTotals).mkString(" ")
   }
 
-  private def tokenizeOrderBy(orderBy: Seq[(Column, OrderingDirection)])(implicit ctx: TokenizeContext): String =
+  private def tokenizeOrderBy(orderBy: Seq[OrderingColumn])(implicit ctx: TokenizeContext): String =
     orderBy.toList match {
       case Nil | null => ""
       case _          => s"ORDER BY ${tokenizeTuplesAliased(orderBy)}"
     }
+
+  /** `INTERPOLATE` with no entries is the bare form, which interpolates every applicable column. */
+  private def tokenizeInterpolate(interpolate: Option[Interpolate])(implicit ctx: TokenizeContext): String =
+    interpolate match {
+      case None                                          => ""
+      case Some(Interpolate(columns)) if columns.isEmpty => "INTERPOLATE"
+      case Some(Interpolate(columns))                    =>
+        val entries = columns.map { case InterpolateColumn(column, expression) =>
+          val target = aliasOrName(column)
+          expression.map(expr => s"$target AS ${tokenizeColumn(expr)}").getOrElse(target)
+        }
+        s"INTERPOLATE (${entries.mkString(Tokens.Delimiter)})"
+    }
+
+  private def tokenizeWithFill(fill: WithFill)(implicit ctx: TokenizeContext): String = {
+    val parts = Seq(
+      fill.from.map(c => s"FROM ${tokenizeColumn(c)}"),
+      fill.to.map(c => s"TO ${tokenizeColumn(c)}"),
+      fill.step.map(c => s"STEP ${tokenizeColumn(c)}"),
+      fill.staleness.map(c => s"STALENESS ${tokenizeColumn(c)}")
+    ).flatten
+    if (parts.isEmpty) "WITH FILL" else s"WITH FILL ${parts.mkString(" ")}"
+  }
 
   private def tokenizeLimit(limit: Option[Limit]): String =
     limit match {
@@ -574,10 +599,11 @@ trait ClickhouseTokenizerModule
   private def tokenizeColumnsAliased(columns: Seq[Column]): String =
     columns.map(aliasOrName).mkString(", ")
 
-  private def tokenizeTuplesAliased(columns: Seq[(Column, OrderingDirection)])(implicit ctx: TokenizeContext): String =
+  private def tokenizeTuplesAliased(columns: Seq[OrderingColumn])(implicit ctx: TokenizeContext): String =
     columns
-      .map { case (column, dir) =>
-        tokenizeColumn(column) + " " + direction(dir)
+      .map { case OrderingColumn(column, dir, fill) =>
+        val ordered = tokenizeColumn(column) + " " + direction(dir)
+        fill.map(f => s"$ordered ${tokenizeWithFill(f)}").getOrElse(ordered)
       }
       .mkString(", ")
 
