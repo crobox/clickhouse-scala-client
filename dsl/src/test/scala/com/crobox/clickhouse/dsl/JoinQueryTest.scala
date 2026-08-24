@@ -175,4 +175,17 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
          |FORMAT JSON""".stripMargin
     )
   }
+
+  // The join number used to be read back after the right-hand side had been tokenized, so a join nested on the right
+  // advanced the counter and the outer join ended up sharing the inner join's aliases (L2/R2 at both levels).
+  it should "number a join nested on the right side below the outer join" in {
+    val inner = select(itemId, col2).from(TwoTestTable).join(InnerJoin, ThreeTestTable) using itemId
+    val query = select(shieldId as itemId).from(OneTestTable).join(InnerJoin, inner) using itemId
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT shield_id AS item_id FROM ${OneTestTable.quoted} AS L1 " +
+        s"INNER JOIN (SELECT item_id, column_2 FROM ${TwoTestTable.quoted} AS L2 " +
+        s"INNER JOIN (SELECT * FROM ${ThreeTestTable.quoted}) AS R2 USING item_id) AS R1 " +
+        s"ON L1.shield_id = R1.item_id FORMAT JSON"
+    )
+  }
 }

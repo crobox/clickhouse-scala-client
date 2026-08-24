@@ -9,7 +9,7 @@ trait DictionaryFunctionTokenizer {
       ctx: TokenizeContext
   ): String = {
     val default = col.default
-      .map(col => ctx.delimiter + tokenizeColumn(col.column))
+      .map(col => Tokens.Delimiter + tokenizeColumn(col.column))
       .getOrElse("")
 
     val orDefault = col.default.map(_ => "orDefault").getOrElse("")

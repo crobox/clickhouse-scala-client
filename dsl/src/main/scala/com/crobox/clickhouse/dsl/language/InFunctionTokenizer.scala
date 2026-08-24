@@ -16,23 +16,26 @@ trait InFunctionTokenizer {
 
   private def tokenizeInFunctionCol(col: InFunctionCol[_])(implicit ctx: TokenizeContext): String = col match {
     case In(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
-      s"${tokenizeColumn(l.column)} IN ${tokenizeInFunRHCol(r, () => ctx.setTableAlias(r.query.forall(_.internalQuery.join.isEmpty)))}"
+      s"${tokenizeColumn(l.column)} IN ${tokenizeInFunRHCol(r, aliasTables(r))}"
     case NotIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
-      s"${tokenizeColumn(l.column)} NOT IN ${tokenizeInFunRHCol(r, () => ctx.setTableAlias(r.query.forall(_.internalQuery.join.isEmpty)))}"
+      s"${tokenizeColumn(l.column)} NOT IN ${tokenizeInFunRHCol(r, aliasTables(r))}"
     case GlobalIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
-      s"${tokenizeColumn(l.column)} GLOBAL IN ${tokenizeInFunRHCol(r, () => ctx)}"
+      s"${tokenizeColumn(l.column)} GLOBAL IN ${tokenizeInFunRHCol(r, aliasTables = false)}"
     case GlobalNotIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
-      s"${tokenizeColumn(l.column)} GLOBAL NOT IN ${tokenizeInFunRHCol(r, () => ctx)}"
+      s"${tokenizeColumn(l.column)} GLOBAL NOT IN ${tokenizeInFunRHCol(r, aliasTables = false)}"
   }
 
-  private def tokenizeInFunRHCol(value: InFuncRHMagnet, fn: () => TokenizeContext)(implicit
+  /** A right-hand side that joins already names its sides, so aliasing its tables again would clash. */
+  private def aliasTables(r: InFuncRHMagnet): Boolean = r.query.forall(_.internalQuery.join.isEmpty)
+
+  private def tokenizeInFunRHCol(value: InFuncRHMagnet, aliasTables: Boolean)(implicit
       ctx: TokenizeContext
   ): String =
     value match {
       case col: InFuncRHMagnet if col.query.isDefined =>
-        s"(${toRawSql(col.query.get.internalQuery)(fn())})"
+        s"(${ctx.withTableAlias(aliasTables)(toRawSql(col.query.get.internalQuery))})"
       case col: InFuncRHMagnet if col.tableRef.isDefined =>
-        col.tableRef.map(table => table.quoted + fn().tableAlias(table)).get
+        col.tableRef.map(table => table.quoted + ctx.withTableAlias(aliasTables)(ctx.tableAlias(table))).get
       case col: InFuncRHMagnet => tokenizeColumn(col.column)
     }
 }

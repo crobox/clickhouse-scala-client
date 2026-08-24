@@ -9,14 +9,34 @@ import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
 
-case class TokenizeContext(
-    var joinNr: Int = 0,
-    var tableAliases: Map[Table, String] = Map.empty,
-    var useTableAlias: Boolean = false,
-    delimiter: String = ", "
-) {
+/** Tokens that are fixed by ClickHouse's grammar rather than by anything the caller chooses. */
+private[language] object Tokens {
 
-  def incrementJoinNumber(): Unit = joinNr += 1
+  /** Separator between a function's arguments. */
+  val Delimiter: String = ", "
+}
+
+/**
+ * State accumulated while rendering one query: join numbering and the table aliases handed out so far.
+ *
+ * Deliberately not a case class. The fields change as tokenization walks the query, so a derived `equals`/`hashCode`
+ * would drift under its own callers and `copy` would hand out a snapshot that silently diverges from the original. Use
+ * one instance per rendered query -- sharing one leaks join numbers and aliases between unrelated queries.
+ */
+class TokenizeContext {
+
+  private var joinNr: Int                      = 0
+  private var tableAliases: Map[Table, String] = Map.empty
+  private var useTableAlias: Boolean           = false
+
+  /**
+   * Claims this join's number. The caller must hold on to the result rather than reading it back later: tokenizing a
+   * join's right-hand side advances the counter again for every join nested inside it.
+   */
+  def nextJoinNumber(): Int = {
+    joinNr += 1
+    joinNr
+  }
 
   def tableAlias(table: Table): String =
     if (useTableAlias) {
@@ -29,14 +49,30 @@ case class TokenizeContext(
       )
     } else ""
 
-  /** Mutates in place rather than copying, so that `tableAliases` accumulated so far survives across joins. */
-  def setTableAlias(value: Boolean): TokenizeContext = {
+  /**
+   * Runs `f` with table aliasing turned on or off, restoring the previous setting afterwards.
+   *
+   * Scoped rather than sticky: as a latching flag this made a subexpression's SQL depend on what happened to be
+   * tokenized before it, so the same `GLOBAL IN` rendered with or without an alias depending on its siblings.
+   * `tableAliases` is deliberately not rolled back -- an alias already emitted has to keep meaning the same table for
+   * the rest of the query.
+   */
+  def withTableAlias[A](value: Boolean)(f: => A): A = {
+    val previous = useTableAlias
     useTableAlias = value
-    this
+    try f
+    finally useTableAlias = previous
   }
 
-  def leftAlias(alias: Option[String]): String  = ClickhouseStatement.quoteIdentifier(alias.getOrElse("L" + joinNr))
-  def rightAlias(alias: Option[String]): String = ClickhouseStatement.quoteIdentifier(alias.getOrElse("R" + joinNr))
+  def leftAlias(alias: Option[String], joinNr: Int): String =
+    ClickhouseStatement.quoteIdentifier(alias.getOrElse("L" + joinNr))
+
+  def rightAlias(alias: Option[String], joinNr: Int): String =
+    ClickhouseStatement.quoteIdentifier(alias.getOrElse("R" + joinNr))
+}
+
+object TokenizeContext {
+  def apply(): TokenizeContext = new TokenizeContext
 }
 
 trait ClickhouseTokenizerModule
@@ -76,7 +112,7 @@ trait ClickhouseTokenizerModule
   }
 
   protected def tokenizeSeqCol(columns: Column*)(implicit ctx: TokenizeContext): String =
-    columns.map(tokenizeColumn).mkString(ctx.delimiter)
+    columns.map(tokenizeColumn).mkString(Tokens.Delimiter)
 
   override def toSql(query: InternalQuery, formatting: Option[String] = Some("JSON"))(implicit
       ctx: TokenizeContext
@@ -151,7 +187,7 @@ trait ClickhouseTokenizerModule
       case alias: AliasedColumn[_] =>
         val originalColumnToken = tokenizeColumn(alias.original)
         if (originalColumnToken.isEmpty) alias.quoted else s"$originalColumnToken AS ${alias.quoted}"
-      case tuple: TupleColumn[_]    => s"(${tuple.elements.map(tokenizeColumn).mkString(ctx.delimiter)})"
+      case tuple: TupleColumn[_]    => s"(${tuple.elements.map(tokenizeColumn).mkString(Tokens.Delimiter)})"
       case col: ExpressionColumn[_] => tokenizeExpressionColumn(col)
       case col: Column              => col.quoted
     }
@@ -277,7 +313,9 @@ trait ClickhouseTokenizerModule
   ): String =
     join match {
       case Some(query) =>
-        ctx.incrementJoinNumber()
+        // Claimed up front and held: tokenizing `right` below advances the counter for every join nested in it, so
+        // reading it back afterwards would number this join by its subtree and collide with the innermost join.
+        val joinNr = ctx.nextJoinNumber()
 
         // we always need to provide an alias to the RIGHT side
         val right = query.other match {
@@ -285,20 +323,20 @@ trait ClickhouseTokenizerModule
           case query: InnerFromQuery    => tokenizeFrom(Some(query), withPrefix = false)
         }
 
-        val leftAlias  = if (from.flatMap(_.alias).isEmpty) s"AS ${ctx.leftAlias(from.flatMap(_.alias))}" else ""
-        val rightAlias = s"AS ${ctx.rightAlias(query.other.alias)}"
+        val leftAlias = if (from.flatMap(_.alias).isEmpty) s"AS ${ctx.leftAlias(from.flatMap(_.alias), joinNr)}" else ""
+        val rightAlias = s"AS ${ctx.rightAlias(query.other.alias, joinNr)}"
 
         s""" $leftAlias
            | ${if (query.global) "GLOBAL " else ""}
            | ${tokenizeJoinType(query.joinType)}
            | $right $rightAlias
-           | ${tokenizeJoinKeys(select, from.get, query)}""".trim.stripMargin
+           | ${tokenizeJoinKeys(select, from.get, query, joinNr)}""".trim.stripMargin
           .replaceAll("\n", "")
           .replaceAll("\r", "")
       case None => ""
     }
 
-  private def tokenizeJoinKeys(select: Option[SelectQuery], from: FromQuery, query: JoinQuery)(implicit
+  private def tokenizeJoinKeys(select: Option[SelectQuery], from: FromQuery, query: JoinQuery, joinNr: Int)(implicit
       ctx: TokenizeContext
   ): String = {
 
@@ -331,17 +369,17 @@ trait ClickhouseTokenizerModule
             "ON " + `using`
               .map { key =>
                 val left = underlyingLeftColumn(select, key).getOrElse(key.name)
-                s"${ctx.leftAlias(from.alias)}.$left = ${ctx.rightAlias(query.other.alias)}.${key.name}"
+                s"${ctx.leftAlias(from.alias, joinNr)}.$left = ${ctx.rightAlias(query.other.alias, joinNr)}.${key.name}"
               }
               .mkString(" AND ")
           } else if (`using`.size == 1) s"USING ${using.head.name}"
-          else s"USING (${using.map(_.name).mkString(ctx.delimiter)})"
+          else s"USING (${using.map(_.name).mkString(Tokens.Delimiter)})"
         } else if (query.on.nonEmpty) {
           // TOKENIZE ON. If the fromClause is a TABLE, we need to check on aliases!
           "ON " + query.on
             .map { cond =>
               val left = underlyingLeftColumn(select, cond.left).getOrElse(cond.left.name)
-              s"${ctx.leftAlias(from.alias)}.$left ${cond.operator} ${ctx.rightAlias(query.other.alias)}.${cond.right.name}"
+              s"${ctx.leftAlias(from.alias, joinNr)}.$left ${cond.operator} ${ctx.rightAlias(query.other.alias, joinNr)}.${cond.right.name}"
             }
             .mkString(" AND ")
         } else ""
