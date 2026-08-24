@@ -159,7 +159,33 @@ class SqlValidationITSpec extends DslITSpec {
     )
   )
 
-  private val constructs: Seq[Construct] = astConstructs ++ joinShapes
+  /**
+   * Whole-query clause shapes, so they live here rather than in [[astConstructs]] -- the coverage ratchet matches those
+   * names against the declarations in `dsl/column`, and a clause has no node there.
+   */
+  private val clauseShapes: Seq[Construct] = Seq(
+    Construct("array join", select(shieldId).from(OneTestTable).withArrayJoin(numbers as "n")),
+    Construct("left array join", select(shieldId).from(OneTestTable).withLeftArrayJoin(numbers as "n")),
+    Construct(
+      "array join alongside a join, where it has to follow the left table's alias",
+      select(shieldId as itemId)
+        .from(OneTestTable)
+        .withArrayJoin(numbers as "n")
+        .join(JoinQuery.InnerJoin, TwoTestTable) using itemId
+    ),
+    Construct("query-level settings", select(shieldId).from(OneTestTable).settings("max_threads" -> "1")),
+    Construct(
+      "settings before a union",
+      select(shieldId).from(OneTestTable).settings("max_threads" -> "1").unionAll(select(shieldId).from(OneTestTable))
+    ),
+    Construct("paste join", select(itemId).from(TwoTestTable).join(JoinQuery.PasteJoin, ThreeTestTable)),
+    // Syntax only: the IT tables are Engine.Memory, and resolving SAMPLE against a table with no sampling key fails
+    // with SAMPLING_NOT_SUPPORTED before the analyzer gets to the clause itself.
+    Construct("sample", select(shieldId).from(OneTestTable).sample(0.1), Syntax),
+    Construct("sample with an offset", select(shieldId).from(OneTestTable).sample(0.1, Option(0.5)), Syntax)
+  )
+
+  private val constructs: Seq[Construct] = astConstructs ++ joinShapes ++ clauseShapes
 
   /** `EXPLAIN QUERY TREE` needs the analyzer, the default since 24.3 and so on every supported server. */
   private def explainOf(level: ValidationLevel): String = level match {

@@ -10,7 +10,17 @@ package object execution {
 
   case class ResultMeta(columnTypes: Seq[ResultColumnType])
 
-  case class QueryResult[V](rows: Seq[V], meta: Option[ResultMeta] = None, statistic: Option[Statistic] = None) {
+  /**
+   * @param totals
+   *   the single aggregate row `GROUP BY ... WITH TOTALS` adds to the response, shaped like any other row. Empty for
+   *   every query that did not ask for it.
+   */
+  case class QueryResult[V](
+      rows: Seq[V],
+      meta: Option[ResultMeta] = None,
+      statistic: Option[Statistic] = None,
+      totals: Option[V] = None
+  ) {
 
     def size: Int = rows.size
   }
@@ -45,7 +55,9 @@ package object execution {
         case Seq(JsNumber(limit), JsNumber(rowsRead)) => Some(Statistic(rowsRead.longValue, limit.longValue))
         case _                                        => None
       }
-      QueryResult(rows, meta, statistic)
+      // Present only for `WITH TOTALS`, and read with the same reader as the rows since the server shapes it as one.
+      val totals = jsObject.fields.get("totals").map(_.convertTo[V])
+      QueryResult(rows, meta, statistic, totals)
     }
   }
 }

@@ -23,6 +23,13 @@ case class Limit(size: Long = 100, offset: Long = 0)
 
 case class LimitBy(limit: Long, offset: Long = 0, expressions: Seq[Column])
 
+/**
+ * `ARRAY JOIN`, which unfolds an array column into one row per element.
+ *
+ * `left` selects `LEFT ARRAY JOIN`, which keeps rows whose array is empty instead of dropping them.
+ */
+case class ArrayJoinQuery(columns: Seq[Column], left: Boolean = false)
+
 trait OrderingDirection
 
 case object ASC extends OrderingDirection
@@ -37,10 +44,14 @@ sealed case class InternalQuery(
     groupBy: Option[GroupByQuery] = None,
     having: Option[TableColumn[Boolean]] = None,
     join: Option[JoinQuery] = None,
+    arrayJoin: Option[ArrayJoinQuery] = None,
     orderBy: Seq[(Column, OrderingDirection)] = Seq.empty,
     limit: Option[Limit] = None,
     limitBy: Option[LimitBy] = None,
-    unionAll: Seq[OperationalQuery] = Seq.empty
+    unionAll: Seq[OperationalQuery] = Seq.empty,
+    // Ordered rather than a Map: map iteration order is unspecified, which would make the emitted SQL vary between
+    // runs for the same query.
+    settings: Seq[(String, String)] = Seq.empty
 ) {
 
   def isValid: Boolean = {
@@ -73,10 +84,12 @@ sealed case class InternalQuery(
       groupBy = groupBy.orElse(other.groupBy),
       having = having.orElse(other.having),
       join = join.orElse(other.join),
+      arrayJoin = arrayJoin.orElse(other.arrayJoin),
       orderBy = if (orderBy.nonEmpty) orderBy else other.orderBy,
       limit = limit.orElse(other.limit),
       limitBy = limitBy.orElse(other.limitBy),
-      unionAll = if (unionAll.nonEmpty) unionAll else other.unionAll
+      unionAll = if (unionAll.nonEmpty) unionAll else other.unionAll,
+      settings = if (settings.nonEmpty) settings else other.settings
     )
 
   /**
@@ -114,10 +127,12 @@ sealed case class InternalQuery(
     noConflict("groupBy", groupBy, other.groupBy)
     noConflict("having", having, other.having)
     noConflict("join", join, other.join)
+    noConflict("arrayJoin", arrayJoin, other.arrayJoin)
     noSeqConflict("orderBy", orderBy, other.orderBy)
     noConflict("limit", limit, other.limit)
     noConflict("limitBy", limitBy, other.limitBy)
     noSeqConflict("unionAll", unionAll, other.unionAll)
+    noSeqConflict("settings", settings, other.settings)
 
     :+>(other)
   }
