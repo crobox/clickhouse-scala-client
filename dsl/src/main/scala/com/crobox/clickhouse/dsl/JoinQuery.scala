@@ -23,23 +23,13 @@ object JoinQuery {
   case object AntiLeftJoin  extends JoinType
   case object AntiRightJoin extends JoinType
 
-  @deprecated(
-    "Please use AllInnerJoin. Old ANY INNER|RIGHT|FULL JOINs are disabled by default. Their logic would be " +
-      "changed. Old logic is many-to-one for all kinds of ANY JOINs. It's equal to apply distinct for right table keys. " +
-      "Default behaviour is reserved for many-to-one LEFT JOIN, one-to-many RIGHT JOIN and one-to-one INNER JOIN. It would " +
-      "be equal to apply distinct for keys to right, left and both tables respectively",
-    "Clickhouse v20"
-  )
-  case object AnyInnerJoin extends JoinType
-  case object AnyLeftJoin  extends JoinType
-
-  @deprecated(
-    "Please use AllRightJoin. Old ANY INNER|RIGHT|FULL JOINs are disabled by default. Their logic would be " +
-      "changed. Old logic is many-to-one for all kinds of ANY JOINs. It's equal to apply distinct for right table keys. " +
-      "Default behaviour is reserved for many-to-one LEFT JOIN, one-to-many RIGHT JOIN and one-to-one INNER JOIN. It would " +
-      "be equal to apply distinct for keys to right, left and both tables respectively",
-    "Clickhouse v20"
-  )
+  // ANY takes at most one matching row from the other side, so these are not interchangeable with the ALL variants:
+  // against a duplicated join key, ANY INNER JOIN returns one row where ALL INNER JOIN returns one per match. These
+  // carried a "disabled by default since v20" deprecation pointing at AllInnerJoin/AllRightJoin, which was both stale
+  // and semantically wrong -- all three are supported and documented, and verified against 25.3.
+  // https://clickhouse.com/docs/sql-reference/statements/select/join
+  case object AnyInnerJoin  extends JoinType
+  case object AnyLeftJoin   extends JoinType
   case object AnyRightJoin  extends JoinType
   case object AsOfJoin      extends JoinType
   case object AsOfLeftJoin  extends JoinType
