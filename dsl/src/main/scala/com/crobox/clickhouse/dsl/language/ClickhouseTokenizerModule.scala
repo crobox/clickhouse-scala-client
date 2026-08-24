@@ -145,12 +145,14 @@ trait ClickhouseTokenizerModule
             limit,
             limitBy,
             union,
-            settings
+            settings,
+            withEntries
           ) =>
         // The left table's alias is emitted by tokenizeJoin, and ARRAY JOIN has to land between that alias and the
         // JOIN keyword, so it is threaded through rather than placed here. Without a join there is no alias to follow.
         val arrayJoinSql = tokenizeArrayJoin(arrayJoin)
         Seq(
+          tokenizeWith(withEntries),
           tokenizeSelect(select),
           tokenizeFrom(from),
           if (join.isDefined) "" else arrayJoinSql,
@@ -166,6 +168,21 @@ trait ClickhouseTokenizerModule
           tokenizeUnionAll(union)
         ).filter(_.nonEmpty).mkString(" ")
     }
+
+  private def tokenizeWith(entries: Seq[WithEntry])(implicit ctx: TokenizeContext): String =
+    if (entries.isEmpty) ""
+    else
+      entries
+        .map {
+          // The two expression forms read `<value> AS <name>`; the CTE form reads the other way round.
+          case WithExpression(expression, name) =>
+            s"${tokenizeColumn(expression)} AS ${ClickhouseStatement.quoteIdentifier(name)}"
+          case WithScalarQuery(query, name) =>
+            s"(${toRawSql(query.internalQuery)}) AS ${ClickhouseStatement.quoteIdentifier(name)}"
+          case WithTable(name, query) =>
+            s"${ClickhouseStatement.quoteIdentifier(name)} AS (${toRawSql(query.internalQuery)})"
+        }
+        .mkString("WITH ", Tokens.Delimiter, "")
 
   private def tokenizeArrayJoin(arrayJoin: Option[ArrayJoinQuery])(implicit ctx: TokenizeContext): String =
     arrayJoin match {

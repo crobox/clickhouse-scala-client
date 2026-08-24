@@ -94,6 +94,13 @@ trait OperationalQuery extends Query {
     )
 
   /**
+   * `WITH`, covering all three of the forms ClickHouse puts behind the keyword -- see [[WithEntry]]. A name introduced
+   * here is referenced with `ref`, and is scoped to this query rather than to any subquery inside it.
+   */
+  def withCte(entries: WithEntry*): OperationalQuery =
+    OperationalQuery(internalQuery.copy(withEntries = internalQuery.withEntries ++ entries))
+
+  /**
    * `ARRAY JOIN`, unfolding each array column into one row per element. Rows with an empty array are dropped.
    *
    * Named `withArrayJoin` rather than `arrayJoin`, matching [[withRollup]] and [[withTotals]]: an inherited member

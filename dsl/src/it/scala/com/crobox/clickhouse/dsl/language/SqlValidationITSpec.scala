@@ -181,6 +181,29 @@ class SqlValidationITSpec extends DslITSpec {
     Construct("paste join", select(itemId).from(TwoTestTable).join(JoinQuery.PasteJoin, ThreeTestTable)),
     // Syntax only: the IT tables are Engine.Memory, and resolving SAMPLE against a table with no sampling key fails
     // with SAMPLING_NOT_SUPPORTED before the analyzer gets to the clause itself.
+    Construct(
+      "with, naming an expression",
+      select(ref[Int]("one")).from(OneTestTable).withCte(WithExpression(const(1), "one"))
+    ),
+    Construct(
+      "with, naming a scalar subquery",
+      select(itemId, ref[Long]("total"))
+        .from(TwoTestTable)
+        .withCte(WithScalarQuery(select(count()).from(TwoTestTable), "total"))
+    ),
+    Construct(
+      "with, declaring a CTE and selecting from it", {
+        val recent = WithTable("recent", select(itemId).from(TwoTestTable))
+        select(itemId).from(recent).withCte(recent)
+      }
+    ),
+    Construct(
+      "with, scoped to a union branch",
+      select(ref[Int]("one"))
+        .from(OneTestTable)
+        .withCte(WithExpression(const(1), "one"))
+        .unionAll(select(ref[Int]("two")).from(OneTestTable).withCte(WithExpression(const(2), "two")))
+    ),
     Construct("sample", select(shieldId).from(OneTestTable).sample(0.1), Syntax),
     Construct("sample with an offset", select(shieldId).from(OneTestTable).sample(0.1, Option(0.5)), Syntax)
   )

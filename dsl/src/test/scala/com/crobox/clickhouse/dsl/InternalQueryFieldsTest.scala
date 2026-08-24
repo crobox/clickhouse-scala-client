@@ -23,7 +23,7 @@ class InternalQueryFieldsTest extends DslTestSpec {
    *   3. `InternalQuery.+` -- otherwise two queries that conflict on it merge without complaint
    *   4. this constant, plus setting the field in [[populated]] and adding it to [[singleFieldQueries]]
    */
-  private val FieldCount = 13
+  private val FieldCount = 14
 
   private val condition = col3 isEq "a"
 
@@ -41,24 +41,26 @@ class InternalQueryFieldsTest extends DslTestSpec {
     limit = Option(Limit(10, 5)),
     limitBy = Option(LimitBy(1, 0, Seq(itemId))),
     unionAll = Seq(select(itemId).from(OneTestTable)),
-    settings = Seq("max_threads" -> "1")
+    settings = Seq("max_threads" -> "1"),
+    withEntries = Seq(WithExpression(const(1), "one"))
   )
 
   /** One query per field, carrying only that field, so a missing conflict check shows up as a merge that succeeds. */
   private val singleFieldQueries: Seq[(String, InternalQuery)] = Seq(
-    "select"    -> InternalQuery(select = populated.select),
-    "from"      -> InternalQuery(from = populated.from),
-    "prewhere"  -> InternalQuery(prewhere = populated.prewhere),
-    "where"     -> InternalQuery(where = populated.where),
-    "groupBy"   -> InternalQuery(groupBy = populated.groupBy),
-    "having"    -> InternalQuery(having = populated.having),
-    "join"      -> InternalQuery(join = populated.join),
-    "arrayJoin" -> InternalQuery(arrayJoin = populated.arrayJoin),
-    "orderBy"   -> InternalQuery(orderBy = populated.orderBy),
-    "limit"     -> InternalQuery(limit = populated.limit),
-    "limitBy"   -> InternalQuery(limitBy = populated.limitBy),
-    "unionAll"  -> InternalQuery(unionAll = populated.unionAll),
-    "settings"  -> InternalQuery(settings = populated.settings)
+    "select"      -> InternalQuery(select = populated.select),
+    "from"        -> InternalQuery(from = populated.from),
+    "prewhere"    -> InternalQuery(prewhere = populated.prewhere),
+    "where"       -> InternalQuery(where = populated.where),
+    "groupBy"     -> InternalQuery(groupBy = populated.groupBy),
+    "having"      -> InternalQuery(having = populated.having),
+    "join"        -> InternalQuery(join = populated.join),
+    "arrayJoin"   -> InternalQuery(arrayJoin = populated.arrayJoin),
+    "orderBy"     -> InternalQuery(orderBy = populated.orderBy),
+    "limit"       -> InternalQuery(limit = populated.limit),
+    "limitBy"     -> InternalQuery(limitBy = populated.limitBy),
+    "unionAll"    -> InternalQuery(unionAll = populated.unionAll),
+    "settings"    -> InternalQuery(settings = populated.settings),
+    "withEntries" -> InternalQuery(withEntries = populated.withEntries)
   )
 
   /** Names the fields that differ, because an InternalQuery's `toString` is far too long to diff by eye. */
