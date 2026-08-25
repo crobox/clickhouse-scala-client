@@ -160,7 +160,9 @@ trait ClickhouseTokenizerModule
             union,
             settings,
             withEntries,
-            interpolate
+            interpolate,
+            windows,
+            qualify
           ) =>
         // The left table's alias is emitted by tokenizeJoin, and ARRAY JOIN has to land between that alias and the
         // JOIN keyword, so it is threaded through rather than placed here. Without a join there is no alias to follow.
@@ -175,6 +177,8 @@ trait ClickhouseTokenizerModule
           tokenizeFiltering(where, "WHERE"),
           tokenizeGroupBy(groupBy),
           tokenizeFiltering(having, "HAVING"),
+          tokenizeWindows(windows),
+          tokenizeFiltering(qualify, "QUALIFY"),
           tokenizeOrderBy(orderBy),
           tokenizeInterpolate(interpolate),
           tokenizeLimitBy(limitBy),
@@ -198,6 +202,34 @@ trait ClickhouseTokenizerModule
             s"${ClickhouseStatement.quoteIdentifier(name)} AS (${toRawSql(query.internalQuery)})"
         }
         .mkString("WITH ", Tokens.Delimiter, "")
+
+  private def tokenizeWindows(windows: Seq[NamedWindow])(implicit ctx: TokenizeContext): String =
+    if (windows.isEmpty) ""
+    else
+      windows
+        .map(w => s"${ClickhouseStatement.quoteIdentifier(w.name)} AS (${tokenizeWindowSpec(w.spec)})")
+        .mkString("WINDOW ", Tokens.Delimiter, "")
+
+  private def tokenizeWindowSpec(spec: WindowSpec)(implicit ctx: TokenizeContext): String =
+    Seq(
+      if (spec.partitionBy.isEmpty) "" else s"PARTITION BY ${tokenizeColumns(spec.partitionBy)}",
+      tokenizeOrderBy(spec.orderBy),
+      spec.frame.map(tokenizeWindowFrame).getOrElse("")
+    ).filter(_.nonEmpty).mkString(" ")
+
+  private def tokenizeWindowFrame(frame: WindowFrame): String = {
+    def bound(b: FrameBound): String = b match {
+      case FrameBound.UnboundedPreceding => "UNBOUNDED PRECEDING"
+      case FrameBound.UnboundedFollowing => "UNBOUNDED FOLLOWING"
+      case FrameBound.CurrentRow         => "CURRENT ROW"
+      case FrameBound.Preceding(offset)  => s"$offset PRECEDING"
+      case FrameBound.Following(offset)  => s"$offset FOLLOWING"
+    }
+    frame.end match {
+      case Some(end) => s"${frame.mode.keyword} BETWEEN ${bound(frame.start)} AND ${bound(end)}"
+      case None      => s"${frame.mode.keyword} ${bound(frame.start)}"
+    }
+  }
 
   private def tokenizeArrayJoin(arrayJoin: Option[ArrayJoinQuery])(implicit ctx: TokenizeContext): String =
     arrayJoin match {
@@ -266,7 +298,13 @@ trait ClickhouseTokenizerModule
       case alias: AliasedColumn[_] =>
         val originalColumnToken = tokenizeColumn(alias.original)
         if (originalColumnToken.isEmpty) alias.quoted else s"$originalColumnToken AS ${alias.quoted}"
-      case tuple: TupleColumn[_]    => s"(${tuple.elements.map(tokenizeColumn).mkString(Tokens.Delimiter)})"
+      case tuple: TupleColumn[_]     => s"(${tuple.elements.map(tokenizeColumn).mkString(Tokens.Delimiter)})"
+      case window: WindowFunction[_] =>
+        val over = window.window match {
+          case WindowRef.Inline(spec) => s"(${tokenizeWindowSpec(spec)})"
+          case WindowRef.Named(name)  => ClickhouseStatement.quoteIdentifier(name)
+        }
+        s"${tokenizeColumn(window.function)} OVER $over"
       case col: ExpressionColumn[_] => tokenizeExpressionColumn(col)
       case col: Column              => col.quoted
     }

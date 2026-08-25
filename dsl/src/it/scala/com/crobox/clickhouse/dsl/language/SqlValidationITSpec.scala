@@ -395,6 +395,46 @@ class SqlValidationITSpec extends DslITSpec {
           java.time.ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, java.time.ZoneOffset.UTC)
       )
     ),
+    Construct("window function over an empty window", select(sum(col2).over()).from(TwoTestTable)),
+    Construct(
+      "window function over a partition and ordering",
+      select(sum(col2).over(WindowSpec(partitionBy = Seq(col3), orderBy = Seq(OrderingColumn(col2)))))
+        .from(TwoTestTable)
+    ),
+    Construct(
+      "window function with a ROWS frame",
+      select(
+        sum(col2).over(
+          WindowSpec(
+            orderBy = Seq(OrderingColumn(col2)),
+            frame = Option(WindowFrame(FrameMode.Rows, FrameBound.Preceding(1), Option(FrameBound.CurrentRow)))
+          )
+        )
+      ).from(TwoTestTable)
+    ),
+    Construct(
+      "window function with a RANGE frame",
+      select(
+        sum(col2).over(
+          WindowSpec(
+            orderBy = Seq(OrderingColumn(col2)),
+            frame = Option(
+              WindowFrame(FrameMode.Range, FrameBound.UnboundedPreceding, Option(FrameBound.UnboundedFollowing))
+            )
+          )
+        )
+      ).from(TwoTestTable)
+    ),
+    Construct(
+      "a named window", {
+        val w = NamedWindow("w", WindowSpec(partitionBy = Seq(col3)))
+        select(sum(col2).over(w)).from(TwoTestTable).window(w)
+      }
+    ),
+    Construct(
+      "qualify on a window result",
+      select(sum(col2).over() as "s").from(TwoTestTable).qualify(ref[Long]("s") > 1)
+    ),
     Construct("sample", select(shieldId).from(OneTestTable).sample(0.1), Syntax),
     Construct("sample with an offset", select(shieldId).from(OneTestTable).sample(0.1, Option(0.5)), Syntax)
   )
