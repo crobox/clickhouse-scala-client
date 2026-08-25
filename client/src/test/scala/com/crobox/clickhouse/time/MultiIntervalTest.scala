@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.time
 
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.DateTimeZone.UTC
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.flatspec.AnyFlatSpecLike
@@ -176,6 +176,85 @@ class MultiIntervalTest extends AnyFlatSpecLike with Matchers with TableDrivenPr
     interval.getEnd should be(startExpected.plusSeconds(10))
     interval.subIntervals should contain theSameElementsInOrderAs ((startExpected to startExpected.plusSeconds(5)) ::
       (startExpected.plusSeconds(5) to startExpected.plusSeconds(10)) :: Nil)
+  }
+
+  // The cases above are all UTC, where MultiInterval's tzOffset arithmetic is a no-op.
+
+  private val Amsterdam = DateTimeZone.forID("Europe/Amsterdam")
+  private val NewYork   = DateTimeZone.forID("America/New_York")
+
+  private def firstSubInterval(start: DateTime, duration: Duration) =
+    MultiInterval(start, start.plusDays(2), duration).subIntervals.head
+
+  "Day alignment" should "start at local midnight, east of UTC" in {
+    val interval = firstSubInterval(new DateTime(2014, 5, 8, 16, 26, 0, Amsterdam), MultiDuration(1, TimeUnit.Day))
+    interval.getStart should be(new DateTime(2014, 5, 8, 0, 0, 0, Amsterdam))
+    interval.getEnd should be(new DateTime(2014, 5, 9, 0, 0, 0, Amsterdam))
+  }
+
+  it should "start at local midnight, west of UTC" in {
+    val interval = firstSubInterval(new DateTime(2014, 5, 8, 16, 26, 0, NewYork), MultiDuration(1, TimeUnit.Day))
+    interval.getStart should be(new DateTime(2014, 5, 8, 0, 0, 0, NewYork))
+    interval.getEnd should be(new DateTime(2014, 5, 9, 0, 0, 0, NewYork))
+  }
+
+  it should "align a multi-day bucket to local midnight" in {
+    val interval = firstSubInterval(new DateTime(2014, 5, 8, 16, 26, 0, Amsterdam), MultiDuration(2, TimeUnit.Day))
+    interval.getStart should be(new DateTime(2014, 5, 8, 0, 0, 0, Amsterdam))
+    interval.getEnd should be(new DateTime(2014, 5, 10, 0, 0, 0, Amsterdam))
+  }
+
+  it should "keep a spring-forward day one calendar day, not 24 hours" in {
+    val interval = firstSubInterval(new DateTime(2014, 3, 30, 12, 0, 0, Amsterdam), MultiDuration(1, TimeUnit.Day))
+    interval.getStart should be(new DateTime(2014, 3, 30, 0, 0, 0, Amsterdam))
+    interval.getEnd should be(new DateTime(2014, 3, 31, 0, 0, 0, Amsterdam))
+    interval.toDuration.getStandardHours should be(23)
+  }
+
+  it should "keep a fall-back day one calendar day, not 24 hours" in {
+    val interval = firstSubInterval(new DateTime(2014, 10, 26, 12, 0, 0, Amsterdam), MultiDuration(1, TimeUnit.Day))
+    interval.getStart should be(new DateTime(2014, 10, 26, 0, 0, 0, Amsterdam))
+    interval.getEnd should be(new DateTime(2014, 10, 27, 0, 0, 0, Amsterdam))
+    interval.toDuration.getStandardHours should be(25)
+  }
+
+  "Week alignment" should "start on Monday at local midnight, east of UTC" in {
+    val interval = firstSubInterval(new DateTime(2014, 5, 8, 16, 26, 0, Amsterdam), MultiDuration(1, TimeUnit.Week))
+    interval.getStart should be(new DateTime(2014, 5, 5, 0, 0, 0, Amsterdam))
+    interval.getEnd should be(new DateTime(2014, 5, 12, 0, 0, 0, Amsterdam))
+  }
+
+  it should "start on Monday at local midnight, west of UTC" in {
+    val interval = firstSubInterval(new DateTime(2014, 5, 8, 16, 26, 0, NewYork), MultiDuration(1, TimeUnit.Week))
+    interval.getStart should be(new DateTime(2014, 5, 5, 0, 0, 0, NewYork))
+    interval.getEnd should be(new DateTime(2014, 5, 12, 0, 0, 0, NewYork))
+  }
+
+  it should "align a multi-week bucket to a Monday" in {
+    val interval = firstSubInterval(new DateTime(2014, 5, 8, 16, 26, 0, Amsterdam), MultiDuration(2, TimeUnit.Week))
+    interval.getStart should be(new DateTime(2014, 4, 28, 0, 0, 0, Amsterdam))
+    interval.getEnd should be(new DateTime(2014, 5, 12, 0, 0, 0, Amsterdam))
+  }
+
+  it should "span a DST transition inside the week" in {
+    val interval = firstSubInterval(new DateTime(2014, 3, 30, 12, 0, 0, Amsterdam), MultiDuration(1, TimeUnit.Week))
+    interval.getStart should be(new DateTime(2014, 3, 24, 0, 0, 0, Amsterdam))
+    interval.getEnd should be(new DateTime(2014, 3, 31, 0, 0, 0, Amsterdam))
+    interval.toDuration.getStandardHours should be((7 * 24) - 1)
+  }
+
+  // Pinned on purpose: unlike Day and Week above, sub-day buckets do not align to local midnight. Looks like a bug,
+  // is not, and changing it would move every grouped result for non-UTC consumers.
+  "Sub-day alignment" should "bucket on the epoch rather than on local midnight" in {
+    val interval = firstSubInterval(new DateTime(2014, 5, 8, 12, 0, 0, Amsterdam), MultiDuration(6, TimeUnit.Hour))
+    interval.getStart should be(new DateTime(2014, 5, 8, 8, 0, 0, Amsterdam))
+    interval.getEnd should be(new DateTime(2014, 5, 8, 14, 0, 0, Amsterdam))
+  }
+
+  it should "bucket minutes on the epoch, west of UTC" in {
+    val interval = firstSubInterval(new DateTime(2014, 5, 8, 16, 26, 12, NewYork), MultiDuration(15, TimeUnit.Minute))
+    interval.getStart should be(new DateTime(2014, 5, 8, 16, 15, 0, NewYork))
+    interval.getEnd should be(new DateTime(2014, 5, 8, 16, 30, 0, NewYork))
   }
 
 }

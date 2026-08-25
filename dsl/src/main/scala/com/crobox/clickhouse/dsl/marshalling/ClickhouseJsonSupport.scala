@@ -17,8 +17,10 @@ trait ClickhouseJsonSupport {
 
     override def write(obj: IntervalStart): JsValue = JsNumber(obj.getMillis)
 
-    val month: Regex                 = """(\d+)_(.*)""".r
-    val date: Regex                  = """(.+)_(.*)""".r
+    val month: Regex = """(\d+)_(.*)""".r
+
+    // Lazy: a zone id can contain an underscore (America/New_York), a date cannot, so split on the first.
+    val date: Regex                  = """(.+?)_(.*)""".r
     val nanoTimestamp: Regex         = """^(\d{16})$""".r
     val msTimestamp: Regex           = """^(\d{13})$""".r
     val timestamp: Regex             = """^(\d{10})$""".r
