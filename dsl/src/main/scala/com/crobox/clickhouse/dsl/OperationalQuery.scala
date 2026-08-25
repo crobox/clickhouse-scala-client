@@ -222,12 +222,9 @@ trait OperationalQuery extends Query {
       newOrderingColumns
     }
 
-    val filteredDuplicates = filteredSelectAll.filterNot(column =>
-      selectForGroupCols.exists {
-        case c: Column => column.name == c.name
-        case _         => false
-      }
-    )
+    // By value rather than by name, for the same reason as SelectQuery.addColumn: `groupBy(x)` on a query already
+    // selecting `sum(x)` used to leave the grouping column out of the projection entirely.
+    val filteredDuplicates = filteredSelectAll.filterNot(selectForGroupCols.contains)
 
     val selectWithOrderColumns = selectForGroupCols ++ filteredDuplicates
 

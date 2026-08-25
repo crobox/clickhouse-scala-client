@@ -66,6 +66,14 @@ class QueryIT extends DslITSpec {
     rows.map(_.itemId) should contain theSameElementsAs table2Entries.map(_.itemId.toString)
   }
 
+  // Read by column rather than through a declared reader, because the point is which columns come back at all.
+  it should "project the grouping key so grouped rows can be told apart" in {
+    val query = select(sum(col2)).from(TwoTestTable).groupBy(col2)
+    val rows  = queryExecutor.executeRows(query).futureValue.rows
+    rows should not be empty
+    rows.head.names should contain("column_2")
+  }
+
   it should "map as result" in {
 
     case class Result(columnResult: String, empty: Int)

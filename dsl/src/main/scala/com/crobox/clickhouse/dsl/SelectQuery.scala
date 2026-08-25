@@ -5,9 +5,11 @@ case class SelectQuery(columns: Seq[Column], modifier: String = "", distinctColu
     with OperationalQuery {
   override val internalQuery = InternalQuery(Some(this))
 
+  // Compared by value, not by name: an unaliased expression takes its target column's name, so `sum(x)` and `uniq(x)`
+  // are both called `x` and only one of them survived a name comparison.
   def addColumn(column: Column): SelectQuery =
-    if (columns.exists(_.name == column.name)) this else copy(columns = columns ++ Seq(column))
+    if (columns.contains(column)) this else copy(columns = columns ++ Seq(column))
 
   def removeColumn(column: Column): SelectQuery =
-    copy(columns = columns.filter(_.name != column.name))
+    copy(columns = columns.filterNot(_ == column))
 }
