@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl.schemabuilder
 
 import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl._
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.ZonedDateTime
 
 class CreateTableIT extends DslITSpec {
 

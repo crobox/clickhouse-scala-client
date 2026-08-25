@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.marshalling
 import com.crobox.clickhouse.dsl.NativeColumn
 import com.crobox.clickhouse.dsl.execution.{ColumnLookupException, CompactRowParser, ResultParsingException}
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import spray.json._
@@ -50,10 +50,10 @@ class CompactRowParserTest extends AnyFlatSpec with Matchers {
   it should "expose the declared ClickHouse types as meta" in {
     val parsed =
       CompactRowParser.parse(
-        body("""["n", "t"]""", """["UInt64", "ZonedDateTime"]""", """["5", "2026-08-21 10:00:00"]""")
+        body("""["n", "t"]""", """["UInt64", "DateTime"]""", """["5", "2026-08-21 10:00:00"]""")
       )
     parsed.meta.map(_.columnTypes.map(c => c.name -> c.columnType)) shouldBe
-    Some(Seq("n" -> "UInt64", "t" -> "ZonedDateTime"))
+    Some(Seq("n" -> "UInt64", "t" -> "DateTime"))
   }
 
   it should "decode a 64-bit integer whether ClickHouse quoted it or not" in {
@@ -95,7 +95,7 @@ class CompactRowParserTest extends AnyFlatSpec with Matchers {
       .parse(
         body(
           """["d", "dt", "dt64"]""",
-          """["Date", "ZonedDateTime", "DateTime64(3)"]""",
+          """["Date", "DateTime", "DateTime64(3)"]""",
           """["2026-08-21", "2026-08-21 21:48:17", "2026-08-21 21:48:17.250"]"""
         )
       )

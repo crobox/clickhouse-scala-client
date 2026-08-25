@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl.execution.ColumnLookupException
 import com.crobox.clickhouse.internal.QuerySettings
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.ZonedDateTime
 
 import java.util.UUID
 

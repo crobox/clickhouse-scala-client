@@ -3,7 +3,7 @@ package com.crobox.clickhouse
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import com.crobox.clickhouse.dsl.{NativeColumn, Table}
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.ZonedDateTime
 import spray.json._
 
 import java.util.UUID

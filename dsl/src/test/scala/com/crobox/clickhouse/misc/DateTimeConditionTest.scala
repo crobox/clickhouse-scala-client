@@ -3,7 +3,7 @@ package com.crobox.clickhouse.misc
 import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.misc.DateConditions.dateTimeCondition
 import com.crobox.clickhouse.dsl.{NativeColumn, SelectQuery}
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 import org.scalatest.prop.TableDrivenPropertyChecks
 
 class DateTimeConditionTest extends DslTestSpec with TableDrivenPropertyChecks {

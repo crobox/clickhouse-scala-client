@@ -3,7 +3,7 @@ package com.crobox.clickhouse.misc
 import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.misc.DSLImprovements.ColumnsImprovements
 import com.crobox.clickhouse.dsl.{Column, NativeColumn}
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.ZonedDateTime
 
 import java.util.UUID
 

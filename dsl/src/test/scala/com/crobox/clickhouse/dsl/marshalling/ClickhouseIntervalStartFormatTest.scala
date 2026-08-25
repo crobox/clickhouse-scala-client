@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.marshalling
 import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport.ClickhouseIntervalStartFormat
 import com.crobox.clickhouse.time.IntervalStart
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.{Instant, ZoneId, ZoneOffset, ZonedDateTime}
 import spray.json.{JsNumber, JsString}
 
 class ClickhouseIntervalStartFormatTest extends DslTestSpec {

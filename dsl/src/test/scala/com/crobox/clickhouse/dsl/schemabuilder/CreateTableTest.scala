@@ -4,7 +4,7 @@ import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.dsl.schemabuilder.DefaultValue.Default
 import com.crobox.clickhouse.dsl.schemabuilder.Engine.{DistributedEngine, SummingMergeTree}
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.LocalDate
 
 /**
  * @author

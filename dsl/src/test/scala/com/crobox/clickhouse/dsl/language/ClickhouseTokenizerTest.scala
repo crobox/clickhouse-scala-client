@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.language
 import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.ZonedDateTime
 
 import java.util.UUID
 

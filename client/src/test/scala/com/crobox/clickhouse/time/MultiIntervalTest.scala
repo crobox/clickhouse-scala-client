@@ -177,6 +177,21 @@ class MultiIntervalTest extends AnyFlatSpecLike with Matchers with TableDrivenPr
       (startExpected.plusSeconds(5) to startExpected.plusSeconds(10)) :: Nil)
   }
 
+  "Duration in milliseconds" should "be exact for units with a fixed length" in {
+    MultiDuration(1, TimeUnit.Second).millis shouldBe 1000L
+    MultiDuration(2, TimeUnit.Hour).millis shouldBe 7200000L
+    MultiDuration(1, TimeUnit.Day).millis shouldBe 86400000L
+    MultiDuration(1, TimeUnit.Week).millis shouldBe 604800000L
+  }
+
+  // joda's Period.toStandardDuration refused these; returning java.time's ~30.44-day estimate instead would be a
+  // silently wrong number.
+  it should "refuse units whose length depends on the calendar" in {
+    an[UnsupportedOperationException] should be thrownBy MultiDuration(1, TimeUnit.Month).millis
+    an[UnsupportedOperationException] should be thrownBy MultiDuration(1, TimeUnit.Quarter).millis
+    an[UnsupportedOperationException] should be thrownBy MultiDuration(1, TimeUnit.Year).millis
+  }
+
   // The cases above are all UTC, where MultiInterval's tzOffset arithmetic is a no-op.
 
   private val Amsterdam = ZoneId.of("Europe/Amsterdam")

@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse._
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.{LocalDate, ZonedDateTime}
 
 import java.util.UUID
 import scala.util.{Failure, Success}

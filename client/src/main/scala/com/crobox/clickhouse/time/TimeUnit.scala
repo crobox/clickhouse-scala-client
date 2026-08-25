@@ -26,9 +26,17 @@ abstract class MultiTimeUnit(
     val chronoUnit: ChronoUnit
 ) extends TimeUnit {
 
-  // Exact for second through week. Month and above have no fixed length and never reach here: MultiInterval aligns
-  // them by calendar field instead.
-  lazy protected[time] val standardMillis: Long = chronoUnit.getDuration.toMillis * amount
+  /** False for month and longer, whose length depends on the calendar. */
+  def hasFixedLength: Boolean = true
+
+  // Refuses month and longer rather than returning java.time's ~30.44-day estimate for them, which is what joda's
+  // Period.toStandardDuration did. MultiInterval never asks: it aligns those units by calendar field.
+  lazy protected[time] val standardMillis: Long =
+    if (hasFixedLength) chronoUnit.getDuration.toMillis * amount
+    else
+      throw new UnsupportedOperationException(
+        s"Cannot convert a $mainLabel to milliseconds, because months and longer vary in length"
+      )
 }
 
 /**
@@ -49,11 +57,17 @@ object TimeUnit {
 
   case object Week extends MultiTimeUnit(Array("w", "week", "weeks"), "week", 1, ChronoUnit.WEEKS)
 
-  case object Month extends MultiTimeUnit(Array("M", "month", "months"), "month", 1, ChronoUnit.MONTHS)
+  case object Month extends MultiTimeUnit(Array("M", "month", "months"), "month", 1, ChronoUnit.MONTHS) {
+    override def hasFixedLength: Boolean = false
+  }
 
-  case object Quarter extends MultiTimeUnit(Array("q", "quarter"), "quarter", 3, ChronoUnit.MONTHS)
+  case object Quarter extends MultiTimeUnit(Array("q", "quarter"), "quarter", 3, ChronoUnit.MONTHS) {
+    override def hasFixedLength: Boolean = false
+  }
 
-  case object Year extends MultiTimeUnit(Array("y", "year"), "year", 1, ChronoUnit.YEARS)
+  case object Year extends MultiTimeUnit(Array("y", "year"), "year", 1, ChronoUnit.YEARS) {
+    override def hasFixedLength: Boolean = false
+  }
 
   case object Total extends TimeUnit {
     override val labels: Array[String] = Array("t", "total")

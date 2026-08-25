@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl.execution.QueryResult
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
 import com.crobox.clickhouse.time.{IntervalStart, MultiDuration, MultiInterval, TimeUnit, TotalDuration}
 import java.time.temporal.ChronoUnit
-import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
+import java.time.{LocalDate, ZoneOffset}
 import org.scalactic.TripleEqualsSupport
 import org.scalatest.prop.TableDrivenPropertyChecks
 import spray.json.RootJsonFormat
