@@ -1,7 +1,8 @@
 package com.crobox.clickhouse.dsl.marshalling
 
-import org.joda.time.format.DateTimeFormatterBuilder
-import org.joda.time.{DateTime, DateTimeZone, LocalDate}
+import java.time.format.{DateTimeFormatter, DateTimeFormatterBuilder, DateTimeParseException}
+import java.time.temporal.ChronoField
+import java.time.{LocalDate, LocalDateTime, ZoneOffset, ZonedDateTime}
 import spray.json._
 
 import java.util.UUID
@@ -87,33 +88,34 @@ object ColumnDecoder {
    * -- a space rather than the ISO `T`, and no offset. Everything after the date is optional, because `n` runs from 0
    * to 9: `DateTime64(0)` carries no fractional part at all and `DateTime64(9)` carries nine digits.
    *
-   * Two things this cannot do. joda carries milliseconds, so anything finer than `DateTime64(3)` is truncated rather
-   * than represented -- java.time would carry it (#326). And the absence of an offset means the server renders a
-   * `DateTime` in that column's own timezone, which the declared type carries (`DateTime('Europe/Amsterdam')`) but the
-   * value does not; these read as UTC, which is right for a default server and wrong for a column declared with an
-   * explicit zone. Reading the zone off the declared type needs the decoder to see it, which this signature does not
-   * allow.
+   * The absence of an offset means the server renders a `DateTime` in that column's own timezone, which the declared
+   * type carries (`DateTime('Europe/Amsterdam')`) but the value does not; these read as UTC, which is right for a
+   * default server and wrong for a column declared with an explicit zone. Reading the zone off the declared type needs
+   * the decoder to see it, which this signature does not allow.
    */
-  private val dateTimeParser = new DateTimeFormatterBuilder()
+  private val dateTimeParser: DateTimeFormatter = new DateTimeFormatterBuilder()
     .appendPattern("yyyy-MM-dd")
-    .appendOptional(
-      new DateTimeFormatterBuilder()
-        .appendLiteral(' ')
-        .appendPattern("HH:mm:ss")
-        .appendOptional(new DateTimeFormatterBuilder().appendLiteral('.').appendFractionOfSecond(1, 9).toParser)
-        .toParser
-    )
+    .optionalStart()
+    .appendLiteral(' ')
+    .appendPattern("HH:mm:ss")
+    .optionalStart()
+    .appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, true)
+    .optionalEnd()
+    .optionalEnd()
+    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+    .parseDefaulting(ChronoField.NANO_OF_SECOND, 0)
     .toFormatter
-    .withZoneUTC()
 
-  implicit val dateTimeDecoder: ColumnDecoder[DateTime] = instance("DateTime") { case JsString(s) =>
-    try dateTimeParser.parseDateTime(s)
-    catch { case _: IllegalArgumentException => throw ColumnDecodingException("DateTime", JsString(s)) }
+  implicit val dateTimeDecoder: ColumnDecoder[ZonedDateTime] = instance("DateTime") { case JsString(s) =>
+    try LocalDateTime.parse(s, dateTimeParser).atZone(ZoneOffset.UTC)
+    catch { case _: DateTimeParseException => throw ColumnDecodingException("DateTime", JsString(s)) }
   }
 
   implicit val localDateDecoder: ColumnDecoder[LocalDate] = instance("Date") { case JsString(s) =>
-    try dateTimeParser.withZone(DateTimeZone.UTC).parseLocalDate(s)
-    catch { case _: IllegalArgumentException => throw ColumnDecodingException("Date", JsString(s)) }
+    try LocalDate.parse(s, dateTimeParser)
+    catch { case _: DateTimeParseException => throw ColumnDecodingException("Date", JsString(s)) }
   }
 
   /** Escape hatch for a column this layer has no instance for. */

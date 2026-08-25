@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
 import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn, OperationalQuery, Table, TableColumn}
-import org.joda.time.{DateTime, LocalDate}
+import java.time.{LocalDate, ZonedDateTime}
 
 import java.util.UUID
 import scala.language.implicitConversions
@@ -188,8 +188,8 @@ trait Magnets {
       override val column = s
     }
 
-  implicit def ddtFromDateTimeCol[T <: TableColumn[DateTime]](s: T): DateOrDateTime[DateTime] =
-    new DateOrDateTime[DateTime] {
+  implicit def ddtFromDateTimeCol[T <: TableColumn[ZonedDateTime]](s: T): DateOrDateTime[ZonedDateTime] =
+    new DateOrDateTime[ZonedDateTime] {
       override val column = s
     }
 
@@ -198,8 +198,8 @@ trait Magnets {
       override val column = toDate(s)
     }
 
-  implicit def ddtFromDateTime[T <: DateTime: QueryValue](s: T): DateOrDateTime[DateTime] =
-    new DateOrDateTime[DateTime] {
+  implicit def ddtFromDateTime[T <: ZonedDateTime: QueryValue](s: T): DateOrDateTime[ZonedDateTime] =
+    new DateOrDateTime[ZonedDateTime] {
       override val column = toDateTime(s)
     }
 

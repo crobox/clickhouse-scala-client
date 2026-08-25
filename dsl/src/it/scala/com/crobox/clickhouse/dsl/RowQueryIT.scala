@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl.execution.ColumnLookupException
 import com.crobox.clickhouse.internal.QuerySettings
-import org.joda.time.DateTime
+import java.time.ZonedDateTime
 
 import java.util.UUID
 
@@ -18,8 +18,8 @@ class RowQueryIT extends DslITSpec {
   private val idB = UUID.randomUUID()
 
   override val table1Entries: Seq[Table1Entry] = Seq(
-    Table1Entry(idA, DateTime.now(), Seq(1, 2, 3)),
-    Table1Entry(idB, DateTime.now(), Seq(4, 5))
+    Table1Entry(idA, ZonedDateTime.now(), Seq(1, 2, 3)),
+    Table1Entry(idB, ZonedDateTime.now(), Seq(4, 5))
   )
 
   override val table2Entries: Seq[Table2Entry] = Seq(

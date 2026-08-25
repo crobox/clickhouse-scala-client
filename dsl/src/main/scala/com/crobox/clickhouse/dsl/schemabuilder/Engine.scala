@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl.schemabuilder
 
 import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats.StringQueryValue
 import com.crobox.clickhouse.dsl.{Column, NativeColumn}
-import org.joda.time.LocalDate
+import java.time.LocalDate
 
 /**
  * @author

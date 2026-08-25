@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn, TableColumn}
-import org.joda.time.{DateTime, LocalDate}
+import java.time.{LocalDate, ZonedDateTime}
 import scala.language.implicitConversions
 
 trait ArithmeticFunctions { self: Magnets =>
@@ -100,12 +100,12 @@ trait ArithmeticFunctions { self: Magnets =>
   implicit object LocalDateBigDecimalBinding extends AritRetType[LocalDate, BigDecimal, LocalDate]
   implicit object LocalDateBigIntBinding     extends AritRetType[LocalDate, BigInt, LocalDate]
 
-  implicit object DateTimeIntBinding        extends AritRetType[DateTime, Int, DateTime]
-  implicit object DateTimeLongBinding       extends AritRetType[DateTime, Long, DateTime]
-  implicit object DateTimeDoubleBinding     extends AritRetType[DateTime, Double, DateTime]
-  implicit object DateTimeFloatBinding      extends AritRetType[DateTime, Float, DateTime]
-  implicit object DateTimeBigDecimalBinding extends AritRetType[DateTime, BigDecimal, DateTime]
-  implicit object DateTimeBigIntBinding     extends AritRetType[DateTime, BigInt, DateTime]
+  implicit object DateTimeIntBinding        extends AritRetType[ZonedDateTime, Int, ZonedDateTime]
+  implicit object DateTimeLongBinding       extends AritRetType[ZonedDateTime, Long, ZonedDateTime]
+  implicit object DateTimeDoubleBinding     extends AritRetType[ZonedDateTime, Double, ZonedDateTime]
+  implicit object DateTimeFloatBinding      extends AritRetType[ZonedDateTime, Float, ZonedDateTime]
+  implicit object DateTimeBigDecimalBinding extends AritRetType[ZonedDateTime, BigDecimal, ZonedDateTime]
+  implicit object DateTimeBigIntBinding     extends AritRetType[ZonedDateTime, BigInt, ZonedDateTime]
 
   def abs[T](targetColumn: NumericCol[T]): Abs[T] = Abs[T](targetColumn)
 

@@ -4,7 +4,7 @@ import com.crobox.clickhouse.dsl.JoinQuery._
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.time.{MultiDuration, TimeUnit, TotalDuration}
 import com.typesafe.scalalogging.Logger
-import org.joda.time.{DateTime, DateTimeZone}
+import java.time.{ZoneId, ZonedDateTime}
 import org.slf4j.LoggerFactory
 
 import scala.jdk.CollectionConverters._
@@ -337,7 +337,7 @@ trait ClickhouseTokenizerModule
     def toUnixTimestamp(inner: String): String = s"toUnixTimestamp($inner, '$dateZone')"
 
     interval.duration match {
-      case TotalDuration                      => s"${interval.getStartMillis}"
+      case TotalDuration                      => s"${interval.start.toInstant.toEpochMilli}"
       case MultiDuration(1, TimeUnit.Year)    => toDateTime(convert("toStartOfYear"))
       case MultiDuration(1, TimeUnit.Quarter) => toDateTime(convert("toStartOfQuarter"))
       case MultiDuration(1, TimeUnit.Month)   => toDateTime(convert("toStartOfMonth"))
@@ -369,21 +369,18 @@ trait ClickhouseTokenizerModule
   // TODO this is a fallback to find a similar timezone when the provided interval does not have a set timezone id.
   // We should be able to disable this from the config and fail fast if we cannot determine the timezone for timeseries
   // (probably default to failing)
-  private def determineZoneId(start: DateTime): String = {
-    val provider   = DateTimeZone.getProvider
-    val zones      = provider.getAvailableIDs.asScala.map(provider.getZone)
-    val zone       = start.getZone
-    val targetZone = zones
-      .find(_.getID == zone.getID)
-      .orElse(
-        zones.find(targetZone =>
-          targetZone.getID.startsWith("Etc/") &&
-            targetZone.getOffset(start.getMillis) == start.getZone.getOffset(start.getMillis)
-        )
-      )
-      .getOrElse(throw new IllegalArgumentException(s"Could not determine the zone from source $zone"))
-      .getID
-    targetZone
+  private def determineZoneId(start: ZonedDateTime): String = {
+    val zone      = start.getZone
+    val available = ZoneId.getAvailableZoneIds.asScala
+    if (available.contains(zone.getId)) zone.getId
+    else {
+      // Sorted, because eight Etc/ zones sit at offset zero and getAvailableZoneIds is unordered -- without this the
+      // emitted timezone would vary between runs for a UTC interval.
+      val instant = start.toInstant
+      available.toSeq.sorted
+        .find(id => id.startsWith("Etc/") && ZoneId.of(id).getRules.getOffset(instant) == start.getOffset)
+        .getOrElse(throw new IllegalArgumentException(s"Could not determine the zone from source $zone"))
+    }
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635

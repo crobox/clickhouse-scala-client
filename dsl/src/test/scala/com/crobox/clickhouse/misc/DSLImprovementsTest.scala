@@ -3,7 +3,7 @@ package com.crobox.clickhouse.misc
 import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.misc.DSLImprovements.ColumnsImprovements
 import com.crobox.clickhouse.dsl.{Column, NativeColumn}
-import org.joda.time.DateTime
+import java.time.ZonedDateTime
 
 import java.util.UUID
 
@@ -13,7 +13,7 @@ class DSLImprovementsTest extends DslTestSpec {
   val doubleCol: NativeColumn[Double]           = NativeColumn[Double]("double")
   val stringCol: NativeColumn[String]           = NativeColumn[String]("string")
   val boolCol: NativeColumn[Boolean]            = NativeColumn[Boolean]("bool")
-  val dateTimeCol: NativeColumn[DateTime]       = NativeColumn[DateTime]("date_time")
+  val dateTimeCol: NativeColumn[ZonedDateTime]  = NativeColumn[ZonedDateTime]("date_time")
   val intArrayCol: NativeColumn[Seq[Int]]       = NativeColumn[Seq[Int]]("int_array")
   val doubleArrayCol: NativeColumn[Seq[Double]] = NativeColumn[Seq[Double]]("double_array")
   val stringArrayCol: NativeColumn[Seq[String]] = NativeColumn[Seq[String]]("string_array")

@@ -3,7 +3,7 @@ package com.crobox.clickhouse
 import com.crobox.clickhouse.dsl.marshalling.ClickhouseJsonSupport._
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import com.crobox.clickhouse.dsl.{NativeColumn, Table}
-import org.joda.time.DateTime
+import java.time.ZonedDateTime
 import spray.json._
 
 import java.util.UUID
@@ -62,7 +62,7 @@ trait TestSchema {
   val timestampColumn = NativeColumn[Long]("ts", ColumnType.UInt64)
   val nativeUUID      = NativeColumn[UUID]("uuid", ColumnType.UUID)
 
-  case class Table1Entry(shieldId: UUID, date: DateTime = DateTime.now(), numbers: Seq[Int] = Seq())
+  case class Table1Entry(shieldId: UUID, date: ZonedDateTime = ZonedDateTime.now(), numbers: Seq[Int] = Seq())
 
   case class Table2Entry(
       itemId: UUID,

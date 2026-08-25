@@ -2,7 +2,7 @@ package com.crobox.clickhouse.dsl.schemabuilder
 
 import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl._
-import org.joda.time.DateTime
+import java.time.ZonedDateTime
 
 class CreateTableIT extends DslITSpec {
 
@@ -11,7 +11,7 @@ class CreateTableIT extends DslITSpec {
   //
 
   it should "create table with TTL" in {
-    val eventTime = NativeColumn[DateTime]("event_time", ColumnType.DateTime)
+    val eventTime = NativeColumn[ZonedDateTime]("event_time", ColumnType.DateTime)
     val userId    = NativeColumn[Long]("user_id", ColumnType.UInt64)
     val comment   = NativeColumn[String]("comment", ColumnType.String)
     val db        = database

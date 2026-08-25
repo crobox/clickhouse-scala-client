@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.column
 import java.util.UUID
 
 import com.crobox.clickhouse.dsl._
-import org.joda.time.{DateTime, LocalDate}
+import java.time.{LocalDate, ZonedDateTime}
 
 trait DictionaryFunctions { self: Magnets =>
 
@@ -86,8 +86,8 @@ trait DictionaryFunctions { self: Magnets =>
       _dictName: StringColMagnet[_],
       _attrName: StringColMagnet[_],
       _id: ConstOrColMagnet[_],
-      _default: Option[Magnet[DateTime]] = None
-  ) extends DictionaryGetFuncColumn[DateTime](_dictName, _attrName, _id, _default)
+      _default: Option[Magnet[ZonedDateTime]] = None
+  ) extends DictionaryGetFuncColumn[ZonedDateTime](_dictName, _attrName, _id, _default)
   case class DictGetUUID(
       _dictName: StringColMagnet[_],
       _attrName: StringColMagnet[_],
@@ -210,7 +210,7 @@ trait DictionaryFunctions { self: Magnets =>
       dictName: StringColMagnet[_],
       attrName: StringColMagnet[_],
       id: ConstOrColMagnet[_],
-      default: Magnet[DateTime]
+      default: Magnet[ZonedDateTime]
   ) = DictGetDateTime(dictName, attrName, id, Some(default))
   def dictGetUUIDOrDefault(
       dictName: StringColMagnet[_],

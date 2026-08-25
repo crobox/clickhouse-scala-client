@@ -2,8 +2,8 @@ package com.crobox.clickhouse.dsl.marshalling
 
 import com.crobox.clickhouse.dsl.ClickhouseStatement
 import com.crobox.clickhouse.partitioning.PartitionDateFormatter
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.{DateTime, LocalDate}
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDate, ZonedDateTime}
 import scala.language.implicitConversions
 
 import java.util.UUID
@@ -69,9 +69,12 @@ trait QueryValueFormats {
     override def apply(v: UUID): String = quote(v.toString)
   }
 
-  implicit object DateTimeQueryValue extends QueryValue[DateTime] {
-    private val formatter                   = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
-    override def apply(v: DateTime): String = quote(formatter.print(v))
+  implicit object DateTimeQueryValue extends QueryValue[ZonedDateTime] {
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+    // Second precision, as before. ZonedDateTime carries nanoseconds, so DateTime64 becomes expressible here, but
+    // widening the literal would change every DateTime value this renders -- that belongs with #329.
+    override def apply(v: ZonedDateTime): String = quote(formatter.format(v))
   }
 
   implicit object LocalDateQueryValue extends QueryValue[LocalDate] {
