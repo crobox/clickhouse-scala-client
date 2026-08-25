@@ -44,4 +44,65 @@ class ClickhouseIntervalStartFormatTest extends DslTestSpec {
     // JsString("1618876800000000").convertTo[IntervalStart] should be ("53270-03-01T00:00:00.000Z")
     JsString("1618876800000000").convertTo[IntervalStart].getMillis should be(1618876800000L)
   }
+
+  // A zone id with an underscore in it. The date regex used to be greedy and split on the last underscore, cutting
+  // the id in half and throwing out of the reader rather than returning a date.
+  it should "read date only for a timezone whose id contains an underscore" in {
+    ClickhouseIntervalStartFormat.read(JsString("1970-12-17_America/New_York")) should be(
+      new DateTime("1970-12-17T00:00:00.000-05:00", DateTimeZone.UTC)
+    )
+  }
+
+  it should "read date only for a timezone with two underscores" in {
+    ClickhouseIntervalStartFormat.read(JsString("1970-12-17_America/Argentina/Rio_Gallegos")) should be(
+      new DateTime("1970-12-17T00:00:00.000-03:00", DateTimeZone.UTC)
+    )
+  }
+
+  // The month branch was never affected -- `\d+` cannot swallow the zone -- but pin it so a future rewrite of either
+  // regex has to keep both working.
+  it should "read month relative for a timezone whose id contains an underscore" in {
+    ClickhouseIntervalStartFormat.read(
+      JsString(s"${ClickhouseIntervalStartFormat.RelativeMonthsSinceUnixStart + 3}_America/New_York")
+    ) should be(new DateTime("1970-04-01T00:00:00.000-05:00", DateTimeZone.UTC))
+  }
+
+  it should "read a month before the unix epoch" in {
+    ClickhouseIntervalStartFormat.read(
+      JsString(s"${ClickhouseIntervalStartFormat.RelativeMonthsSinceUnixStart - 2}_$zone")
+    ) should be(new DateTime("1969-11-01T00:00:00.000+02:00", DateTimeZone.UTC))
+  }
+
+  // Quarter and year grouping come back through the date branch, per the comment on it.
+  it should "read a quarter boundary as a date" in {
+    ClickhouseIntervalStartFormat.read(JsString(s"1970-04-01_$zone")) should be(
+      new DateTime("1970-04-01T00:00:00.000+02:00", DateTimeZone.UTC)
+    )
+  }
+
+  it should "read a year boundary as a date" in {
+    ClickhouseIntervalStartFormat.read(JsString(s"1971-01-01_$zone")) should be(
+      new DateTime("1971-01-01T00:00:00.000+02:00", DateTimeZone.UTC)
+    )
+  }
+
+  // Ten digits: seconds rather than millis. This branch had no test at all.
+  it should "read a ten-digit value as seconds" in {
+    ClickhouseIntervalStartFormat.read(JsString("1618876800")) should be(
+      new DateTime(1618876800000L, DateTimeZone.UTC)
+    )
+  }
+
+  it should "read a sixteen-digit value as microseconds" in {
+    ClickhouseIntervalStartFormat.read(JsString("1618876800000000")).getMillis should be(1618876800000L)
+  }
+
+  it should "write millis" in {
+    val date = new DateTime(1618876800000L, DateTimeZone.UTC)
+    ClickhouseIntervalStartFormat.write(date) should be(JsNumber(1618876800000L))
+  }
+
+  it should "refuse a value it cannot parse rather than returning an epoch" in {
+    a[Exception] should be thrownBy ClickhouseIntervalStartFormat.read(JsString("not-a-date"))
+  }
 }

@@ -17,8 +17,14 @@ trait ClickhouseJsonSupport {
 
     override def write(obj: IntervalStart): JsValue = JsNumber(obj.getMillis)
 
-    val month: Regex                 = """(\d+)_(.*)""".r
-    val date: Regex                  = """(.+)_(.*)""".r
+    val month: Regex = """(\d+)_(.*)""".r
+
+    // Lazy first group, deliberately. Greedy, this split on the *last* underscore, so any timezone whose id contains
+    // one -- America/New_York, America/Los_Angeles, Asia/Ho_Chi_Minh -- was cut in half: `1970-12-17_America/New_York`
+    // parsed as date `1970-12-17_America/New` in zone `York`, and the resulting IllegalArgumentException is not caught
+    // in this branch, so date-granularity grouping failed outright for those zones. A date never contains an
+    // underscore, so splitting on the first is right. `month` was never affected: `\d+` cannot over-consume.
+    val date: Regex                  = """(.+?)_(.*)""".r
     val nanoTimestamp: Regex         = """^(\d{16})$""".r
     val msTimestamp: Regex           = """^(\d{13})$""".r
     val timestamp: Regex             = """^(\d{10})$""".r
