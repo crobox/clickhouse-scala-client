@@ -134,11 +134,13 @@ object DSLImprovements {
     }
   }
 
-  implicit class OrderingColumnsImprovements(values: Seq[(Column, OrderingDirection)]) {
+  implicit class OrderingColumnsImprovements(values: Seq[OrderingColumn]) {
 
-    def addColumns(columns: Iterable[(Column, OrderingDirection)]): Seq[(Column, OrderingDirection)] =
-      columns.foldLeft(values)((result, c) => if (result.exists(_._1.name == c._1.name)) result else result ++ Seq(c))
+    def addColumns(columns: Iterable[OrderingColumn]): Seq[OrderingColumn] =
+      columns.foldLeft(values)((result, c) =>
+        if (result.exists(_.column.name == c.column.name)) result else result ++ Seq(c)
+      )
 
-    def +++(columns: Iterable[(Column, OrderingDirection)]): Seq[(Column, OrderingDirection)] = addColumns(columns)
+    def +++(columns: Iterable[OrderingColumn]): Seq[OrderingColumn] = addColumns(columns)
   }
 }

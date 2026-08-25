@@ -167,16 +167,26 @@ trait OperationalQuery extends Query {
   }
 
   def orderBy(columns: Column*): OperationalQuery =
-    orderByWithDirection(columns.map(c => (c, ASC)): _*)
+    orderByColumns(columns.map(OrderingColumn(_)): _*)
 
-  def orderByWithDirection(columns: (Column, OrderingDirection)*): OperationalQuery = {
-    val newOrderingColumns: Seq[(Column, OrderingDirection)] =
-      Seq(columns: _*)
-    val newSelect = mergeOperationalColumns(columns.map(_._1))
+  def orderByWithDirection(columns: (Column, OrderingDirection)*): OperationalQuery =
+    orderByColumns(columns.map(OrderingColumn.fromTuple): _*)
+
+  /** `ORDER BY` taking the full entry, which is how a `WITH FILL` is attached to a column. */
+  def orderByColumns(columns: OrderingColumn*): OperationalQuery = {
+    // Appended, not deduplicated -- same as before the reshape. `DSLImprovements.+++` is where dedup lives.
+    val newSelect = mergeOperationalColumns(columns.map(_.column))
     OperationalQuery(
-      internalQuery.copy(select = newSelect, orderBy = internalQuery.orderBy ++ newOrderingColumns)
+      internalQuery.copy(select = newSelect, orderBy = internalQuery.orderBy ++ columns)
     )
   }
+
+  /**
+   * `INTERPOLATE`, carrying columns into the rows `WITH FILL` invents. Only valid alongside a `WITH FILL`; with no
+   * entries it renders the bare form, which interpolates every applicable column.
+   */
+  def interpolate(columns: InterpolateColumn*): OperationalQuery =
+    OperationalQuery(internalQuery.copy(interpolate = Option(Interpolate(columns))))
 
   def limit(limit: Option[Limit]): OperationalQuery =
     OperationalQuery(internalQuery.copy(limit = limit))
