@@ -5,6 +5,7 @@ import com.typesafe.config.Config
 import org.apache.pekko.http.scaladsl.model.Uri.Query
 import org.apache.pekko.http.scaladsl.model.headers.HttpEncoding
 
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
@@ -19,7 +20,8 @@ case class QuerySettings(
     idempotent: Option[Boolean] = None,
     retries: Option[Int] = None,
     requestCompressionType: Option[HttpEncoding] = None,
-    sslCertAuth: Option[Boolean] = None
+    sslCertAuth: Option[Boolean] = None,
+    timeout: Option[FiniteDuration] = None
 ) {
 
   def asQueryParams: Query =
@@ -31,7 +33,10 @@ case class QuerySettings(
         profile.map("profile" -> _) ++
         progressHeaders.map(progress => "send_progress_in_http_headers" -> (if (progress) "1" else "0")) ++
         httpCompression
-          .map(compression => "enable_http_compression" -> (if (compression) "1" else "0"))).toMap
+          .map(compression => "enable_http_compression" -> (if (compression) "1" else "0")) ++
+        // Seconds, fractional accepted. Bounds the work the server does; the client-side half of the same setting is
+        // applied by ClickHouseExecutor.
+        timeout.map(t => "max_execution_time" -> BigDecimal(t.toMillis)./(1000).toString)).toMap
     )
 
   def withFallback(config: Config): QuerySettings = {
@@ -47,7 +52,10 @@ case class QuerySettings(
       sslCertAuth = sslCertAuth.orElse(Try {
         val authConfig = config.getConfig(path("authentication"))
         authConfig.getBoolean("ssl-cert-auth")
-      }.toOption)
+      }.toOption),
+      timeout = timeout.orElse(Try(config.getDuration(path("timeout"))).toOption.collect {
+        case d if !d.isZero && !d.isNegative => Duration.fromNanos(d.toNanos)
+      })
     )
   }
 
