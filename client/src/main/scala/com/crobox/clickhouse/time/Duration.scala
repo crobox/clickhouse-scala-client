@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.time
 
-import org.joda.time.Period
+import java.time.ZonedDateTime
 
 sealed trait Duration {
   val unit: TimeUnit
@@ -25,7 +25,10 @@ object Duration {
 }
 
 case class MultiDuration(value: Int, override val unit: MultiTimeUnit) extends Duration {
-  val asPeriod: Period = unit.asPeriod.multipliedBy(value)
+
+  def addTo(moment: ZonedDateTime): ZonedDateTime = moment.plus(value.toLong * unit.amount, unit.chronoUnit)
+
+  def millis: Long = unit.standardMillis * value
 }
 
 object MultiDuration {

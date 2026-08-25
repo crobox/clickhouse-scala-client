@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl
 import com.crobox.clickhouse._
 import com.crobox.clickhouse.dsl.JoinQuery.InnerJoin
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
-import org.joda.time.{DateTime, LocalDate}
+import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
 
 import java.util.UUID
 import scala.util.{Failure, Success}
@@ -92,7 +92,7 @@ class QueryTest extends DslTestSpec {
   }
 
   it should "parse datefunction" in {
-    val query = select(toYear(NativeColumn[DateTime]("dateTime"))) from OneTestTable
+    val query = select(toYear(NativeColumn[ZonedDateTime]("dateTime"))) from OneTestTable
     toSql(query.internalQuery).nonEmpty shouldBe true
   }
 

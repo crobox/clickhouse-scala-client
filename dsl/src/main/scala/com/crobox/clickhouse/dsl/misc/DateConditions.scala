@@ -7,7 +7,7 @@ import com.crobox.clickhouse.dsl.numericFromLongCol
 import com.crobox.clickhouse.dsl.logicalOpsMagnetFromOptionCol
 import com.crobox.clickhouse.dsl.logicalOpsMagnetFromBooleanCol
 import com.crobox.clickhouse.dsl.{ExpressionColumn, NativeColumn}
-import org.joda.time.{DateTime, DateTimeZone, LocalDate}
+import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 
 import scala.language.implicitConversions
@@ -21,17 +21,17 @@ trait DateConditions {
   def dateTimeCondition(
       dateColumn: NativeColumn[LocalDate],
       timestampColumn: NativeColumn[Long],
-      startDate: DateTime,
-      endDate: Option[DateTime]
+      startDate: ZonedDateTime,
+      endDate: Option[ZonedDateTime]
   ): ExpressionColumn[Boolean] =
     // this
-    dateColumn >= startDate.withZone(DateTimeZone.UTC).toLocalDate and
-      noneIfStartOfDay(startDate).map(dt => timestampColumn >= dt.getMillis) and endDate.map(ed =>
+    dateColumn >= startDate.withZoneSameInstant(ZoneOffset.UTC).toLocalDate and
+      noneIfStartOfDay(startDate).map(dt => timestampColumn >= dt.toInstant.toEpochMilli) and endDate.map(ed =>
         noneIfStartOfDay(ed)
           // Must be smaller equals because of current day overlap
-          .map(dt => dateColumn <= dt.toLocalDate and timestampColumn < dt.getMillis)
+          .map(dt => dateColumn <= dt.toLocalDate and timestampColumn < dt.toInstant.toEpochMilli)
           // Must be smaller then since endDate is not inclusive
-          .getOrElse(dateColumn < ed.withZone(DateTimeZone.UTC).toLocalDate)
+          .getOrElse(dateColumn < ed.withZoneSameInstant(ZoneOffset.UTC).toLocalDate)
       )
 
   /**
@@ -41,21 +41,21 @@ trait DateConditions {
   def dateTimeCondition(
       dateColumn: NativeColumn[LocalDate],
       timestampColumn: NativeColumn[Long],
-      startDate: Option[DateTime],
-      endDate: Option[DateTime]
+      startDate: Option[ZonedDateTime],
+      endDate: Option[ZonedDateTime]
   ): Option[ExpressionColumn[Boolean]] = {
 
     val startCondition: Option[ExpressionColumn[Boolean]] = startDate.map(sd =>
-      dateColumn >= sd.withZone(DateTimeZone.UTC).toLocalDate and
-        noneIfStartOfDay(sd).map(dt => timestampColumn >= dt.getMillis)
+      dateColumn >= sd.withZoneSameInstant(ZoneOffset.UTC).toLocalDate and
+        noneIfStartOfDay(sd).map(dt => timestampColumn >= dt.toInstant.toEpochMilli)
     )
 
     val endCondition: Option[ExpressionColumn[Boolean]] = endDate.map(ed =>
       noneIfStartOfDay(ed)
         // Must be smaller equals because of current day overlap
-        .map(dt => dateColumn <= dt.toLocalDate and timestampColumn < dt.getMillis)
+        .map(dt => dateColumn <= dt.toLocalDate and timestampColumn < dt.toInstant.toEpochMilli)
         // Must be smaller then since endDate is not inclusive
-        .getOrElse(dateColumn < ed.withZone(DateTimeZone.UTC).toLocalDate)
+        .getOrElse(dateColumn < ed.withZoneSameInstant(ZoneOffset.UTC).toLocalDate)
     )
 
     startCondition match {
@@ -64,9 +64,9 @@ trait DateConditions {
     }
   }
 
-  def noneIfStartOfDay(dateTime: DateTime): Option[DateTime] = {
-    val utcDateTime = dateTime.withZone(DateTimeZone.UTC)
-    if (utcDateTime.withTimeAtStartOfDay().isEqual(utcDateTime)) {
+  def noneIfStartOfDay(dateTime: ZonedDateTime): Option[ZonedDateTime] = {
+    val utcDateTime = dateTime.withZoneSameInstant(ZoneOffset.UTC)
+    if (utcDateTime.toLocalDate.atStartOfDay(ZoneOffset.UTC).isEqual(utcDateTime)) {
       None
     } else {
       Some(utcDateTime)

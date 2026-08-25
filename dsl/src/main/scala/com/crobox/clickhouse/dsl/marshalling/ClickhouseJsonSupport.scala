@@ -1,8 +1,8 @@
 package com.crobox.clickhouse.dsl.marshalling
 
 import com.crobox.clickhouse.time.IntervalStart
-import org.joda.time.format.{DateTimeFormatter, DateTimeFormatterBuilder, ISODateTimeFormat}
-import org.joda.time.{DateTime, DateTimeZone}
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
 import spray.json.{deserializationError, JsNumber, JsString, JsValue, JsonFormat, _}
 
 import scala.util.Try
@@ -11,11 +11,11 @@ import scala.util.matching.Regex
 trait ClickhouseJsonSupport {
 
   /**
-   * Adds support for org.joda.time.DateTime format specific to clickhouse
+   * Adds support for the date formats clickhouse returns for grouped intervals
    */
   implicit object ClickhouseIntervalStartFormat extends JsonFormat[IntervalStart] {
 
-    override def write(obj: IntervalStart): JsValue = JsNumber(obj.getMillis)
+    override def write(obj: IntervalStart): JsValue = JsNumber(obj.toInstant.toEpochMilli)
 
     val month: Regex = """(\d+)_(.*)""".r
 
@@ -26,17 +26,9 @@ trait ClickhouseJsonSupport {
     val timestamp: Regex             = """^(\d{10})$""".r
     val RelativeMonthsSinceUnixStart = 23641
 
-    val UnixStartTimeWithoutTimeZone            = "1970-01-01T00:00:00.000"
-    val formatter: DateTimeFormatter            = ISODateTimeFormat.date()
-    private val isoFormatter: DateTimeFormatter = ISODateTimeFormat.dateTimeNoMillis
-
-    val readFormatter: DateTimeFormatter = new DateTimeFormatterBuilder()
-      .append(
-        isoFormatter.getPrinter,
-        Array(isoFormatter.getParser, ISODateTimeFormat.date().withZone(DateTimeZone.UTC).getParser)
-      )
-      .toFormatter
-      .withOffsetParsed()
+    val UnixStart: LocalDate             = LocalDate.of(1970, 1, 1)
+    val formatter: DateTimeFormatter     = DateTimeFormatter.ISO_LOCAL_DATE
+    val readFormatter: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
     /*
      * It read the dates back as UTC, but it does contain the corresponding milliseconds relative to the timezone used in the initial request
@@ -47,43 +39,44 @@ trait ClickhouseJsonSupport {
         case JsString(value) =>
           value match {
             case month(relativeMonth, timezoneId) =>
-              new DateTime(UnixStartTimeWithoutTimeZone)
-                .withZoneRetainFields(DateTimeZone.forID(timezoneId))
-                .plusMonths(relativeMonth.toInt - RelativeMonthsSinceUnixStart)
-                .withZone(DateTimeZone.UTC)
+              UnixStart
+                .atStartOfDay(ZoneId.of(timezoneId))
+                .plusMonths((relativeMonth.toInt - RelativeMonthsSinceUnixStart).toLong)
+                .withZoneSameInstant(ZoneOffset.UTC)
             case date(dateOnly, timezoneId) =>
               // should handle quarter and year grouping as it returns a date
-              formatter
-                .parseDateTime(dateOnly)
-                .withZoneRetainFields(DateTimeZone.forID(timezoneId))
-                .withZone(DateTimeZone.UTC)
-            case nanoTimestamp(millis) => new DateTime(millis.toLong / 1000, DateTimeZone.UTC)
-            case msTimestamp(millis)   => new DateTime(millis.toLong, DateTimeZone.UTC)
-            case timestamp(secs)       => new DateTime(secs.toLong * 1000, DateTimeZone.UTC)
+              LocalDate
+                .parse(dateOnly, formatter)
+                .atStartOfDay(ZoneId.of(timezoneId))
+                .withZoneSameInstant(ZoneOffset.UTC)
+            case nanoTimestamp(millis) => atUtc(millis.toLong / 1000)
+            case msTimestamp(millis)   => atUtc(millis.toLong)
+            case timestamp(secs)       => atUtc(secs.toLong * 1000)
             case _                     =>
               // sometimes clickhouse mistakenly returns a long / int value as JsString. Therefor, first try to
               // parse it as a long...
-              val dateTime = Try {
-                new DateTime(value.toLong, DateTimeZone.UTC)
-              }.toOption
+              val dateTime = Try(atUtc(value.toLong)).toOption
 
               // continue with parsing using the formatter
               dateTime.getOrElse {
                 try
-                  formatter.parseDateTime(value)
+                  LocalDate.parse(value, formatter).atStartOfDay(ZoneId.systemDefault())
                 catch {
-                  case _: IllegalArgumentException      => error(s"Couldn't parse $value into valid date time")
+                  case _: java.time.format.DateTimeParseException =>
+                    error(s"Couldn't parse $value into valid date time")
                   case _: UnsupportedOperationException =>
                     error("Unsupported operation, programmatic misconfiguration?")
                 }
               }
           }
-        case JsNumber(millis) => new DateTime(millis.longValue, DateTimeZone.UTC)
+        case JsNumber(millis) => atUtc(millis.longValue)
         case _                => throw DeserializationException(s"Unknown date format read from clickhouse for $json")
       }
 
-    def error(v: Any): DateTime = {
-      val example = readFormatter.print(0)
+    private def atUtc(millis: Long): ZonedDateTime = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC)
+
+    def error(v: Any): ZonedDateTime = {
+      val example = readFormatter.format(Instant.EPOCH.atZone(ZoneOffset.UTC))
       deserializationError(
         f"'$v' is not a valid date value. Dates must be in compact ISO-8601 format, e.g. '$example'"
       )

@@ -3,8 +3,7 @@ package com.crobox.clickhouse.misc
 import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl.misc.DateConditions.dateTimeCondition
 import com.crobox.clickhouse.dsl.{NativeColumn, SelectQuery}
-import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{DateTime, LocalDate}
+import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
 import org.scalatest.prop.TableDrivenPropertyChecks
 
 class DateTimeConditionTest extends DslTestSpec with TableDrivenPropertyChecks {
@@ -74,8 +73,14 @@ class DateTimeConditionTest extends DslTestSpec with TableDrivenPropertyChecks {
     }
   }
 
-  val ISO_8601 = ISODateTimeFormat.dateOptionalTimeParser().withZoneUTC();
-
-  def parseDateTime(value: String): DateTime =
-    ISO_8601.parseDateTime(value.replace(' ', 'T'))
+  // Accepts a bare date, a date-time, or a date-time with an offset, normalising to UTC -- what joda's
+  // dateOptionalTimeParser().withZoneUTC() did.
+  def parseDateTime(value: String): ZonedDateTime = {
+    val text = value.replace(' ', 'T')
+    scala.util
+      .Try(ZonedDateTime.parse(text))
+      .orElse(scala.util.Try(java.time.LocalDateTime.parse(text).atZone(ZoneOffset.UTC)))
+      .getOrElse(LocalDate.parse(text).atStartOfDay(ZoneOffset.UTC))
+      .withZoneSameInstant(ZoneOffset.UTC)
+  }
 }

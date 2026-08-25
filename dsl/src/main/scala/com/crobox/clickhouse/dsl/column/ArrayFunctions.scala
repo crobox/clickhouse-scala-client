@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
-import org.joda.time.{DateTime, LocalDate}
+import java.time.{LocalDate, ZonedDateTime}
 
 trait ArrayFunctions { this: Magnets =>
   sealed trait ArrayFunction
@@ -21,7 +21,7 @@ trait ArrayFunctions { this: Magnets =>
   case class EmptyArrayFloat32()     extends ArrayFunctionConst[Float]
   case class EmptyArrayFloat64()     extends ArrayFunctionConst[Double]
   case class EmptyArrayDate()        extends ArrayFunctionConst[LocalDate]
-  case class EmptyArrayDateTime()    extends ArrayFunctionConst[DateTime]
+  case class EmptyArrayDateTime()    extends ArrayFunctionConst[ZonedDateTime]
   case class EmptyArrayString()      extends ArrayFunctionConst[String]
   case class Range(n: NumericCol[_]) extends ArrayFunctionConst[Long]
 

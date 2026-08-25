@@ -3,25 +3,28 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.TestUtils.DDTStringify
 import com.crobox.clickhouse.dsl._
-import org.joda.time._
+import java.time.temporal.ChronoUnit
+import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 
 class DateTimeFunctionsIT extends DslITSpec {
   it should "succeed for DateTimeFunctions" in {
-    val now         = new DateTime().withZone(DateTimeZone.UTC)
-    val epoch       = new DateTime(0).withZone(DateTimeZone.UTC)
-    val August_8_19 = new DateTime().withZone(DateTimeZone.UTC).withYear(2019).withMonthOfYear(8).withDayOfMonth(8)
+    val now         = ZonedDateTime.now(ZoneOffset.UTC)
+    val epoch       = java.time.Instant.EPOCH.atZone(ZoneOffset.UTC)
+    val August_8_19 = ZonedDateTime.now(ZoneOffset.UTC).withYear(2019).withMonth(8).withDayOfMonth(8)
 
-    def dynNow = new DateTime().withZone(DateTimeZone.UTC)
+    def dynNow = ZonedDateTime.now(ZoneOffset.UTC)
 
     r(toYear(now)) shouldBe now.getYear.toString
     r(toYYYYMM(now)) shouldBe now.printAsYYYYMM
-    r(toMonth(now)) shouldBe now.getMonthOfYear.toString
+    r(toMonth(now)) shouldBe now.getMonthValue.toString
     r(toDayOfMonth(now)) shouldBe now.getDayOfMonth.toString
-    r(toDayOfWeek(now)) shouldBe now.getDayOfWeek.toString
-    r(toHour(now)) shouldBe now.getHourOfDay.toString
-    r(toMinute(now)) shouldBe now.getMinuteOfHour.toString
-    r(toSecond(now)) shouldBe now.getSecondOfMinute.toString
-    r(toMonday(now)) shouldBe now.withDayOfWeek(1).printAsDate
+    r(toDayOfWeek(now)) shouldBe now.getDayOfWeek.getValue.toString
+    r(toHour(now)) shouldBe now.getHour.toString
+    r(toMinute(now)) shouldBe now.getMinute.toString
+    r(toSecond(now)) shouldBe now.getSecond.toString
+    r(toMonday(now)) shouldBe now
+      .`with`(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+      .printAsDate
     r(addSeconds(now, 2)) shouldBe now.plusSeconds(2).printAsDateTime
     r(addMinutes(now, 2)) shouldBe now.plusMinutes(2).printAsDateTime
     r(addHours(now, 2)) shouldBe now.plusHours(2).printAsDateTime
@@ -36,21 +39,21 @@ class DateTimeFunctionsIT extends DslITSpec {
     r(toStartOfFiveMinute(now)) shouldBe now.toStartOfMin(5).printAsDateTime
     r(toStartOfFifteenMinutes(now)) shouldBe now.toStartOfMin(15).printAsDateTime
     r(toStartOfHour(now)) shouldBe now.toStartOfHr.printAsDateTime
-    r(toStartOfDay(now)) shouldBe now.withTimeAtStartOfDay().printAsDateTime
+    r(toStartOfDay(now)) shouldBe now.toLocalDate.atStartOfDay(ZoneOffset.UTC).printAsDateTime
     r(toTime(now)).substring(11) shouldBe now.printAsDateTime.substring(11)
     r(toRelativeYearNum(now)) shouldBe now.getYear.toString
-    r(toRelativeQuarterNum(now)) shouldBe ((now.getYear * 4) + (now.getMonthOfYear - 1) / 3).toString
-    r(toRelativeMonthNum(now)) shouldBe ((now.getYear * 12) + now.getMonthOfYear).toString
-    r(toRelativeWeekNum(now)) should (equal(Weeks.weeksBetween(epoch, now).getWeeks.toString) or equal(
-      (Weeks.weeksBetween(epoch, now).getWeeks + 1).toString
+    r(toRelativeQuarterNum(now)) shouldBe ((now.getYear * 4) + (now.getMonthValue - 1) / 3).toString
+    r(toRelativeMonthNum(now)) shouldBe ((now.getYear * 12) + now.getMonthValue).toString
+    r(toRelativeWeekNum(now)) should (equal(ChronoUnit.WEEKS.between(epoch, now).toString) or equal(
+      (ChronoUnit.WEEKS.between(epoch, now) + 1).toString
     ))
-    r(toRelativeDayNum(now)) shouldBe Days.daysBetween(epoch, now).getDays.toString
-    r(toRelativeHourNum(now)) shouldBe Hours.hoursBetween(epoch, now).getHours.toString
-    r(toRelativeMinuteNum(now)) shouldBe Minutes.minutesBetween(epoch, now).getMinutes.toString
-    r(toRelativeSecondNum(now)) shouldBe Seconds.secondsBetween(epoch, now).getSeconds.toString
+    r(toRelativeDayNum(now)) shouldBe ChronoUnit.DAYS.between(epoch, now).toString
+    r(toRelativeHourNum(now)) shouldBe ChronoUnit.HOURS.between(epoch, now).toString
+    r(toRelativeMinuteNum(now)) shouldBe ChronoUnit.MINUTES.between(epoch, now).toString
+    r(toRelativeSecondNum(now)) shouldBe ChronoUnit.SECONDS.between(epoch, now).toString
     r(chNow()) should (equal(dynNow.printAsDateTime) or equal(dynNow.minusSeconds(1).printAsDateTime))
     r(chYesterday()) shouldBe dynNow.minusDays(1).printAsDate
-    r(chToday()) shouldBe dynNow.withTimeAtStartOfDay().printAsDate
+    r(chToday()) shouldBe dynNow.toLocalDate.atStartOfDay(ZoneOffset.UTC).printAsDate
     r(timeSlot(now)) shouldBe now.toStartOfMin(30).printAsDateTime
     r(
       timeSlots(now, toUInt32(1800))

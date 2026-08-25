@@ -1,16 +1,23 @@
 package com.crobox.clickhouse
 
-import org.joda.time.{DateTime, Interval}
+import java.time.{Duration => JavaDuration, ZonedDateTime}
 
 package object time {
-  type IntervalStart = DateTime
+  type IntervalStart = ZonedDateTime
 
   implicit class FixedDurationExtension(multiDuration: MultiDuration) {
-    def millis(): Long = multiDuration.asPeriod.toStandardDuration.getMillis
+    def millis(): Long = multiDuration.millis
   }
 
-  implicit class IntervalExtras(obj: DateTime) {
+  implicit class IntervalExtras(obj: ZonedDateTime) {
+    def to(endInterval: ZonedDateTime): TimeInterval = TimeInterval(obj, endInterval)
+  }
+}
 
-    def to(endInterval: DateTime) = new Interval(obj, endInterval)
+package time {
+
+  /** Replaces joda's `Interval`, which `MultiInterval` used to extend. */
+  case class TimeInterval(start: ZonedDateTime, end: ZonedDateTime) {
+    def duration: JavaDuration = JavaDuration.between(start, end)
   }
 }

@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.time
 
-import org.joda.time.Period
+import java.time.temporal.ChronoUnit
 
 sealed trait TimeUnit {
   val labels: Array[String]
@@ -15,9 +15,20 @@ sealed trait TimeUnit {
     }
 }
 
-abstract class MultiTimeUnit(override val labels: Array[String], override val mainLabel: String) extends TimeUnit {
-  val asPeriod: Period
-  lazy protected[time] val standardMillis: Long = asPeriod.toStandardDuration.getMillis
+/**
+ * @param amount
+ *   how many `chronoUnit`s one of this unit spans, so a quarter is three months.
+ */
+abstract class MultiTimeUnit(
+    override val labels: Array[String],
+    override val mainLabel: String,
+    val amount: Int,
+    val chronoUnit: ChronoUnit
+) extends TimeUnit {
+
+  // Exact for second through week. Month and above have no fixed length and never reach here: MultiInterval aligns
+  // them by calendar field instead.
+  lazy protected[time] val standardMillis: Long = chronoUnit.getDuration.toMillis * amount
 }
 
 /**
@@ -28,37 +39,21 @@ object TimeUnit {
   private lazy val allUnits =
     Seq(Second, Minute, Hour, Day, Week, Month, Quarter, Year, Total)
 
-  case object Second extends MultiTimeUnit(Array("s", "second", "seconds"), "second") {
-    override val asPeriod: Period = Period.seconds(1)
-  }
+  case object Second extends MultiTimeUnit(Array("s", "second", "seconds"), "second", 1, ChronoUnit.SECONDS)
 
-  case object Minute extends MultiTimeUnit(Array("m", "minute", "minutes"), "minute") {
-    override val asPeriod: Period = Period.minutes(1)
-  }
+  case object Minute extends MultiTimeUnit(Array("m", "minute", "minutes"), "minute", 1, ChronoUnit.MINUTES)
 
-  case object Hour extends MultiTimeUnit(Array("h", "hour", "hours"), "hour") {
-    override val asPeriod: Period = Period.hours(1)
-  }
+  case object Hour extends MultiTimeUnit(Array("h", "hour", "hours"), "hour", 1, ChronoUnit.HOURS)
 
-  case object Day extends MultiTimeUnit(Array("d", "day", "days"), "day") {
-    override val asPeriod: Period = Period.days(1)
-  }
+  case object Day extends MultiTimeUnit(Array("d", "day", "days"), "day", 1, ChronoUnit.DAYS)
 
-  case object Week extends MultiTimeUnit(Array("w", "week", "weeks"), "week") {
-    override val asPeriod: Period = Period.weeks(1)
-  }
+  case object Week extends MultiTimeUnit(Array("w", "week", "weeks"), "week", 1, ChronoUnit.WEEKS)
 
-  case object Month extends MultiTimeUnit(Array("M", "month", "months"), "month") {
-    override val asPeriod: Period = Period.months(1)
-  }
+  case object Month extends MultiTimeUnit(Array("M", "month", "months"), "month", 1, ChronoUnit.MONTHS)
 
-  case object Quarter extends MultiTimeUnit(Array("q", "quarter"), "quarter") {
-    override val asPeriod: Period = Period.months(3)
-  }
+  case object Quarter extends MultiTimeUnit(Array("q", "quarter"), "quarter", 3, ChronoUnit.MONTHS)
 
-  case object Year extends MultiTimeUnit(Array("y", "year"), "year") {
-    override val asPeriod: Period = Period.years(1)
-  }
+  case object Year extends MultiTimeUnit(Array("y", "year"), "year", 1, ChronoUnit.YEARS)
 
   case object Total extends TimeUnit {
     override val labels: Array[String] = Array("t", "total")
@@ -69,16 +64,8 @@ object TimeUnit {
     .find(_.labels.contains(label))
     .getOrElse(throw new IllegalArgumentException(s"Invalid label $label for time unit."))
 
-  def apply(period: Period): Option[TimeUnit] = period.toString match {
-    case "PT1S" => Some(TimeUnit.Second)
-    case "PT1M" => Some(TimeUnit.Minute)
-    case "PT1H" => Some(TimeUnit.Hour)
-    case "P1D"  => Some(TimeUnit.Day)
-    case "P1W"  => Some(TimeUnit.Week)
-    case "P1M"  => Some(TimeUnit.Month)
-    case "P3M"  => Some(TimeUnit.Quarter)
-    case "P1Y"  => Some(TimeUnit.Year)
-    case _      => None
-  }
-
+  def apply(amount: Int, chronoUnit: ChronoUnit): Option[TimeUnit] =
+    allUnits.collectFirst {
+      case unit: MultiTimeUnit if unit.amount == amount && unit.chronoUnit == chronoUnit => unit
+    }
 }

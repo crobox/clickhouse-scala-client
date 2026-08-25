@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.language
 import com.crobox.clickhouse.DslTestSpec
 import com.crobox.clickhouse.dsl._
 import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
-import org.joda.time.{DateTime, DateTimeZone}
+import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
 
 import java.util.UUID
 
@@ -236,8 +236,8 @@ class ClickhouseTokenizerTest extends DslTestSpec {
       TimeSeries(
         timestampColumn,
         MultiInterval(
-          DateTime.now(DateTimeZone.forOffsetHours(2)),
-          DateTime.now(DateTimeZone.forOffsetHours(2)),
+          ZonedDateTime.now(java.time.ZoneOffset.ofHours(2)),
+          ZonedDateTime.now(java.time.ZoneOffset.ofHours(2)),
           MultiDuration(TimeUnit.Month)
         )
       )

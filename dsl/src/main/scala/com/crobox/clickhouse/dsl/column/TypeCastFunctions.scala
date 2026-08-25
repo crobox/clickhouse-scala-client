@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
 import com.crobox.clickhouse.dsl.{ExpressionColumn, TableColumn}
-import org.joda.time.DateTime
+import java.time.ZonedDateTime
 
 trait TypeCastFunctions {
   self: Magnets =>
@@ -109,17 +109,17 @@ trait TypeCastFunctions {
   case class DateRep(
       tableColumn: ConstOrColMagnet[_],
       orZero: Boolean = false,
-      orDefault: Option[DateTime] = None,
+      orDefault: Option[ZonedDateTime] = None,
       orNull: Boolean = false
-  ) extends TypeCastColumn[org.joda.time.LocalDate](tableColumn)
+  ) extends TypeCastColumn[java.time.LocalDate](tableColumn)
       with Reinterpretable
 
   case class DateTimeRep(
       tableColumn: ConstOrColMagnet[_],
       orZero: Boolean = false,
-      orDefault: Option[org.joda.time.DateTime] = None,
+      orDefault: Option[java.time.ZonedDateTime] = None,
       orNull: Boolean = false
-  ) extends TypeCastColumn[org.joda.time.DateTime](tableColumn)
+  ) extends TypeCastColumn[java.time.ZonedDateTime](tableColumn)
       with Reinterpretable
 
   case class StringRep(tableColumn: ConstOrColMagnet[_])
@@ -248,7 +248,7 @@ trait TypeCastFunctions {
 
   def toDate(tableColumn: ConstOrColMagnet[_]): DateRep = DateRep(tableColumn)
 
-  def toDateOrDefault(tableColumn: ConstOrColMagnet[_], value: DateTime): DateRep =
+  def toDateOrDefault(tableColumn: ConstOrColMagnet[_], value: ZonedDateTime): DateRep =
     DateRep(tableColumn, orDefault = Option(value))
 
   def toDateOrNull(tableColumn: ConstOrColMagnet[_]): DateRep = DateRep(tableColumn, orNull = true)
@@ -257,7 +257,7 @@ trait TypeCastFunctions {
 
   def toDateTime(tableColumn: ConstOrColMagnet[_]): DateTimeRep = DateTimeRep(tableColumn)
 
-  def toDateTimeOrDefault(tableColumn: ConstOrColMagnet[_], value: DateTime): DateTimeRep =
+  def toDateTimeOrDefault(tableColumn: ConstOrColMagnet[_], value: ZonedDateTime): DateTimeRep =
     DateTimeRep(tableColumn, orDefault = Option(value))
 
   def toDateTimeOrNull(tableColumn: ConstOrColMagnet[_]): DateTimeRep = DateTimeRep(tableColumn, orNull = true)

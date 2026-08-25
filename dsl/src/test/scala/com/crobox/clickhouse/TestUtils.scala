@@ -1,36 +1,30 @@
 package com.crobox.clickhouse
 
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 object TestUtils {
 
-  implicit class DDTStringify(ddt: DateTime) {
-    def printAsDate: String = DateTimeFormat.forPattern("yyyy-MM-dd").print(ddt)
+  implicit class DDTStringify(ddt: ZonedDateTime) {
+    def printAsDate: String = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(ddt)
 
-    def printAsDateTime: String = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").print(ddt)
+    def printAsDateTime: String = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(ddt)
 
-    def printAsYYYYMM: String = DateTimeFormat.forPattern("yyyyMM").print(ddt)
+    def printAsYYYYMM: String = DateTimeFormatter.ofPattern("yyyyMM").format(ddt)
 
-    def toStartOfQuarter: DateTime = {
-      val remainder = (ddt.getMonthOfYear - 1) % 3
+    def toStartOfQuarter: ZonedDateTime = {
+      val remainder = (ddt.getMonthValue - 1) % 3
 
-      ddt.withDayOfMonth(1).minusMonths(remainder)
+      ddt.withDayOfMonth(1).minusMonths(remainder.toLong)
     }
 
-    def toStartOfMin(min: Int): DateTime = {
-      val remainder = ddt.getMinuteOfHour % min
+    def toStartOfMin(min: Int): ZonedDateTime = {
+      val remainder = ddt.getMinute % min
 
-      ddt
-        .withSecondOfMinute(0)
-        .withMillisOfSecond(0)
-        .minusMinutes(remainder)
+      ddt.truncatedTo(ChronoUnit.MINUTES).minusMinutes(remainder.toLong)
     }
 
-    def toStartOfHr: DateTime =
-      ddt
-        .withMinuteOfHour(0)
-        .withSecondOfMinute(0)
-        .withMillisOfSecond(0)
+    def toStartOfHr: ZonedDateTime = ddt.truncatedTo(ChronoUnit.HOURS)
   }
 }

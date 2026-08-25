@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl._
-import org.joda.time.{DateTime, LocalDate}
+import java.time.{LocalDate, ZonedDateTime}
 
 trait DateTimeFunctions { self: Magnets =>
   sealed trait DateTimeFunction
@@ -20,9 +20,9 @@ trait DateTimeFunctions { self: Magnets =>
   case class Minute(d: DateOrDateTime[_])     extends DateTimeFunctionCol[Int](d)
   case class Second(d: DateOrDateTime[_])     extends DateTimeFunctionCol[Int](d)
   case class Monday[V](d: DateOrDateTime[_])  extends DateTimeFunctionCol[V](d)
-  case class AddSeconds(d: DateOrDateTime[_], seconds: NumericCol[_])  extends DateTimeFunctionCol[DateTime](d)
-  case class AddMinutes(d: DateOrDateTime[_], minutes: NumericCol[_])  extends DateTimeFunctionCol[DateTime](d)
-  case class AddHours(d: DateOrDateTime[_], hours: NumericCol[_])      extends DateTimeFunctionCol[DateTime](d)
+  case class AddSeconds(d: DateOrDateTime[_], seconds: NumericCol[_])  extends DateTimeFunctionCol[ZonedDateTime](d)
+  case class AddMinutes(d: DateOrDateTime[_], minutes: NumericCol[_])  extends DateTimeFunctionCol[ZonedDateTime](d)
+  case class AddHours(d: DateOrDateTime[_], hours: NumericCol[_])      extends DateTimeFunctionCol[ZonedDateTime](d)
   case class AddDays[V](d: DateOrDateTime[V], days: NumericCol[_])     extends DateTimeFunctionCol[V](d)
   case class AddWeeks[V](d: DateOrDateTime[V], weeks: NumericCol[_])   extends DateTimeFunctionCol[V](d)
   case class AddMonths[V](d: DateOrDateTime[V], months: NumericCol[_]) extends DateTimeFunctionCol[V](d)
@@ -35,7 +35,7 @@ trait DateTimeFunctions { self: Magnets =>
   case class StartOfFifteenMinutes[V](d: DateOrDateTime[_])            extends DateTimeFunctionCol[V](d)
   case class StartOfHour[V](d: DateOrDateTime[_])                      extends DateTimeFunctionCol[V](d)
   case class StartOfDay[V](d: DateOrDateTime[_])                       extends DateTimeFunctionCol[V](d)
-  case class Time(d: DateOrDateTime[_])                                extends DateTimeFunctionCol[DateTime](d)
+  case class Time(d: DateOrDateTime[_])                                extends DateTimeFunctionCol[ZonedDateTime](d)
   case class RelativeYearNum[V](d: DateOrDateTime[_])                  extends DateTimeFunctionCol[V](d)
   case class RelativeQuarterNum[V](d: DateOrDateTime[_])               extends DateTimeFunctionCol[V](d)
   case class RelativeMonthNum[V](d: DateOrDateTime[_])                 extends DateTimeFunctionCol[V](d)
@@ -44,11 +44,11 @@ trait DateTimeFunctions { self: Magnets =>
   case class RelativeHourNum[V](d: DateOrDateTime[_])                  extends DateTimeFunctionCol[V](d)
   case class RelativeMinuteNum[V](d: DateOrDateTime[_])                extends DateTimeFunctionCol[V](d)
   case class RelativeSecondNum[V](d: DateOrDateTime[_])                extends DateTimeFunctionCol[V](d)
-  case class Now()                                                     extends DateTimeConst[DateTime]()
+  case class Now()                                                     extends DateTimeConst[ZonedDateTime]()
   case class Today()                                                   extends DateTimeConst[LocalDate]()
   case class Yesterday()                                               extends DateTimeConst[LocalDate]()
-  case class TimeSlot(d: DateOrDateTime[_])                            extends DateTimeFunctionCol[DateTime](d)
-  case class TimeSlots(d: DateOrDateTime[_], duration: NumericCol[_])  extends DateTimeFunctionCol[DateTime](d)
+  case class TimeSlot(d: DateOrDateTime[_])                            extends DateTimeFunctionCol[ZonedDateTime](d)
+  case class TimeSlots(d: DateOrDateTime[_], duration: NumericCol[_])  extends DateTimeFunctionCol[ZonedDateTime](d)
   case class ISOYear(d: DateOrDateTime[_])                             extends DateTimeFunctionCol[Int](d)
   case class ISOWeek(d: DateOrDateTime[_])                             extends DateTimeFunctionCol[Int](d)
   case class Week(d: DateOrDateTime[_], mode: Int)                     extends DateTimeFunctionCol[Int](d)

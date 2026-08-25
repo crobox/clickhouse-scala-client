@@ -3,7 +3,7 @@ package com.crobox.clickhouse.dsl.marshalling
 import com.crobox.clickhouse.dsl.NativeColumn
 import com.crobox.clickhouse.dsl.execution.{ColumnLookupException, CompactRowParser, ResultParsingException}
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
-import org.joda.time.{DateTime, DateTimeZone, LocalDate}
+import java.time.{Instant, LocalDate, ZoneId, ZoneOffset, ZonedDateTime}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import spray.json._
@@ -49,9 +49,11 @@ class CompactRowParserTest extends AnyFlatSpec with Matchers {
 
   it should "expose the declared ClickHouse types as meta" in {
     val parsed =
-      CompactRowParser.parse(body("""["n", "t"]""", """["UInt64", "DateTime"]""", """["5", "2026-08-21 10:00:00"]"""))
+      CompactRowParser.parse(
+        body("""["n", "t"]""", """["UInt64", "ZonedDateTime"]""", """["5", "2026-08-21 10:00:00"]""")
+      )
     parsed.meta.map(_.columnTypes.map(c => c.name -> c.columnType)) shouldBe
-    Some(Seq("n" -> "UInt64", "t" -> "DateTime"))
+    Some(Seq("n" -> "UInt64", "t" -> "ZonedDateTime"))
   }
 
   it should "decode a 64-bit integer whether ClickHouse quoted it or not" in {
@@ -87,36 +89,46 @@ class CompactRowParserTest extends AnyFlatSpec with Matchers {
   it should "decode the date types with the spelling ClickHouse actually sends" in {
     // Verified against a live server: a space rather than the ISO T, and DateTime64 carries a fractional part.
     val d    = NativeColumn[LocalDate]("d", ColumnType.Date)
-    val dt   = NativeColumn[DateTime]("dt", ColumnType.DateTime)
-    val dt64 = NativeColumn[DateTime]("dt64", ColumnType.DateTime)
+    val dt   = NativeColumn[ZonedDateTime]("dt", ColumnType.DateTime)
+    val dt64 = NativeColumn[ZonedDateTime]("dt64", ColumnType.DateTime)
     val row  = CompactRowParser
       .parse(
         body(
           """["d", "dt", "dt64"]""",
-          """["Date", "DateTime", "DateTime64(3)"]""",
+          """["Date", "ZonedDateTime", "DateTime64(3)"]""",
           """["2026-08-21", "2026-08-21 21:48:17", "2026-08-21 21:48:17.250"]"""
         )
       )
       .rows
       .head
 
-    row.get(d) shouldBe Some(new LocalDate(2026, 8, 21))
-    row.get(dt) shouldBe Some(new DateTime(2026, 8, 21, 21, 48, 17, DateTimeZone.UTC))
-    row.get(dt64) shouldBe Some(new DateTime(2026, 8, 21, 21, 48, 17, 250, DateTimeZone.UTC))
+    row.get(d) shouldBe Some(LocalDate.of(2026, 8, 21))
+    row.get(dt) shouldBe Some(ZonedDateTime.of(2026, 8, 21, 21, 48, 17, 0, ZoneOffset.UTC))
+    row.get(dt64) shouldBe Some(ZonedDateTime.of(2026, 8, 21, 21, 48, 17, 250 * 1000000, ZoneOffset.UTC))
   }
 
   it should "decode every DateTime64 precision ClickHouse can send" in {
     // DateTime64(n) allows n up to 9: (0) has no fractional part at all, (3)/(6)/(9) have 3, 6 and 9 digits. Taken from
     // a live server rather than assumed.
-    val dt                 = NativeColumn[DateTime]("dt", ColumnType.DateTime)
+    val dt                 = NativeColumn[ZonedDateTime]("dt", ColumnType.DateTime)
     def one(value: String) =
       CompactRowParser.parse(body("""["dt"]""", """["DateTime64(9)"]""", s"""["$value"]""")).rows.head.get(dt)
 
-    val expected = new DateTime(2026, 8, 21, 22, 0, 33, 250, DateTimeZone.UTC)
-    one("2026-08-21 22:00:33") shouldBe Some(expected.withMillisOfSecond(0))
+    val expected = ZonedDateTime.of(2026, 8, 21, 22, 0, 33, 250 * 1000000, ZoneOffset.UTC)
+    one("2026-08-21 22:00:33") shouldBe Some(expected.withNano(0))
     one("2026-08-21 22:00:33.250") shouldBe Some(expected)
     one("2026-08-21 22:00:33.250000") shouldBe Some(expected)
     one("2026-08-21 22:00:33.250000000") shouldBe Some(expected)
+  }
+
+  // Under joda this truncated to milliseconds; ZonedDateTime carries the nanoseconds through.
+  it should "keep sub-millisecond precision from DateTime64" in {
+    val dt  = NativeColumn[ZonedDateTime]("dt", ColumnType.DateTime)
+    val row = CompactRowParser
+      .parse(body("""["dt"]""", """["DateTime64(9)"]""", """["2026-08-21 22:00:33.250000001"]"""))
+      .rows
+      .head
+    row.get(dt).map(_.getNano) shouldBe Some(250000001)
   }
 
   it should "hand over the raw value for a type this layer has no decoder for" in {
