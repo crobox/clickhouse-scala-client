@@ -53,9 +53,6 @@ object ColumnType {
 
   case class FixedString(length: Int) extends SimpleColumnType(s"FixedString($length)")
 
-  @deprecated("Use the native UUID type instead of String", "1-10-2018")
-  val Uuid: ColumnType = String
-
   case object UUID extends SimpleColumnType("UUID")
 
   case object Date extends SimpleColumnType("Date")

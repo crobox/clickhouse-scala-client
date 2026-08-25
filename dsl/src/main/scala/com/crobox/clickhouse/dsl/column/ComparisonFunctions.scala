@@ -8,10 +8,6 @@ trait ComparisonFunctions {
   case class ComparisonColumn(left: Magnet[_], operator: String, right: Magnet[_])
       extends ExpressionColumn[Boolean](EmptyColumn)
 
-  @deprecated("Use isEqual instead")
-  def _equals(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]): ExpressionColumn[Boolean] =
-    ComparisonColumn(col1, "=", col2)
-
   def isEqual(col1: ConstOrColMagnet[_], col2: ConstOrColMagnet[_]): ExpressionColumn[Boolean] =
     ComparisonColumn(col1, "=", col2)
 
