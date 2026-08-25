@@ -65,4 +65,13 @@ class ColumnIdentityTest extends DslTestSpec {
   it should "survive being aliased repeatedly" in {
     sql(select(shieldId as "a" as "b" as "c")) should matchSQL("SELECT shield_id AS c")
   }
+
+  // The documented answer to #24: to refer to an alias from an enclosing query, reference it rather than re-aliasing.
+  it should "reference an inner alias from an enclosing query" in {
+    val fromPv = shieldId as "from_pv"
+    val query  = select(ref[String]("from_pv") as "from_start").from(select(fromPv).from(OneTestTable))
+    sql(query) should matchSQL(
+      s"SELECT from_pv AS from_start FROM (SELECT shield_id AS from_pv FROM ${OneTestTable.quoted})"
+    )
+  }
 }
