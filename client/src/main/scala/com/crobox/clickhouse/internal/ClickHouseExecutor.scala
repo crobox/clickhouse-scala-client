@@ -1,12 +1,14 @@
 package com.crobox.clickhouse.internal
 
 import org.apache.pekko
+import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.{ActorSystem, Terminated}
+import org.apache.pekko.util.ByteString
 import org.apache.pekko.http.scaladsl.{Http, HttpsConnectionContext}
 import org.apache.pekko.http.scaladsl.model._
 import org.apache.pekko.http.scaladsl.settings.{ClientConnectionSettings, ConnectionPoolSettings}
 import org.apache.pekko.stream._
-import org.apache.pekko.stream.scaladsl.{Keep, Sink, Source, SourceQueueWithComplete}
+import org.apache.pekko.stream.scaladsl.{Framing, Keep, Sink, Source, SourceQueueWithComplete}
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.progress.QueryProgress._
 import com.crobox.clickhouse.internal.progress.{QueryProgress, StreamingProgressClickhouseTransport}
@@ -116,6 +118,42 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     Source
       .queue[QueryProgress](10, OverflowStrategy.dropHead)
       .mapMaterializedValue(queue => executeRequest(query, settings, entity, Some(queue)))
+
+  /**
+   * Progress events and the result body in one stream, so a large result is not held whole.
+   *
+   * `executeRequestWithProgress` returns the body as its materialised value, which means draining the entity into a
+   * single String -- a million-row result is one 7MB allocation. Here the body is framed and emitted as
+   * [[QueryProgress.QueryResultPart]] events instead.
+   *
+   * No retries: a retry would re-run the request after the consumer had already seen part of a result.
+   */
+  def executeRequestStreaming(
+      query: String,
+      settings: QuerySettings,
+      maximumFrameLength: Int
+  ): Source[QueryProgress, NotUsed] = {
+    val identifier = queryIdentifier
+
+    val progress = progressSource.collect {
+      case reported if reported.identifier == identifier => reported.progress
+    }
+
+    val body = Source
+      .future(hostBalancer.nextHost.flatMap { host =>
+        val request =
+          toRequest(host, query, Some(identifier), settings.copy(progressHeaders = Some(true)), None)(config)
+        singleRequest(request, progressEnabled = true)
+      })
+      .flatMapConcat(response => response.entity.withoutSizeLimit().dataBytes)
+      .via(Framing.delimiter(ByteString("\n"), maximumFrameLength, allowTruncation = true))
+      .map(line => QueryResultPart(line.utf8String))
+      .concat(Source.single(QueryFinished))
+
+    // eagerComplete, because the progress hub is a BroadcastHub that never completes on its own -- the body is what
+    // decides when this stream is done.
+    progress.merge(body, eagerComplete = true)
+  }
 
   def shutdown(): Future[Terminated] = {
     queue.complete()
