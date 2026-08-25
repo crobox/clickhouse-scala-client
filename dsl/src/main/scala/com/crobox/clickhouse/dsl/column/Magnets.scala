@@ -30,6 +30,16 @@ trait Magnets {
    */
   trait Magnet[+C] {
     val column: TableColumn[C]
+
+    // Magnets are anonymous classes minted by implicit conversion, so without this two built from the same value
+    // compare unequal, and every AST node holding one inherits that. The wrapped column is the only state a magnet
+    // has and the only part that renders, so it is what equality is about.
+    override def equals(other: Any): Boolean = other match {
+      case that: Magnet[_] => column == that.column
+      case _               => false
+    }
+
+    override def hashCode(): Int = column.hashCode()
   }
 
   // ComparableWith trait and Cast case class were members of ComparisonFunctions and TypeCastFunctions trait
@@ -205,6 +215,15 @@ trait Magnets {
 
   sealed trait LogicalOpsMagnet extends LogicalOps {
     val asOption: Option[TableColumn[Boolean]]
+
+    // Same reasoning as Magnet: anonymous classes from implicit conversion, with the wrapped column as their only
+    // state. This hierarchy is separate because it carries an Option rather than a column.
+    override def equals(other: Any): Boolean = other match {
+      case that: LogicalOpsMagnet => asOption == that.asOption
+      case _                      => false
+    }
+
+    override def hashCode(): Int = asOption.hashCode()
 
     def isConstTrue: Boolean = asOption match {
       case Some(Const(el: Boolean)) => el
