@@ -33,7 +33,16 @@ case class NativeColumn[V](
 
 case class RefColumn[V](ref: String) extends TableColumn[V](ref)
 
-case class AliasedColumn[+V](original: TableColumn[V], alias: String) extends TableColumn[V](alias)
+case class AliasedColumn[+V](original: TableColumn[V], alias: String) extends TableColumn[V](alias) {
+
+  // Replaces the alias rather than wrapping, which emitted `x AS a AS b` -- a syntax error. To refer to the alias from
+  // an enclosing query instead, project it and reference it: `ref[V]("a") as "b"`.
+  override def as(newAlias: String): AliasedColumn[V] = AliasedColumn(original, newAlias)
+
+  override def aliased(newAlias: String): AliasedColumn[V] = AliasedColumn(original, newAlias)
+
+  override def as[C <: Column](newAlias: C): AliasedColumn[V] = AliasedColumn(original, newAlias.name)
+}
 
 case class TupleColumn[V](elements: Column*) extends TableColumn[V](EmptyColumn.name)
 

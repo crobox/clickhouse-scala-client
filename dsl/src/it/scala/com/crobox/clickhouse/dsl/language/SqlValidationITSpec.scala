@@ -242,6 +242,15 @@ class SqlValidationITSpec extends DslITSpec {
         .orderByColumns(OrderingColumn(col2, ASC, Option(WithFill())))
         .interpolate()
     ),
+    Construct(
+      "group by a column an aggregate already covers, which is now projected",
+      select(sum(col2)).from(TwoTestTable).groupBy(col2)
+    ),
+    Construct(
+      "order by an expression differing from the projection",
+      select(sum(col2)).from(TwoTestTable).orderBy(uniq(col2))
+    ),
+    Construct("re-aliased column", select((shieldId as "from_pv") as "from_start").from(OneTestTable)),
     Construct("sample", select(shieldId).from(OneTestTable).sample(0.1), Syntax),
     Construct("sample with an offset", select(shieldId).from(OneTestTable).sample(0.1, Option(0.5)), Syntax)
   )
