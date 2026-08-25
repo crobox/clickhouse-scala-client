@@ -19,10 +19,18 @@ class MagnetEqualityTest extends DslTestSpec {
     (2 === 2).and(3 === 3) should not be (2 === 2).and(3 === 4)
   }
 
+  // isEq, not ===, and bound to typed vals: ScalaTest also defines === and Scala 3 resolves the bare operator to
+  // ScalaTest's, which compares a Column to an Int and yields false, so the assertion silently tested nothing.
   it should "compare column-based conditions" in {
-    (col2 === 1) shouldBe (col2 === 1)
-    (col2 === 1) should not be (col2 === 2)
-    (col2 === 1) should not be (col4 === "1")
+    val one: ExpressionColumn[Boolean]      = col2 isEq 1
+    val alsoOne: ExpressionColumn[Boolean]  = col2 isEq 1
+    val two: ExpressionColumn[Boolean]      = col2 isEq 2
+    val otherCol: ExpressionColumn[Boolean] = col4 isEq "1"
+
+    one shouldBe alsoOne
+    one.hashCode shouldBe alsoOne.hashCode
+    one should not be two
+    one should not be otherCol
   }
 
   it should "deduplicate equal expressions in a select list" in {
