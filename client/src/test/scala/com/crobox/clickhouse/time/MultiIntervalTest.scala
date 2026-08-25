@@ -178,14 +178,7 @@ class MultiIntervalTest extends AnyFlatSpecLike with Matchers with TableDrivenPr
       (startExpected.plusSeconds(5) to startExpected.plusSeconds(10)) :: Nil)
   }
 
-  // ---------------------------------------------------------------------------------------------------------------
-  // Zone-sensitive alignment.
-  //
-  // Everything above runs in UTC, where the `tzOffset` arithmetic in MultiInterval's Day and Week branches is a
-  // no-op -- so none of it was exercised. These pin the current behaviour in real zones, on both sides of UTC and
-  // across both DST transitions, because that behaviour is what a change of date library is most likely to alter
-  // quietly.
-  // ---------------------------------------------------------------------------------------------------------------
+  // The cases above are all UTC, where MultiInterval's tzOffset arithmetic is a no-op.
 
   private val Amsterdam = DateTimeZone.forID("Europe/Amsterdam")
   private val NewYork   = DateTimeZone.forID("America/New_York")
@@ -211,7 +204,6 @@ class MultiIntervalTest extends AnyFlatSpecLike with Matchers with TableDrivenPr
     interval.getEnd should be(new DateTime(2014, 5, 10, 0, 0, 0, Amsterdam))
   }
 
-  // The clocks go forward at 02:00, so this calendar day is 23 hours long, not 24.
   it should "keep a spring-forward day one calendar day, not 24 hours" in {
     val interval = firstSubInterval(new DateTime(2014, 3, 30, 12, 0, 0, Amsterdam), MultiDuration(1, TimeUnit.Day))
     interval.getStart should be(new DateTime(2014, 3, 30, 0, 0, 0, Amsterdam))
@@ -219,7 +211,6 @@ class MultiIntervalTest extends AnyFlatSpecLike with Matchers with TableDrivenPr
     interval.toDuration.getStandardHours should be(23)
   }
 
-  // And back at 03:00, making this one 25.
   it should "keep a fall-back day one calendar day, not 24 hours" in {
     val interval = firstSubInterval(new DateTime(2014, 10, 26, 12, 0, 0, Amsterdam), MultiDuration(1, TimeUnit.Day))
     interval.getStart should be(new DateTime(2014, 10, 26, 0, 0, 0, Amsterdam))
@@ -252,10 +243,8 @@ class MultiIntervalTest extends AnyFlatSpecLike with Matchers with TableDrivenPr
     interval.toDuration.getStandardHours should be((7 * 24) - 1)
   }
 
-  // Deliberately pinned, because it is the one inconsistency here: sub-day buckets are aligned on the epoch rather
-  // than on local midnight, so east of UTC a 6-hour bucket starts at 02:00, 08:00, 14:00, 20:00 local -- not at
-  // midnight. Day and Week above do align locally. A port that "fixed" this silently would change every grouped
-  // result for non-UTC consumers.
+  // Pinned on purpose: unlike Day and Week above, sub-day buckets do not align to local midnight. Looks like a bug,
+  // is not, and changing it would move every grouped result for non-UTC consumers.
   "Sub-day alignment" should "bucket on the epoch rather than on local midnight" in {
     val interval = firstSubInterval(new DateTime(2014, 5, 8, 12, 0, 0, Amsterdam), MultiDuration(6, TimeUnit.Hour))
     interval.getStart should be(new DateTime(2014, 5, 8, 8, 0, 0, Amsterdam))

@@ -45,8 +45,6 @@ class ClickhouseIntervalStartFormatTest extends DslTestSpec {
     JsString("1618876800000000").convertTo[IntervalStart].getMillis should be(1618876800000L)
   }
 
-  // A zone id with an underscore in it. The date regex used to be greedy and split on the last underscore, cutting
-  // the id in half and throwing out of the reader rather than returning a date.
   it should "read date only for a timezone whose id contains an underscore" in {
     ClickhouseIntervalStartFormat.read(JsString("1970-12-17_America/New_York")) should be(
       new DateTime("1970-12-17T00:00:00.000-05:00", DateTimeZone.UTC)
@@ -59,8 +57,6 @@ class ClickhouseIntervalStartFormatTest extends DslTestSpec {
     )
   }
 
-  // The month branch was never affected -- `\d+` cannot swallow the zone -- but pin it so a future rewrite of either
-  // regex has to keep both working.
   it should "read month relative for a timezone whose id contains an underscore" in {
     ClickhouseIntervalStartFormat.read(
       JsString(s"${ClickhouseIntervalStartFormat.RelativeMonthsSinceUnixStart + 3}_America/New_York")
@@ -73,7 +69,6 @@ class ClickhouseIntervalStartFormatTest extends DslTestSpec {
     ) should be(new DateTime("1969-11-01T00:00:00.000+02:00", DateTimeZone.UTC))
   }
 
-  // Quarter and year grouping come back through the date branch, per the comment on it.
   it should "read a quarter boundary as a date" in {
     ClickhouseIntervalStartFormat.read(JsString(s"1970-04-01_$zone")) should be(
       new DateTime("1970-04-01T00:00:00.000+02:00", DateTimeZone.UTC)
@@ -86,7 +81,6 @@ class ClickhouseIntervalStartFormatTest extends DslTestSpec {
     )
   }
 
-  // Ten digits: seconds rather than millis. This branch had no test at all.
   it should "read a ten-digit value as seconds" in {
     ClickhouseIntervalStartFormat.read(JsString("1618876800")) should be(
       new DateTime(1618876800000L, DateTimeZone.UTC)
