@@ -41,6 +41,133 @@ class SqlValidationITSpec extends DslITSpec {
   private def sem(ast: String, query: OperationalQuery) = Construct(ast, query, Semantic)
   private def syn(ast: String, query: OperationalQuery) = Construct(ast, query, Syntax)
 
+  private val nullableConstructs = Seq(
+    sem("IsNull", select(isNull(1))),
+    sem("IsNullable", select(isNullable(1))),
+    sem("IsNotNull", select(isNotNull(1))),
+    sem("IsZeroOrNull", select(isZeroOrNull(1))),
+    sem("AssumeNotNull", select(assumeNotNull(1))),
+    sem("ToNullable", select(toNullable(1))),
+    sem("IfNull", select(ifNull(1, 0))),
+    sem("NullIf", select(nullIf(1, 0)))
+  )
+
+  private val jsonConstructs = Seq(
+    sem("VisitParamHas", select(visitParamHas("""{"a":1}""", "a"))),
+    sem("VisitParamExtractUInt", select(visitParamExtractUInt("""{"a":1}""", "a"))),
+    sem("VisitParamExtractInt", select(visitParamExtractInt("""{"a":-1}""", "a"))),
+    sem("VisitParamExtractFloat", select(visitParamExtractFloat("""{"a":1.5}""", "a"))),
+    sem("VisitParamExtractBool", select(visitParamExtractBool("""{"a":true}""", "a"))),
+    sem("VisitParamExtractRaw", select(visitParamExtractRaw("""{"a":{"b":1}}""", "a"))),
+    sem("VisitParamExtractString", select(visitParamExtractString("""{"a":"b"}""", "a")))
+  )
+
+  private val encodingConstructs = Seq(
+    sem("Hex", select(hex(255))),
+    sem("Unhex", select(unhex("FF"))),
+    sem("UUIDStringToNum", select(uUIDStringToNum("00000000-0000-0000-0000-000000000000"))),
+    // Needs FixedString(16); the DSL types this argument as String, so the cast has to be explicit.
+    sem("UUIDNumToString", select(uUIDNumToString(toFixedString("0000000000000000", 16)))),
+    sem("BitmaskToList", select(bitmaskToList(5))),
+    sem("BitmaskToArray", select(bitmaskToArray(5)))
+  )
+
+  private val ipConstructs = Seq(
+    sem("IPv4NumToString", select(iPv4NumToString(3232235521L))),
+    sem("IPv4StringToNum", select(iPv4StringToNum("192.168.0.1"))),
+    sem("IPv4NumToStringClassC", select(iPv4NumToStringClassC(3232235521L))),
+    sem("IPv6NumToString", select(iPv6NumToString(toFixedString("0000000000000000", 16)))),
+    sem("IPv6StringToNum", select(iPv6StringToNum("::1")))
+  )
+
+  private val splitMergeConstructs = Seq(
+    sem("SplitByChar", select(splitByChar(",", "a,b"))),
+    sem("SplitByString", select(splitByString(", ", "a, b"))),
+    sem("ArrayStringConcat", select(arrayStringConcat(splitByChar(",", "a,b"), ","))),
+    sem("AlphaTokens", select(alphaTokens("a1b2")))
+  )
+
+  private val emptyConstructs = Seq(
+    sem("Empty", select(com.crobox.clickhouse.dsl.empty(""))),
+    sem("NotEmpty", select(com.crobox.clickhouse.dsl.notEmpty("x")))
+  )
+
+  // Shapes lifted from HigherOrderFunctionsIT, which already runs them. Registered here so the lambda-parameter
+  // binding is checked by the analyzer too, not only by the value each returns.
+  private val higherOrderConstructs = {
+    val nums = Seq(1L, 2L, 3L)
+    Seq(
+      sem("ArrayAll", select(arrayAll[Long](_ <= 3, nums))),
+      sem("ArrayAvg", select(arrayAvg[Long, Long](None, nums))),
+      sem("ArrayCount", select(arrayCount[Long](Some(_.isEq(2L)), nums))),
+      sem("ArrayCumSum", select(arrayCumSum[Long, Long](None, nums))),
+      sem("ArrayExists", select(arrayExists[Long](_.isEq(2L), nums))),
+      sem("ArrayFill", select(arrayFill[Long](_.isEq(2L), nums))),
+      sem("ArrayFilter", select(arrayFilter[Long](_ <> 2L, nums))),
+      sem("ArrayFirst", select(arrayFirst[Long](_ < 0, nums))),
+      sem("ArrayFirstIndex", select(arrayFirstIndex[Long](_ < 0, nums))),
+      sem("ArrayMap", select(arrayMap[Long, Long](x => x * 2L, nums))),
+      sem("ArrayMax", select(arrayMax[Long, Long](None, nums))),
+      sem("ArrayMin", select(arrayMin[Long, Long](None, nums))),
+      sem("ArrayReverseFill", select(arrayReverseFill[Long](_.isEq(2L), nums))),
+      sem("ArrayReverseSort", select(arrayReverseSort[Long, Long](None, nums))),
+      sem("ArraySort", select(arraySort[Long, Double](None, nums))),
+      sem("ArraySum", select(arraySum[Long, Long](None, nums))),
+      sem("ArraySplit", select(arraySplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3), Iterable(1, 0, 1)))),
+      sem(
+        "ArrayReverseSplit",
+        select(arrayReverseSplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3), Iterable(1, 0, 1)))
+      )
+    )
+  }
+
+  private val arrayConstructs = {
+    val nums = Seq(1, 2, 3)
+    Seq(
+      sem("EmptyArrayUInt8", select(emptyArrayUInt8)),
+      sem("EmptyArrayUInt16", select(emptyArrayUInt16)),
+      sem("EmptyArrayUInt32", select(emptyArrayUInt32)),
+      sem("EmptyArrayUInt64", select(emptyArrayUInt64)),
+      sem("EmptyArrayInt8", select(emptyArrayInt8)),
+      sem("EmptyArrayInt16", select(emptyArrayInt16)),
+      sem("EmptyArrayInt32", select(emptyArrayInt32)),
+      sem("EmptyArrayInt64", select(emptyArrayInt64)),
+      sem("EmptyArrayFloat32", select(emptyArrayFloat32)),
+      sem("EmptyArrayFloat64", select(emptyArrayFloat64)),
+      sem("EmptyArrayDate", select(emptyArrayDate)),
+      sem("EmptyArrayDateTime", select(emptyArrayDateTime)),
+      sem("EmptyArrayString", select(emptyArrayString)),
+      sem("EmptyArrayToSingle", select(emptyArrayToSingle(emptyArrayUInt8))),
+      sem("Range", select(range(5))),
+      sem("ArrayConcat", select(arrayConcat(nums, nums))),
+      sem("ArrayElement", select(arrayElement(nums, 1))),
+      sem("Has", select(has(nums, 2))),
+      sem("HasAll", select(hasAll(nums, Seq(1, 2)))),
+      sem("HasAny", select(hasAny(nums, Seq(1, 9)))),
+      sem("IndexOf", select(indexOf(nums, 2))),
+      sem("CountEqual", select(countEqual(nums, 2))),
+      sem("ArrayEnumerate", select(arrayEnumerate(nums))),
+      sem("ArrayEnumerateUniq", select(arrayEnumerateUniq(nums))),
+      sem("ArrayPopBack", select(arrayPopBack(nums))),
+      sem("ArrayPopFront", select(arrayPopFront(nums))),
+      sem("ArrayPushBack", select(arrayPushBack(nums, 4))),
+      sem("ArrayPushFront", select(arrayPushFront(nums, 0))),
+      sem("ArrayResize", select(arrayResize(nums, 5, 0))),
+      sem("ArraySlice", select(arraySlice(nums, 1, 2))),
+      sem("ArrayUniq", select(arrayUniq(nums))),
+      sem("ArrayJoin", select(arrayJoin(nums))),
+      sem("ArrayDifference", select(arrayDifference(nums))),
+      sem("ArrayDistinct", select(arrayDistinct(nums))),
+      sem("ArrayIntersect", select(arrayIntersect(nums, Seq(2, 3)))),
+      sem("ArrayReduce", select(arrayReduce("sum", nums))),
+      sem("ArrayReverse", select(arrayReverse(nums))),
+      sem("ArrayEmpty", select(arrayEmpty(nums))),
+      sem("ArrayNotEmpty", select(arrayNotEmpty(nums))),
+      sem("ArrayLength", select(arrayLength(nums))),
+      sem("ArrayFlatten", select(ArrayFlatten(Array(Array("1", "2"), Array("3")))))
+    )
+  }
+
   private val bitConstructs = Seq(
     sem("BitAnd", select(bitAnd(3, 5))),
     sem("BitOr", select(bitOr(3, 5))),
@@ -128,7 +255,8 @@ class SqlValidationITSpec extends DslITSpec {
   /** AST nodes covered above; these are what the coverage ratchet counts. */
   private val astConstructs: Seq[Construct] =
     bitConstructs ++ randomConstructs ++ roundingConstructs ++ mathConstructs ++
-      dictionaryConstructs ++ tupleAndMapConstructs
+      dictionaryConstructs ++ tupleAndMapConstructs ++ nullableConstructs ++ jsonConstructs ++
+      encodingConstructs ++ ipConstructs ++ splitMergeConstructs ++ emptyConstructs ++ higherOrderConstructs ++ arrayConstructs
 
   /**
    * Whole-query shapes rather than individual functions, so they are validated but not counted towards AST coverage.
@@ -353,5 +481,5 @@ object SqlValidationITSpec {
    * so that adding a function without a rendering check fails, while the existing backlog is worked off deliberately
    * rather than blocking this harness on writing 347 entries up front.
    */
-  val UnregisteredBaseline = 288
+  val UnregisteredBaseline = 197
 }
