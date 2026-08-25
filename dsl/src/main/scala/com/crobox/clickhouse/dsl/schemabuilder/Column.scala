@@ -59,6 +59,18 @@ object ColumnType {
 
   case object DateTime extends SimpleColumnType("DateTime")
 
+  /**
+   * `DateTime64(precision[, timezone])`, where precision is the number of fractional-second digits.
+   *
+   * The reader keeps all nine: ColumnDecoder parses the fractional part into a ZonedDateTime's nanoseconds.
+   */
+  case class DateTime64(precision: Int, timezone: Option[String] = None) extends ColumnType {
+    require(precision >= 0 && precision <= 9, s"DateTime64 precision must be between 0 and 9, got $precision")
+
+    override def toString: String =
+      timezone.map(zone => s"DateTime64($precision, '$zone')").getOrElse(s"DateTime64($precision)")
+  }
+
   case class Array(columnType: ColumnType) extends ColumnType {
     require(
       !columnType.isInstanceOf[Nested] && !columnType.isInstanceOf[Array],
@@ -87,6 +99,30 @@ object ColumnType {
   case class Nullable(columnType: ColumnType) extends ColumnType {
     override def toString: String = s"Nullable(${columnType.toString})"
   }
+
+  /** `Variant(A, B, ...)`: one value, one of several types, discriminated per row. */
+  case class Variant(columnType: ColumnType, nextTypes: ColumnType*) extends ColumnType {
+    require(nextTypes.nonEmpty, "Variant needs at least two alternatives")
+
+    override def toString: String = s"Variant(${(columnType +: nextTypes).mkString(", ")})"
+  }
+
+  /** `Dynamic`: any type, decided per row rather than declared. */
+  case object Dynamic extends SimpleColumnType("Dynamic")
+
+  /** The native `JSON` type, as opposed to the `visitParam*` functions that read JSON out of a String. */
+  case object JSON extends SimpleColumnType("JSON")
+
+  /**
+   * `SimpleAggregateFunction(f, types...)`.
+   *
+   * Unlike [[AggregateFunctionColumn]] this stores the aggregated value itself rather than an intermediate state, so it
+   * is read like an ordinary column and needs no `-Merge`.
+   */
+  case class SimpleAggregateFunction(function: String, columnType: ColumnType, nextTypes: ColumnType*)
+      extends SimpleColumnType(
+        s"SimpleAggregateFunction($function, ${(columnType +: nextTypes).map(_.toString).mkString(", ")})"
+      )
 }
 
 sealed trait DefaultValue
