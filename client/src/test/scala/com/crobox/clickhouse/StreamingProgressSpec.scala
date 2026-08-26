@@ -1,5 +1,7 @@
 package com.crobox.clickhouse
 
+import com.crobox.clickhouse.internal.QuerySettings
+import com.crobox.clickhouse.internal.QuerySettings.ReadQueries
 import com.crobox.clickhouse.internal.progress.QueryProgress._
 import org.apache.pekko.stream.scaladsl.Sink
 
@@ -42,4 +44,35 @@ class StreamingProgressSpec extends ClickhouseClientAsyncSpec {
         // The result is what matters; progress headers are best-effort and the server may finish too fast to send any.
         events.count { case QueryResultPart(d) if d.nonEmpty => true; case _ => false } shouldBe 100000
       }
+
+  // ClickHouse answers 200 and starts streaming, then appends the error if the query fails partway through. Without
+  // checking each line, that error arrives as ordinary QueryResultParts followed by QueryFinished, and the consumer
+  // cannot tell it from success.
+  it should "fail the stream on an error appended mid-body" in
+    client
+      .queryWithProgressStreaming("SELECT number, throwIf(number = 3, 'boom') FROM numbers(10)")(
+        QuerySettings(ReadQueries, settings = Map("max_block_size" -> "1"))
+      )
+      .runWith(Sink.seq)
+      .failed
+      .map { failure =>
+        failure shouldBe a[ClickhouseException]
+        failure.getMessage should include("395")
+      }
+
+  it should "not report QueryFinished when the body carried an error" in
+    client
+      .queryWithProgressStreaming("SELECT number, throwIf(number = 3, 'boom') FROM numbers(10)")(
+        QuerySettings(ReadQueries, settings = Map("max_block_size" -> "1"))
+      )
+      .recover { case _ => QueryRejected }
+      .runWith(Sink.seq)
+      .map(events => events should not contain QueryFinished)
+
+  it should "fail the stream on a non-OK response rather than streaming the error as results" in
+    client
+      .queryWithProgressStreaming("SELECT this_column_does_not_exist FROM system.one")
+      .runWith(Sink.seq)
+      .failed
+      .map(_ shouldBe a[ClickhouseException])
 }

@@ -12,7 +12,14 @@ import org.apache.pekko.stream.scaladsl.{Framing, Keep, Sink, Source, SourceQueu
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.progress.QueryProgress._
 import com.crobox.clickhouse.internal.progress.{QueryProgress, StreamingProgressClickhouseTransport}
-import com.crobox.clickhouse.{ClickhouseExecutionException, QueryTimeoutException, TooManyQueriesException}
+import com.crobox.clickhouse.internal.ClickhouseResponseParser.StreamedExceptionMarker
+import com.crobox.clickhouse.{
+  ClickhouseChunkedException,
+  ClickhouseException,
+  ClickhouseExecutionException,
+  QueryTimeoutException,
+  TooManyQueriesException
+}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
@@ -145,9 +152,45 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
           toRequest(host, query, Some(identifier), settings.copy(progressHeaders = Some(true)), None)(config)
         singleRequest(request, progressEnabled = true)
       })
-      .flatMapConcat(response => response.entity.withoutSizeLimit().dataBytes)
+      // decodeResponse, because the request advertises gzip and deflate: without it a compressed response would be
+      // framed as though the raw bytes were text.
+      .map(decodeResponse)
+      .flatMapConcat {
+        case response @ HttpResponse(StatusCodes.OK, _, entity, _) =>
+          entity.withoutSizeLimit().dataBytes.map(bytes => (response.status, bytes))
+        case response =>
+          // Non-OK: stream the body as the failure rather than as results.
+          response.entity
+            .withoutSizeLimit()
+            .dataBytes
+            .fold(ByteString.empty)(_ ++ _)
+            .flatMapConcat(body =>
+              Source.failed(
+                ClickhouseException(
+                  s"Server returned code ${response.status}; $body",
+                  query,
+                  statusCode = response.status
+                )
+              )
+            )
+      }
+      .map(_._2)
       .via(Framing.delimiter(ByteString("\n"), maximumFrameLength, allowTruncation = true))
-      .map(line => QueryResultPart(line.utf8String))
+      .map { line =>
+        val text = line.utf8String
+        // ClickHouse answers 200 and starts streaming, then appends an error if the query fails partway through, so
+        // the status line cannot report it. processClickhouseResponse checks the buffered body for the same marker;
+        // streaming has to check each line, or a failure arrives as ordinary results followed by QueryFinished.
+        StreamedExceptionMarker.findFirstMatchIn(text).foreach { marker =>
+          throw ClickhouseException(
+            s"Query failed after the response had started streaming; ClickHouse error code ${marker.group(1)}",
+            query,
+            ClickhouseChunkedException(text),
+            StatusCodes.OK
+          )
+        }
+        QueryResultPart(text)
+      }
       .concat(Source.single(QueryFinished))
 
     // eagerComplete, because the progress hub is a BroadcastHub that never completes on its own -- the body is what
