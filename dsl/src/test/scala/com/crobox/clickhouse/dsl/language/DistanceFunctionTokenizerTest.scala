@@ -25,14 +25,15 @@ class DistanceFunctionTokenizerTest extends DslTestSpec {
     )
   }
 
+  // One tuple, not two arrays: the server answers NUMBER_OF_ARGUMENTS_DOESNT_MATCH for the second argument and
+  // ILLEGAL_TYPE_OF_ARGUMENT for an array, which is why these are not shaped like the *Norm tests above.
   it should "tokenize L1Normalize " in {
-    toSQL(select(l1Normalize(array1, array1))) should matchSQL(s"SELECT L1Normalize([1], [1])")
-    toSQL(select(l1Normalize(array12, array12))) should matchSQL(s"SELECT L1Normalize([1, 2], [1, 2])")
-    toSQL(select(l1Normalize[Int](tuple1, tuple1))) should matchSQL(s"SELECT L1Normalize((1), (1))")
-    toSQL(select(l1Normalize[Int](tuple12, tuple12))) should matchSQL(s"SELECT L1Normalize((1, 2), (1, 2))")
-    toSQL(select(l1Normalize(numbers, numbers2)).from(OneTestTable)) should matchSQL(
-      s"SELECT L1Normalize(numbers, numbers2) FROM ${OneTestTable.quoted}"
-    )
+    toSQL(select(l1Normalize(tuple1))) should matchSQL(s"SELECT L1Normalize((1))")
+    toSQL(select(l1Normalize(tuple12))) should matchSQL(s"SELECT L1Normalize((1, 2))")
+  }
+
+  it should "refuse two vectors to L1Normalize" in {
+    """select(l1Normalize(tuple12, tuple12))""" shouldNot typeCheck
   }
 
   it should "tokenize L1Distance " in {
@@ -56,13 +57,8 @@ class DistanceFunctionTokenizerTest extends DslTestSpec {
   }
 
   it should "tokenize L2Normalize " in {
-    toSQL(select(l2Normalize(array1, array1))) should matchSQL(s"SELECT L2Normalize([1], [1])")
-    toSQL(select(l2Normalize(array12, array12))) should matchSQL(s"SELECT L2Normalize([1, 2], [1, 2])")
-    toSQL(select(l2Normalize[Int](tuple1, tuple1))) should matchSQL(s"SELECT L2Normalize((1), (1))")
-    toSQL(select(l2Normalize[Int](tuple12, tuple12))) should matchSQL(s"SELECT L2Normalize((1, 2), (1, 2))")
-    toSQL(select(l2Normalize(numbers, numbers2)).from(OneTestTable)) should matchSQL(
-      s"SELECT L2Normalize(numbers, numbers2) FROM ${OneTestTable.quoted}"
-    )
+    toSQL(select(l2Normalize(tuple1))) should matchSQL(s"SELECT L2Normalize((1))")
+    toSQL(select(l2Normalize(tuple12))) should matchSQL(s"SELECT L2Normalize((1, 2))")
   }
 
   it should "tokenize L2Distance " in {
@@ -106,13 +102,8 @@ class DistanceFunctionTokenizerTest extends DslTestSpec {
   }
 
   it should "tokenize LinfNormalize " in {
-    toSQL(select(lInfNormalize(array1, array1))) should matchSQL(s"SELECT LinfNormalize([1], [1])")
-    toSQL(select(lInfNormalize(array12, array12))) should matchSQL(s"SELECT LinfNormalize([1, 2], [1, 2])")
-    toSQL(select(lInfNormalize(tuple1, tuple1))) should matchSQL(s"SELECT LinfNormalize((1), (1))")
-    toSQL(select(lInfNormalize(tuple12, tuple12))) should matchSQL(s"SELECT LinfNormalize((1, 2), (1, 2))")
-    toSQL(select(lInfNormalize(numbers, numbers2)).from(OneTestTable)) should matchSQL(
-      s"SELECT LinfNormalize(numbers, numbers2) FROM ${OneTestTable.quoted}"
-    )
+    toSQL(select(lInfNormalize(tuple1))) should matchSQL(s"SELECT LinfNormalize((1))")
+    toSQL(select(lInfNormalize(tuple12))) should matchSQL(s"SELECT LinfNormalize((1, 2))")
   }
 
   it should "tokenize LinfDistance " in {
@@ -133,11 +124,8 @@ class DistanceFunctionTokenizerTest extends DslTestSpec {
   }
 
   it should "tokenize LpNormalize " in {
-    toSQL(select(lPNormalize(array1, array1, p))) should matchSQL(s"SELECT LpNormalize([1], [1], 1.0)")
-    toSQL(select(lPNormalize(array12, array12, p))) should matchSQL(s"SELECT LpNormalize([1, 2], [1, 2], 1.0)")
-    toSQL(select(lPNormalize(tuple1, tuple1, p))) should matchSQL(s"SELECT LpNormalize((1), (1), 1.0)")
-    toSQL(select(lPNormalize(tuple12, tuple12, p))) should matchSQL(s"SELECT LpNormalize((1, 2), (1, 2), 1.0)")
-    toSQL(select(lPNormalize(numbers, numbers2, p))) should matchSQL(s"SELECT LpNormalize(numbers, numbers2, 1.0)")
+    toSQL(select(lPNormalize(tuple1, p))) should matchSQL(s"SELECT LpNormalize((1), 1.0)")
+    toSQL(select(lPNormalize(tuple12, p))) should matchSQL(s"SELECT LpNormalize((1, 2), 1.0)")
   }
 
   it should "tokenize LpDistance " in {

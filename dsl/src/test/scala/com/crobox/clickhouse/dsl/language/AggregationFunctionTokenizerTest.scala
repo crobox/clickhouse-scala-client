@@ -28,4 +28,30 @@ class AggregationFunctionTokenizerTest extends DslTestSpec {
       "SELECT uniqIf(column_2, column_1 = 'abc')"
     )
   }
+
+  // quantile emitted a closing paren too many -- quantile(0.5)(column_2)) -- for as long as it existed, because the
+  // plural quantiles was the only one any test ever rendered.
+  it should "tokenize quantile" in {
+    toSQL(select(quantile(col2, 0.5f)), false) should matchSQL("SELECT quantile(0.5)(column_2)")
+  }
+
+  it should "tokenize quantile with each level modifier" in {
+    toSQL(select(quantileExact(col2, 0.5f)), false) should matchSQL("SELECT quantileExact(0.5)(column_2)")
+    toSQL(select(quantileTDigest(col2, 0.5f)), false) should matchSQL("SELECT quantileTDigest(0.5)(column_2)")
+    toSQL(select(quantileTiming(col2, 0.5f)), false) should matchSQL("SELECT quantileTiming(0.5)(column_2)")
+    toSQL(select(quantileExactWeighted(col2, col2, 0.5f)), false) should matchSQL(
+      "SELECT quantileExactWeighted(0.5)(column_2, column_2)"
+    )
+    toSQL(select(quantileTimingWeighted(col2, col2, 0.5f)), false) should matchSQL(
+      "SELECT quantileTimingWeighted(0.5)(column_2, column_2)"
+    )
+    toSQL(select(quantileDeterministic(col2, col2, 0.5f)), false) should matchSQL(
+      "SELECT quantileDeterministic(0.5)(column_2, column_2)"
+    )
+  }
+
+  it should "tokenize quantiles and median unchanged" in {
+    toSQL(select(quantiles(col2, 0.25f, 0.75f)), false) should matchSQL("SELECT quantiles(0.25, 0.75)(column_2)")
+    toSQL(select(median(col2, 0.5f)), false) should matchSQL("SELECT median(0.5)(column_2)")
+  }
 }

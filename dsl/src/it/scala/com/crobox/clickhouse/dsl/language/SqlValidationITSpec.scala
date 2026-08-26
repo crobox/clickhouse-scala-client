@@ -2,6 +2,8 @@ package com.crobox.clickhouse.dsl.language
 
 import com.crobox.clickhouse.DslITSpec
 import com.crobox.clickhouse.dsl._
+import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
+import com.crobox.clickhouse.time.{MultiDuration, MultiInterval, TimeUnit}
 
 /**
  * Asserts that the SQL this DSL emits is SQL ClickHouse actually accepts.
@@ -37,6 +39,12 @@ class SqlValidationITSpec extends DslITSpec {
    *   is just a description, since those cover a whole-query shape rather than one node.
    */
   case class Construct(ast: String, query: OperationalQuery, level: ValidationLevel = Semantic)
+
+  private val oneDay = MultiInterval(
+    java.time.ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, java.time.ZoneOffset.UTC),
+    java.time.ZonedDateTime.of(2020, 1, 8, 0, 0, 0, 0, java.time.ZoneOffset.UTC),
+    MultiDuration(1, TimeUnit.Day)
+  )
 
   private def sem(ast: String, query: OperationalQuery) = Construct(ast, query, Semantic)
   private def syn(ast: String, query: OperationalQuery) = Construct(ast, query, Syntax)
@@ -253,11 +261,267 @@ class SqlValidationITSpec extends DslITSpec {
     sem("Array", select(arrayOf(1, 2, 3)))
   )
 
+  private val urlConstructs = {
+    val url = "http://www.example.com/a/b?x=1&y=2#frag"
+    Seq(
+      sem("Protocol", select(protocol(url))),
+      sem("Domain", select(domain(url))),
+      sem("DomainWithoutWWW", select(domainWithoutWWW(url))),
+      sem("TopLevelDomain", select(topLevelDomain(url))),
+      sem("FirstSignificantSubdomain", select(firstSignificantSubdomain(url))),
+      sem("CutToFirstSignificantSubdomain", select(cutToFirstSignificantSubdomain(url))),
+      sem("Path", select(path(url))),
+      sem("PathFull", select(pathFull(url))),
+      sem("QueryString", select(queryString(url))),
+      sem("Fragment", select(fragment(url))),
+      sem("QueryStringAndFragment", select(queryStringAndFragment(url))),
+      sem("ExtractURLParameter", select(extractURLParameter(url, "x"))),
+      sem("ExtractURLParameters", select(extractURLParameters(url))),
+      sem("ExtractURLParameterNames", select(extractURLParameterNames(url))),
+      sem("URLHierarchy", select(uRLHierarchy(url))),
+      sem("URLPathHierarchy", select(uRLPathHierarchy(url))),
+      sem("DecodeURLComponent", select(decodeURLComponent("%2Fa%2Fb"))),
+      sem("CutWWW", select(cutWWW(url))),
+      sem("CutQueryString", select(cutQueryString(url))),
+      sem("CutFragment", select(cutFragment(url))),
+      sem("CutQueryStringAndFragment", select(cutQueryStringAndFragment(url))),
+      sem("CutURLParameter", select(cutURLParameter(url, "x")))
+    )
+  }
+
+  private val hashConstructs = Seq(
+    sem("HalfMD5", select(halfMD5("a"))),
+    sem("MD5", select(mD5("a"))),
+    sem("SipHash64", select(sipHash64("a"))),
+    sem("SipHash128", select(sipHash128("a"))),
+    sem("CityHash64", select(cityHash64("a", "b"))),
+    sem("IntHash32", select(intHash32(1))),
+    sem("IntHash64", select(intHash64(1))),
+    sem("SHA1", select(sHA1("a"))),
+    sem("SHA224", select(sHA224("a"))),
+    sem("SHA256", select(sHA256("a"))),
+    sem("URLHash", select(uRLHash("http://example.com/a/b", 1)))
+  )
+
+  private val distanceConstructs = {
+    val v1 = Seq(1.0, 2.0)
+    val v2 = Seq(3.0, 4.0)
+    val t1 = tuple(1.0, 2.0)
+    Seq(
+      sem("L1Norm", select(l1Norm[Double](v1))),
+      sem("L1Distance", select(l1Distance[Double](v1, v2))),
+      sem("L2Norm", select(l2Norm[Double](v1))),
+      sem("L2Distance", select(l2Distance[Double](v1, v2))),
+      sem("L2SquaredNorm", select(l2SquaredNorm[Double](v1))),
+      sem("L2SquaredDistance", select(l2SquaredDistance[Double](v1, v2))),
+      sem("LInfNorm", select(lInfNorm[Double](v1))),
+      sem("LInfDistance", select(lInfDistance[Double](v1, v2))),
+      sem("LPNorm", select(lPNorm[Double](v1, 2.0f))),
+      sem("LPDistance", select(lPDistance[Double](v1, v2, 2.0f))),
+      sem("CosineDistance", select(cosineDistance[Double](v1, v2))),
+      // The *Normalize functions take one tuple, not two arrays -- see DistanceFunctions.
+      sem("L1Normalize", select(l1Normalize(t1))),
+      sem("L2Normalize", select(l2Normalize(t1))),
+      sem("LInfNormalize", select(lInfNormalize(t1))),
+      sem("LPNormalize", select(lPNormalize(t1, 2.0f)))
+    )
+  }
+
+  private val stringConstructs = Seq(
+    sem("Length", select(com.crobox.clickhouse.dsl.length("abc"))),
+    sem("LengthUTF8", select(lengthUTF8("abc"))),
+    sem("Lower", select(lower("ABC"))),
+    sem("Upper", select(upper("abc"))),
+    sem("LowerUTF8", select(lowerUTF8("ABC"))),
+    sem("UpperUTF8", select(upperUTF8("abc"))),
+    sem("Reverse", select(reverse("abc"))),
+    sem("ReverseUTF8", select(reverseUTF8("abc"))),
+    sem("Concat", select(concat("a", "b", "c"))),
+    sem("Substring", select(substring("abcdef", 2, 3))),
+    sem("SubstringUTF8", select(substringUTF8("abcdef", 2, 3))),
+    sem("AppendTrailingCharIfAbsent", select(appendTrailingCharIfAbsent("abc", "/"))),
+    sem("ConvertCharset", select(convertCharset("abc", "UTF-8", "UTF-16")))
+  )
+
+  private val stringSearchConstructs = Seq(
+    sem("Position", select(position("abc", "b"))),
+    sem("Position", select(positionCaseInsensitive("abc", "B"))),
+    sem("PositionUTF8", select(positionUTF8("abc", "b"))),
+    sem("PositionUTF8", select(positionUTF8CaseInsensitive("abc", "B"))),
+    sem("StrMatch", select(strMatch("abc", "b"))),
+    sem("Extract", select(extract("abc123", "[0-9]+"))),
+    sem("ExtractAll", select(extractAll("abc123", "[0-9]+"))),
+    sem("ILike", select(iLike("abc", "%B%"))),
+    sem("Like", select(like("abc", "%b%"))),
+    sem("NotLike", select(notLike("abc", "%b%"))),
+    sem("ReplaceOne", select(replaceOne("abc", "b", "x"))),
+    sem("ReplaceAll", select(replaceAll("abc", "b", "x"))),
+    sem("ReplaceRegexpOne", select(replaceRegexpOne("abc", "b", "x"))),
+    sem("ReplaceRegexpAll", select(replaceRegexpAll("abc", "b", "x")))
+  )
+
+  private val miscConstructs = Seq(
+    sem("HostName", select(hostName())),
+    sem("VisibleWidth", select(visibleWidth(1))),
+    sem("ToTypeName", select(toTypeName(1))),
+    sem("BlockSize", select(blockSize())),
+    sem("Materialize", select(materialize(1))),
+    sem("Ignore", select(com.crobox.clickhouse.dsl.ignore(1, 2))),
+    sem("Sleep", select(sleep(0))),
+    sem("CurrentDatabase", select(currentDatabase())),
+    sem("IsFinite", select(isFinite(1.0))),
+    sem("IsInfinite", select(isInfinite(1.0))),
+    sem("IsNaN", select(isNaN(1.0))),
+    sem("HasColumnInTable", select(hasColumnInTable("system", "numbers", "number"))),
+    sem("Bar", select(bar(5, 0, 10, None))),
+    sem("Transform", select(transform[Int, String](1, Seq(1, 2), Seq("a", "b"), "c"))),
+    sem("FormatReadableSize", select(formatReadableSize(1024))),
+    sem("Least", select(least(1, 2))),
+    sem("Greatest", select(greatest(1, 2))),
+    sem("Uptime", select(uptime())),
+    sem("Version", select(version())),
+    sem("RowNumberInAllBlocks", select(rowNumberInAllBlocks())),
+    sem("MACNumToString", select(mACNumToString(toUInt64(1)))),
+    sem("MACStringToNum", select(mACStringToNum("01:02:03:04:05:06"))),
+    sem("MACStringToOUI", select(mACStringToOUI("01:02:03:04:05:06")))
+  )
+
+  private val arithmeticConstructs = Seq(
+    sem("Plus", select(plus(1, 2))),
+    sem("Minus", select(minus(3, 1))),
+    sem("Multiply", select(multiply(2, 3))),
+    sem("Divide", select(divide(6, 3))),
+    sem("IntDiv", select(intDiv(7, 2))),
+    sem("IntDivOrZero", select(intDivOrZero(7, 2))),
+    sem("Modulo", select(modulo(7, 2))),
+    sem("Power", select(power(2, 3))),
+    sem("Gcd", select(gcd(12, 8))),
+    sem("Lcm", select(lcm(4, 6))),
+    sem("Negate", select(negate(1))),
+    sem("Abs", select(abs(-1)))
+  )
+
+  private val operatorConstructs = Seq(
+    sem("ComparisonColumn", select(isEqual(1, 1))),
+    sem("LogicalFunction", select(and(col2 > 1, col2 < 5)) from TwoTestTable),
+    sem("Cast", select(cast(1, ColumnType.UInt32))),
+    sem("In", select(com.crobox.clickhouse.dsl.in(col2, Seq(1, 2))) from TwoTestTable),
+    sem("NotIn", select(notIn(col2, Seq(1, 2))) from TwoTestTable),
+    sem("GlobalIn", select(globalIn(col2, Seq(1, 2))) from TwoTestTable),
+    sem("GlobalNotIn", select(globalNotIn(col2, Seq(1, 2))) from TwoTestTable)
+  )
+
+  private val typeCastConstructs = Seq(
+    sem("UInt8", select(toUInt8("1"))),
+    sem("UInt16", select(toUInt16("1"))),
+    sem("UInt32", select(toUInt32("1"))),
+    sem("UInt64", select(toUInt64("1"))),
+    sem("Int8", select(toInt8("1"))),
+    sem("Int16", select(toInt16("1"))),
+    sem("Int32", select(toInt32("1"))),
+    sem("Int64", select(toInt64("1"))),
+    sem("Float32", select(toFloat32("1"))),
+    sem("Float64", select(toFloat64("1"))),
+    sem("Uuid", select(toUUID("00000000-0000-0000-0000-000000000000"))),
+    sem("DateRep", select(toDate("2020-01-01"))),
+    sem("DateTimeRep", select(toDateTime("2020-01-01 00:00:00"))),
+    sem("StringRep", select(toStringRep(1))),
+    sem("FixedString", select(toFixedString("ab", 2))),
+    sem("StringCutToZero", select(toStringCutToZero("ab"))),
+    sem("Reinterpret", select(reinterpret[Long](toUInt64("1")))),
+    // The Or* variants render a different arm each, and the OrDefault one renders a nested cast of the default.
+    sem("UInt32", select(toUInt32OrZero("x"))),
+    sem("UInt32", select(toUInt32OrNull("x"))),
+    sem("UInt32", select(toUInt32OrDefault("x", 0)))
+  )
+
+  private val dateTimeConstructs = {
+    val date  = java.time.LocalDate.of(2020, 1, 5)
+    val stamp = java.time.ZonedDateTime.of(2020, 1, 5, 10, 20, 30, 0, java.time.ZoneOffset.UTC)
+    Seq(
+      sem("Year", select(toYear(date))),
+      sem("YYYYMM", select(toYYYYMM(date))),
+      sem("Month", select(toMonth(date))),
+      sem("DayOfMonth", select(toDayOfMonth(date))),
+      sem("DayOfWeek", select(toDayOfWeek(date))),
+      sem("Hour", select(toHour(stamp))),
+      sem("Minute", select(toMinute(stamp))),
+      sem("Second", select(toSecond(stamp))),
+      sem("Monday", select(toMonday(date))),
+      sem("AddSeconds", select(addSeconds(stamp, 1))),
+      sem("AddMinutes", select(addMinutes(stamp, 1))),
+      sem("AddHours", select(addHours(stamp, 1))),
+      sem("AddDays", select(addDays(date, 1))),
+      sem("AddWeeks", select(addWeeks(date, 1))),
+      sem("AddMonths", select(addMonths(date, 1))),
+      sem("AddYears", select(addYears(date, 1))),
+      sem("StartOfMonth", select(toStartOfMonth(date))),
+      sem("StartOfQuarter", select(toStartOfQuarter(date))),
+      sem("StartOfYear", select(toStartOfYear(date))),
+      sem("StartOfMinute", select(toStartOfMinute(stamp))),
+      sem("StartOfFiveMinute", select(toStartOfFiveMinute(stamp))),
+      sem("StartOfFifteenMinutes", select(toStartOfFifteenMinutes(stamp))),
+      sem("StartOfHour", select(toStartOfHour(stamp))),
+      sem("StartOfDay", select(toStartOfDay(stamp))),
+      sem("Time", select(toTime(stamp))),
+      sem("RelativeYearNum", select(toRelativeYearNum(date))),
+      sem("RelativeQuarterNum", select(toRelativeQuarterNum(date))),
+      sem("RelativeMonthNum", select(toRelativeMonthNum(date))),
+      sem("RelativeWeekNum", select(toRelativeWeekNum(date))),
+      sem("RelativeDayNum", select(toRelativeDayNum(date))),
+      sem("RelativeHourNum", select(toRelativeHourNum(stamp))),
+      sem("RelativeMinuteNum", select(toRelativeMinuteNum(stamp))),
+      sem("RelativeSecondNum", select(toRelativeSecondNum(stamp))),
+      sem("Now", select(chNow())),
+      sem("Today", select(chToday())),
+      sem("Yesterday", select(chYesterday())),
+      sem("TimeSlot", select(timeSlot(stamp))),
+      sem("TimeSlots", select(timeSlots(stamp, toUInt32(1800)))),
+      sem("ISOYear", select(toISOYear(date))),
+      sem("ISOWeek", select(toISOWeek(date))),
+      sem("Week", select(toWeek(date)))
+    )
+  }
+
+  private val aggregationConstructs = Seq(
+    sem("Count", select(count()) from TwoTestTable),
+    sem("Avg", select(average(col2)) from TwoTestTable),
+    sem("Min", select(min(col2)) from TwoTestTable),
+    sem("Max", select(max(col2)) from TwoTestTable),
+    sem("Sum", select(sum(col2)) from TwoTestTable),
+    sem("AnyResult", select(any(col2)) from TwoTestTable),
+    sem("Uniq", select(uniq(col2)) from TwoTestTable),
+    sem("GroupArray", select(groupArray(col2, Option(3L))) from TwoTestTable),
+    sem("GroupUniqArray", select(groupUniqArray(col2)) from TwoTestTable),
+    sem("FirstValue", select(firstValue(col2)) from TwoTestTable),
+    sem("LastValue", select(lastValue(col2)) from TwoTestTable),
+    sem("Quantile", select(quantile(col2, 0.5f)) from TwoTestTable),
+    sem("Quantiles", select(quantiles(col2, 0.25f, 0.75f)) from TwoTestTable),
+    sem("Median", select(median(col2, 0.5f)) from TwoTestTable),
+    sem("Deterministic", select(quantileDeterministic(col2, col2, 0.5f)) from TwoTestTable),
+    sem("TimingWeighted", select(quantileTimingWeighted(col2, col2, 0.5f)) from TwoTestTable),
+    sem("ExactWeighted", select(quantileExactWeighted(col2, col2, 0.5f)) from TwoTestTable),
+    sem(
+      "CombinedAggregatedFunction",
+      select(aggIf[TableColumn[Double], Double](col2 > 1)(sum(col2))) from TwoTestTable
+    ),
+    sem("If", select(aggIf[TableColumn[Double], Double](col2 > 1)(sum(col2))) from TwoTestTable),
+    sem("CombinatorArray", select(array[TableColumn[Seq[Double]], Double](sum(numbers))) from OneTestTable),
+    sem("ArrayForEach", select(forEach[Int, NativeColumn[Seq[Int]], Double](numbers)(sum(_))) from OneTestTable),
+    sem("State", select(state[TableColumn[Double], Double](sum(col2))) from TwoTestTable),
+    // Syntax only: sumMerge needs an AggregateFunction(sum, ...) column to read, and the test tables hold plain values.
+    syn("Merge", select(merge[TableColumn[StateResult[Double]], Double](sum(col2))) from TwoTestTable),
+    sem("TimeSeries", select(timeSeries(timestampColumn, oneDay)) from OneTestTable)
+  )
+
   /** AST nodes covered above; these are what the coverage ratchet counts. */
   private val astConstructs: Seq[Construct] =
     bitConstructs ++ randomConstructs ++ roundingConstructs ++ mathConstructs ++
       dictionaryConstructs ++ tupleAndMapConstructs ++ nullableConstructs ++ jsonConstructs ++
-      encodingConstructs ++ ipConstructs ++ splitMergeConstructs ++ emptyConstructs ++ higherOrderConstructs ++ arrayConstructs
+      encodingConstructs ++ ipConstructs ++ splitMergeConstructs ++ emptyConstructs ++ higherOrderConstructs ++
+      arrayConstructs ++ urlConstructs ++ hashConstructs ++ distanceConstructs ++ stringConstructs ++
+      stringSearchConstructs ++ miscConstructs ++ arithmeticConstructs ++ operatorConstructs ++ typeCastConstructs ++
+      dateTimeConstructs ++ aggregationConstructs
 
   /**
    * Whole-query shapes rather than individual functions, so they are validated but not counted towards AST coverage.
@@ -471,11 +735,9 @@ class SqlValidationITSpec extends DslITSpec {
   }
 
   /**
-   * A ratchet, not a gate. 348 AST case classes exist in `dsl/column` and most have no rendering check anywhere; this
-   * records how many and refuses to let that number grow, so a new function cannot be added without a check while the
-   * backlog is worked off by lowering the baseline.
+   * Now a gate: every AST case class in `dsl/column` has an entry, so a new function without one fails here.
    */
-  it should "not grow the set of AST nodes with no rendering check" in {
+  it should "have a rendering check for every AST node" in {
     val declared   = declaredAstNames()
     val registered = astConstructs.map(_.ast).toSet
 
@@ -486,7 +748,7 @@ class SqlValidationITSpec extends DslITSpec {
 
     val unregistered = declared.diff(registered).toSeq.sorted
     withClue(
-      s"${unregistered.size} AST nodes have no entry in this registry. Lower UnregisteredBaseline as you add them.\n" +
+      s"${unregistered.size} AST nodes have no entry in this registry. Add one per node above.\n" +
         unregistered.mkString(", ") + "\n"
     ) {
       unregistered.size should be <= SqlValidationITSpec.UnregisteredBaseline
@@ -529,9 +791,8 @@ class SqlValidationITSpec extends DslITSpec {
 object SqlValidationITSpec {
 
   /**
-   * How many of the 346 AST nodes in `dsl/column` still have no entry in the registry. Only ever lower this: it exists
-   * so that adding a function without a rendering check fails, while the existing backlog is worked off deliberately
-   * rather than blocking this harness on writing 347 entries up front.
+   * How many AST nodes in `dsl/column` may have no entry in the registry. The backlog this started with (288) is worked
+   * off, so it is zero and should stay zero: a new function now needs a rendering check to land.
    */
-  val UnregisteredBaseline = 197
+  val UnregisteredBaseline = 0
 }
