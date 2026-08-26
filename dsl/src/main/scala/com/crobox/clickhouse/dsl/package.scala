@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 
 import scala.util.Try
 
-package object dsl extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats {
+package object dsl extends ClickhouseColumnFunctions with QueryFactory with QueryValueFormats with TableFunctions {
 
   /**
    * Exposes the OperationalQuery.+ operator on Try[OperationalQuery]

@@ -41,8 +41,9 @@ trait OperationalQuery extends Query {
     OperationalQuery(
       internalQuery.from
         .map {
-          case query: InnerFromQuery    => internalQuery.copy(from = Some(query.copy(alias = Option(alias))))
-          case table: TableFromQuery[_] => internalQuery.copy(from = Some(table.copy(alias = Option(alias))))
+          case query: InnerFromQuery      => internalQuery.copy(from = Some(query.copy(alias = Option(alias))))
+          case table: TableFromQuery[_]   => internalQuery.copy(from = Some(table.copy(alias = Option(alias))))
+          case fn: TableFunctionFromQuery => internalQuery.copy(from = Some(fn.copy(alias = Option(alias))))
         }
         .getOrElse(internalQuery)
     )
@@ -56,6 +57,13 @@ trait OperationalQuery extends Query {
   def from(query: OperationalQuery): OperationalQuery =
     OperationalQuery(internalQuery.copy(from = Some(InnerFromQuery(query))))
 
+  /** `FROM <function>(args)`, as in `select(all).from(numbers(10))`. */
+  def from(function: TableFunctionFromQuery): OperationalQuery =
+    OperationalQuery(internalQuery.copy(from = Some(function)))
+
+  def from(function: TableFunctionFromQuery, alias: String): OperationalQuery =
+    OperationalQuery(internalQuery.copy(from = Some(function.copy(alias = Option(alias)))))
+
   def from(query: OperationalQuery, alias: String): OperationalQuery =
     OperationalQuery(internalQuery.copy(from = Some(InnerFromQuery(query, alias = Option(alias)))))
 
@@ -67,6 +75,8 @@ trait OperationalQuery extends Query {
         .map {
           case _: InnerFromQuery =>
             throw new IllegalArgumentException("It's ILLEGAL to set FINAL on a (sub)query FROM query")
+          case _: TableFunctionFromQuery =>
+            throw new IllegalArgumentException("It's ILLEGAL to set FINAL on a table function: it has no engine")
           case table: TableFromQuery[_] =>
             internalQuery.copy(from = Option(table.copy(finalized = true)))
         }
@@ -87,6 +97,8 @@ trait OperationalQuery extends Query {
         .map {
           case _: InnerFromQuery =>
             throw new IllegalArgumentException("It's ILLEGAL to set SAMPLE on a (sub)query FROM query")
+          case _: TableFunctionFromQuery =>
+            throw new IllegalArgumentException("It's ILLEGAL to set SAMPLE on a table function: it has no sampling key")
           case table: TableFromQuery[_] =>
             internalQuery.copy(from = Option(table.copy(sampling = Option(Sample(rate, offset)))))
         }
@@ -332,6 +344,22 @@ trait OperationalQuery extends Query {
     require(internalQuery.joins.nonEmpty, "No join to attach USING or ON to")
     OperationalQuery(internalQuery.copy(joins = internalQuery.joins.init :+ f(internalQuery.joins.last)))
   }
+
+  /**
+   * A table function on the right-hand side.
+   *
+   * Needed as its own overload because [[FromQuery]] extends [[OperationalQuery]]: without it a table function takes
+   * the subquery overload, is wrapped in an `InnerFromQuery`, and renders as `(FROM numbers(3))` -- a `SELECT`-less
+   * subquery.
+   */
+  def join(joinType: JoinQuery.JoinType, function: TableFunctionFromQuery, global: Boolean): OperationalQuery =
+    addJoin(JoinQuery(joinType, function, global = global))
+
+  def join(joinType: JoinQuery.JoinType, function: TableFunctionFromQuery): OperationalQuery =
+    join(joinType = joinType, function = function, global = false)
+
+  def globalJoin(joinType: JoinQuery.JoinType, function: TableFunctionFromQuery): OperationalQuery =
+    join(joinType = joinType, function = function, global = true)
 
   def join[TargetTable <: Table](joinType: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery =
     join(joinType = joinType, query = query, global = false)
