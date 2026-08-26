@@ -290,9 +290,11 @@ trait ClickhouseTokenizerModule
   ): String = {
     require(from != null)
     val fromClause = from match {
-      case Some(query: InnerFromQuery)    => s"(${toRawSql(query.innerQuery.internalQuery).trim})"
-      case Some(table: TableFromQuery[_]) => table.table.quoted + ctx.tableAlias(table.table)
-      case _                              => return ""
+      case Some(query: InnerFromQuery)      => s"(${toRawSql(query.innerQuery.internalQuery).trim})"
+      case Some(table: TableFromQuery[_])   => table.table.quoted + ctx.tableAlias(table.table)
+      case Some(fn: TableFunctionFromQuery) =>
+        s"${fn.function.name}(${fn.function.args.map(tokenizeColumn).mkString(Tokens.Delimiter)})"
+      case _ => return ""
     }
 
     val prefix = if (withPrefix) "FROM" else ""
@@ -474,7 +476,9 @@ trait ClickhouseTokenizerModule
         // we always need to provide an alias to the RIGHT side
         val right = query.other match {
           case table: TableFromQuery[_] => s"(SELECT * ${tokenizeFrom(Some(table))})"
-          case query: InnerFromQuery    => tokenizeFrom(Some(query), withPrefix = false)
+          // Wrapped for the same reason a table is: a bare join right-hand side contributes no columns to `SELECT *`.
+          case fn: TableFunctionFromQuery => s"(SELECT * ${tokenizeFrom(Some(fn))})"
+          case query: InnerFromQuery      => tokenizeFrom(Some(query), withPrefix = false)
         }
 
         Seq(
