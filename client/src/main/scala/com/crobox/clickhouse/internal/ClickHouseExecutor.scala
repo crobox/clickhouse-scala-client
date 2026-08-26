@@ -1,5 +1,6 @@
 package com.crobox.clickhouse.internal
 
+import org.apache.pekko
 import org.apache.pekko.actor.{ActorSystem, Terminated}
 import org.apache.pekko.http.scaladsl.{Http, HttpsConnectionContext}
 import org.apache.pekko.http.scaladsl.model._
@@ -9,10 +10,11 @@ import org.apache.pekko.stream.scaladsl.{Keep, Sink, Source, SourceQueueWithComp
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.progress.QueryProgress._
 import com.crobox.clickhouse.internal.progress.{QueryProgress, StreamingProgressClickhouseTransport}
-import com.crobox.clickhouse.{ClickhouseExecutionException, TooManyQueriesException}
+import com.crobox.clickhouse.{ClickhouseExecutionException, QueryTimeoutException, TooManyQueriesException}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Random, Success}
 
@@ -65,13 +67,33 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     // cancelled -- one per request plus one per retry, each retained for the lifetime of the hub.
     val progressSubscription = progressQueue.map(subscribeToProgress(internalQueryIdentifier, _))
 
-    executeWithRetries(totalRetries, totalRetries, progressQueue, settings) { () =>
+    val attempts = executeWithRetries(totalRetries, totalRetries, progressQueue, settings) { () =>
       executeRequestInternal(hostBalancer.nextHost, query, internalQueryIdentifier, settings, entity, progressQueue)
-    }.andThen { case _ =>
+    }
+
+    withTimeout(attempts, query, settings).andThen { case _ =>
       progressSubscription.foreach(_.shutdown())
       progressQueue.foreach(_.complete())
     }
   }
+
+  /**
+   * Bounds the whole call rather than one attempt, so the caller's wall clock is what the timeout describes -- a 30
+   * second timeout with three retries would otherwise take 120 seconds to fail.
+   *
+   * The deadline is set slightly past `max_execution_time` so the server's own TIMEOUT_EXCEEDED normally lands first,
+   * which reports the elapsed time; this only fires when the server never answers at all. Losing the race does not
+   * cancel the request, but the response is still consumed downstream, so the connection is returned to the pool.
+   */
+  private def withTimeout(result: Future[String], query: String, settings: QuerySettings): Future[String] =
+    settings.timeout match {
+      case None          => result
+      case Some(timeout) =>
+        val deadline = pekko.pattern.after(timeout + ClickHouseExecutor.TimeoutGrace, system.scheduler)(
+          Future.failed(QueryTimeoutException(timeout, query))
+        )
+        Future.firstCompletedOf(Seq(result, deadline))
+    }
 
   private def subscribeToProgress(
       internalQueryIdentifier: String,
@@ -171,4 +193,8 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
   }
 }
 
-object ClickHouseExecutor {}
+object ClickHouseExecutor {
+
+  /** Head start for the server's own timeout, whose error names the elapsed time where the client's cannot. */
+  private[internal] val TimeoutGrace: FiniteDuration = 1.second
+}

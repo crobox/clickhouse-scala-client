@@ -12,6 +12,17 @@ case class ClickhouseException(message: String, query: String, cause: Throwable 
   override val retryable: Boolean = true
 }
 
+/**
+ * A query that ran past its `timeout`.
+ *
+ * Not retryable: the deadline is a bound on the whole call, so spending another attempt on it would exceed the very
+ * budget the caller asked for.
+ */
+case class QueryTimeoutException(timeout: scala.concurrent.duration.FiniteDuration, query: String)
+    extends ClickhouseExecutionException(s"Query exceeded its timeout of $timeout, query $query") {
+  override val retryable: Boolean = false
+}
+
 case class ClickhouseChunkedException(message: String) extends ClickhouseExecutionException(message) {
   override val retryable: Boolean = true
 }
