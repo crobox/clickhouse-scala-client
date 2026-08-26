@@ -30,6 +30,16 @@ trait Magnets {
    */
   trait Magnet[+C] {
     val column: TableColumn[C]
+
+    // Magnets are anonymous classes minted by implicit conversion, so without this two built from the same value
+    // compare unequal, and every AST node holding one inherits that. The wrapped column is the only state a magnet
+    // has and the only part that renders, so it is what equality is about.
+    override def equals(other: Any): Boolean = other match {
+      case that: Magnet[_] => column == that.column
+      case _               => false
+    }
+
+    override def hashCode(): Int = column.hashCode()
   }
 
   // ComparableWith trait and Cast case class were members of ComparisonFunctions and TypeCastFunctions trait
@@ -85,6 +95,18 @@ trait Magnets {
     val tableRef: Option[Table]         = None
 
     val isEmptyCollection: Boolean = false
+
+    // The query and table forms both leave `column` as EmptyColumn and carry the distinguishing value here, so
+    // Magnet's equality would make every one of them equal -- including a table one to a query one.
+    //
+    // OperationalQuery is itself an anonymous class, so two identically built subqueries still compare unequal. That
+    // direction is safe: a duplicate kept rather than a column dropped.
+    override def equals(other: Any): Boolean = other match {
+      case that: InFuncRHMagnet => column == that.column && query == that.query && tableRef == that.tableRef
+      case _                    => false
+    }
+
+    override def hashCode(): Int = (column, query, tableRef).hashCode()
   }
 
   implicit def InFuncRHMagnetFromIterable[T: QueryValue](s: Iterable[T]): InFuncRHMagnet =
@@ -205,6 +227,15 @@ trait Magnets {
 
   sealed trait LogicalOpsMagnet extends LogicalOps {
     val asOption: Option[TableColumn[Boolean]]
+
+    // Same reasoning as Magnet: anonymous classes from implicit conversion, with the wrapped column as their only
+    // state. This hierarchy is separate because it carries an Option rather than a column.
+    override def equals(other: Any): Boolean = other match {
+      case that: LogicalOpsMagnet => asOption == that.asOption
+      case _                      => false
+    }
+
+    override def hashCode(): Int = asOption.hashCode()
 
     def isConstTrue: Boolean = asOption match {
       case Some(Const(el: Boolean)) => el
