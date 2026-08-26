@@ -55,7 +55,7 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
         (
           s"quantile$modifierName",
-          s"$level)(${tokenizeColumn(column)}${modifierValue.map(Tokens.Delimiter + _).getOrElse("")})"
+          s"$level)(${tokenizeColumn(column)}${modifierValue.map(Tokens.Delimiter + _).getOrElse("")}"
         )
       case Quantiles(column, levels, modifier) =>
         val (modifierName, modifierValue) = tokenizeLevelModifier(modifier)
