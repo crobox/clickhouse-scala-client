@@ -156,6 +156,22 @@ trait TypeCastFunctions {
 
   implicit object DateTimeCastOutBind extends CastOutBind[ColumnType.DateTime.type, Int]
 
+  // Keyed on the class rather than on `<companion>.type`: `cast` infers T from the argument, and the argument's type
+  // for a parameterised column type is the class. (`Decimal(10, 2) : ColumnType.Decimal`, not `Decimal.type`.)
+  implicit object DecimalCastOutBind extends CastOutBind[ColumnType.Decimal, BigDecimal]
+
+  implicit object Decimal32CastOutBind extends CastOutBind[ColumnType.Decimal32, BigDecimal]
+
+  implicit object Decimal64CastOutBind extends CastOutBind[ColumnType.Decimal64, BigDecimal]
+
+  implicit object Decimal128CastOutBind extends CastOutBind[ColumnType.Decimal128, BigDecimal]
+
+  implicit object Decimal256CastOutBind extends CastOutBind[ColumnType.Decimal256, BigDecimal]
+
+  implicit object IPv4CastOutBind extends CastOutBind[ColumnType.IPv4.type, String]
+
+  implicit object IPv6CastOutBind extends CastOutBind[ColumnType.IPv6.type, String]
+
   def toUInt8(tableColumn: ConstOrColMagnet[_]): UInt8 = UInt8(tableColumn)
 
   def toUInt8OrDefault(tableColumn: ConstOrColMagnet[_], value: Byte): UInt8 =

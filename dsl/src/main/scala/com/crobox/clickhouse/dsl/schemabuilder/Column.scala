@@ -53,6 +53,54 @@ object ColumnType {
 
   case class FixedString(length: Int) extends SimpleColumnType(s"FixedString($length)")
 
+  /**
+   * `Decimal(P, S)`: `P` significant digits of which `S` are after the point.
+   *
+   * The read side already existed -- `BigDecimal` has a `QueryValue`, a `ColumnDecoder` and a full set of entries in
+   * the arithmetic widening table -- so only the declaration was missing. Values come back as JSON numbers at low
+   * precision and as strings at high; the decoder accepts either.
+   */
+  case class Decimal(precision: Int, scale: Int) extends SimpleColumnType(s"Decimal($precision, $scale)") {
+    require(
+      precision >= 1 && precision <= Decimal.MaxPrecision,
+      s"Decimal precision must be between 1 and ${Decimal.MaxPrecision}, got $precision"
+    )
+
+    // The server rejects a scale above the precision with "Negative scales and scales larger than precision are not
+    // supported"; equal is allowed, as in Decimal(76, 76).
+    require(scale >= 0 && scale <= precision, s"Decimal scale must be between 0 and the precision, got $scale")
+  }
+
+  object Decimal {
+    val MaxPrecision = 76
+  }
+
+  /**
+   * The fixed-width spellings, where the precision follows from the storage size rather than being given.
+   *
+   * `Decimal32(S)` is `Decimal(9, S)`, and likewise 18, 38 and 76 -- which is what `toTypeName` reports them as, so a
+   * column declared one way and read back reads as the other.
+   */
+  sealed abstract class SizedDecimal(name: String, val scale: Int, val precision: Int)
+      extends SimpleColumnType(s"$name($scale)") {
+    require(scale >= 0 && scale <= precision, s"$name scale must be between 0 and $precision, got $scale")
+  }
+
+  case class Decimal32(override val scale: Int)  extends SizedDecimal("Decimal32", scale, 9)
+  case class Decimal64(override val scale: Int)  extends SizedDecimal("Decimal64", scale, 18)
+  case class Decimal128(override val scale: Int) extends SizedDecimal("Decimal128", scale, 38)
+  case class Decimal256(override val scale: Int) extends SizedDecimal("Decimal256", scale, 76)
+
+  /**
+   * `IPv4` / `IPv6`.
+   *
+   * The functions already ship (see `IPFunctions`); only the declaration was missing. Both serialise as their textual
+   * form -- `"10.0.0.1"`, `"2001:db8::1"` -- so they are read as `String`.
+   */
+  case object IPv4 extends SimpleColumnType("IPv4")
+
+  case object IPv6 extends SimpleColumnType("IPv6")
+
   case object UUID extends SimpleColumnType("UUID")
 
   case object Date extends SimpleColumnType("Date")
