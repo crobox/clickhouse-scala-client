@@ -683,6 +683,44 @@ class SqlValidationITSpec extends DslITSpec {
         .orderByColumns(OrderingColumn(col2, ASC, Option(WithFill())))
         .interpolate()
     ),
+    Construct("numbers", select(com.crobox.clickhouse.dsl.all).from(com.crobox.clickhouse.dsl.numbers(3))),
+    Construct(
+      "numbers from an offset",
+      select(com.crobox.clickhouse.dsl.all).from(com.crobox.clickhouse.dsl.numbers(10, 3))
+    ),
+    Construct("zeros", select(com.crobox.clickhouse.dsl.all).from(com.crobox.clickhouse.dsl.zeros(3))),
+    Construct(
+      "values as rows",
+      select(com.crobox.clickhouse.dsl.all)
+        .from(com.crobox.clickhouse.dsl.values(tuple(const(1), const("x")), tuple(const(2), const("y"))))
+    ),
+    Construct(
+      "values with a structure",
+      select(com.crobox.clickhouse.dsl.all).from(valuesWithStructure("a UInt32", const(1), const(2)))
+    ),
+    Construct("merge", select(com.crobox.clickhouse.dsl.all).from(mergeTables("system", "^one$"))),
+    Construct("generateRandom", select(com.crobox.clickhouse.dsl.all).from(generateRandom("a UInt8"))),
+    Construct(
+      "generateRandom, seeded",
+      select(com.crobox.clickhouse.dsl.all).from(generateRandom("a UInt8", 1, 1, 1))
+    ),
+    Construct("remote", select(count()).from(remote("localhost:9000", "system", "one"))),
+    // Syntax only: resolving a cluster reads the server's own configuration, and the test server declares only
+    // `default` -- which is a property of the fixture rather than of the rendering.
+    syn("cluster", select(count()).from(cluster("test_cluster", "system", "one"))),
+    Construct(
+      "a table function with an alias",
+      select(ref[Long]("number")).from(com.crobox.clickhouse.dsl.numbers(3), "n")
+    ),
+    Construct(
+      "a table function as a join right-hand side",
+      select(shieldId).from(OneTestTable).join(JoinQuery.CrossJoin, com.crobox.clickhouse.dsl.numbers(3))
+    ),
+    Construct(
+      "a table function as a subquery source",
+      select(com.crobox.clickhouse.dsl.all)
+        .from(select(com.crobox.clickhouse.dsl.all).from(com.crobox.clickhouse.dsl.numbers(3)))
+    ),
     Construct(
       "order by nulls first",
       select(col2).from(TwoTestTable).orderByColumns(OrderingColumn(col2, DESC, nulls = Option(NullsOrder.NullsFirst)))

@@ -9,6 +9,15 @@ package com.crobox.clickhouse.dsl
  */
 case class Sample(rate: Double, offset: Option[Double] = None)
 
+/**
+ * A table function standing where a table would, as in `FROM numbers(10)`.
+ *
+ * Arguments are [[Column]]s so that the existing literal rendering applies -- `const("system")` becomes `'system'`. A
+ * table function that takes a query rather than values, such as `view`, has no representation here; the DSL already
+ * puts a subquery in `FROM` directly.
+ */
+case class TableFunction(name: String, args: Seq[Column] = Seq.empty)
+
 sealed trait FromQuery extends Query with OperationalQuery {
   override val internalQuery: InternalQuery = InternalQuery(from = Some(this))
   val alias: Option[String]
@@ -34,3 +43,13 @@ sealed case class TableFromQuery[T <: Table](
     finalized: Boolean = false,
     sampling: Option[Sample] = None
 ) extends FromQuery
+
+/**
+ * `FROM <function>(args)`.
+ *
+ * Neither FINAL nor SAMPLE applies: both read something the table's engine declares, and a function has no engine.
+ */
+sealed case class TableFunctionFromQuery(function: TableFunction, alias: Option[String] = None) extends FromQuery {
+  override val finalized                = false
+  override val sampling: Option[Sample] = None
+}
