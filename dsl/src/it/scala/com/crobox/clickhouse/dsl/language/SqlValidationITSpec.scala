@@ -642,6 +642,14 @@ class SqlValidationITSpec extends DslITSpec {
       "order by an expression differing from the projection",
       select(sum(col2)).from(TwoTestTable).orderBy(uniq(col2))
     ),
+    Construct(
+      "order by an alias, which must not be projected a second time",
+      select(uniq(col2) as "value").from(TwoTestTable).orderBy(ref[Long]("value"))
+    ),
+    Construct(
+      "group by an alias, which must not be projected a second time",
+      select(col3 as "value").from(TwoTestTable).groupBy(ref[String]("value"))
+    ),
     Construct("re-aliased column", select((shieldId as "from_pv") as "from_start").from(OneTestTable)),
     Construct(
       "an inner alias referenced from the enclosing query",

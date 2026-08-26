@@ -66,6 +66,33 @@ class ColumnIdentityTest extends DslTestSpec {
     sql(select(shieldId as "a" as "b" as "c")) should matchSQL("SELECT shield_id AS c")
   }
 
+  // Ordering by an alias must not append a second copy of it to the projection. By-value de-duplication alone did,
+  // which widened every row of every query that orders by an aggregate's alias.
+  "Ordering by an alias" should "not duplicate the aliased column" in {
+    sql(select(uniq(col2) as "value").from(TwoTestTable).orderBy(ref[Long]("value"))) should matchSQL(
+      s"SELECT uniq(column_2) AS value FROM ${TwoTestTable.quoted} ORDER BY value ASC"
+    )
+  }
+
+  it should "not duplicate it when grouping either" in {
+    sql(select(col3 as "value").from(TwoTestTable).groupBy(ref[String]("value"))) should matchSQL(
+      s"SELECT column_3 AS value FROM ${TwoTestTable.quoted} GROUP BY value"
+    )
+  }
+
+  it should "still project a grouping column the projection does not produce" in {
+    sql(select(col3 as "value").from(TwoTestTable).groupBy(col2)) should matchSQL(
+      s"SELECT column_3 AS value, column_2 FROM ${TwoTestTable.quoted} GROUP BY column_2"
+    )
+  }
+
+  // A stored column and an alias of the same name are the same identifier to the server, which resolves the alias.
+  it should "treat a native column of the alias name as already projected" in {
+    sql(select(col3 as "column_2").from(TwoTestTable).orderBy(col2)) should matchSQL(
+      s"SELECT column_3 AS column_2 FROM ${TwoTestTable.quoted} ORDER BY column_2 ASC"
+    )
+  }
+
   // The documented answer to #24: to refer to an alias from an enclosing query, reference it rather than re-aliasing.
   it should "reference an inner alias from an enclosing query" in {
     val fromPv = shieldId as "from_pv"
