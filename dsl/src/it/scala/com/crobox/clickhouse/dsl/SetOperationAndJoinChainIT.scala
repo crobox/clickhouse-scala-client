@@ -52,6 +52,14 @@ class SetOperationAndJoinChainIT extends DslITSpec {
   private def labels(query: OperationalQuery): Seq[String] =
     queryExecutor.executeRows(query).futureValue.rows.map(_.requiredByName[String]("column_3"))
 
+  // The discriminating case for the parenthesising of nested branches. Intended is
+  // `two UNION ALL (three EXCEPT two)` = {shared, onlyTwo, onlyThree}; a flat chain would group as
+  // `(two UNION ALL three) EXCEPT two` = {onlyThree}, which is a different set rather than a different spelling.
+  "A nested set operation" should "keep the grouping the call structure states" in {
+    ids(fromTwo.unionAll(fromThree.except(fromTwo))) should contain theSameElementsAs
+    Seq(shared, onlyTwo, onlyThree).map(_.toString)
+  }
+
   "A chain of joins" should "keep only the rows every table in the chain has" in {
     val query = select(col3)
       .from(TwoTestTable)

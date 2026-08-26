@@ -28,7 +28,12 @@ trait Query {
  * `withTies` extends the result past `size` with every row that ties with the last one on the `ORDER BY` key. It needs
  * an `ORDER BY` to mean anything, which is not checked here: the ordering lives on the query rather than on this.
  */
-case class Limit(size: Option[Long] = Some(100), offset: Long = 0, withTies: Boolean = false)
+case class Limit(size: Option[Long] = Some(100), offset: Long = 0, withTies: Boolean = false) {
+
+  // WITH TIES extends the result past `size`, so there is nothing for it to do without one, and the OFFSET-only
+  // rendering has nowhere to put it -- it would be dropped silently.
+  require(size.isDefined || !withTies, "WITH TIES needs a LIMIT size to extend")
+}
 
 object Limit {
 

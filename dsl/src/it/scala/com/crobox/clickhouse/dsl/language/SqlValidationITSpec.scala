@@ -521,6 +521,12 @@ class SqlValidationITSpec extends DslITSpec {
     syn("Merge", select(merge[TableColumn[StateResult[Double]], Double](sum(col2))) from TwoTestTable),
     sem("TimeSeries", select(timeSeries(timestampColumn, oneDay)) from OneTestTable),
     sem("ArgMin", select(argMin(col2, col3)) from TwoTestTable),
+    // count(DISTINCT) under a combinator: renders `countIf(DISTINCT column_2, ...)`, which the server accepts and
+    // reads as "count the distinct values among the rows matching the condition".
+    sem(
+      "Count",
+      select(aggIf[TableColumn[Long], Long](col2 > 1)(countDistinct(col2))) from TwoTestTable
+    ),
     sem("ArgMax", select(argMax(col2, col3)) from TwoTestTable)
   )
 

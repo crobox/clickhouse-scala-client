@@ -171,6 +171,10 @@ class QueryClausesTest extends DslTestSpec {
     )
   }
 
+  it should "refuse WITH TIES with no size to extend" in {
+    an[IllegalArgumentException] should be thrownBy Limit(None, 5, withTies = true)
+  }
+
   "OFFSET" should "render on its own, with no LIMIT" in {
     sql(select(shieldId).from(OneTestTable).offset(5)) should matchSQL(
       s"SELECT shield_id FROM ${OneTestTable.quoted} OFFSET 5"

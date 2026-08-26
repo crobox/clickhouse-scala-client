@@ -53,6 +53,34 @@ class SetOperationTest extends DslTestSpec {
     an[IllegalArgumentException] should be thrownBy left.except(right).intersect(third)
   }
 
+  // A flat chain reads left to right, so `a UNION ALL b EXCEPT c` groups as `(a UNION ALL b) EXCEPT c`. Set difference
+  // is not associative, so rendering a nested right operand flat silently returns a different set.
+  "A branch that carries set operations of its own" should "be parenthesised" in {
+    val third = select(itemId) from ThreeTestTable
+    sql(left.unionAll(right.except(third))) should matchSQL(
+      s"SELECT shield_id FROM ${OneTestTable.quoted} UNION ALL " +
+        s"(SELECT item_id FROM ${TwoTestTable.quoted} EXCEPT SELECT item_id FROM ${ThreeTestTable.quoted})"
+    )
+  }
+
+  it should "be parenthesised even where the two kinds match" in {
+    val third = select(itemId) from ThreeTestTable
+    sql(left.unionAll(right.unionAll(third))) should matchSQL(
+      s"SELECT shield_id FROM ${OneTestTable.quoted} UNION ALL " +
+        s"(SELECT item_id FROM ${TwoTestTable.quoted} UNION ALL SELECT item_id FROM ${ThreeTestTable.quoted})"
+    )
+  }
+
+  it should "not be refused the way a flat mixed chain is, because the nesting says which grouping was meant" in {
+    val third = select(itemId) from ThreeTestTable
+    noException should be thrownBy left.unionAll(right.intersect(third))
+    sql(left.unionAll(right.intersect(third))) should include("UNION ALL (SELECT")
+  }
+
+  it should "leave a plain branch unparenthesised" in {
+    sql(left.unionAll(right)) should matchSQL(combined("UNION ALL"))
+  }
+
   it should "be expressible by nesting the INTERSECT in a subquery" in {
     val third  = select(itemId) from ThreeTestTable
     val nested = select(itemId) from right.intersect(third)

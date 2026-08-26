@@ -251,14 +251,23 @@ trait ClickhouseTokenizerModule
     else settings.map { case (key, value) => s"$key = $value" }.mkString("SETTINGS ", Tokens.Delimiter, "")
 
   /**
-   * `UNION`/`INTERSECT`/`EXCEPT`, rendered as a flat chain with no parentheses of its own.
+   * `UNION`/`INTERSECT`/`EXCEPT`.
    *
-   * Flat is only faithful while every step shares one precedence level, which [[InternalQuery]] requires. A trailing
-   * `ORDER BY` or `LIMIT` binds to the last branch either way, which is what the per-branch model already says.
+   * A branch that carries set operations of its own is parenthesised, because the chain is otherwise flat and
+   * ClickHouse reads a flat chain left to right. `a.unionAll(b.except(c))` would render `a UNION ALL b EXCEPT c`, which
+   * groups as `(a UNION ALL b) EXCEPT c` -- and set difference is not associative, so that silently returns something
+   * else. The call structure says which grouping was meant, so this preserves it rather than refusing it;
+   * [[InternalQuery]]'s own `require` covers the flat case, where nothing says.
+   *
+   * A trailing `ORDER BY` or `LIMIT` binds to its own branch either way, which is what the per-branch model says.
    */
   private def tokenizeSetOperations(combinations: Seq[SetOperation])(implicit ctx: TokenizeContext): String =
     combinations
-      .map { case SetOperation(kind, query) => s"${kind.keyword} ${toRawSql(query.internalQuery)}" }
+      .map { case SetOperation(kind, query) =>
+        val branch = toRawSql(query.internalQuery)
+        val nested = if (query.internalQuery.combinations.isEmpty) branch else s"($branch)"
+        s"${kind.keyword} $nested"
+      }
       .mkString(" ")
 
   private def tokenizeSelect(select: Option[SelectQuery])(implicit ctx: TokenizeContext): String =
