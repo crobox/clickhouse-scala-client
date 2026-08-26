@@ -51,6 +51,10 @@ class StreamingProgressSpec extends ClickhouseClientAsyncSpec {
   // ClickHouse answers 200 and starts streaming, then appends the error if the query fails partway through. Without
   // checking each line, that error arrives as ordinary QueryResultParts followed by QueryFinished, and the consumer
   // cannot tell it from success.
+  //
+  // Which path it takes is not stable across versions: 25.3 sends 200 with the error appended, 25.8 answers 500 with
+  // the error as the whole body. Either must fail the stream and name the code, so the assertion covers both rather
+  // than pinning one server's choice.
   it should "fail the stream on an error appended mid-body" in
     client
       .queryWithProgressStreaming("SELECT number, throwIf(number = 3, 'boom') FROM numbers(10)")(

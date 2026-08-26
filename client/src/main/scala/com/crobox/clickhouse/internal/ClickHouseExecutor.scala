@@ -167,7 +167,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
             .flatMapConcat(body =>
               Source.failed(
                 ClickhouseException(
-                  s"Server returned code ${response.status}; $body",
+                  s"Server returned code ${response.status}; ${body.utf8String}",
                   query,
                   statusCode = response.status
                 )
