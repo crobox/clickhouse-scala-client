@@ -3,7 +3,15 @@ package com.crobox.clickhouse.dsl.column
 import com.crobox.clickhouse.dsl.marshalling.QueryValueFormats._
 import com.crobox.clickhouse.dsl.marshalling.{QueryValue, QueryValueFormats}
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
-import com.crobox.clickhouse.dsl.{Const, EmptyColumn, ExpressionColumn, OperationalQuery, Table, TableColumn}
+import com.crobox.clickhouse.dsl.{
+  Const,
+  EmptyColumn,
+  ExpressionColumn,
+  FixedStringBytes,
+  OperationalQuery,
+  Table,
+  TableColumn
+}
 import java.time.{LocalDate, ZonedDateTime}
 
 import java.util.UUID
@@ -193,6 +201,19 @@ trait Magnets {
   implicit def stringColMagnetFromUUIDCol[T <: TableColumn[UUID]](s: T): StringColMagnet[UUID] =
     new StringColMagnet[UUID] {
       override val column: TableColumn[UUID] = s
+    }
+
+  /**
+   * Columns the server types as `FixedString(N)`. Separate from [[StringColMagnet]] because the functions that read one
+   * reject a plain `String`.
+   */
+  trait FixedStringColMagnet[C] extends Magnet[C] with HexCompatible[C]
+
+  implicit def fixedStringColMagnetFromCol[T <: TableColumn[FixedStringBytes]](
+      s: T
+  ): FixedStringColMagnet[FixedStringBytes] =
+    new FixedStringColMagnet[FixedStringBytes] {
+      override val column: TableColumn[FixedStringBytes] = s
     }
 
   /**

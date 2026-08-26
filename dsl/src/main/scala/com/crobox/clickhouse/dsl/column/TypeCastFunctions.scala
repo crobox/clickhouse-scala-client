@@ -279,7 +279,13 @@ trait TypeCastFunctions {
 
   def toUUIDOrZero(tableColumn: ConstOrColMagnet[_]): Uuid = Uuid(tableColumn, orZero = true)
 
-  case class FixedString(tableColumn: ConstOrColMagnet[_], n: Int) extends TypeCastColumn[String](tableColumn)
+  // Also a FixedStringColMagnet: this is the escape hatch for handing a FixedString(N) to IPv6NumToString or
+  // UUIDNumToString when the value did not come from one of the *StringToNum functions.
+  case class FixedString(tableColumn: ConstOrColMagnet[_], n: Int)
+      extends TypeCastColumn[String](tableColumn)
+      with FixedStringColMagnet[String] {
+    override val column: TableColumn[String] = this
+  }
 
   case class StringCutToZero(tableColumn: ConstOrColMagnet[_]) extends TypeCastColumn[String](tableColumn)
 

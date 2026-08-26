@@ -12,5 +12,6 @@ class IPFunctionsIT extends DslITSpec {
     r(iPv4NumToStringClassC(num)) shouldBe "0.0.0.xxx"
     r(iPv6NumToString(toFixedString("0", 16))) shouldBe "3000::"
     r(iPv6StringToNum("3000::")) shouldBe "0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0"
+    r(iPv6NumToString(iPv6StringToNum("3000::"))) shouldBe "3000::"
   }
 }
