@@ -681,6 +681,20 @@ class SqlValidationITSpec extends DslITSpec {
       "group by a column an aggregate already covers, which is now projected",
       select(sum(col2)).from(TwoTestTable).groupBy(col2)
     ),
+    // GROUP BY named its keys rather than rendering them, so an expression key became its argument's name -- or NULL
+    // for an arithmetic one, which the server rejects outright.
+    Construct(
+      "group by a function expression",
+      select(count()).from(OneTestTable).groupBy(toStartOfDay(toDateTime(timestampColumn)))
+    ),
+    Construct(
+      "group by an arithmetic expression",
+      select(count()).from(OneTestTable).groupBy(intDiv(timestampColumn, 1000))
+    ),
+    Construct(
+      "group by a nested expression",
+      select(count()).from(OneTestTable).groupBy(toDateTime(intDiv(toUInt64rNull(shieldId), 1000)))
+    ),
     Construct(
       "order by an expression differing from the projection",
       select(sum(col2)).from(TwoTestTable).orderBy(uniq(col2))
