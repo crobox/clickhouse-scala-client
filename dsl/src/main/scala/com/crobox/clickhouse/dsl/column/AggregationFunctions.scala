@@ -20,7 +20,8 @@ trait AggregationFunctions {
   /**
    * `OVER` lives here rather than on TableColumn because ClickHouse requires an aggregate or window function before it:
    * `v OVER ()`, `1 OVER ()` and `toUInt32(v) OVER ()` are all rejected by the server, so restricting the entry point
-   * turns those into compile errors. Window-only functions added later should extend this or share a marker with it.
+   * turns those into compile errors. Unlike [[WindowFunctions.WindowOnlyFunction]] the window is optional here, since
+   * an aggregate is valid with or without one.
    */
   abstract class AggregateFunction[+V](targetColumn: Column) extends ExpressionColumn[V](targetColumn) {
 
@@ -34,7 +35,18 @@ trait AggregationFunctions {
     def over(): WindowFunction[V] = over(WindowSpec())
   }
 
-  case class Count(column: Option[Column] = None) extends AggregateFunction[Long](column.getOrElse(EmptyColumn))
+  case class Count(column: Option[Column] = None, distinct: Boolean = false)
+      extends AggregateFunction[Long](column.getOrElse(EmptyColumn)) {
+
+    require(column.isDefined || !distinct, "count(DISTINCT) needs a column")
+  }
+
+  /**
+   * `argMin`/`argMax`: the value of `arg` on the row where `value` is smallest/largest. The result type follows `arg`.
+   */
+  case class ArgMin[A, V](arg: TableColumn[A], value: TableColumn[V]) extends AggregateFunction[A](arg)
+
+  case class ArgMax[A, V](arg: TableColumn[A], value: TableColumn[V]) extends AggregateFunction[A](arg)
 
   case class Avg[V](tableColumn: TableColumn[V]) extends AggregateFunction[Double](tableColumn)
 
@@ -57,6 +69,16 @@ trait AggregationFunctions {
   def count(): Count = Count()
 
   def count(column: TableColumn[_]): Count = Count(Option(column))
+
+  /**
+   * `count(DISTINCT column)`. ClickHouse rewrites this to `uniqExact` by default -- see the
+   * `count_distinct_implementation` setting -- so [[UniqFunctions.uniqExact]] says the same thing more directly.
+   */
+  def countDistinct(column: TableColumn[_]): Count = Count(Option(column), distinct = true)
+
+  def argMin[A, V](arg: TableColumn[A], value: TableColumn[V]): ArgMin[A, V] = ArgMin(arg, value)
+
+  def argMax[A, V](arg: TableColumn[A], value: TableColumn[V]): ArgMax[A, V] = ArgMax(arg, value)
 
   def average[T](tableColumn: TableColumn[T]): Avg[T] = Avg(tableColumn)
 

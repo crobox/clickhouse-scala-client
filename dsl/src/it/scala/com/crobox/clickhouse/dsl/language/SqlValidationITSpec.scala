@@ -519,7 +519,41 @@ class SqlValidationITSpec extends DslITSpec {
     sem("State", select(state[TableColumn[Double], Double](sum(col2))) from TwoTestTable),
     // Syntax only: sumMerge needs an AggregateFunction(sum, ...) column to read, and the test tables hold plain values.
     syn("Merge", select(merge[TableColumn[StateResult[Double]], Double](sum(col2))) from TwoTestTable),
-    sem("TimeSeries", select(timeSeries(timestampColumn, oneDay)) from OneTestTable)
+    sem("TimeSeries", select(timeSeries(timestampColumn, oneDay)) from OneTestTable),
+    sem("ArgMin", select(argMin(col2, col3)) from TwoTestTable),
+    sem("ArgMax", select(argMax(col2, col3)) from TwoTestTable)
+  )
+
+  /**
+   * Window-only functions, each behind the `OVER` that ClickHouse requires -- without one the server answers
+   * BAD_ARGUMENTS, "can only be used as a window function", which is why the builders return something that is not a
+   * Column.
+   */
+  private val windowConstructs = Seq(
+    sem("RowNumber", select(rowNumber().over(WindowSpec(orderBy = Seq(col2)))) from TwoTestTable),
+    sem("Rank", select(rank().over(WindowSpec(orderBy = Seq(col2)))) from TwoTestTable),
+    sem("DenseRank", select(denseRank().over(WindowSpec(orderBy = Seq(col2)))) from TwoTestTable),
+    sem("PercentRank", select(percentRank().over(WindowSpec(orderBy = Seq(col2)))) from TwoTestTable),
+    sem("Ntile", select(ntile(4).over(WindowSpec(orderBy = Seq(col2)))) from TwoTestTable),
+    sem(
+      "LagInFrame",
+      // The default has to land on column_2's own UInt32; a Float64 one is rejected outright.
+      select(lagInFrame(col2, Option(const(1L)), Option(const(0))).over(WindowSpec(orderBy = Seq(col2))))
+        from TwoTestTable
+    ),
+    sem(
+      "LeadInFrame",
+      select(
+        leadInFrame(col2, Option(const(1L)))
+          .over(
+            WindowSpec(
+              orderBy = Seq(col2),
+              frame = Option(WindowFrame(FrameMode.Rows, FrameBound.CurrentRow, Option(FrameBound.Following(1))))
+            )
+          )
+      ) from TwoTestTable
+    ),
+    sem("NthValue", select(nthValue(col2, 2).over(WindowSpec(orderBy = Seq(col2)))) from TwoTestTable)
   )
 
   /** AST nodes covered above; these are what the coverage ratchet counts. */
@@ -529,7 +563,7 @@ class SqlValidationITSpec extends DslITSpec {
       encodingConstructs ++ ipConstructs ++ splitMergeConstructs ++ emptyConstructs ++ higherOrderConstructs ++
       arrayConstructs ++ urlConstructs ++ hashConstructs ++ distanceConstructs ++ stringConstructs ++
       stringSearchConstructs ++ miscConstructs ++ arithmeticConstructs ++ operatorConstructs ++ typeCastConstructs ++
-      dateTimeConstructs ++ aggregationConstructs
+      dateTimeConstructs ++ aggregationConstructs ++ windowConstructs
 
   /**
    * Whole-query shapes rather than individual functions, so they are validated but not counted towards AST coverage.

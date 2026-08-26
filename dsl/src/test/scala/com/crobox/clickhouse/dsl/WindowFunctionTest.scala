@@ -128,6 +128,66 @@ class WindowFunctionTest extends DslTestSpec {
     )
   }
 
+  "A window-only function" should "render row_number" in {
+    sql(select(rowNumber().over(WindowSpec(orderBy = Seq(col2)))).from(TwoTestTable)) should matchSQL(
+      s"SELECT row_number() OVER (ORDER BY column_2 ASC) FROM ${TwoTestTable.quoted}"
+    )
+  }
+
+  it should "render the other rankings" in {
+    sql(select(rank().over(), denseRank().over(), percentRank().over(), ntile(4).over()).from(TwoTestTable)) should
+    matchSQL(
+      s"SELECT rank() OVER (), dense_rank() OVER (), percent_rank() OVER (), ntile(4) OVER () " +
+        s"FROM ${TwoTestTable.quoted}"
+    )
+  }
+
+  it should "render lagInFrame at each arity" in {
+    sql(
+      select(
+        lagInFrame(col2).over(),
+        lagInFrame(col2, Option(const(2))).over(),
+        lagInFrame(col2, Option(const(2)), Option(const(99))).over()
+      ).from(TwoTestTable)
+    ) should matchSQL(
+      s"SELECT lagInFrame(column_2) OVER (), lagInFrame(column_2, 2) OVER (), " +
+        s"lagInFrame(column_2, 2, 99) OVER () FROM ${TwoTestTable.quoted}"
+    )
+  }
+
+  it should "render leadInFrame and nth_value" in {
+    sql(select(leadInFrame(col2, Option(const(1))).over(), nthValue(col2, 2).over()).from(TwoTestTable)) should
+    matchSQL(
+      s"SELECT leadInFrame(column_2, 1) OVER (), nth_value(column_2, 2) OVER () FROM ${TwoTestTable.quoted}"
+    )
+  }
+
+  it should "work through a named window" in {
+    val w = NamedWindow("w", WindowSpec(partitionBy = Seq(col3), orderBy = Seq(col2)))
+    sql(select(rowNumber().over(w)).from(TwoTestTable).window(w)) should matchSQL(
+      s"SELECT row_number() OVER w FROM ${TwoTestTable.quoted} " +
+        s"WINDOW w AS (PARTITION BY column_3 ORDER BY column_2 ASC)"
+    )
+  }
+
+  // The server rejects `row_number()` on its own with "can only be used as a window function", so the builders return
+  // something that is not a Column and `over` is the only way out of it.
+  it should "not be selectable without a window" in {
+    """select(rowNumber())""" shouldNot typeCheck
+  }
+
+  it should "refuse a non-positive ntile bucket count" in {
+    an[IllegalArgumentException] should be thrownBy ntile(0)
+  }
+
+  it should "refuse a zero nth_value offset" in {
+    an[IllegalArgumentException] should be thrownBy nthValue(col2, 0)
+  }
+
+  it should "refuse a default without an offset" in {
+    an[IllegalArgumentException] should be thrownBy lagInFrame(col2, None, Option(const(1)))
+  }
+
   // The server parses WITH FILL inside OVER and then ignores it: no error, no filled rows. Refused at construction
   // rather than emitting a clause that does nothing.
   "A window spec" should "refuse an ordering that carries WITH FILL" in {

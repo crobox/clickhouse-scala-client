@@ -35,9 +35,15 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       agg: AggregateFunction[_]
   )(implicit ctx: TokenizeContext): (String, String) =
     agg match {
-      case AnyResult(column, modifier)        => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
-      case Avg(column)                        => ("avg", tokenizeColumn(column))
-      case Count(column)                      => ("count", tokenizeColumn(column.getOrElse(EmptyColumn)))
+      case AnyResult(column, modifier) => (s"any${tokenizeAnyModifier(modifier)}", tokenizeColumn(column))
+      case Avg(column)                 => ("avg", tokenizeColumn(column))
+      case ArgMin(arg, value)          =>
+        ("argMin", s"${tokenizeColumn(arg)}${Tokens.Delimiter}${tokenizeColumn(value)}")
+      case ArgMax(arg, value) =>
+        ("argMax", s"${tokenizeColumn(arg)}${Tokens.Delimiter}${tokenizeColumn(value)}")
+      case Count(column, distinct) =>
+        val prefix = if (distinct) "DISTINCT " else ""
+        ("count", prefix + tokenizeColumn(column.getOrElse(EmptyColumn)))
       case FirstValue(column)                 => ("first_value", tokenizeColumn(column))
       case GroupArray(tableColumn, maxValues) =>
         ("groupArray", s"${maxValues.map(_.toString + ")(").getOrElse("")}${tokenizeColumn(tableColumn)}")

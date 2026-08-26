@@ -23,6 +23,24 @@ class AggregationFunctionTokenizerTest extends DslTestSpec {
     )
   }
 
+  it should "argMin and argMax" in {
+    toSQL(select(argMin(col1, col2), argMax(col1, col2)), false) should matchSQL(
+      "SELECT argMin(column_1, column_2), argMax(column_1, column_2)"
+    )
+  }
+
+  it should "count with and without DISTINCT" in {
+    toSQL(select(count(), count(col1), countDistinct(col1)), false) should matchSQL(
+      "SELECT count(), count(column_1), count(DISTINCT column_1)"
+    )
+  }
+
+  it should "combine argMin with a combinator" in {
+    toSQL(select(aggIf(col1.isEq("abc"))(argMax(col1, col2))), false) should matchSQL(
+      "SELECT argMaxIf(column_1, column_2, column_1 = 'abc')"
+    )
+  }
+
   it should "anyIf in groupArray" in {
     toSQL(select(aggIf(col1.isEq("abc"))(uniq(col2))), false) should matchSQL(
       "SELECT uniqIf(column_2, column_1 = 'abc')"
