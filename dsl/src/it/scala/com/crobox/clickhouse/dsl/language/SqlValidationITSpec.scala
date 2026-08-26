@@ -164,7 +164,8 @@ class SqlValidationITSpec extends DslITSpec {
       sem("ArrayEmpty", select(arrayEmpty(nums))),
       sem("ArrayNotEmpty", select(arrayNotEmpty(nums))),
       sem("ArrayLength", select(arrayLength(nums))),
-      sem("ArrayFlatten", select(ArrayFlatten(Array(Array("1", "2"), Array("3")))))
+      // arrayOf rather than the DSL's `Array`, which shadows scala.Array here and reads like a native array call.
+      sem("ArrayFlatten", select(arrayFlatten(arrayOf(arrayOf("1", "2"), arrayOf("3")))))
     )
   }
 
