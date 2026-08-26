@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.language
 
-import com.crobox.clickhouse.dsl.{ExplainKind, InternalQuery}
+import com.crobox.clickhouse.dsl.{ExplainKind, InternalQuery, Statement}
 
 trait TokenizerModule {
 
@@ -22,4 +22,12 @@ trait TokenizerModule {
       query: InternalQuery,
       options: Seq[(String, String)] = Seq.empty
   )(implicit ctx: TokenizeContext): String
+
+  /**
+   * A data-changing statement -- see [[com.crobox.clickhouse.dsl.Statement]].
+   *
+   * One entry point for all of them rather than one each: unlike [[toExplainSql]], whose extra parameters earn it its
+   * own, they differ only in which case of the ADT they are.
+   */
+  def toStatementSql(statement: Statement)(implicit ctx: TokenizeContext): String
 }
