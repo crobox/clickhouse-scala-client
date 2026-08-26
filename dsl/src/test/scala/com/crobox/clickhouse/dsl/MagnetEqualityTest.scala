@@ -94,4 +94,34 @@ class MagnetEqualityTest extends DslTestSpec {
     Seq[Column](expr).contains(expr) shouldBe true
     SelectQuery(Seq(expr)).addColumn(expr).columns should have size 1
   }
+
+  // hashCode self-recursed exactly as equals did, and moving the equality off Magnet fixed both at once. The tests
+  // above call hashCode, which proves it terminates, but they never check that equal nodes agree on it, and nothing
+  // put one of these columns in a Set or Map -- the path where a caller would have hit the overflow without ever
+  // comparing two columns itself.
+  it should "agree on hashCode for equal nodes" in {
+    intDiv(timestampColumn, 1000).hashCode shouldBe intDiv(timestampColumn, 1000).hashCode
+    abs(col2).hashCode shouldBe abs(col2).hashCode
+    (col2 + 1).hashCode shouldBe (col2 + 1).hashCode
+    cast(col2, ColumnType.UInt32).hashCode shouldBe cast(col2, ColumnType.UInt32).hashCode
+    toFixedString(col3, 2).hashCode shouldBe toFixedString(col3, 2).hashCode
+  }
+
+  it should "collapse in a Set" in {
+    Set[Column](intDiv(timestampColumn, 1000), intDiv(timestampColumn, 1000)) should have size 1
+    Set[Column](abs(col2), abs(col2)) should have size 1
+    Set[Column](cast(col2, ColumnType.UInt32), cast(col2, ColumnType.UInt32)) should have size 1
+    Set[Column](toFixedString(col3, 2), toFixedString(col3, 2)) should have size 1
+  }
+
+  it should "keep distinct nodes apart in a Set" in {
+    Set[Column](intDiv(timestampColumn, 1000), intDiv(timestampColumn, 500)) should have size 2
+    Set[Column](toFixedString(col3, 2), toFixedString(col3, 4)) should have size 2
+  }
+
+  it should "work as a Map key, looked up by an equal but distinct instance" in {
+    val key     = toDateTime(intDiv(toUInt64rNull(shieldId), 1000))
+    val rebuilt = toDateTime(intDiv(toUInt64rNull(shieldId), 1000))
+    Map[Column, String](key -> "bucket").get(rebuilt) shouldBe Some("bucket")
+  }
 }
