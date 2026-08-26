@@ -383,6 +383,17 @@ class SqlValidationITSpec extends DslITSpec {
       "an inner alias referenced from the enclosing query",
       select(ref[String]("from_pv") as "from_start").from(select(shieldId as "from_pv").from(OneTestTable))
     ),
+    Construct(
+      "date minus date",
+      select(java.time.LocalDate.of(2020, 1, 5) - java.time.LocalDate.of(2020, 1, 1))
+    ),
+    Construct(
+      "datetime minus datetime",
+      select(
+        java.time.ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, java.time.ZoneOffset.UTC) -
+          java.time.ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, java.time.ZoneOffset.UTC)
+      )
+    ),
     Construct("sample", select(shieldId).from(OneTestTable).sample(0.1), Syntax),
     Construct("sample with an offset", select(shieldId).from(OneTestTable).sample(0.1, Option(0.5)), Syntax)
   )

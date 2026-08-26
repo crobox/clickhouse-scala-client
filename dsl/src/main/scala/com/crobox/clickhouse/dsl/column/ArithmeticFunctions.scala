@@ -23,8 +23,8 @@ trait ArithmeticFunctions { self: Magnets =>
   }
 
   trait AddSubtractOps[L] { self: AddSubtractable[_] =>
-    def +[R, O](other: AddSubtractable[R])(implicit ev: AritRetType[L, R, O]): Plus[O]  = Plus[O](this, other)
-    def -[R, O](other: AddSubtractable[R])(implicit ev: AritRetType[L, R, O]): Minus[O] = Minus[O](this, other)
+    def +[R, O](other: AddSubtractable[R])(implicit ev: AritRetType[L, R, O]): Plus[O]      = Plus[O](this, other)
+    def -[R, O](other: AddSubtractable[R])(implicit ev: SubtractRetType[L, R, O]): Minus[O] = Minus[O](this, other)
   }
 
   trait ArithmeticOps[L] { self: NumericCol[_] =>
@@ -49,6 +49,21 @@ trait ArithmeticFunctions { self: Magnets =>
   case class Abs[T](t: NumericCol[T])    extends ArithmeticFunctionCol[T](t)
 
   // trait ArithmeticFunctionsDsl {
+
+  /**
+   * What subtraction accepts: everything addition does, plus a date on both sides.
+   *
+   * Separate from [[AritRetType]] because the two operators are not symmetric here -- the server rejects `plus` on two
+   * dates, so a shared binding would let `dateA + dateB` compile.
+   */
+  sealed abstract class SubtractRetType[L, R, O]
+
+  implicit def subtractFromArithmetic[L, R, O](implicit ev: AritRetType[L, R, O]): SubtractRetType[L, R, O] =
+    new SubtractRetType[L, R, O] {}
+
+  // Date minus date is the difference the server reports as Int32: days for Date, seconds for DateTime.
+  implicit object LocalDateDifferenceBinding extends SubtractRetType[LocalDate, LocalDate, Int]
+  implicit object DateTimeDifferenceBinding  extends SubtractRetType[ZonedDateTime, ZonedDateTime, Int]
 
   sealed abstract class AritRetType[L, R, O]
   implicit object IntIntBinding        extends AritRetType[Int, Int, Int]
