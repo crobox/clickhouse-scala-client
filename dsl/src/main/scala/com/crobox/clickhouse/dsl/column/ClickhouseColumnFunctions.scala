@@ -35,5 +35,6 @@ trait ClickhouseColumnFunctions
     with StringSearchFunctions
     with TypeCastFunctions
     with URLFunctions
+    with WindowFunctions
 
 object ClickhouseColumnFunctions extends ClickhouseColumnFunctions {}
