@@ -93,6 +93,16 @@ trait OperationalQuery extends Query {
         .getOrElse(internalQuery)
     )
 
+  /** `WINDOW name AS (spec)`, so several columns can share one window. */
+  def window(definitions: NamedWindow*): OperationalQuery =
+    OperationalQuery(internalQuery.copy(windows = internalQuery.windows ++ definitions))
+
+  /** `QUALIFY`, which filters on window-function results the way HAVING filters on aggregates. */
+  def qualify(condition: TableColumn[Boolean]): OperationalQuery = {
+    val combined = internalQuery.qualify.map(_.and(condition)).getOrElse(condition)
+    OperationalQuery(internalQuery.copy(qualify = Option(combined)))
+  }
+
   /**
    * `WITH`, covering all three of the forms ClickHouse puts behind the keyword -- see [[WithEntry]]. A name introduced
    * here is referenced with `ref`, and is scoped to this query rather than to any subquery inside it.

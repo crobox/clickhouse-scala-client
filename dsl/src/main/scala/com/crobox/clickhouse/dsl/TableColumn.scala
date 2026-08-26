@@ -17,6 +17,7 @@ abstract class TableColumn[+V](val name: String) extends Column {
     AliasedColumn(this, alias)
 
   def as[C <: Column](alias: C): AliasedColumn[V] = AliasedColumn(this, alias.name)
+
 }
 
 case object EmptyColumn extends TableColumn("NULL")
@@ -55,6 +56,9 @@ case class AliasedColumn[+V](original: TableColumn[V], alias: String) extends Ta
 case class TupleColumn[V](elements: Column*) extends TableColumn[V](EmptyColumn.name)
 
 abstract class ExpressionColumn[+V](targetColumn: Column) extends TableColumn[V](targetColumn.name)
+
+/** `<function> OVER <window>`. */
+case class WindowFunction[+V](function: TableColumn[V], window: WindowRef) extends ExpressionColumn[V](function)
 
 case class All() extends ExpressionColumn[Long](EmptyColumn)
 

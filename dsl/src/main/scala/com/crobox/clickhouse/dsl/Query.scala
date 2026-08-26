@@ -56,7 +56,9 @@ sealed case class InternalQuery(
     // tokenizer's business rather than this list's.
     withEntries: Seq[WithEntry] = Seq.empty,
     // Only meaningful alongside a WITH FILL in `orderBy`; the server rejects it on a plain ORDER BY.
-    interpolate: Option[Interpolate] = None
+    interpolate: Option[Interpolate] = None,
+    windows: Seq[NamedWindow] = Seq.empty,
+    qualify: Option[TableColumn[Boolean]] = None
 ) {
 
   def isValid: Boolean = {
@@ -96,7 +98,9 @@ sealed case class InternalQuery(
       unionAll = if (unionAll.nonEmpty) unionAll else other.unionAll,
       settings = if (settings.nonEmpty) settings else other.settings,
       withEntries = if (withEntries.nonEmpty) withEntries else other.withEntries,
-      interpolate = interpolate.orElse(other.interpolate)
+      interpolate = interpolate.orElse(other.interpolate),
+      windows = if (windows.nonEmpty) windows else other.windows,
+      qualify = qualify.orElse(other.qualify)
     )
 
   /**
@@ -142,6 +146,8 @@ sealed case class InternalQuery(
     noSeqConflict("settings", settings, other.settings)
     noSeqConflict("withEntries", withEntries, other.withEntries)
     noConflict("interpolate", interpolate, other.interpolate)
+    noSeqConflict("windows", windows, other.windows)
+    noConflict("qualify", qualify, other.qualify)
 
     :+>(other)
   }

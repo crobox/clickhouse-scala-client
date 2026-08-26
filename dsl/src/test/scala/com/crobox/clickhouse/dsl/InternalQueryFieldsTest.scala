@@ -23,7 +23,7 @@ class InternalQueryFieldsTest extends DslTestSpec {
    *   3. `InternalQuery.+` -- otherwise two queries that conflict on it merge without complaint
    *   4. this constant, plus setting the field in [[populated]] and adding it to [[singleFieldQueries]]
    */
-  private val FieldCount = 15
+  private val FieldCount = 17
 
   private val condition = col3 isEq "a"
 
@@ -43,7 +43,9 @@ class InternalQueryFieldsTest extends DslTestSpec {
     unionAll = Seq(select(itemId).from(OneTestTable)),
     settings = Seq("max_threads" -> "1"),
     withEntries = Seq(WithExpression(const(1), "one")),
-    interpolate = Option(Interpolate(Seq(InterpolateColumn(col2))))
+    interpolate = Option(Interpolate(Seq(InterpolateColumn(col2)))),
+    windows = Seq(NamedWindow("w", WindowSpec(partitionBy = Seq(col3)))),
+    qualify = Option(condition)
   )
 
   /** One query per field, carrying only that field, so a missing conflict check shows up as a merge that succeeds. */
@@ -62,7 +64,9 @@ class InternalQueryFieldsTest extends DslTestSpec {
     "unionAll"    -> InternalQuery(unionAll = populated.unionAll),
     "settings"    -> InternalQuery(settings = populated.settings),
     "withEntries" -> InternalQuery(withEntries = populated.withEntries),
-    "interpolate" -> InternalQuery(interpolate = populated.interpolate)
+    "interpolate" -> InternalQuery(interpolate = populated.interpolate),
+    "windows"     -> InternalQuery(windows = populated.windows),
+    "qualify"     -> InternalQuery(qualify = populated.qualify)
   )
 
   /** Names the fields that differ, because an InternalQuery's `toString` is far too long to diff by eye. */
