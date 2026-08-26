@@ -1,6 +1,9 @@
 package com.crobox.clickhouse
 
 import com.crobox.clickhouse.internal.QuerySettings
+import com.typesafe.config.ConfigValueFactory
+
+import scala.concurrent.duration._
 import com.crobox.clickhouse.internal.QuerySettings.ReadQueries
 import com.crobox.clickhouse.internal.progress.QueryProgress._
 import org.apache.pekko.stream.scaladsl.Sink
@@ -75,4 +78,41 @@ class StreamingProgressSpec extends ClickhouseClientAsyncSpec {
       .runWith(Sink.seq)
       .failed
       .map(_ shouldBe a[ClickhouseException])
+
+  // The timeout from #355 bounds a whole call, which would be wrong for a stream: a large result can legitimately run
+  // longer than any per-query timeout. It becomes an idle timeout here, catching a server that stops answering.
+  it should "free the caller when a stalled server stops sending mid-stream" in {
+    val listener  = new java.net.ServerSocket(0)
+    val accepting = new Thread(() => while (!listener.isClosed) scala.util.Try(listener.accept()))
+    accepting.setDaemon(true)
+    accepting.start()
+
+    val stalled = new ClickhouseClient(
+      Some(
+        config
+          .withValue("crobox.clickhouse.client.connection.port", ConfigValueFactory.fromAnyRef(listener.getLocalPort))
+          .withValue("crobox.clickhouse.client.connection.host", ConfigValueFactory.fromAnyRef("localhost"))
+      )
+    )
+
+    val started = System.nanoTime()
+    stalled
+      .queryWithProgressStreaming("SELECT 1")(QuerySettings(ReadQueries, timeout = Some(1.second)))
+      .runWith(Sink.seq)
+      .failed
+      .map { _ =>
+        val elapsed = (System.nanoTime() - started).nanos
+        listener.close()
+        elapsed should be < 15.seconds
+      }
+  }
+
+  it should "not cut short a result that takes longer than the timeout to stream" in
+    client
+      .queryWithProgressStreaming("SELECT number FROM numbers(300000)")(
+        QuerySettings(ReadQueries, timeout = Some(1.second))
+      )
+      .collect { case QueryResultPart(d) if d.nonEmpty => 1 }
+      .runWith(Sink.fold(0)(_ + _))
+      .map(_ shouldBe 300000)
 }

@@ -195,7 +195,15 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
 
     // eagerComplete, because the progress hub is a BroadcastHub that never completes on its own -- the body is what
     // decides when this stream is done.
-    progress.merge(body, eagerComplete = true)
+    val merged = progress.merge(body, eagerComplete = true)
+
+    // idleTimeout rather than the deadline executeRequest applies. A stream's total duration is legitimately
+    // unbounded -- a large result can take longer than any per-query timeout and still be healthy -- but a gap
+    // between elements means the server has stopped answering, which is what the timeout is there to catch. The
+    // server-side max_execution_time still bounds the query itself, since it travels as a query parameter.
+    settings.timeout
+      .map(timeout => merged.idleTimeout(timeout + ClickHouseExecutor.TimeoutGrace))
+      .getOrElse(merged)
   }
 
   def shutdown(): Future[Terminated] = {
