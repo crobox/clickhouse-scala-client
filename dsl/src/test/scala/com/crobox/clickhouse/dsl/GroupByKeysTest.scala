@@ -65,6 +65,14 @@ class GroupByKeysTest extends DslTestSpec {
     )
   }
 
+  // Raised in review on #378: with no key left to render, is the trailing modifier valid on its own? It is --
+  // `SELECT count() FROM numbers(3) WITH ROLLUP` and the same with WITH TOTALS both answer 3 on 25.3, whereas the
+  // `GROUP BY  WITH ROLLUP` this used to emit is a syntax error.
+  it should "drop an empty GROUP BY rather than emit a bare one" in {
+    val query = select(count()).from(OneTestTable).groupBy(EmptyColumn).withRollup
+    sql(query) should matchSQL(s"SELECT count() FROM ${OneTestTable.quoted} WITH ROLLUP")
+  }
+
   it should "keep WITH ROLLUP, WITH CUBE and WITH TOTALS attached" in {
     sql(select(count()).from(OneTestTable).groupBy(toStartOfDay(stamp)).withRollup) should include(
       "GROUP BY toStartOfDay(ts_dt) WITH ROLLUP"

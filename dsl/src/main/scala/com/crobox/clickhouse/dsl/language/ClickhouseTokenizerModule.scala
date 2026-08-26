@@ -657,10 +657,8 @@ trait ClickhouseTokenizerModule
   private def tokenizeGroupByKeys(columns: Seq[Column])(implicit ctx: TokenizeContext): String =
     columns
       .map {
-        case EmptyColumn             => ""
+        // The alias alone. tokenizeColumn would render `<expression> AS d`, which is a projection, not a key.
         case alias: AliasedColumn[_] => alias.quoted
-        case col: NativeColumn[_]    => col.quoted
-        case col: RefColumn[_]       => col.quoted
         case col                     => tokenizeColumn(col)
       }
       .filter(_.nonEmpty)
