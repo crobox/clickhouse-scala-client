@@ -68,6 +68,22 @@ class ClickhouseClient(
     )
 
   /**
+   * Progress events and the result, streamed together.
+   *
+   * Unlike [[queryWithProgress]], which hands back the body as a materialised `Future[String]` and so holds the whole
+   * result in memory, this emits it as [[QueryProgress.QueryResultPart]] events as it arrives. Not retried, since a
+   * retry would re-run the query after the consumer had already seen part of a result.
+   */
+  def queryWithProgressStreaming(sql: String)(implicit
+      settings: QuerySettings = QuerySettings(ReadQueries)
+  ): Source[QueryProgress, NotUsed] =
+    executeRequestStreaming(
+      sql,
+      settings.copy(readOnly = ReadQueries, idempotent = settings.idempotent.orElse(Some(true))),
+      MaximumFrameLength
+    )
+
+  /**
    * Execute a query that is modifying the state of the database. e.g. INSERT, SET, CREATE TABLE. For security purposes
    * SELECT and SHOW queries are not allowed, use the .query() method for those.
    *

@@ -18,6 +18,9 @@ object QueryProgress extends LazyLogging {
   case class QueryFailed(cause: Throwable)                  extends QueryProgress
   case class QueryRetry(cause: Throwable, retryNumber: Int) extends QueryProgress
 
+  /** One framed line of the result body, for callers streaming the result rather than buffering it. */
+  case class QueryResultPart(data: String) extends QueryProgress
+
   case class ClickhouseQueryProgress(identifier: String, progress: QueryProgress)
   case class Progress(rowsRead: Long, bytesRead: Long, rowsWritten: Long, bytesWritten: Long, totalRows: Long)
       extends QueryProgress

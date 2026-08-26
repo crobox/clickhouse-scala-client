@@ -1,16 +1,25 @@
 package com.crobox.clickhouse.internal
 
 import org.apache.pekko
+import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.{ActorSystem, Terminated}
+import org.apache.pekko.util.ByteString
 import org.apache.pekko.http.scaladsl.{Http, HttpsConnectionContext}
 import org.apache.pekko.http.scaladsl.model._
 import org.apache.pekko.http.scaladsl.settings.{ClientConnectionSettings, ConnectionPoolSettings}
 import org.apache.pekko.stream._
-import org.apache.pekko.stream.scaladsl.{Keep, Sink, Source, SourceQueueWithComplete}
+import org.apache.pekko.stream.scaladsl.{Framing, Keep, Sink, Source, SourceQueueWithComplete}
 import com.crobox.clickhouse.balancing.HostBalancer
 import com.crobox.clickhouse.internal.progress.QueryProgress._
 import com.crobox.clickhouse.internal.progress.{QueryProgress, StreamingProgressClickhouseTransport}
-import com.crobox.clickhouse.{ClickhouseExecutionException, QueryTimeoutException, TooManyQueriesException}
+import com.crobox.clickhouse.internal.ClickhouseResponseParser.StreamedExceptionMarker
+import com.crobox.clickhouse.{
+  ClickhouseChunkedException,
+  ClickhouseException,
+  ClickhouseExecutionException,
+  QueryTimeoutException,
+  TooManyQueriesException
+}
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 
@@ -116,6 +125,86 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
     Source
       .queue[QueryProgress](10, OverflowStrategy.dropHead)
       .mapMaterializedValue(queue => executeRequest(query, settings, entity, Some(queue)))
+
+  /**
+   * Progress events and the result body in one stream, so a large result is not held whole.
+   *
+   * `executeRequestWithProgress` returns the body as its materialised value, which means draining the entity into a
+   * single String -- a million-row result is one 7MB allocation. Here the body is framed and emitted as
+   * [[QueryProgress.QueryResultPart]] events instead.
+   *
+   * No retries: a retry would re-run the request after the consumer had already seen part of a result.
+   */
+  def executeRequestStreaming(
+      query: String,
+      settings: QuerySettings,
+      maximumFrameLength: Int
+  ): Source[QueryProgress, NotUsed] = {
+    val identifier = queryIdentifier
+
+    val progress = progressSource.collect {
+      case reported if reported.identifier == identifier => reported.progress
+    }
+
+    val body = Source
+      .future(hostBalancer.nextHost.flatMap { host =>
+        val request =
+          toRequest(host, query, Some(identifier), settings.copy(progressHeaders = Some(true)), None)(config)
+        singleRequest(request, progressEnabled = true)
+      })
+      // decodeResponse, because the request advertises gzip and deflate: without it a compressed response would be
+      // framed as though the raw bytes were text.
+      .map(decodeResponse)
+      .flatMapConcat {
+        case response @ HttpResponse(StatusCodes.OK, _, entity, _) =>
+          entity.withoutSizeLimit().dataBytes.map(bytes => (response.status, bytes))
+        case response =>
+          // Non-OK: stream the body as the failure rather than as results.
+          response.entity
+            .withoutSizeLimit()
+            .dataBytes
+            .fold(ByteString.empty)(_ ++ _)
+            .flatMapConcat(body =>
+              Source.failed(
+                ClickhouseException(
+                  s"Server returned code ${response.status}; ${body.utf8String}",
+                  query,
+                  statusCode = response.status
+                )
+              )
+            )
+      }
+      .map(_._2)
+      .via(Framing.delimiter(ByteString("\n"), maximumFrameLength, allowTruncation = true))
+      .map { line =>
+        val text = line.utf8String
+        // ClickHouse answers 200 and starts streaming, then appends an error if the query fails partway through, so
+        // the status line cannot report it. processClickhouseResponse checks the buffered body for the same marker;
+        // streaming has to check each line, or a failure arrives as ordinary results followed by QueryFinished.
+        StreamedExceptionMarker.findFirstMatchIn(text).foreach { marker =>
+          throw ClickhouseException(
+            s"Query failed after the response had started streaming; ClickHouse error code ${marker.group(1)}",
+            query,
+            ClickhouseChunkedException(text),
+            StatusCodes.OK
+          )
+        }
+        QueryResultPart(text)
+      }
+      .concat(Source.single(QueryFinished))
+
+    // eagerComplete, because the progress hub is a BroadcastHub that never completes on its own -- the body is what
+    // decides when this stream is done.
+    val merged = progress.merge(body, eagerComplete = true)
+
+    // idleTimeout rather than the deadline executeRequest applies. A stream's total duration is legitimately
+    // unbounded -- a large result can take longer than any per-query timeout and still be healthy -- but a gap
+    // between elements means the server has stopped answering, which is what the timeout is there to catch. The
+    // server-side max_execution_time still bounds the query itself, since it travels as a query parameter.
+    settings.timeout
+      .map(timeout => merged.idleTimeout(timeout + ClickHouseExecutor.TimeoutGrace))
+      .getOrElse(merged)
+  }
 
   def shutdown(): Future[Terminated] = {
     queue.complete()
