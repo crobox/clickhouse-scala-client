@@ -107,9 +107,11 @@ object DSLImprovements {
       OperationalQuery(query.internalQuery.copy(where = Some(comparison)))
     }
 
+    /** The table this selects from, where it is a table at all -- a subquery and a table function both give `None`. */
     def selectFromTable[T <: Table](): Option[T] = query.internalQuery.from.flatMap {
-      case _: InnerFromQuery    => None
-      case x: TableFromQuery[_] => Option(x.table.asInstanceOf[T])
+      case _: InnerFromQuery         => None
+      case _: TableFunctionFromQuery => None
+      case x: TableFromQuery[_]      => Option(x.table.asInstanceOf[T])
     }
 
     def insertConstraint(condition: Option[ExpressionColumn[Boolean]]): OperationalQuery =

@@ -75,4 +75,13 @@ class TableFunctionTest extends DslTestSpec {
     an[IllegalArgumentException] should be thrownBy select(dsl.all).from(dsl.numbers(3)).asFinal
     an[IllegalArgumentException] should be thrownBy select(dsl.all).from(dsl.numbers(3)).sample(0.1)
   }
+
+  // selectFromTable matched only the two cases FromQuery used to have, so a third made it throw MatchError at runtime
+  // for any query built on a table function. It is public API, so this is the regression the ADT change could cause.
+  it should "give None from selectFromTable rather than throwing" in {
+    import com.crobox.clickhouse.dsl.misc.DSLImprovements._
+    select(dsl.all).from(dsl.numbers(3)).selectFromTable[Table]() shouldBe None
+    select(itemId).from(TwoTestTable).selectFromTable[Table]() shouldBe Option(TwoTestTable)
+    select(itemId).from(select(itemId).from(TwoTestTable)).selectFromTable[Table]() shouldBe None
+  }
 }
