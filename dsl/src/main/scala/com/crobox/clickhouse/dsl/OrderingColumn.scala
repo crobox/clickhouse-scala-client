@@ -22,13 +22,32 @@ case class WithFill(
   )
 }
 
+/** `NULLS FIRST` / `NULLS LAST`, which decides where NULLs land independently of the direction. */
+sealed abstract class NullsOrder(val keyword: String)
+
+object NullsOrder {
+  case object NullsFirst extends NullsOrder("NULLS FIRST")
+  case object NullsLast  extends NullsOrder("NULLS LAST")
+}
+
 /**
  * One `ORDER BY` entry.
  *
  * Was a `(Column, OrderingDirection)` tuple, which had nowhere to put `WITH FILL`. The implicit conversions below keep
  * the tuple and bare-column forms working at call sites.
+ *
+ * `nulls` and `collate` come after `fill` in the parameter list but before it in the emitted SQL. Field order is kept
+ * as it was so the existing positional `OrderingColumn(col, DESC, Option(WithFill()))` call sites still compile;
+ * ClickHouse's grammar fixes the render order at `expr [ASC|DESC] [NULLS ...] [COLLATE ...] [WITH FILL ...]` and
+ * rejects any other -- `COLLATE 'en' NULLS LAST` and `WITH FILL ... NULLS LAST` are both syntax errors.
  */
-case class OrderingColumn(column: Column, direction: OrderingDirection = ASC, fill: Option[WithFill] = None)
+case class OrderingColumn(
+    column: Column,
+    direction: OrderingDirection = ASC,
+    fill: Option[WithFill] = None,
+    nulls: Option[NullsOrder] = None,
+    collate: Option[String] = None
+)
 
 object OrderingColumn {
 

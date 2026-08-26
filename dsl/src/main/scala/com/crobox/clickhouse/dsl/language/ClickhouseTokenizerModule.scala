@@ -153,12 +153,12 @@ trait ClickhouseTokenizerModule
             where,
             groupBy,
             having,
-            join,
+            joins,
             arrayJoin,
             orderBy,
             limit,
             limitBy,
-            union,
+            combinations,
             settings,
             withEntries,
             interpolate,
@@ -172,8 +172,8 @@ trait ClickhouseTokenizerModule
           tokenizeWith(withEntries),
           tokenizeSelect(select),
           tokenizeFrom(from),
-          if (join.isDefined) "" else arrayJoinSql,
-          tokenizeJoin(select, from, join, arrayJoinSql),
+          if (joins.nonEmpty) "" else arrayJoinSql,
+          tokenizeJoins(select, from, joins, arrayJoinSql),
           tokenizeFiltering(prewhere, "PREWHERE"),
           tokenizeFiltering(where, "WHERE"),
           tokenizeGroupBy(groupBy),
@@ -185,7 +185,7 @@ trait ClickhouseTokenizerModule
           tokenizeLimitBy(limitBy),
           tokenizeLimit(limit),
           tokenizeSettings(settings),
-          tokenizeUnionAll(union)
+          tokenizeSetOperations(combinations)
         ).filter(_.nonEmpty).mkString(" ")
     }
 
@@ -250,8 +250,16 @@ trait ClickhouseTokenizerModule
     if (settings.isEmpty) ""
     else settings.map { case (key, value) => s"$key = $value" }.mkString("SETTINGS ", Tokens.Delimiter, "")
 
-  private def tokenizeUnionAll(unions: Seq[OperationalQuery])(implicit ctx: TokenizeContext): String =
-    if (unions.nonEmpty) unions.map(q => s"UNION ALL ${toRawSql(q.internalQuery)}").mkString(" ") else ""
+  /**
+   * `UNION`/`INTERSECT`/`EXCEPT`, rendered as a flat chain with no parentheses of its own.
+   *
+   * Flat is only faithful while every step shares one precedence level, which [[InternalQuery]] requires. A trailing
+   * `ORDER BY` or `LIMIT` binds to the last branch either way, which is what the per-branch model already says.
+   */
+  private def tokenizeSetOperations(combinations: Seq[SetOperation])(implicit ctx: TokenizeContext): String =
+    combinations
+      .map { case SetOperation(kind, query) => s"${kind.keyword} ${toRawSql(query.internalQuery)}" }
+      .mkString(" ")
 
   private def tokenizeSelect(select: Option[SelectQuery])(implicit ctx: TokenizeContext): String =
     select match {
@@ -424,19 +432,35 @@ trait ClickhouseTokenizerModule
   }
 
   //  Table joins are tokenized as select * because of https://github.com/yandex/ClickHouse/issues/635
-  private def tokenizeJoin(
+  /**
+   * The whole `JOIN` chain, plus the left table's alias, which only exists because a join needs something to qualify
+   * its keys with.
+   *
+   * Every join in the chain keys off the *first* table: the left alias is claimed once and reused, while each join
+   * takes its own number for its right alias, giving `L1 ... R1 ... R2`. A join that has to key off an earlier join's
+   * right-hand side cannot be spelled here, because a [[com.crobox.clickhouse.dsl.JoinCondition]] names columns and not
+   * the table they came from -- nest it in a subquery instead.
+   */
+  private def tokenizeJoins(
       select: Option[SelectQuery],
       from: Option[FromQuery],
-      join: Option[JoinQuery],
+      joins: Seq[JoinQuery],
       arrayJoin: String
   )(implicit
       ctx: TokenizeContext
   ): String =
-    join match {
-      case Some(query) =>
-        // Claimed up front and held: tokenizing `right` below advances the counter for every join nested in it, so
-        // reading it back afterwards would number this join by its subtree and collide with the innermost join.
-        val joinNr = ctx.nextJoinNumber()
+    if (joins.isEmpty) ""
+    else {
+      // Claimed up front and held: tokenizing a right-hand side below advances the counter for every join nested in
+      // it, so reading it back afterwards would number this join by its subtree and collide with the innermost join.
+      val leftNr = ctx.nextJoinNumber()
+
+      val leftAlias =
+        if (from.flatMap(_.alias).isEmpty) s"AS ${ctx.leftAlias(from.flatMap(_.alias), leftNr)}" else ""
+
+      val chain = joins.zipWithIndex.map { case (query, index) =>
+        // The first join shares the left side's number; the rest claim their own so their right aliases stay distinct.
+        val rightNr = if (index == 0) leftNr else ctx.nextJoinNumber()
 
         // we always need to provide an alias to the RIGHT side
         val right = query.other match {
@@ -444,21 +468,26 @@ trait ClickhouseTokenizerModule
           case query: InnerFromQuery    => tokenizeFrom(Some(query), withPrefix = false)
         }
 
-        val leftAlias = if (from.flatMap(_.alias).isEmpty) s"AS ${ctx.leftAlias(from.flatMap(_.alias), joinNr)}" else ""
-        val rightAlias = s"AS ${ctx.rightAlias(query.other.alias, joinNr)}"
+        Seq(
+          if (query.global) "GLOBAL" else "",
+          tokenizeJoinType(query.joinType),
+          right,
+          s"AS ${ctx.rightAlias(query.other.alias, rightNr)}",
+          tokenizeJoinKeys(select, from.get, query, leftNr, rightNr)
+        )
+      }
 
-        s""" $leftAlias
-           | $arrayJoin
-           | ${if (query.global) "GLOBAL " else ""}
-           | ${tokenizeJoinType(query.joinType)}
-           | $right $rightAlias
-           | ${tokenizeJoinKeys(select, from.get, query, joinNr)}""".trim.stripMargin
-          .replaceAll("\n", "")
-          .replaceAll("\r", "")
-      case None => ""
+      // ARRAY JOIN has to land between the left table's alias and the first JOIN keyword.
+      (Seq(leftAlias, arrayJoin) ++ chain.flatten).filter(_.nonEmpty).mkString(" ")
     }
 
-  private def tokenizeJoinKeys(select: Option[SelectQuery], from: FromQuery, query: JoinQuery, joinNr: Int)(implicit
+  private def tokenizeJoinKeys(
+      select: Option[SelectQuery],
+      from: FromQuery,
+      query: JoinQuery,
+      leftNr: Int,
+      rightNr: Int
+  )(implicit
       ctx: TokenizeContext
   ): String = {
 
@@ -492,7 +521,7 @@ trait ClickhouseTokenizerModule
             "ON " + `using`
               .map { key =>
                 val left = underlyingLeftColumn(select, key).getOrElse(key.name)
-                s"${ctx.leftAlias(from.alias, joinNr)}.$left = ${ctx.rightAlias(query.other.alias, joinNr)}.${key.name}"
+                s"${ctx.leftAlias(from.alias, leftNr)}.$left = ${ctx.rightAlias(query.other.alias, rightNr)}.${key.name}"
               }
               .mkString(" AND ")
           } else if (`using`.size == 1) s"USING ${using.head.name}"
@@ -502,7 +531,7 @@ trait ClickhouseTokenizerModule
           "ON " + query.on
             .map { cond =>
               val left = underlyingLeftColumn(select, cond.left).getOrElse(cond.left.name)
-              s"${ctx.leftAlias(from.alias, joinNr)}.$left ${cond.operator} ${ctx.rightAlias(query.other.alias, joinNr)}.${cond.right.name}"
+              s"${ctx.leftAlias(from.alias, leftNr)}.$left ${cond.operator} ${ctx.rightAlias(query.other.alias, rightNr)}.${cond.right.name}"
             }
             .mkString(" AND ")
         } else ""
@@ -628,10 +657,18 @@ trait ClickhouseTokenizerModule
     if (parts.isEmpty) "WITH FILL" else s"WITH FILL ${parts.mkString(" ")}"
   }
 
+  /**
+   * `LIMIT`, and `OFFSET` on its own when there is no size to limit to.
+   *
+   * `WITH TIES` only parses at the very end of the clause, and only after the `LIMIT offset, size` spelling -- both
+   * `LIMIT size WITH TIES OFFSET offset` and `LIMIT size OFFSET offset WITH TIES` are syntax errors.
+   */
   private def tokenizeLimit(limit: Option[Limit]): String =
     limit match {
-      case None                      => ""
-      case Some(Limit(size, offset)) => s"LIMIT $offset, $size"
+      case None                                      => ""
+      case Some(Limit(None, offset, _))              => s"OFFSET $offset"
+      case Some(Limit(Some(size), offset, withTies)) =>
+        s"LIMIT $offset, $size" + (if (withTies) " WITH TIES" else "")
     }
 
   private def tokenizeLimitBy(limitBy: Option[LimitBy])(implicit ctx: TokenizeContext): String =
@@ -651,9 +688,17 @@ trait ClickhouseTokenizerModule
 
   private def tokenizeTuplesAliased(columns: Seq[OrderingColumn])(implicit ctx: TokenizeContext): String =
     columns
-      .map { case OrderingColumn(column, dir, fill) =>
-        val ordered = tokenizeColumn(column) + " " + direction(dir)
-        fill.map(f => s"$ordered ${tokenizeWithFill(f)}").getOrElse(ordered)
+      // ClickHouse's grammar fixes this order and rejects any other: NULLS before COLLATE, and WITH FILL last.
+      .map { case OrderingColumn(column, dir, fill, nulls, collate) =>
+        Seq(
+          Option(tokenizeColumn(column)),
+          Option(direction(dir)),
+          nulls.map(_.keyword),
+          // A locale name, so a quoted string literal rather than an identifier -- `escape` does the escaping but not
+          // the quoting.
+          collate.map(locale => s"COLLATE '${ClickhouseStatement.escape(locale)}'"),
+          fill.map(tokenizeWithFill)
+        ).flatten.mkString(" ")
       }
       .mkString(", ")
 

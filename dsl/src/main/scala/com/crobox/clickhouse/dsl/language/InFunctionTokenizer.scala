@@ -26,7 +26,7 @@ trait InFunctionTokenizer {
   }
 
   /** A right-hand side that joins already names its sides, so aliasing its tables again would clash. */
-  private def aliasTables(r: InFuncRHMagnet): Boolean = r.query.forall(_.internalQuery.join.isEmpty)
+  private def aliasTables(r: InFuncRHMagnet): Boolean = r.query.forall(_.internalQuery.joins.isEmpty)
 
   private def tokenizeInFunRHCol(value: InFuncRHMagnet, aliasTables: Boolean)(implicit
       ctx: TokenizeContext

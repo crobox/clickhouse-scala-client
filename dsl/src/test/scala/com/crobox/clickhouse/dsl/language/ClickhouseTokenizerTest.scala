@@ -121,7 +121,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-        join = Some(
+        joins = Seq(
           JoinQuery(JoinQuery.InnerJoin, TableFromQuery[OneTestTable.type](OneTestTable), using = Seq(shieldId))
         )
       )
@@ -153,7 +153,7 @@ class ClickhouseTokenizerTest extends DslTestSpec {
       InternalQuery(
         Some(select),
         Some(TableFromQuery[OneTestTable.type](OneTestTable)),
-        join = Some(
+        joins = Seq(
           JoinQuery(
             JoinQuery.AnyLeftJoin,
             InnerFromQuery(

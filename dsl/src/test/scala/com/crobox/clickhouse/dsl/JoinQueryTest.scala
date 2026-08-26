@@ -188,4 +188,78 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
         s"ON L1.shield_id = R1.item_id FORMAT JSON"
     )
   }
+
+  // A chain keys every join off the first table: the left alias is claimed once and reused while the right aliases
+  // count up. Anything keyed off an earlier join's right-hand side has to nest, since a JoinCondition names a column
+  // rather than the table it belongs to.
+  it should "chain several joins at one level, keyed off the first table" in {
+    val query = select(itemId)
+      .from(TwoTestTable)
+      .join(InnerJoin, ThreeTestTable)
+      .on(itemId)
+      .join(AllLeftJoin, OneTestTable)
+      .on(itemId)
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT item_id FROM ${TwoTestTable.quoted} AS L1 " +
+        s"INNER JOIN (SELECT * FROM ${ThreeTestTable.quoted}) AS R1 ON L1.item_id = R1.item_id " +
+        s"ALL LEFT JOIN (SELECT * FROM ${OneTestTable.quoted}) AS R2 ON L1.item_id = R2.item_id FORMAT JSON"
+    )
+  }
+
+  it should "chain joins that use USING" in {
+    val query = select(itemId).from(TwoTestTable).join(InnerJoin, ThreeTestTable).using(itemId)
+    toSql(query.join(InnerJoin, TwoTestTable).using(itemId).internalQuery) should matchSQL(
+      s"SELECT item_id FROM ${TwoTestTable.quoted} AS L1 " +
+        s"INNER JOIN (SELECT * FROM ${ThreeTestTable.quoted}) AS R1 USING item_id " +
+        s"INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R2 USING item_id FORMAT JSON"
+    )
+  }
+
+  it should "attach USING and ON to the join most recently added" in {
+    val query = select(itemId)
+      .from(TwoTestTable)
+      .join(InnerJoin, ThreeTestTable)
+      .using(itemId)
+      .join(InnerJoin, OneTestTable)
+      .on(itemId)
+    query.internalQuery.joins.map(j => (j.using.map(_.name), j.on.size)) shouldBe Seq(
+      (Seq("item_id"), 0),
+      (Seq.empty, 1)
+    )
+  }
+
+  it should "keep ARRAY JOIN between the left alias and the first JOIN of a chain" in {
+    val query = select(itemId)
+      .from(TwoTestTable)
+      .withArrayJoin(numbers)
+      .join(InnerJoin, ThreeTestTable)
+      .on(itemId)
+      .join(InnerJoin, TwoTestTable)
+      .on(itemId)
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT item_id FROM ${TwoTestTable.quoted} AS L1 ARRAY JOIN numbers " +
+        s"INNER JOIN (SELECT * FROM ${ThreeTestTable.quoted}) AS R1 ON L1.item_id = R1.item_id " +
+        s"INNER JOIN (SELECT * FROM ${TwoTestTable.quoted}) AS R2 ON L1.item_id = R2.item_id FORMAT JSON"
+    )
+  }
+
+  it should "carry GLOBAL per join rather than for the whole chain" in {
+    val query = select(itemId)
+      .from(TwoTestTable)
+      .join(InnerJoin, ThreeTestTable)
+      .on(itemId)
+      .globalJoin(InnerJoin, OneTestTable)
+      .on(itemId)
+    toSql(query.internalQuery) should include("GLOBAL INNER JOIN")
+    toSql(query.internalQuery) should matchSQL(
+      s"SELECT item_id FROM ${TwoTestTable.quoted} AS L1 " +
+        s"INNER JOIN (SELECT * FROM ${ThreeTestTable.quoted}) AS R1 ON L1.item_id = R1.item_id " +
+        s"GLOBAL INNER JOIN (SELECT * FROM ${OneTestTable.quoted}) AS R2 ON L1.item_id = R2.item_id FORMAT JSON"
+    )
+  }
+
+  it should "refuse USING or ON with no join to attach them to" in {
+    an[IllegalArgumentException] should be thrownBy select(itemId).from(TwoTestTable).using(itemId)
+    an[IllegalArgumentException] should be thrownBy select(itemId).from(TwoTestTable).on(itemId)
+  }
 }
