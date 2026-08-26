@@ -147,4 +147,81 @@ class QueryClausesTest extends DslTestSpec {
     val query = select(itemId).from(TwoTestTable).join(JoinQuery.PasteJoin, ThreeTestTable) on itemId
     an[IllegalArgumentException] should be thrownBy sql(query)
   }
+
+  "LIMIT" should "render offset and size" in {
+    sql(select(shieldId).from(OneTestTable).limit(10, 5)) should matchSQL(
+      s"SELECT shield_id FROM ${OneTestTable.quoted} LIMIT 5, 10"
+    )
+  }
+
+  it should "render a size on its own" in {
+    sql(select(shieldId).from(OneTestTable).limit(10)) should matchSQL(
+      s"SELECT shield_id FROM ${OneTestTable.quoted} LIMIT 0, 10"
+    )
+  }
+
+  // WITH TIES parses only at the end of the clause, and only after `LIMIT offset, size` -- neither
+  // `LIMIT size WITH TIES OFFSET offset` nor `LIMIT size OFFSET offset WITH TIES` is accepted.
+  it should "render WITH TIES last, alone and with an offset" in {
+    sql(select(shieldId).from(OneTestTable).limitWithTies(10)) should matchSQL(
+      s"SELECT shield_id FROM ${OneTestTable.quoted} LIMIT 0, 10 WITH TIES"
+    )
+    sql(select(shieldId).from(OneTestTable).limitWithTies(10, 5)) should matchSQL(
+      s"SELECT shield_id FROM ${OneTestTable.quoted} LIMIT 5, 10 WITH TIES"
+    )
+  }
+
+  it should "refuse WITH TIES with no size to extend" in {
+    an[IllegalArgumentException] should be thrownBy Limit(None, 5, withTies = true)
+  }
+
+  "OFFSET" should "render on its own, with no LIMIT" in {
+    sql(select(shieldId).from(OneTestTable).offset(5)) should matchSQL(
+      s"SELECT shield_id FROM ${OneTestTable.quoted} OFFSET 5"
+    )
+  }
+
+  it should "keep a size that was already set" in {
+    sql(select(shieldId).from(OneTestTable).limit(10).offset(5)) should matchSQL(
+      s"SELECT shield_id FROM ${OneTestTable.quoted} LIMIT 5, 10"
+    )
+  }
+
+  // ClickHouse fixes this order and rejects any other: NULLS after the direction, COLLATE after NULLS, WITH FILL last.
+  "ORDER BY" should "render NULLS FIRST and NULLS LAST" in {
+    sql(
+      select(shieldId)
+        .from(OneTestTable)
+        .orderByColumns(OrderingColumn(shieldId, DESC, nulls = Option(NullsOrder.NullsFirst)))
+    ) should matchSQL(s"SELECT shield_id FROM ${OneTestTable.quoted} ORDER BY shield_id DESC NULLS FIRST")
+    sql(
+      select(shieldId)
+        .from(OneTestTable)
+        .orderByColumns(OrderingColumn(shieldId, ASC, nulls = Option(NullsOrder.NullsLast)))
+    ) should matchSQL(s"SELECT shield_id FROM ${OneTestTable.quoted} ORDER BY shield_id ASC NULLS LAST")
+  }
+
+  it should "render COLLATE, quoted as a literal" in {
+    sql(select(shieldId).from(OneTestTable).orderByColumns(OrderingColumn(shieldId, collate = Option("en")))) should
+    matchSQL(s"SELECT shield_id FROM ${OneTestTable.quoted} ORDER BY shield_id ASC COLLATE 'en'")
+  }
+
+  it should "render direction, NULLS, COLLATE and WITH FILL in the order the grammar requires" in {
+    sql(
+      select(shieldId)
+        .from(OneTestTable)
+        .orderByColumns(
+          OrderingColumn(
+            shieldId,
+            DESC,
+            fill = Option(WithFill(step = Option(const(1)))),
+            nulls = Option(NullsOrder.NullsLast),
+            collate = Option("en")
+          )
+        )
+    ) should matchSQL(
+      s"SELECT shield_id FROM ${OneTestTable.quoted} " +
+        s"ORDER BY shield_id DESC NULLS LAST COLLATE 'en' WITH FILL STEP 1"
+    )
+  }
 }

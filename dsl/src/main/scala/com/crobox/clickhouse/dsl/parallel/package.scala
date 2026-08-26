@@ -58,10 +58,8 @@ package object parallel {
 
         val newCols = (cols ++ maybeFromCols ++ uQry.select.toSeq.flatMap(_.columns)).distinct
 
-        uQry.join match {
-          case Some(JoinQuery(_, q, _, _, _)) if selectAll => recursiveCollectCols(q.internalQuery, newCols)
-          case _                                           => newCols
-        }
+        if (selectAll) uQry.joins.foldLeft(newCols)((acc, join) => recursiveCollectCols(join.other.internalQuery, acc))
+        else newCols
       }
 
       // Forcefully add the columns of the right table(s), because 'select *' on a join only returns the values of the left table in clickhouse

@@ -521,6 +521,12 @@ class SqlValidationITSpec extends DslITSpec {
     syn("Merge", select(merge[TableColumn[StateResult[Double]], Double](sum(col2))) from TwoTestTable),
     sem("TimeSeries", select(timeSeries(timestampColumn, oneDay)) from OneTestTable),
     sem("ArgMin", select(argMin(col2, col3)) from TwoTestTable),
+    // count(DISTINCT) under a combinator: renders `countIf(DISTINCT column_2, ...)`, which the server accepts and
+    // reads as "count the distinct values among the rows matching the condition".
+    sem(
+      "Count",
+      select(aggIf[TableColumn[Long], Long](col2 > 1)(countDistinct(col2))) from TwoTestTable
+    ),
     sem("ArgMax", select(argMax(col2, col3)) from TwoTestTable)
   )
 
@@ -676,6 +682,90 @@ class SqlValidationITSpec extends DslITSpec {
         .from(TwoTestTable)
         .orderByColumns(OrderingColumn(col2, ASC, Option(WithFill())))
         .interpolate()
+    ),
+    Construct(
+      "order by nulls first",
+      select(col2).from(TwoTestTable).orderByColumns(OrderingColumn(col2, DESC, nulls = Option(NullsOrder.NullsFirst)))
+    ),
+    Construct(
+      "order by collate",
+      select(col3).from(TwoTestTable).orderByColumns(OrderingColumn(col3, collate = Option("en")))
+    ),
+    Construct(
+      "order by with every modifier, in the one order the grammar accepts",
+      select(col2)
+        .from(TwoTestTable)
+        .orderByColumns(
+          OrderingColumn(
+            col2,
+            DESC,
+            fill = Option(WithFill(step = Option(const(1)))),
+            nulls = Option(NullsOrder.NullsLast),
+            collate = Option("en")
+          )
+        )
+    ),
+    Construct("limit with ties", select(col2).from(TwoTestTable).orderBy(col2).limitWithTies(2)),
+    Construct(
+      "limit with ties and an offset, which only parses as LIMIT offset, size WITH TIES",
+      select(col2).from(TwoTestTable).orderBy(col2).limitWithTies(2, 1)
+    ),
+    Construct("offset without a limit", select(col2).from(TwoTestTable).orderBy(col2).offset(2)),
+    Construct(
+      "union distinct",
+      (select(itemId) from TwoTestTable).unionDistinct(select(itemId) from ThreeTestTable)
+    ),
+    Construct(
+      "intersect",
+      (select(itemId) from TwoTestTable).intersect(select(itemId) from ThreeTestTable)
+    ),
+    Construct(
+      "intersect distinct",
+      (select(itemId) from TwoTestTable).intersectDistinct(select(itemId) from ThreeTestTable)
+    ),
+    Construct(
+      "except",
+      (select(itemId) from TwoTestTable).except(select(itemId) from ThreeTestTable)
+    ),
+    Construct(
+      "except distinct",
+      (select(itemId) from TwoTestTable).exceptDistinct(select(itemId) from ThreeTestTable)
+    ),
+    Construct(
+      "except chained with union, which share a precedence level",
+      (select(itemId) from TwoTestTable)
+        .except(select(itemId) from ThreeTestTable)
+        .unionAll(select(itemId) from TwoTestTable)
+    ),
+    Construct(
+      // Projects column_3, which only the left table has: once three tables in the chain expose item_id, selecting it
+      // unqualified is ambiguous -- a property of the fixture's schema rather than of the rendering.
+      "three tables joined at one level, every join keyed off the first",
+      select(col3)
+        .from(TwoTestTable)
+        .join(JoinQuery.InnerJoin, ThreeTestTable)
+        .on(itemId)
+        .join(JoinQuery.AllLeftJoin, ThreeTestTable)
+        .on(itemId)
+    ),
+    Construct(
+      "a chain of joins using USING",
+      select(itemId)
+        .from(TwoTestTable)
+        .join(JoinQuery.InnerJoin, ThreeTestTable)
+        .using(itemId)
+        .join(JoinQuery.InnerJoin, TwoTestTable)
+        .using(itemId)
+    ),
+    Construct(
+      "array join ahead of a chain of joins",
+      select(shieldId as itemId)
+        .from(OneTestTable)
+        .withArrayJoin(numbers as "n")
+        .join(JoinQuery.InnerJoin, TwoTestTable)
+        .using(itemId)
+        .join(JoinQuery.InnerJoin, ThreeTestTable)
+        .using(itemId)
     ),
     Construct(
       "group by a column an aggregate already covers, which is now projected",
