@@ -38,10 +38,21 @@ trait Magnets {
    */
   trait Magnet[+C] {
     val column: TableColumn[C]
+  }
 
-    // Magnets are anonymous classes minted by implicit conversion, so without this two built from the same value
-    // compare unequal, and every AST node holding one inherits that. The wrapped column is the only state a magnet
-    // has and the only part that renders, so it is what equality is about.
+  /**
+   * Structural equality for the magnets the implicit conversions mint.
+   *
+   * Those are anonymous classes, so two built from the same value would compare unequal, and every AST node holding one
+   * would inherit that. The wrapped column is their only state and the only part that renders, so it is what equality
+   * is about.
+   *
+   * It deliberately does not live on [[Magnet]] itself. A concrete `equals` inherited from there suppresses the one the
+   * compiler synthesises for a case class, so every case class extending a magnet -- `IntDiv`, `Cast`, `FixedString`
+   * and the rest, whose `column` is `this` -- inherited `column == that.column` and recursed until the stack ran out.
+   * Off `Magnet`, those get their own field-wise equality back.
+   */
+  trait MagnetEquality { self: Magnet[_] =>
     override def equals(other: Any): Boolean = other match {
       case that: Magnet[_] => column == that.column
       case _               => false
@@ -86,12 +97,12 @@ trait Magnets {
   trait ConstOrColMagnet[+C] extends Magnet[C] with ScalaBooleanFunctionOps with InOps with NullableOps
 
   implicit def constOrColMagnetFromCol[C](s: TableColumn[C]): ConstOrColMagnet[C] =
-    new ConstOrColMagnet[C] {
+    new ConstOrColMagnet[C] with MagnetEquality {
       override val column: TableColumn[C] = s
     }
 
   implicit def constOrColMagnetFromConst[T: QueryValue](s: T): ConstOrColMagnet[T] =
-    new ConstOrColMagnet[T] {
+    new ConstOrColMagnet[T] with MagnetEquality {
       override val column: TableColumn[T] = Const(s)
     }
 
@@ -150,13 +161,13 @@ trait Magnets {
   sealed trait ArrayColMagnet[+C] extends Magnet[C]
 
   implicit def arrayColMagnetFromIterableConst[T: QueryValue](s: scala.Iterable[T]): ArrayColMagnet[scala.Iterable[T]] =
-    new ArrayColMagnet[scala.Iterable[T]] {
+    new ArrayColMagnet[scala.Iterable[T]] with MagnetEquality {
       val qvForIterable   = QueryValueFormats.queryValueToSeq(implicitly[QueryValue[T]])
       override val column = Const(s)(qvForIterable)
     }
 
   implicit def arrayColMagnetFromIterableCol[C](s: TableColumn[scala.Iterable[C]]): ArrayColMagnet[scala.Iterable[C]] =
-    new ArrayColMagnet[scala.Iterable[C]] {
+    new ArrayColMagnet[scala.Iterable[C]] with MagnetEquality {
       override val column = s
     }
 
@@ -184,22 +195,22 @@ trait Magnets {
       with EmptyNonEmptyCol[C]
 
   implicit def stringColMagnetFromString[T <: String: QueryValue](s: T): StringColMagnet[String] =
-    new StringColMagnet[String] {
+    new StringColMagnet[String] with MagnetEquality {
       override val column: TableColumn[String] = Const(s)
     }
 
   implicit def stringColMagnetFromStringCol[T <: TableColumn[String]](s: T): StringColMagnet[String] =
-    new StringColMagnet[String] {
+    new StringColMagnet[String] with MagnetEquality {
       override val column: TableColumn[String] = s
     }
 
   implicit def stringColMagnetFromUUID[T <: UUID: QueryValue](s: T): StringColMagnet[UUID] =
-    new StringColMagnet[UUID] {
+    new StringColMagnet[UUID] with MagnetEquality {
       override val column: TableColumn[UUID] = Const(s)
     }
 
   implicit def stringColMagnetFromUUIDCol[T <: TableColumn[UUID]](s: T): StringColMagnet[UUID] =
-    new StringColMagnet[UUID] {
+    new StringColMagnet[UUID] with MagnetEquality {
       override val column: TableColumn[UUID] = s
     }
 
@@ -212,7 +223,7 @@ trait Magnets {
   implicit def fixedStringColMagnetFromCol[T <: TableColumn[FixedStringBytes]](
       s: T
   ): FixedStringColMagnet[FixedStringBytes] =
-    new FixedStringColMagnet[FixedStringBytes] {
+    new FixedStringColMagnet[FixedStringBytes] with MagnetEquality {
       override val column: TableColumn[FixedStringBytes] = s
     }
 
@@ -227,22 +238,22 @@ trait Magnets {
   sealed trait DateOrDateTime[C] extends Magnet[C] with AddSubtractable[C] with ComparableWith[DateOrDateTime[_]]
 
   implicit def ddtFromDateCol[T <: TableColumn[LocalDate]](s: T): DateOrDateTime[LocalDate] =
-    new DateOrDateTime[LocalDate] {
+    new DateOrDateTime[LocalDate] with MagnetEquality {
       override val column = s
     }
 
   implicit def ddtFromDateTimeCol[T <: TableColumn[ZonedDateTime]](s: T): DateOrDateTime[ZonedDateTime] =
-    new DateOrDateTime[ZonedDateTime] {
+    new DateOrDateTime[ZonedDateTime] with MagnetEquality {
       override val column = s
     }
 
   implicit def ddtFromDate[T <: LocalDate: QueryValue](s: T): DateOrDateTime[LocalDate] =
-    new DateOrDateTime[LocalDate] {
+    new DateOrDateTime[LocalDate] with MagnetEquality {
       override val column = toDate(s)
     }
 
   implicit def ddtFromDateTime[T <: ZonedDateTime: QueryValue](s: T): DateOrDateTime[ZonedDateTime] =
-    new DateOrDateTime[ZonedDateTime] {
+    new DateOrDateTime[ZonedDateTime] with MagnetEquality {
       override val column = toDateTime(s)
     }
 
@@ -309,72 +320,72 @@ trait Magnets {
       with ArithmeticOps[C]
 
   implicit def numericFromLong[T <: Long: QueryValue](s: T): NumericCol[Long] =
-    new NumericCol[Long] {
+    new NumericCol[Long] with MagnetEquality {
       override val column = Const(s)
     }
 
   implicit def numericFromInt[T <: Int: QueryValue](s: T): NumericCol[Int] =
-    new NumericCol[Int] {
+    new NumericCol[Int] with MagnetEquality {
       override val column = Const(s)
     }
 
   implicit def numericFromDouble[T <: Double: QueryValue](s: T): NumericCol[Double] =
-    new NumericCol[Double] {
+    new NumericCol[Double] with MagnetEquality {
       override val column = Const(s)
     }
 
   implicit def numericFromFloat[T <: Float: QueryValue](s: T): NumericCol[Float] =
-    new NumericCol[Float] {
+    new NumericCol[Float] with MagnetEquality {
       override val column = Const(s)
     }
 
   implicit def numericFromBigInt[T <: BigInt: QueryValue](s: T): NumericCol[BigInt] =
-    new NumericCol[BigInt] {
+    new NumericCol[BigInt] with MagnetEquality {
       override val column = Const(s)
     }
 
   implicit def numericFromBigDecimal[T <: BigDecimal: QueryValue](s: T): NumericCol[BigDecimal] =
-    new NumericCol[BigDecimal] {
+    new NumericCol[BigDecimal] with MagnetEquality {
       override val column = Const(s)
     }
 
   implicit def numericFromBoolean[T <: Boolean: QueryValue](s: T): NumericCol[Boolean] =
-    new NumericCol[Boolean] {
+    new NumericCol[Boolean] with MagnetEquality {
       override val column = Const(s)
     }
 
   implicit def numericFromLongCol[T <: TableColumn[Long]](s: T): NumericCol[Long] =
-    new NumericCol[Long] {
+    new NumericCol[Long] with MagnetEquality {
       override val column = s
     }
 
   implicit def numericFromIntCol[T <: TableColumn[Int]](s: T): NumericCol[Int] =
-    new NumericCol[Int] {
+    new NumericCol[Int] with MagnetEquality {
       override val column = s
     }
 
   implicit def numericFromDoubleCol[T <: TableColumn[Double]](s: T): NumericCol[Double] =
-    new NumericCol[Double] {
+    new NumericCol[Double] with MagnetEquality {
       override val column = s
     }
 
   implicit def numericFromFloatCol[T <: TableColumn[Float]](s: T): NumericCol[Float] =
-    new NumericCol[Float] {
+    new NumericCol[Float] with MagnetEquality {
       override val column = s
     }
 
   implicit def numericFromBigIntCol[T <: TableColumn[BigInt]](s: T): NumericCol[BigInt] =
-    new NumericCol[BigInt] {
+    new NumericCol[BigInt] with MagnetEquality {
       override val column = s
     }
 
   implicit def numericFromBigDecimalCol[T <: TableColumn[BigDecimal]](s: T): NumericCol[BigDecimal] =
-    new NumericCol[BigDecimal] {
+    new NumericCol[BigDecimal] with MagnetEquality {
       override val column = s
     }
 
   implicit def numericFromBooleanCol[T <: TableColumn[Boolean]](s: T): NumericCol[Boolean] =
-    new NumericCol[Boolean] {
+    new NumericCol[Boolean] with MagnetEquality {
       override val column = s
     }
 
@@ -386,12 +397,12 @@ trait Magnets {
   implicit def emptyNonEmptyFromIterableCol[Elem, Collection[B] <: Iterable[B], ColType[A] <: TableColumn[A]](
       s: ColType[Collection[Elem]]
   ): EmptyNonEmptyCol[Collection[Elem]] =
-    new EmptyNonEmptyCol[Collection[Elem]] {
+    new EmptyNonEmptyCol[Collection[Elem]] with MagnetEquality {
       override val column: TableColumn[Collection[Elem]] = s
     }
 
   implicit def emptyNonEmptyFromIterable[T <: Iterable[_]: QueryValue](s: T): EmptyNonEmptyCol[T] =
-    new EmptyNonEmptyCol[T] {
+    new EmptyNonEmptyCol[T] with MagnetEquality {
       override val column = Const(s)
     }
 
