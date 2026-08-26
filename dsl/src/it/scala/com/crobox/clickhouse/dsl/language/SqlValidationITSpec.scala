@@ -40,6 +40,9 @@ class SqlValidationITSpec extends DslITSpec {
    */
   case class Construct(ast: String, query: OperationalQuery, level: ValidationLevel = Semantic)
 
+  private val stampInAmsterdam =
+    java.time.ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, java.time.ZoneId.of("Europe/Amsterdam"))
+
   private val oneDay = MultiInterval(
     java.time.ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, java.time.ZoneOffset.UTC),
     java.time.ZonedDateTime.of(2020, 1, 8, 0, 0, 0, 0, java.time.ZoneOffset.UTC),
@@ -428,10 +431,16 @@ class SqlValidationITSpec extends DslITSpec {
     sem("FixedString", select(toFixedString("ab", 2))),
     sem("StringCutToZero", select(toStringCutToZero("ab"))),
     sem("Reinterpret", select(reinterpret[Long](toUInt64("1")))),
-    // The Or* variants render a different arm each, and the OrDefault one renders a nested cast of the default.
+    // The Or* variants render a different arm each. OrDefault renders the default value, which went through toString
+    // and so emitted literals the server could not parse for every non-numeric type.
     sem("UInt32", select(toUInt32OrZero("x"))),
     sem("UInt32", select(toUInt32OrNull("x"))),
-    sem("UInt32", select(toUInt32OrDefault("x", 0)))
+    sem("UInt32", select(toUInt32OrDefault("x", 0))),
+    sem("Int16", select(toInt16OrDefault("x", (-7).toShort))),
+    sem("Float64", select(toFloat64OrDefault("x", 1.5))),
+    sem("DateRep", select(toDateOrDefault("x", stampInAmsterdam))),
+    sem("DateTimeRep", select(toDateTimeOrDefault("x", stampInAmsterdam))),
+    sem("Uuid", select(toUUIDOrDefault("x", toUUID("00000000-0000-0000-0000-000000000001"))))
   )
 
   private val dateTimeConstructs = {
