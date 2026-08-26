@@ -10,7 +10,7 @@ import scala.util.{Failure, Success}
  * Adding a clause means adding a field, and only one of the places that field has to be handled is checked by the
  * compiler: `toRawSql` destructures positionally, so it stops building. `:+>` and `+` both name their arguments, so an
  * unmentioned field just takes its default -- a merge quietly discards it, and a genuine conflict quietly passes. That
- * is how `unionAll` came to be dropped from every merge for as long as it existed.
+ * is how the set-operation field came to be dropped from every merge for as long as it existed.
  *
  * [[FieldCount]] is the tripwire that sends the author here; the tests below are what actually verify the merge.
  */
@@ -35,12 +35,12 @@ class InternalQueryFieldsTest extends DslTestSpec {
     where = Option(condition),
     groupBy = Option(GroupByQuery(usingColumns = Seq(itemId))),
     having = Option(condition),
-    join = Option(JoinQuery(JoinQuery.InnerJoin, TableFromQuery(ThreeTestTable), `using` = Seq(itemId))),
+    joins = Seq(JoinQuery(JoinQuery.InnerJoin, TableFromQuery(ThreeTestTable), `using` = Seq(itemId))),
     arrayJoin = Option(ArrayJoinQuery(Seq(numbers))),
-    orderBy = Seq(OrderingColumn(itemId, DESC)),
-    limit = Option(Limit(10, 5)),
+    orderBy = Seq(OrderingColumn(itemId, DESC, nulls = Option(NullsOrder.NullsLast))),
+    limit = Option(Limit(Option(10), 5, withTies = true)),
     limitBy = Option(LimitBy(1, 0, Seq(itemId))),
-    unionAll = Seq(select(itemId).from(OneTestTable)),
+    combinations = Seq(SetOperation(SetOperationKind.UnionAll, select(itemId).from(OneTestTable))),
     settings = Seq("max_threads" -> "1"),
     withEntries = Seq(WithExpression(const(1), "one")),
     interpolate = Option(Interpolate(Seq(InterpolateColumn(col2)))),
@@ -50,23 +50,23 @@ class InternalQueryFieldsTest extends DslTestSpec {
 
   /** One query per field, carrying only that field, so a missing conflict check shows up as a merge that succeeds. */
   private val singleFieldQueries: Seq[(String, InternalQuery)] = Seq(
-    "select"      -> InternalQuery(select = populated.select),
-    "from"        -> InternalQuery(from = populated.from),
-    "prewhere"    -> InternalQuery(prewhere = populated.prewhere),
-    "where"       -> InternalQuery(where = populated.where),
-    "groupBy"     -> InternalQuery(groupBy = populated.groupBy),
-    "having"      -> InternalQuery(having = populated.having),
-    "join"        -> InternalQuery(join = populated.join),
-    "arrayJoin"   -> InternalQuery(arrayJoin = populated.arrayJoin),
-    "orderBy"     -> InternalQuery(orderBy = populated.orderBy),
-    "limit"       -> InternalQuery(limit = populated.limit),
-    "limitBy"     -> InternalQuery(limitBy = populated.limitBy),
-    "unionAll"    -> InternalQuery(unionAll = populated.unionAll),
-    "settings"    -> InternalQuery(settings = populated.settings),
-    "withEntries" -> InternalQuery(withEntries = populated.withEntries),
-    "interpolate" -> InternalQuery(interpolate = populated.interpolate),
-    "windows"     -> InternalQuery(windows = populated.windows),
-    "qualify"     -> InternalQuery(qualify = populated.qualify)
+    "select"       -> InternalQuery(select = populated.select),
+    "from"         -> InternalQuery(from = populated.from),
+    "prewhere"     -> InternalQuery(prewhere = populated.prewhere),
+    "where"        -> InternalQuery(where = populated.where),
+    "groupBy"      -> InternalQuery(groupBy = populated.groupBy),
+    "having"       -> InternalQuery(having = populated.having),
+    "joins"        -> InternalQuery(joins = populated.joins),
+    "arrayJoin"    -> InternalQuery(arrayJoin = populated.arrayJoin),
+    "orderBy"      -> InternalQuery(orderBy = populated.orderBy),
+    "limit"        -> InternalQuery(limit = populated.limit),
+    "limitBy"      -> InternalQuery(limitBy = populated.limitBy),
+    "combinations" -> InternalQuery(combinations = populated.combinations),
+    "settings"     -> InternalQuery(settings = populated.settings),
+    "withEntries"  -> InternalQuery(withEntries = populated.withEntries),
+    "interpolate"  -> InternalQuery(interpolate = populated.interpolate),
+    "windows"      -> InternalQuery(windows = populated.windows),
+    "qualify"      -> InternalQuery(qualify = populated.qualify)
   )
 
   /** Names the fields that differ, because an InternalQuery's `toString` is far too long to diff by eye. */

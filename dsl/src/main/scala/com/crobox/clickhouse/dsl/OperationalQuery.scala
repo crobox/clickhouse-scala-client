@@ -201,23 +201,63 @@ trait OperationalQuery extends Query {
   def limit(limit: Option[Limit]): OperationalQuery =
     OperationalQuery(internalQuery.copy(limit = limit))
 
+  def limit(size: Long): OperationalQuery = limit(Option(Limit(Option(size))))
+
+  def limit(size: Long, offset: Long): OperationalQuery = limit(Option(Limit(Option(size), offset)))
+
+  /** `LIMIT size WITH TIES`, which also returns every row tying with the last one on the `ORDER BY` key. */
+  def limitWithTies(size: Long, offset: Long = 0): OperationalQuery =
+    limit(Option(Limit(Option(size), offset, withTies = true)))
+
+  /** `OFFSET n` with no `LIMIT`, which ClickHouse accepts on its own. */
+  def offset(offset: Long): OperationalQuery =
+    limit(Option(internalQuery.limit.fold(Limit(None, offset))(_.copy(offset = offset))))
+
   def limitBy(limit: Long, expressions: Column*): OperationalQuery =
     OperationalQuery(internalQuery.copy(limitBy = Some(LimitBy(limit, 0, expressions))))
 
   def limitBy(limit: Long, offset: Long, expressions: Column*): OperationalQuery =
     OperationalQuery(internalQuery.copy(limitBy = Some(LimitBy(limit, offset, expressions))))
 
-  def unionAll(otherQuery: OperationalQuery): OperationalQuery = {
+  def unionAll(otherQuery: OperationalQuery): OperationalQuery =
+    combineWith(SetOperationKind.UnionAll, otherQuery)
+
+  /** `UNION DISTINCT`, which deduplicates across the branches where `UNION ALL` concatenates them. */
+  def unionDistinct(otherQuery: OperationalQuery): OperationalQuery =
+    combineWith(SetOperationKind.UnionDistinct, otherQuery)
+
+  /**
+   * `INTERSECT`, the rows present in both branches.
+   *
+   * Binds tighter than `UNION` and `EXCEPT`, so it cannot be chained with either -- see the `require` in
+   * [[InternalQuery]].
+   */
+  def intersect(otherQuery: OperationalQuery): OperationalQuery =
+    combineWith(SetOperationKind.Intersect, otherQuery)
+
+  def intersectDistinct(otherQuery: OperationalQuery): OperationalQuery =
+    combineWith(SetOperationKind.IntersectDistinct, otherQuery)
+
+  /** `EXCEPT`, the rows of this query that the other does not have. */
+  def except(otherQuery: OperationalQuery): OperationalQuery =
+    combineWith(SetOperationKind.Except, otherQuery)
+
+  def exceptDistinct(otherQuery: OperationalQuery): OperationalQuery =
+    combineWith(SetOperationKind.ExceptDistinct, otherQuery)
+
+  private def combineWith(kind: SetOperationKind, otherQuery: OperationalQuery): OperationalQuery = {
     require(
       internalQuery.select.isDefined && otherQuery.internalQuery.select.isDefined,
-      "Trying to apply UNION ALL on non SELECT queries."
+      s"Trying to apply ${kind.keyword} on non SELECT queries."
     )
     require(
       otherQuery.internalQuery.select.get.columns.size == internalQuery.select.get.columns.size,
-      "SELECT queries needs to have the same number of columns to perform UNION ALL."
+      s"SELECT queries needs to have the same number of columns to perform ${kind.keyword}."
     )
 
-    OperationalQuery(internalQuery.copy(unionAll = internalQuery.unionAll :+ otherQuery))
+    OperationalQuery(
+      internalQuery.copy(combinations = internalQuery.combinations :+ SetOperation(kind, otherQuery))
+    )
   }
 
   /**
@@ -265,15 +305,33 @@ trait OperationalQuery extends Query {
     newSelect
   }
 
+  /**
+   * Appends a join. Several joins at one level render as a chain, where each one's `ON` addresses the *first* table --
+   * the left alias stays `L1` throughout while the right aliases count up `R1`, `R2`, ... That covers a fact table
+   * joined to several dimensions; anything keyed off an earlier join's right-hand side has to nest in a subquery, since
+   * a [[JoinCondition]] names columns rather than the table they belong to.
+   */
   def join[TargetTable <: Table](
       joinType: JoinQuery.JoinType,
       query: OperationalQuery,
       global: Boolean
-  ): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, InnerFromQuery(query), global = global))))
+  ): OperationalQuery = addJoin(JoinQuery(joinType, InnerFromQuery(query), global = global))
 
   def join[TargetTable <: Table](joinType: JoinQuery.JoinType, table: TargetTable, global: Boolean): OperationalQuery =
-    OperationalQuery(internalQuery.copy(join = Some(JoinQuery(joinType, TableFromQuery(table), global = global))))
+    addJoin(JoinQuery(joinType, TableFromQuery(table), global = global))
+
+  private def addJoin(join: JoinQuery): OperationalQuery =
+    OperationalQuery(internalQuery.copy(joins = internalQuery.joins :+ join))
+
+  /**
+   * Rewrites the join most recently added, which is what `using` and `on` attach to.
+   *
+   * Applies to the last rather than the only one so that `.join(a).using(k).join(b).using(k)` reads as it looks.
+   */
+  private def mapLastJoin(f: JoinQuery => JoinQuery): OperationalQuery = {
+    require(internalQuery.joins.nonEmpty, "No join to attach USING or ON to")
+    OperationalQuery(internalQuery.copy(joins = internalQuery.joins.init :+ f(internalQuery.joins.last)))
+  }
 
   def join[TargetTable <: Table](joinType: JoinQuery.JoinType, query: OperationalQuery): OperationalQuery =
     join(joinType = joinType, query = query, global = false)
@@ -290,33 +348,16 @@ trait OperationalQuery extends Query {
   def using(
       column: Column,
       columns: Column*
-  ): OperationalQuery = {
-    require(internalQuery.join.isDefined)
+  ): OperationalQuery = mapLastJoin(_.copy(`using` = (column +: columns).distinct))
 
-    val newJoin = this.internalQuery.join.get.copy(`using` = (column +: columns).distinct)
-    OperationalQuery(internalQuery.copy(join = Some(newJoin)))
-  }
+  def on(columns: Column*): OperationalQuery =
+    mapLastJoin(_.copy(on = columns.map(JoinCondition(_))))
 
-  def on(columns: Column*): OperationalQuery = {
-    require(internalQuery.join.isDefined)
-    OperationalQuery(
-      internalQuery.copy(join = Some(this.internalQuery.join.get.copy(on = columns.map(JoinCondition(_)))))
-    )
-  }
+  def on(condition: JoinCondition, conditions: JoinCondition*): OperationalQuery =
+    mapLastJoin(_.copy(on = condition +: conditions))
 
-  def on(condition: JoinCondition, conditions: JoinCondition*): OperationalQuery = {
-    require(internalQuery.join.isDefined)
-    OperationalQuery(internalQuery.copy(join = Some(this.internalQuery.join.get.copy(on = condition +: conditions))))
-  }
-
-  def on(condition: (Column, String, Column), conditions: (Column, String, Column)*): OperationalQuery = {
-    require(internalQuery.join.isDefined)
-    OperationalQuery(
-      internalQuery.copy(
-        join = Some(this.internalQuery.join.get.copy(on = JoinCondition(condition) +: conditions.map(JoinCondition(_))))
-      )
-    )
-  }
+  def on(condition: (Column, String, Column), conditions: (Column, String, Column)*): OperationalQuery =
+    mapLastJoin(_.copy(on = JoinCondition(condition) +: conditions.map(JoinCondition(_))))
 
   /**
    * Merge with another OperationalQuery, any conflict on query parts between the 2 joins will be resolved by preferring
