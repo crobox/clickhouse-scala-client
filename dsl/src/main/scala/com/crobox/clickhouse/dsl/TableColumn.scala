@@ -18,14 +18,6 @@ abstract class TableColumn[+V](val name: String) extends Column {
 
   def as[C <: Column](alias: C): AliasedColumn[V] = AliasedColumn(this, alias.name)
 
-  /** `OVER (spec)`, turning an aggregate into a window function. */
-  def over(spec: WindowSpec): WindowFunction[V] = WindowFunction(this, WindowRef.Inline(spec))
-
-  /** `OVER name`, referring to a definition in the query's `WINDOW` clause. */
-  def over(window: NamedWindow): WindowFunction[V] = WindowFunction(this, WindowRef.Named(window.name))
-
-  /** `OVER ()`, an unpartitioned, unordered window over the whole result. */
-  def over(): WindowFunction[V] = over(WindowSpec())
 }
 
 case object EmptyColumn extends TableColumn("NULL")

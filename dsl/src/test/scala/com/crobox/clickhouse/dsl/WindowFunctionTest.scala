@@ -107,4 +107,35 @@ class WindowFunctionTest extends DslTestSpec {
         "HAVING column_3 = 'x' WINDOW w AS (PARTITION BY column_3) QUALIFY s > 1 ORDER BY column_3 ASC"
     )
   }
+
+  // ClickHouse rejects `v OVER ()`, `1 OVER ()` and `toUInt32(v) OVER ()` -- it wants an aggregate before OVER -- so
+  // `over` lives on AggregateFunction and these are compile errors rather than server errors.
+  "OVER" should "not be available on a bare column" in {
+    """col2.over()""" shouldNot typeCheck
+  }
+
+  it should "not be available on a literal" in {
+    """const(1).over()""" shouldNot typeCheck
+  }
+
+  it should "not be available on a non-aggregate function" in {
+    """toUInt32(col2).over()""" shouldNot typeCheck
+  }
+
+  it should "be available on any aggregate" in {
+    sql(select(count().over()).from(TwoTestTable)) should matchSQL(
+      s"SELECT count() OVER () FROM ${TwoTestTable.quoted}"
+    )
+  }
+
+  // The server parses WITH FILL inside OVER and then ignores it: no error, no filled rows. Refused at construction
+  // rather than emitting a clause that does nothing.
+  "A window spec" should "refuse an ordering that carries WITH FILL" in {
+    an[IllegalArgumentException] should be thrownBy
+    WindowSpec(orderBy = Seq(OrderingColumn(col2, ASC, Option(WithFill()))))
+  }
+
+  it should "accept an ordering without one" in {
+    WindowSpec(orderBy = Seq(OrderingColumn(col2))).orderBy should have size 1
+  }
 }

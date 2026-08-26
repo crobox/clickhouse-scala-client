@@ -17,7 +17,22 @@ trait AggregationFunctions {
 
   // https://clickhouse.yandex/docs/en/agg_functions/reference
 
-  abstract class AggregateFunction[+V](targetColumn: Column) extends ExpressionColumn[V](targetColumn)
+  /**
+   * `OVER` lives here rather than on TableColumn because ClickHouse requires an aggregate or window function before it:
+   * `v OVER ()`, `1 OVER ()` and `toUInt32(v) OVER ()` are all rejected by the server, so restricting the entry point
+   * turns those into compile errors. Window-only functions added later should extend this or share a marker with it.
+   */
+  abstract class AggregateFunction[+V](targetColumn: Column) extends ExpressionColumn[V](targetColumn) {
+
+    /** `OVER (spec)`. */
+    def over(spec: WindowSpec): WindowFunction[V] = WindowFunction(this, WindowRef.Inline(spec))
+
+    /** `OVER name`, referring to a definition in the query's `WINDOW` clause. */
+    def over(window: NamedWindow): WindowFunction[V] = WindowFunction(this, WindowRef.Named(window.name))
+
+    /** `OVER ()`, an unpartitioned, unordered window over the whole result. */
+    def over(): WindowFunction[V] = over(WindowSpec())
+  }
 
   case class Count(column: Option[Column] = None) extends AggregateFunction[Long](column.getOrElse(EmptyColumn))
 

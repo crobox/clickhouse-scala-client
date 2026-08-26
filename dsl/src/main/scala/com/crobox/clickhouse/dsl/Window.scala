@@ -33,7 +33,16 @@ case class WindowSpec(
     partitionBy: Seq[Column] = Seq.empty,
     orderBy: Seq[OrderingColumn] = Seq.empty,
     frame: Option[WindowFrame] = None
-)
+) {
+
+  // The ordering type is shared with the query-level ORDER BY, which can carry WITH FILL. Inside OVER the server
+  // parses it and silently ignores it -- no error, no filled rows -- so refuse it here rather than emit a clause that
+  // does nothing.
+  require(
+    orderBy.forall(_.fill.isEmpty),
+    "WITH FILL has no effect inside OVER (...); it belongs on the query's own ORDER BY"
+  )
+}
 
 /** What follows `OVER`: either a spec written in place, or the name of one defined in the `WINDOW` clause. */
 sealed trait WindowRef
