@@ -1,6 +1,7 @@
 package com.crobox.clickhouse.dsl
 
 import com.crobox.clickhouse.DslTestSpec
+import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 
 class MagnetEqualityTest extends DslTestSpec {
 
@@ -61,5 +62,36 @@ class MagnetEqualityTest extends DslTestSpec {
 
   it should "still tell IN over different literal collections apart" in {
     (col4 in Seq("a")) should not be (col4 in Seq("b"))
+  }
+
+  // These are the case classes whose `column` is `this`. A concrete equals on Magnet suppressed the one the compiler
+  // synthesises for a case class, so they inherited `column == that.column` -- `this == this` -- and every comparison
+  // or hash blew the stack. Reaching one only took a dedup that compares by value.
+  "A node whose column is itself" should "hash without recursing" in {
+    intDiv(timestampColumn, 1000).hashCode()
+    abs(col2).hashCode()
+    (col2 + 1).hashCode()
+    cast(col2, ColumnType.UInt32).hashCode()
+    toFixedString(col3, 2).hashCode()
+    succeed
+  }
+
+  it should "compare structurally rather than by identity" in {
+    intDiv(timestampColumn, 1000) shouldBe intDiv(timestampColumn, 1000)
+    abs(col2) shouldBe abs(col2)
+    cast(col2, ColumnType.UInt32) shouldBe cast(col2, ColumnType.UInt32)
+    toFixedString(col3, 2) shouldBe toFixedString(col3, 2)
+  }
+
+  it should "still tell different operands apart" in {
+    intDiv(timestampColumn, 1000) should not be intDiv(timestampColumn, 500)
+    abs(col2) should not be abs(timestampColumn)
+    toFixedString(col3, 2) should not be toFixedString(col3, 4)
+  }
+
+  it should "survive a dedup that compares by value" in {
+    val expr = toDateTime(intDiv(toUInt64rNull(timestampColumn), 1000))
+    Seq[Column](expr).contains(expr) shouldBe true
+    SelectQuery(Seq(expr)).addColumn(expr).columns should have size 1
   }
 }
