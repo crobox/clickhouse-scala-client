@@ -577,10 +577,10 @@ trait ClickhouseTokenizerModule
         s"$keyword ${removeSurroundingBrackets(tokenizeColumn(condition).trim)}"
     }
 
-  private def tokenizeGroupBy(groupBy: Option[GroupByQuery]): String = {
+  private def tokenizeGroupBy(groupBy: Option[GroupByQuery])(implicit ctx: TokenizeContext): String = {
     val groupByColumns = groupBy match {
       case Some(GroupByQuery(usingColumns, _, _)) if usingColumns.nonEmpty =>
-        Some(s"GROUP BY ${tokenizeColumnsAliased(usingColumns)}")
+        Option(tokenizeGroupByKeys(usingColumns)).filter(_.nonEmpty).map(keys => s"GROUP BY $keys")
       case _ =>
         None
     }
@@ -646,8 +646,25 @@ trait ClickhouseTokenizerModule
         }
     }
 
-  private def tokenizeColumnsAliased(columns: Seq[Column]): String =
-    columns.map(aliasOrName).mkString(", ")
+  /**
+   * `GROUP BY` keys.
+   *
+   * An alias is referred to by name, since the projection already defines it, but anything else has to render as
+   * itself. `Column.name` for an expression is its *argument's* name, so naming the key here grouped `toStartOfDay(ts)`
+   * by the raw `ts` -- a query that succeeds and aggregates over the wrong buckets -- and rendered an arithmetic
+   * expression as `NULL`, which the server rejects outright.
+   */
+  private def tokenizeGroupByKeys(columns: Seq[Column])(implicit ctx: TokenizeContext): String =
+    columns
+      .map {
+        case EmptyColumn             => ""
+        case alias: AliasedColumn[_] => alias.quoted
+        case col: NativeColumn[_]    => col.quoted
+        case col: RefColumn[_]       => col.quoted
+        case col                     => tokenizeColumn(col)
+      }
+      .filter(_.nonEmpty)
+      .mkString(Tokens.Delimiter)
 
   private def tokenizeTuplesAliased(columns: Seq[OrderingColumn])(implicit ctx: TokenizeContext): String =
     columns
