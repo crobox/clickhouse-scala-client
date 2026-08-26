@@ -137,6 +137,33 @@ trait ClickhouseTokenizerModule
     sql
   }
 
+  override def toStatementSql(statement: Statement)(implicit ctx: TokenizeContext): String = {
+    // Between the table and the action for ALTER, but after the WHERE's table for DELETE FROM -- the two statements
+    // put the clause in different places.
+    def onCluster(name: Option[String]): String =
+      name.map(c => s" ON CLUSTER ${ClickhouseStatement.quoteIdentifier(c)}").getOrElse("")
+
+    val sql = statement match {
+      case DeleteFrom(table, where, cluster) =>
+        s"DELETE FROM ${table.quoted}${onCluster(cluster)} WHERE ${tokenizeColumn(where)}"
+      case AlterDelete(table, where, cluster) =>
+        s"ALTER TABLE ${table.quoted}${onCluster(cluster)} DELETE WHERE ${tokenizeColumn(where)}"
+      case AlterUpdate(table, assignments, where, cluster) =>
+        val sets = assignments
+          .map { case Assignment(column, value) => s"${aliasOrName(column)} = ${tokenizeColumn(value)}" }
+          .mkString(Tokens.Delimiter)
+        s"ALTER TABLE ${table.quoted}${onCluster(cluster)} UPDATE $sets WHERE ${tokenizeColumn(where)}"
+      case DropPartition(table, partition, cluster) =>
+        val target = partition match {
+          case PartitionRef.Id(id)           => s"ID ${"'" + ClickhouseStatement.escape(id) + "'"}"
+          case PartitionRef.Expression(expr) => tokenizeColumn(expr)
+        }
+        s"ALTER TABLE ${table.quoted}${onCluster(cluster)} DROP PARTITION $target"
+    }
+    logger.debug(s"Generated sql [$sql]")
+    sql
+  }
+
   private def removeSurroundingBrackets(value: String): String =
     if (value.startsWith("(") && value.endsWith(")") && value.count(_ == '(') == 1 && value.count(_ == ')') == 1) {
       value.substring(1, value.length - 1)

@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.execution
 
 import com.crobox.clickhouse.dsl.language.TokenizerModule
-import com.crobox.clickhouse.dsl.{ExplainKind, Query, Table}
+import com.crobox.clickhouse.dsl.{ExplainKind, Query, Statement, Table}
 import com.crobox.clickhouse.internal.QuerySettings
 import spray.json._
 
@@ -52,6 +52,19 @@ trait QueryExecutor { self: TokenizerModule =>
       query: Query,
       options: Seq[(String, String)] = Seq.empty
   )(implicit executionContext: ExecutionContext, settings: QuerySettings = QuerySettings()): Future[QueryResult[Row]]
+
+  /**
+   * Run a data-changing statement -- see [[com.crobox.clickhouse.dsl.Statement]] -- and return the server's response
+   * body, which is empty on success. Mirrors [[insert]] rather than the `execute`/`executeRows` pair: there are no rows
+   * to read back.
+   *
+   * A mutation (`ALTER TABLE ... DELETE`/`UPDATE`) returns as soon as it is queued, not when it has finished; pass
+   * `mutations_sync` through `settings` to wait, and watch `system.mutations` otherwise.
+   */
+  def executeStatement(statement: Statement)(implicit
+      executionContext: ExecutionContext,
+      settings: QuerySettings = QuerySettings()
+  ): Future[String]
 
   def insert[V: JsonWriter](table: Table, values: Seq[V])(implicit
       executionContext: ExecutionContext,
