@@ -66,8 +66,7 @@ class SqlValidationITSpec extends DslITSpec {
     sem("Hex", select(hex(255))),
     sem("Unhex", select(unhex("FF"))),
     sem("UUIDStringToNum", select(uUIDStringToNum("00000000-0000-0000-0000-000000000000"))),
-    // Needs FixedString(16); the DSL types this argument as String, so the cast has to be explicit.
-    sem("UUIDNumToString", select(uUIDNumToString(toFixedString("0000000000000000", 16)))),
+    sem("UUIDNumToString", select(uUIDNumToString(uUIDStringToNum("00000000-0000-0000-0000-000000000000")))),
     sem("BitmaskToList", select(bitmaskToList(5))),
     sem("BitmaskToArray", select(bitmaskToArray(5)))
   )
@@ -76,7 +75,7 @@ class SqlValidationITSpec extends DslITSpec {
     sem("IPv4NumToString", select(iPv4NumToString(3232235521L))),
     sem("IPv4StringToNum", select(iPv4StringToNum("192.168.0.1"))),
     sem("IPv4NumToStringClassC", select(iPv4NumToStringClassC(3232235521L))),
-    sem("IPv6NumToString", select(iPv6NumToString(toFixedString("0000000000000000", 16)))),
+    sem("IPv6NumToString", select(iPv6NumToString(iPv6StringToNum("::1")))),
     sem("IPv6StringToNum", select(iPv6StringToNum("::1")))
   )
 
