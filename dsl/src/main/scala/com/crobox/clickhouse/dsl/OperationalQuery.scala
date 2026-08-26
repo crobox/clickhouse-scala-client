@@ -220,6 +220,27 @@ trait OperationalQuery extends Query {
     OperationalQuery(internalQuery.copy(unionAll = internalQuery.unionAll :+ otherQuery))
   }
 
+  /**
+   * The name a column publishes to the enclosing scope, where it has one.
+   *
+   * `Column.name` is not that. An `ExpressionColumn` is constructed with its argument's name, so `sum(x).name` is `x`
+   * -- which is why de-duplicating on `name` left the grouping column out of `select(sum(x)).groupBy(x)`. Only these
+   * three name their own output, and only they can stand in for one another.
+   */
+  private def publishedName(column: Column): Option[String] = column match {
+    case c: AliasedColumn[_] => Option(c.alias)
+    case c: NativeColumn[_]  => Option(c.name)
+    case c: RefColumn[_]     => Option(c.ref)
+    case _                   => None
+  }
+
+  /**
+   * Adds the `GROUP BY` / `ORDER BY` columns that the projection does not already produce.
+   *
+   * "Already produce" is two things, and matching only one of them has broken in both directions: by name alone drops a
+   * grouping column that an aggregate over it appears to shadow, and by value alone appends a second `value` for
+   * `ORDER BY value` over a `... AS value`, silently widening every row.
+   */
   private def mergeOperationalColumns(newOrderingColumns: Seq[Column]): Option[SelectQuery] = {
     val selectForGroup = internalQuery.select
 
@@ -232,9 +253,11 @@ trait OperationalQuery extends Query {
       newOrderingColumns
     }
 
-    // By value rather than by name, for the same reason as SelectQuery.addColumn: `groupBy(x)` on a query already
-    // selecting `sum(x)` used to leave the grouping column out of the projection entirely.
-    val filteredDuplicates = filteredSelectAll.filterNot(selectForGroupCols.contains)
+    val published = selectForGroupCols.flatMap(publishedName).toSet
+
+    val filteredDuplicates = filteredSelectAll.filterNot { candidate =>
+      selectForGroupCols.contains(candidate) || publishedName(candidate).exists(published.contains)
+    }
 
     val selectWithOrderColumns = selectForGroupCols ++ filteredDuplicates
 
