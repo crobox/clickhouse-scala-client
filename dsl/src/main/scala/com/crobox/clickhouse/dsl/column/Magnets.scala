@@ -95,6 +95,18 @@ trait Magnets {
     val tableRef: Option[Table]         = None
 
     val isEmptyCollection: Boolean = false
+
+    // The query and table forms both leave `column` as EmptyColumn and carry the distinguishing value here, so
+    // Magnet's equality would make every one of them equal -- including a table one to a query one.
+    //
+    // OperationalQuery is itself an anonymous class, so two identically built subqueries still compare unequal. That
+    // direction is safe: a duplicate kept rather than a column dropped.
+    override def equals(other: Any): Boolean = other match {
+      case that: InFuncRHMagnet => column == that.column && query == that.query && tableRef == that.tableRef
+      case _                    => false
+    }
+
+    override def hashCode(): Int = (column, query, tableRef).hashCode()
   }
 
   implicit def InFuncRHMagnetFromIterable[T: QueryValue](s: Iterable[T]): InFuncRHMagnet =

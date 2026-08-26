@@ -40,4 +40,26 @@ class MagnetEqualityTest extends DslTestSpec {
   it should "let a Set collapse equal conditions" in {
     Set((2 === 2).and(3 === 3), (2 === 2).and(3 === 3)) should have size 1
   }
+
+  // Regression for the review on #357: these all leave `column` as EmptyColumn, so the inherited Magnet equality made
+  // them indistinguishable and a select list silently dropped one.
+  it should "tell IN over different tables apart" in {
+    (col4 in OneTestTable) should not be (col4 in TwoTestTable)
+  }
+
+  it should "tell IN over different subqueries apart" in {
+    (col4 in select(col4).from(TwoTestTable)) should not be (col4 in select(col4).from(ThreeTestTable))
+  }
+
+  it should "tell an IN over a table from an IN over a subquery" in {
+    (col4 in OneTestTable) should not be (col4 in select(col4).from(OneTestTable))
+  }
+
+  it should "keep both when a select list holds IN over two tables" in {
+    SelectQuery(Seq(col4 in OneTestTable)).addColumn(col4 in TwoTestTable).columns should have size 2
+  }
+
+  it should "still tell IN over different literal collections apart" in {
+    (col4 in Seq("a")) should not be (col4 in Seq("b"))
+  }
 }
