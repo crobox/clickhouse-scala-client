@@ -5,7 +5,7 @@ import com.crobox.clickhouse.dsl.{EmptyColumn, ExpressionColumn}
 trait DistanceFunctions { self: Magnets =>
 
   sealed trait DistanceFunction
-  abstract class DistanceFunctionOp[V] extends ExpressionColumn[V](EmptyColumn) with DistanceFunction
+  sealed abstract class DistanceFunctionOp[V] extends ExpressionColumn[V](EmptyColumn) with DistanceFunction
 
   // The *Normalize functions are not shaped like the rest of the family: the server gives them one argument, not
   // two, and it must be a Tuple rather than an Array -- an Array is rejected with ILLEGAL_TYPE_OF_ARGUMENT. They

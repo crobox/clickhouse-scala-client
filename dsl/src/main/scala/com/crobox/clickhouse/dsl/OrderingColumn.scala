@@ -1,5 +1,7 @@
 package com.crobox.clickhouse.dsl
 
+import scala.language.implicitConversions
+
 /**
  * `WITH FILL` on one `ORDER BY` column: rows for the gaps in an otherwise sparse ordering.
  *

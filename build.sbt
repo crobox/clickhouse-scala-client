@@ -22,6 +22,8 @@ lazy val root = (project in file("."))
             uri("https://crobox.com")
           )
         ),
+        // sbt-ci-release publishes with no version scheme otherwise, and warns on every task that reads it.
+        versionScheme      := Some("early-semver"),
         scalaVersion       := "2.13.18",
         crossScalaVersions := List("2.13.18", "3.3.8"),
         javacOptions ++= Seq("-g", "-Xlint:unchecked", "-Xlint:deprecation", "-source", "11", "-target", "11"),

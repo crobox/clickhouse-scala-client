@@ -72,7 +72,7 @@ trait AggregationFunctions {
 
   /**
    * `count(DISTINCT column)`. ClickHouse rewrites this to `uniqExact` by default -- see the
-   * `count_distinct_implementation` setting -- so [[UniqFunctions.uniqExact]] says the same thing more directly.
+   * `count_distinct_implementation` setting -- so `uniqExact` says the same thing more directly.
    */
   def countDistinct(column: TableColumn[_]): Count = Count(Option(column), distinct = true)
 
@@ -224,7 +224,7 @@ trait UniqFunctions { self: Magnets with AggregationFunctions =>
   }
 
   /**
-   * `uniqCombined64`, which uses a 64-bit hash for every type where [[uniqCombined]] uses one only for String.
+   * `uniqCombined64`, which uses a 64-bit hash for every type where `uniqCombined` uses one only for String.
    *
    * Prefer it above roughly `UINT_MAX` distinct values: the 32-bit hash collides badly at that scale, and the error
    * rate rises with it.

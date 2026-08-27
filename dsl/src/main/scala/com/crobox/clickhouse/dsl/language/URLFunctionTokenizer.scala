@@ -29,7 +29,6 @@ trait URLFunctionTokenizer {
       case CutFragment(_)                    => "cutFragment"
       case CutQueryStringAndFragment(_)      => "cutQueryStringAndFragment"
       case CutURLParameter(_, _)             => "cutURLParameter"
-      case unsupported                       => throw new IllegalArgumentException(s"Unsupported command: $unsupported")
     }
     val tail = col match {
       case ExtractURLParameter(_, c2) => Tokens.Delimiter + tokenizeColumn(c2.column)

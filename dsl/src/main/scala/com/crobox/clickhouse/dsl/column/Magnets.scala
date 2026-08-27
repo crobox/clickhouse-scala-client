@@ -51,11 +51,14 @@ trait Magnets {
    * compiler synthesises for a case class, so every case class extending a magnet -- `IntDiv`, `Cast`, `FixedString`
    * and the rest, whose `column` is `this` -- inherited `column == that.column` and recursed until the stack ran out.
    * Off `Magnet`, those get their own field-wise equality back.
+   *
+   * `Magnet` is a trait inside a trait, so it carries no outer pointer and the type test cannot confirm the other value
+   * came from this DSL instance. There is only ever the one, `object dsl`.
    */
   trait MagnetEquality { self: Magnet[_] =>
     override def equals(other: Any): Boolean = other match {
-      case that: Magnet[_] => column == that.column
-      case _               => false
+      case that: (Magnet[_] @unchecked) => column == that.column
+      case _                            => false
     }
 
     override def hashCode(): Int = column.hashCode()

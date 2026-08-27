@@ -21,12 +21,7 @@ trait MiscellaneousFunctionTokenizer {
     case Bar(col: NumericCol[_], from: NumericCol[_], to: NumericCol[_], default: Option[NumericCol[_]]) =>
       val defaultPart = default.map(col => Tokens.Delimiter + tokenizeColumn(col.column)).getOrElse("")
       s"bar(${tokenizeColumn(col.column)},${tokenizeColumn(from.column)},${tokenizeColumn(to.column)}${defaultPart})"
-    case Transform(
-          col: ConstOrColMagnet[_],
-          arrayFrom: ArrayColMagnet[_],
-          arrayTo: ArrayColMagnet[_],
-          default: ConstOrColMagnet[_]
-        ) =>
+    case Transform(col, arrayFrom, arrayTo, default) =>
       s"transform(${tokenizeColumn(col.column)},${tokenizeColumn(arrayFrom.column)},${tokenizeColumn(arrayTo.column)},${tokenizeColumn(default.column)})"
     case FormatReadableSize(col: NumericCol[_])                => s"formatReadableSize(${tokenizeColumn(col.column)})"
     case Least(a: ConstOrColMagnet[_], b: ConstOrColMagnet[_]) =>

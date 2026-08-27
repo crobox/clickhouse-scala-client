@@ -131,7 +131,7 @@ private[clickhouse] trait ClickHouseExecutor extends LazyLogging {
    *
    * `executeRequestWithProgress` returns the body as its materialised value, which means draining the entity into a
    * single String -- a million-row result is one 7MB allocation. Here the body is framed and emitted as
-   * [[QueryProgress.QueryResultPart]] events instead.
+   * [[com.crobox.clickhouse.internal.progress.QueryProgress.QueryResultPart]] events instead.
    *
    * No retries: a retry would re-run the request after the consumer had already seen part of a result.
    */

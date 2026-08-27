@@ -36,7 +36,7 @@ class InternalQueryFieldsTest extends DslTestSpec {
     groupBy = Option(GroupByQuery(usingColumns = Seq(itemId))),
     having = Option(condition),
     joins = Seq(JoinQuery(JoinQuery.InnerJoin, TableFromQuery(ThreeTestTable), `using` = Seq(itemId))),
-    arrayJoin = Option(ArrayJoinQuery(Seq(numbers))),
+    arrayJoin = Option(ArrayJoinQuery(Seq(this.numbers))),
     orderBy = Seq(OrderingColumn(itemId, DESC, nulls = Option(NullsOrder.NullsLast))),
     limit = Option(Limit(Option(10), 5, withTies = true)),
     limitBy = Option(LimitBy(1, 0, Seq(itemId))),
