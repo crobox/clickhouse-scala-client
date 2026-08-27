@@ -97,4 +97,18 @@ class NullableFunctionTokenizerTest extends DslTestSpec {
     shouldMatch(query2, expected)
   }
 
+  // The four that hand their column back keep its type: without it every one of these needed an asInstanceOf at the
+  // call site, because a NumericCol conversion cannot be picked for Nothing.
+  it should "keep the column's type, so the result feeds a function that asks for one" in {
+    val expected = s"SELECT column_2 / nullIf(column_2, 0) FROM $database.twoTestTable"
+
+    shouldMatch(select(divide(col2, nullIf(col2, const(0)))).from(TwoTestTable), expected)
+    shouldMatch(select(divide(col2, col2.nullIf(const(0)))).from(TwoTestTable), expected)
+
+    val typed: TableColumn[Int] = assumeNotNull(col2)
+    shouldMatch(
+      select(divide(col2, typed)).from(TwoTestTable),
+      s"SELECT column_2 / assumeNotNull(column_2) FROM $database.twoTestTable"
+    )
+  }
 }

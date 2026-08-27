@@ -94,7 +94,7 @@ trait Magnets {
   /**
    * Any constant or column. Sidenote: The current implementation doesn't represent collections.
    */
-  trait ConstOrColMagnet[+C] extends Magnet[C] with ScalaBooleanFunctionOps with InOps with NullableOps
+  trait ConstOrColMagnet[+C] extends Magnet[C] with ScalaBooleanFunctionOps with InOps with NullableOps[C]
 
   implicit def constOrColMagnetFromCol[C](s: TableColumn[C]): ConstOrColMagnet[C] =
     new ConstOrColMagnet[C] with MagnetEquality {

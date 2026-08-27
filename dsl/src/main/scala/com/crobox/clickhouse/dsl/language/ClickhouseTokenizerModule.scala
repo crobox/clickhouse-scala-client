@@ -390,6 +390,7 @@ trait ClickhouseTokenizerModule
       case col: WindowOnlyFunctionCol[_]        => tokenizeWindowOnlyFunction(col)
       case All()                                => "*"
       case RawColumn(rawSql)                    => rawSql
+      case Conditional(Nil, default, _)         => tokenizeColumn(default)
       case Conditional(cases, default, multiIf) =>
         if (multiIf) {
           s"${if (cases.size > 1) "multiIf" else "if"}(${cases
