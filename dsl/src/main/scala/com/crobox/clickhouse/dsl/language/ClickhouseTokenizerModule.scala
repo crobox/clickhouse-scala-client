@@ -372,7 +372,7 @@ trait ClickhouseTokenizerModule
       case col: EmptyFunction[_]                => tokenizeEmptyCol(col)
       case col: EncodingFunction[_]             => tokenizeEncodingFunction(col)
       case col: HashFunction                    => tokenizeHashFunction(col)
-      case col: HigherOrderFunction[_, _, _]    => tokenizeHigherOrderFunction(col)
+      case col: HigherOrderFunction[_, _]       => tokenizeHigherOrderFunction(col)
       case col: IPFunction[_]                   => tokenizeIPFunction(col)
       case col: InFunction                      => tokenizeInFunction(col)
       case col: JsonFunction[_]                 => tokenizeJsonFunction(col)

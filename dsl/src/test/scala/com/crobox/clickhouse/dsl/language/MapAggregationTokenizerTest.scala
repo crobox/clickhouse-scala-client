@@ -49,7 +49,7 @@ class MapAggregationTokenizerTest extends DslTestSpec {
   it should "project a map aggregate through a higher-order function" in {
     // The shape this was all for: one value per key, then reduced. Previously impossible -- a lambda parameter is bound
     // to a RefColumn, so tuple access inside one could not be expressed.
-    val perKey = arraySum2[Int, Int](
+    val perKey = arraySum[Int, Int, Int](
       (total, count) => total / count,
       mapValues(sumMap(numbers, numbers)),
       mapValues(sumMap(numbers, numbers))
