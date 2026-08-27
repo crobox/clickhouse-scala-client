@@ -1,22 +1,25 @@
 import Build.*
 
 lazy val root = (project in file("."))
+  // sbt 2 only resolves a config-scoped key against configurations the current project declares, so the unscoped
+  // `IntegrationTest/testFull` CI invokes needs the configuration here too, to aggregate down to client and dsl.
+  .configs(Config.IntegrationTest)
   .settings(
     publish         := {},
     publishArtifact := false,
     inThisBuild(
       List(
         organization := "com.crobox.clickhouse",
-        homepage     := Some(url("https://github.com/crobox/clickhouse-scala-client")),
+        homepage     := Some(uri("https://github.com/crobox/clickhouse-scala-client")),
         licenses     := List(
-          "The GNU Lesser General Public License, Version 3.0" -> url("http://www.gnu.org/licenses/lgpl-3.0.txt")
+          "The GNU Lesser General Public License, Version 3.0" -> uri("http://www.gnu.org/licenses/lgpl-3.0.txt")
         ),
         developers := List(
           Developer(
             "crobox",
             "Crobox",
             "support@crobox.com",
-            url("https://crobox.com")
+            uri("https://crobox.com")
           )
         ),
         scalaVersion       := "2.13.18",
@@ -31,7 +34,7 @@ lazy val root = (project in file("."))
 
 lazy val client: Project = (project in file("client"))
   .configs(Config.IntegrationTest)
-  .settings(Config.testSettings: _*)
+  .settings(Config.testSettings)
   .settings(
     name := "client",
     libraryDependencies ++= Seq(
@@ -47,7 +50,7 @@ lazy val client: Project = (project in file("client"))
 lazy val dsl = (project in file("dsl"))
   .dependsOn(client, client % "test->test", testkit % Test)
   .configs(Config.IntegrationTest)
-  .settings(Config.testSettings: _*)
+  .settings(Config.testSettings)
   .settings(
     name := "dsl"
   )
