@@ -54,8 +54,8 @@ jobs:
           down-flags: '--volumes'
 
       - name: Check formatting
-        run: sbt ++${{ matrix.scala }} scalafmtCheckAll scalafmtSbtCheck
+        run: sbt '++${{ matrix.scala }}; scalafmtCheckAll; scalafmtSbtCheck'
 
       - name: Build project
-        run: sbt ++${{ matrix.scala }} test IntegrationTest/test
+        run: sbt '++${{ matrix.scala }}; testFull; IntegrationTest/testFull'
 
