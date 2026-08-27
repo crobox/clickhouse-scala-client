@@ -34,6 +34,30 @@ class AggregationFunctionsIT extends DslITSpec with LazyLogging {
     resultExact.rows.head.result shouldBe entries
   }
 
+  // uniqCombined hashes non-String types to 32 bits and uniqCombined64 to 64, so on a fixture this size they agree;
+  // what is worth pinning is that both run and that HLL_precision reaches the server in the right parameter list.
+  it should "run the combined uniq variants, with and without HLL_precision" in {
+    case class Result(columnResult: String) { def result = columnResult.toInt }
+    implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
+
+    def count(column: TableColumn[Long]): Int =
+      queryExecutor.execute[Result](select(column as "result") from OneTestTable).futureValue.rows.head.result
+
+    count(uniqCombined64(shieldId)) shouldBe (entries ~% delta)
+    count(uniqCombined64(20)(shieldId)) shouldBe (entries ~% delta)
+
+    // A lower HLL_precision buys memory with accuracy, so the usual tolerance does not apply to it: 12 gives 2^12
+    // cells, whose standard error at this cardinality is around 1.6% and whose spread reaches past 3%. Asserting the
+    // default tolerance here failed on three of the six CI combinations while the rendering was perfectly correct.
+    // The point of the assertion is that the parameter arrives and the query runs, not that it is precise.
+    count(uniqCombined(12)(shieldId)) shouldBe (entries ~% 10)
+
+    // Deliberately no assertion that a higher precision is more accurate. It is, in expectation, but the fixture's
+    // ids are random per run, so a coarse estimate landing near-exact by chance would fail such a test a few percent
+    // of the time. That the parameter reaches the right parameter list is settled by the tokenizer test and by
+    // SqlValidationITSpec sending it to a real server.
+  }
+
   it should "run quantiles" in {
     case class Result(result: Seq[Float])
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[Float], Result](Result.apply, "result")

@@ -69,12 +69,15 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
           s"quantiles$modifierName",
           s"${levels.mkString(Tokens.Delimiter)})(${tokenizeColumn(column)}${modifierValue.map(Tokens.Delimiter + _).getOrElse("")}"
         )
-      case Sum(column, modifier)   => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
-      case SumMap(key, value)      => ("sumMap", tokenizeColumns(Seq(key.column, value.column)))
-      case MinMap(key, value)      => ("minMap", tokenizeColumns(Seq(key.column, value.column)))
-      case MaxMap(key, value)      => ("maxMap", tokenizeColumns(Seq(key.column, value.column)))
-      case Uniq(columns, modifier) =>
-        (s"uniq${tokenizeUniqModifier(modifier)}", columns.map(tokenizeColumn).mkString(Tokens.Delimiter))
+      case Sum(column, modifier)                 => (s"sum${tokenizeSumModifier(modifier)}", tokenizeColumn(column))
+      case SumMap(key, value)                    => ("sumMap", tokenizeColumns(Seq(key.column, value.column)))
+      case MinMap(key, value)                    => ("minMap", tokenizeColumns(Seq(key.column, value.column)))
+      case MaxMap(key, value)                    => ("maxMap", tokenizeColumns(Seq(key.column, value.column)))
+      case Uniq(columns, modifier, hllPrecision) =>
+        val args = columns.map(tokenizeColumn).mkString(Tokens.Delimiter)
+        // Closing and reopening the parenthesis inside the argument string is how this module renders a
+        // parameterised aggregate's two lists -- the same shape the quantile family uses for its level.
+        (s"uniq${tokenizeUniqModifier(modifier)}", hllPrecision.map(p => s"$p)($args").getOrElse(args))
       case f: AggregateFunction[_] =>
         throw new IllegalArgumentException(s"Cannot use $f aggregated function with combinator")
     }
@@ -92,10 +95,11 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
 
   def tokenizeUniqModifier(modifier: UniqModifier): String =
     modifier match {
-      case UniqModifier.Simple   => ""
-      case UniqModifier.Combined => "Combined"
-      case UniqModifier.Exact    => "Exact"
-      case UniqModifier.HLL12    => "HLL12"
+      case UniqModifier.Simple     => ""
+      case UniqModifier.Combined   => "Combined"
+      case UniqModifier.Combined64 => "Combined64"
+      case UniqModifier.Exact      => "Exact"
+      case UniqModifier.HLL12      => "HLL12"
     }
 
   def tokenizeSumModifier(modifier: SumModifier): String =

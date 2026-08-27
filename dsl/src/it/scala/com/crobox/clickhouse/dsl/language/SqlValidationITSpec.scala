@@ -499,6 +499,15 @@ class SqlValidationITSpec extends DslITSpec {
     sem("Sum", select(sum(col2)) from TwoTestTable),
     sem("AnyResult", select(any(col2)) from TwoTestTable),
     sem("Uniq", select(uniq(col2)) from TwoTestTable),
+    sem("Uniq", select(uniqCombined64(col2)) from TwoTestTable),
+    sem("Uniq", select(uniqCombined(12)(col2)) from TwoTestTable),
+    sem("Uniq", select(uniqCombined64(20)(col2, col3)) from TwoTestTable),
+    // HLL_precision has to stay ahead of the combinator's own arguments, which is the one thing the two parameter
+    // lists can get wrong.
+    sem(
+      "Uniq",
+      select(aggIf[TableColumn[Long], Long](col2 > 1)(uniqCombined64(12)(col2))) from TwoTestTable
+    ),
     sem("GroupArray", select(groupArray(col2, Option(3L))) from TwoTestTable),
     sem("GroupUniqArray", select(groupUniqArray(col2)) from TwoTestTable),
     sem("FirstValue", select(firstValue(col2)) from TwoTestTable),
