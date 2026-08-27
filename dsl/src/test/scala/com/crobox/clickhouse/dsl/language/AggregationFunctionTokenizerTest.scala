@@ -41,6 +41,37 @@ class AggregationFunctionTokenizerTest extends DslTestSpec {
     )
   }
 
+  it should "render the whole uniq family" in {
+    toSQL(select(uniq(col1), uniqCombined(col1), uniqCombined64(col1), uniqExact(col1), uniqHLL12(col1)), false) should
+    matchSQL(
+      "SELECT uniq(column_1), uniqCombined(column_1), uniqCombined64(column_1), uniqExact(column_1), " +
+        "uniqHLL12(column_1)"
+    )
+  }
+
+  // HLL_precision goes in a parameter list of its own, ahead of the columns.
+  it should "render HLL_precision as a separate parameter list" in {
+    toSQL(select(uniqCombined(12)(col1), uniqCombined64(20)(col1, col2)), false) should matchSQL(
+      "SELECT uniqCombined(12)(column_1), uniqCombined64(20)(column_1, column_2)"
+    )
+  }
+
+  it should "keep HLL_precision ahead of a combinator's own arguments" in {
+    toSQL(select(aggIf(col1.isEq("abc"))(uniqCombined64(12)(col2))), false) should matchSQL(
+      "SELECT uniqCombined64If(12)(column_2, column_1 = 'abc')"
+    )
+  }
+
+  it should "refuse an HLL_precision outside 12 to 20" in {
+    an[IllegalArgumentException] should be thrownBy uniqCombined64(11)(col1)
+    an[IllegalArgumentException] should be thrownBy uniqCombined(21)(col1)
+  }
+
+  it should "refuse an HLL_precision on a variant that takes none" in {
+    an[IllegalArgumentException] should be thrownBy Uniq(Seq(col1), UniqModifier.Exact, Option(12))
+    an[IllegalArgumentException] should be thrownBy Uniq(Seq(col1), UniqModifier.HLL12, Option(12))
+  }
+
   it should "anyIf in groupArray" in {
     toSQL(select(aggIf(col1.isEq("abc"))(uniq(col2))), false) should matchSQL(
       "SELECT uniqIf(column_2, column_1 = 'abc')"

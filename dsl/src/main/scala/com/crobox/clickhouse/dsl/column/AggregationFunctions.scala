@@ -168,14 +168,43 @@ trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
 trait UniqFunctions { self: Magnets with AggregationFunctions =>
   sealed trait UniqModifier
 
-  case class Uniq(tableColumns: Seq[Column], modifier: UniqModifier = UniqModifier.Simple)
-      extends AggregateFunction[Long](tableColumns.head)
+  /**
+   * The `uniq*` family, which approximates a distinct count.
+   *
+   * `hllPrecision` is ClickHouse's `HLL_precision`: the base-2 logarithm of the HyperLogLog cell count, traded against
+   * memory. Only the combined variants take one, and it goes in a parameter list of its own ahead of the columns --
+   * `uniqCombined64(12)(x)`.
+   */
+  case class Uniq(
+      tableColumns: Seq[Column],
+      modifier: UniqModifier = UniqModifier.Simple,
+      hllPrecision: Option[Int] = None
+  ) extends AggregateFunction[Long](tableColumns.head) {
+
+    require(
+      hllPrecision.isEmpty || UniqModifier.takesHllPrecision(modifier),
+      "HLL_precision applies only to uniqCombined and uniqCombined64"
+    )
+
+    // The server answers ARGUMENT_OUT_OF_BOUND outside this range, naming the same bounds.
+    require(
+      hllPrecision.forall(precision => precision >= 12 && precision <= 20),
+      s"HLL_precision must be between 12 and 20, got ${hllPrecision.getOrElse("")}"
+    )
+  }
 
   object UniqModifier {
     case object Simple   extends UniqModifier
     case object Combined extends UniqModifier
-    case object HLL12    extends UniqModifier
-    case object Exact    extends UniqModifier
+
+    /** `uniqCombined64`, which hashes every type to 64 bits rather than only String. */
+    case object Combined64 extends UniqModifier
+
+    case object HLL12 extends UniqModifier
+    case object Exact extends UniqModifier
+
+    def takesHllPrecision(modifier: UniqModifier): Boolean =
+      modifier == Combined || modifier == Combined64
   }
 
   def uniq(tableColumns: Column*): Uniq = {
@@ -186,6 +215,29 @@ trait UniqFunctions { self: Magnets with AggregationFunctions =>
   def uniqCombined(tableColumns: Column*): Uniq = {
     require(tableColumns.nonEmpty, "At least one column should be provided for Uniq")
     Uniq(tableColumns, UniqModifier.Combined)
+  }
+
+  /** `uniqCombined(HLL_precision)(columns)`. Curried to mirror ClickHouse's own two parameter lists. */
+  def uniqCombined(hllPrecision: Int)(tableColumns: Column*): Uniq = {
+    require(tableColumns.nonEmpty, "At least one column should be provided for Uniq")
+    Uniq(tableColumns, UniqModifier.Combined, Option(hllPrecision))
+  }
+
+  /**
+   * `uniqCombined64`, which uses a 64-bit hash for every type where [[uniqCombined]] uses one only for String.
+   *
+   * Prefer it above roughly `UINT_MAX` distinct values: the 32-bit hash collides badly at that scale, and the error
+   * rate rises with it.
+   */
+  def uniqCombined64(tableColumns: Column*): Uniq = {
+    require(tableColumns.nonEmpty, "At least one column should be provided for Uniq")
+    Uniq(tableColumns, UniqModifier.Combined64)
+  }
+
+  /** `uniqCombined64(HLL_precision)(columns)`. */
+  def uniqCombined64(hllPrecision: Int)(tableColumns: Column*): Uniq = {
+    require(tableColumns.nonEmpty, "At least one column should be provided for Uniq")
+    Uniq(tableColumns, UniqModifier.Combined64, Option(hllPrecision))
   }
 
   def uniqExact(tableColumns: Column*): Uniq = {

@@ -34,6 +34,20 @@ class AggregationFunctionsIT extends DslITSpec with LazyLogging {
     resultExact.rows.head.result shouldBe entries
   }
 
+  // uniqCombined hashes non-String types to 32 bits and uniqCombined64 to 64, so on a fixture this size they agree;
+  // what is worth pinning is that both run, accept HLL_precision, and stay within tolerance of the exact count.
+  it should "run the combined uniq variants, with and without HLL_precision" in {
+    case class Result(columnResult: String) { def result = columnResult.toInt }
+    implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[String, Result](Result.apply, "result")
+
+    def count(column: TableColumn[Long]): Int =
+      queryExecutor.execute[Result](select(column as "result") from OneTestTable).futureValue.rows.head.result
+
+    count(uniqCombined64(shieldId)) shouldBe (entries ~% delta)
+    count(uniqCombined64(20)(shieldId)) shouldBe (entries ~% delta)
+    count(uniqCombined(12)(shieldId)) shouldBe (entries ~% delta)
+  }
+
   it should "run quantiles" in {
     case class Result(result: Seq[Float])
     implicit val resultFormat: RootJsonFormat[Result] = jsonFormat[Seq[Float], Result](Result.apply, "result")
