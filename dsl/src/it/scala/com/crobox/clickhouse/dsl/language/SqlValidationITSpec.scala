@@ -123,10 +123,10 @@ class SqlValidationITSpec extends DslITSpec {
       sem("ArrayReverseSort", select(arrayReverseSort[Long, Long](None, nums))),
       sem("ArraySort", select(arraySort[Long, Double](None, nums))),
       sem("ArraySum", select(arraySum[Long, Long](None, nums))),
-      sem("ArraySplit", select(arraySplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3), Iterable(1, 0, 1)))),
+      sem("ArraySplit", select(arraySplit2[Int, Int]((x, y) => y.notEq(0), Iterable(1, 2, 3), Iterable(1, 0, 1)))),
       sem(
         "ArrayReverseSplit",
-        select(arrayReverseSplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3), Iterable(1, 0, 1)))
+        select(arrayReverseSplit2[Int, Int]((x, y) => y.notEq(0), Iterable(1, 2, 3), Iterable(1, 0, 1)))
       )
     )
   }

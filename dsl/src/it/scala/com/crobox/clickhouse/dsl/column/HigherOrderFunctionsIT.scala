@@ -10,38 +10,38 @@ class HigherOrderFunctionsIT extends DslITSpec {
     r(arrayAll[Long](_ <= 3, arr1)) shouldBe "1"
     r(arrayAll[Long](_.isEq(2L), arr1)) shouldBe "0"
 
-    r(arrayAll2[Int]((x, y) => x < y, Seq(1, 2, 3), Seq(1, 2, 3))) shouldBe "0"
-    r(arrayAll2[Int]((x, y) => x < y, Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "1"
+    r(arrayAll2[Int, Int]((x, y) => x < y, Seq(1, 2, 3), Seq(1, 2, 3))) shouldBe "0"
+    r(arrayAll2[Int, Int]((x, y) => x < y, Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "1"
   }
 
   it should "HigherOrderFunctions: arrayAvg" in {
     r(arrayAvg[Long, Long](None, arr1)) shouldBe "2"
     r(arrayAvg[Long, Double](Option(x => x * 333d), arr1)) shouldBe "666"
 
-    r(arrayAvg2[Int, Int]((x, y) => x * y, Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "4.5"
+    r(arrayAvg2[Int, Int, Int]((x, y) => x * y, Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "4.5"
   }
 
   it should "HigherOrderFunctions: arrayCount" in {
     r(arrayCount[Long](Some(_.isEq(2L)), arr1)) shouldBe "1"
     r(arrayCount[Long](None, arr1)) shouldBe "3"
 
-    r(arrayCount2[Int]((x, y) => x.notEq(y), Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "3"
-    r(arrayCount2[Int]((x, y) => x.isEq(y), Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "1"
+    r(arrayCount2[Int, Int]((x, y) => x.notEq(y), Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "3"
+    r(arrayCount2[Int, Int]((x, y) => x.isEq(y), Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "1"
   }
 
   it should "HigherOrderFunctions: arrayCumSum" in {
     r(arrayCumSum[Long, Long](Some(_ * 2L), arr1)) shouldBe "[2,6,12]"
     r(arrayCumSum[Long, Long](None, arr1)) shouldBe "[1,3,6]"
 
-    r(arrayCumSum2[Long, Long]((x, y) => x * y, arr1, arr1)) shouldBe "[1,5,14]"
+    r(arrayCumSum2[Long, Long, Long]((x, y) => x * y, arr1, arr1)) shouldBe "[1,5,14]"
   }
 
   it should "HigherOrderFunctions: arrayExists" in {
     r(arrayExists[Long](_.isEq(2L), arr1)) shouldBe "1"
     r(arrayExists[Long](_.isEq(-1L), arr1)) shouldBe "0"
 
-    r(arrayExists2[Int]((x, y) => x.isEq(y), Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "0"
-    r(arrayExists2[Int]((x, y) => x.notEq(y), Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "1"
+    r(arrayExists2[Int, Int]((x, y) => x.isEq(y), Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "0"
+    r(arrayExists2[Int, Int]((x, y) => x.notEq(y), Seq(1, 2, 3), Seq(4, 5, 6))) shouldBe "1"
   }
 
   it should "HigherOrderFunctions: arrayFill" in {
@@ -54,7 +54,11 @@ class HigherOrderFunctionsIT extends DslITSpec {
 
     r(arrayFilter[String](_.like("%World%"), Seq("Hello", "World"))) shouldBe "['World']"
     r(
-      arrayFilter2[String]((x, y) => x.concat(y).like("%World"), Seq("Hello", "World"), Seq("Sjoerd", "Leonard"))
+      arrayFilter2[String, String](
+        (x, y) => x.concat(y).like("%World"),
+        Seq("Hello", "World"),
+        Seq("Sjoerd", "Leonard")
+      )
     ) shouldBe "[]"
   }
 
@@ -62,34 +66,34 @@ class HigherOrderFunctionsIT extends DslITSpec {
     r(arrayFirst[Long](modulo(_, 2L).isEq(0), arr1)) shouldBe "2"
     r(arrayFirst[Long](_ < 0, arr1)) shouldBe "0"
 
-    r(arrayFirst2[Int]((x, y) => x > y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "3"
+    r(arrayFirst2[Int, Int]((x, y) => x > y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "3"
   }
 
   it should "HigherOrderFunctions: arrayFirstIndex" in {
     r(arrayFirstIndex[Long](modulo(_, 2L).isEq(0), arr1)) shouldBe "2"
     r(arrayFirstIndex[Long](_ < 0, arr1)) shouldBe "0"
 
-    r(arrayFirstIndex2[Int]((x, y) => x > y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "3"
+    r(arrayFirstIndex2[Int, Int]((x, y) => x > y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "3"
   }
 
   it should "HigherOrderFunctions: arrayMap" in {
     r(arrayMap[Long, Long](x => x * 2L, arr1)) shouldBe "[2,4,6]"
-    r(arrayMap2[Long, Long]((x, y) => x * y, arr1, arr1)) shouldBe "[1,4,9]"
-    r(arrayMap3[Long, Long]((x, y, z) => x * y * z, arr1, arr1, arr1)) shouldBe "[1,8,27]"
+    r(arrayMap2[Long, Long, Long]((x, y) => x * y, arr1, arr1)) shouldBe "[1,4,9]"
+    r(arrayMap3[Long, Long, Long, Long]((x, y, z) => x * y * z, arr1, arr1, arr1)) shouldBe "[1,8,27]"
   }
 
   it should "HigherOrderFunctions: arrayMax" in {
     r(arrayMax[Long, Long](None, arr1)) shouldBe "3"
     r(arrayMax[Long, Long](Option(x => x * -1L), arr1)) shouldBe "-1"
 
-    r(arrayMax2[Int, Int]((x, y) => x ^ y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "9"
+    r(arrayMax2[Int, Int, Int]((x, y) => x ^ y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "9"
   }
 
   it should "HigherOrderFunctions: arrayMin" in {
     r(arrayMin[Long, Long](None, arr1)) shouldBe "1"
     r(arrayMin[Long, Long](Option(x => x * -1L), arr1)) shouldBe "-3"
 
-    r(arrayMin2[Int, Int]((x, y) => x ^ y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "1"
+    r(arrayMin2[Int, Int, Int]((x, y) => x ^ y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "1"
   }
 
   it should "HigherOrderFunctions: arrayReverseFill" in {
@@ -102,24 +106,24 @@ class HigherOrderFunctionsIT extends DslITSpec {
     r(arrayReverseSort[Long, Long](Some(_ % 3), arr1)) shouldBe "[2,1,3]"
     r(arrayReverseSort[Long, Long](None, arr1)) shouldBe "[3,2,1]"
 
-    r(arrayReverseSort2[Int, Int]((x, y) => x * y, Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "[3,3,1,0]"
+    r(arrayReverseSort2[Int, Int, Int]((x, y) => x * y, Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "[3,3,1,0]"
   }
 
   it should "HigherOrderFunctions: arrayReverseSplit" in {
     r(
-      arrayReverseSplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3, 4, 5), Iterable(1, 0, 0, 1, 0))
+      arrayReverseSplit2[Int, Int]((x, y) => y.notEq(0), Iterable(1, 2, 3, 4, 5), Iterable(1, 0, 0, 1, 0))
     ) shouldBe "[[1],[2,3,4],[5]]"
   }
 
   it should "HigherOrderFunctions: arraySort" in {
     r(arraySort[Long, Double](Some(_ % 3.0), arr1)) shouldBe "[3,1,2]"
     r(arraySort[Long, Double](None, arr1)) shouldBe "[1,2,3]"
-    r(arraySort2[Int, Int]((x, y) => x * y, Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "[0,1,3,3]"
+    r(arraySort2[Int, Int, Int]((x, y) => x * y, Seq(1, 3, 3, 0), Seq(3, 2, 3, 4))) shouldBe "[0,1,3,3]"
   }
 
   it should "HigherOrderFunctions: arraySplit" in {
     r(
-      arraySplit[Int]((x, y) => y.notEq(0), Iterable(1, 2, 3, 4, 5), Iterable(1, 0, 0, 1, 0))
+      arraySplit2[Int, Int]((x, y) => y.notEq(0), Iterable(1, 2, 3, 4, 5), Iterable(1, 0, 0, 1, 0))
     ) shouldBe "[[1,2,3],[4,5]]"
   }
 
@@ -127,6 +131,47 @@ class HigherOrderFunctionsIT extends DslITSpec {
     r(arraySum[Long, Long](Some(_ * 2L), arr1)) shouldBe "12"
     r(arraySum[Long, Long](None, arr1)) shouldBe "6"
 
-    r(arraySum2[Int, Int]((x, y) => x ^ y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "14"
+    r(arraySum2[Int, Int, Int]((x, y) => x ^ y, Seq(1, 2, 3), Seq(1, 2, 2))) shouldBe "14"
+  }
+
+  // Arrays whose element types differ. The three-array case had no workaround before: no cast unifies a String with a
+  // numeric, so any expression over an id array plus two numeric arrays was unwritable.
+  it should "HigherOrderFunctions: heterogeneous element types" in {
+    val ids        = Iterable("a", "b")
+    val prices     = Iterable(1.5d, 2.5d)
+    val quantities = Iterable(2, 3)
+
+    r(arrayMap2[Double, Int, Double]((price, qty) => price * qty, prices, quantities)) shouldBe "[3,7.5]"
+
+    r(
+      arrayMap3[String, Double, Int, String](
+        (id, price, qty) => concat(id, const(":"), toStringRep(price * qty)),
+        ids,
+        prices,
+        quantities
+      )
+    ) shouldBe "['a:3','b:7.5']"
+
+    // arrayFilter keeps elements of the first array, so this yields ids selected by a predicate over quantities.
+    r(arrayFilter2[String, Int]((_, qty) => qty > 2, ids, quantities)) shouldBe "['b']"
+
+    r(arraySum2[Double, Int, Double]((price, qty) => price * qty, prices, quantities)) shouldBe "10.5"
+  }
+
+  // The sorting family returns the first array reordered, not the lambda's values -- which is why it is typed by the
+  // first array's element type.
+  it should "HigherOrderFunctions: arraySort returns the first array" in {
+    r(arraySort2[String, Int, Int]((_, qty) => negate(qty), Iterable("a", "b"), Iterable(1, 9))) shouldBe "['b','a']"
+    // Arity one, with the lambda's output type differing from the array's: the result is still the array's own
+    // elements, which the previous Iterable[O] typing got wrong.
+    r(arraySort[Int, Double](Option(x => x * 1.5d), Iterable(3, 1))) shouldBe "[1,3]"
+  }
+
+  it should "HigherOrderFunctions: split at arity one and three" in {
+    r(arraySplit[Int](x => x > const(1), Iterable(1, 2, 3))) shouldBe "[[1],[2],[3]]"
+    r(arrayReverseSplit[Int](x => x > const(1), Iterable(1, 2, 3))) shouldBe "[[1,2],[3]]"
+    r(
+      arraySplit3[Int, Int, Int]((_, _, c) => c > const(0), Iterable(1, 2), Iterable(1, 2), Iterable(1, 0))
+    ) shouldBe "[[1,2]]"
   }
 }
