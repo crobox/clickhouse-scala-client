@@ -33,8 +33,10 @@ class ConnectionManagerActor(
   private var currentConfiguredHosts: Set[Uri]                    = Set.empty
   private var initialized: Boolean                                = false
 
+  // Both implicits spelled out: leaving `sender` to its default argument is a warning under Scala 3.
   context.system.scheduler.scheduleWithFixedDelay(30.seconds, 30.seconds, self, LogDeadConnections)(
-    context.system.dispatcher
+    context.system.dispatcher,
+    Actor.noSender
   )
 
   override def receive: Receive = {

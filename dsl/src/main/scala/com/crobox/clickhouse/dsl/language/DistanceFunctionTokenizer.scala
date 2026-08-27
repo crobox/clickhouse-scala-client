@@ -35,9 +35,9 @@ trait DistanceFunctionTokenizer {
       s"LinfDistance(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)})"
 
     // LP
-    case LPNorm(vector, p)                      => s"LpNorm(${tokenizeColumn(vector.column)}, $p)"
-    case LPNormalize(vector, p: Float)          => s"LpNormalize(${tokenizeColumn(vector.column)}, $p)"
-    case LPDistance(vector1, vector2, p: Float) =>
+    case LPNorm(vector, p)               => s"LpNorm(${tokenizeColumn(vector.column)}, $p)"
+    case LPNormalize(vector, p)          => s"LpNormalize(${tokenizeColumn(vector.column)}, $p)"
+    case LPDistance(vector1, vector2, p) =>
       s"LpDistance(${tokenizeColumn(vector1.column)}, ${tokenizeColumn(vector2.column)}, $p)"
   }
 }

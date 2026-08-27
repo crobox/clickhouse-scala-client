@@ -4,8 +4,8 @@ import com.crobox.clickhouse.dsl.ExpressionColumn
 
 trait URLFunctions { self: Magnets =>
   sealed abstract class URLFunction[V](val urlColumn: StringColMagnet[_]) extends ExpressionColumn[V](urlColumn.column)
-  abstract class URLStrFunction(col: StringColMagnet[_])                  extends URLFunction[String](col)
-  abstract class URLArrFunction(col: StringColMagnet[_])                  extends URLFunction[Seq[String]](col)
+  sealed abstract class URLStrFunction(col: StringColMagnet[_])           extends URLFunction[String](col)
+  sealed abstract class URLArrFunction(col: StringColMagnet[_])           extends URLFunction[Seq[String]](col)
 
   case class Protocol(col: StringColMagnet[_])                                       extends URLStrFunction(col)
   case class Domain(col: StringColMagnet[_])                                         extends URLStrFunction(col)

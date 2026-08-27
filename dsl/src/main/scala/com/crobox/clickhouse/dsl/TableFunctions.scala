@@ -24,7 +24,7 @@ trait TableFunctions {
   def numbers(start: Long, count: Long): TableFunctionFromQuery =
     tableFunction("numbers", const(start), const(count))
 
-  /** `zeros(count)`, which is [[numbers]] without the counter -- cheaper when only the row count matters. */
+  /** `zeros(count)`, which is `numbers` without the counter -- cheaper when only the row count matters. */
   def zeros(count: Long): TableFunctionFromQuery = tableFunction("zeros", const(count))
 
   /** `values(rows)`, an inline table. Build each row with `tuple(...)`; a single-column table can take bare values. */

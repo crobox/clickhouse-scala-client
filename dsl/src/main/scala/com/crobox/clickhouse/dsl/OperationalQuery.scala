@@ -89,7 +89,7 @@ trait OperationalQuery extends Query {
    * `SAMPLE rate [OFFSET offset]`, where `rate` is a fraction in (0, 1] or a row count above 1.
    *
    * Only valid on a table whose engine declares a `SAMPLE BY` expression; the server rejects it otherwise. Rejected
-   * here on a subquery for the same reason [[asFinal]] is -- there is no sampling key to read.
+   * here on a subquery for the same reason `asFinal` is -- there is no sampling key to read.
    */
   def sample(rate: Double, offset: Option[Double] = None): OperationalQuery =
     OperationalQuery(

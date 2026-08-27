@@ -37,7 +37,7 @@ trait SplitMergeFunctionTokenizer {
       }
     case SplitByString(sep: StringColMagnet[_], col: StringColMagnet[_]) =>
       s"splitByString(${tokenizeColumn(sep.column)}, ${tokenizeColumn(col.column)})"
-    case ArrayStringConcat(col: ArrayColMagnet[_], sep: StringColMagnet[_]) =>
+    case ArrayStringConcat(col, sep) =>
       s"arrayStringConcat(${tokenizeColumn(col.column)}, ${tokenizeColumn(sep.column)})"
     case AlphaTokens(col: StringColMagnet[_]) => s"alphaTokens(${tokenizeColumn(col.column)})"
   }

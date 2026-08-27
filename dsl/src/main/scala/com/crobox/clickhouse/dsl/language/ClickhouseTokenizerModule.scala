@@ -357,40 +357,43 @@ trait ClickhouseTokenizerModule
     }
   }
 
+  // The `@unchecked`s are on the markers that are `sealed trait`s inside a trait: a trait carries no outer pointer,
+  // so the type test cannot confirm the value came from this DSL instance. There is only ever the one, `object dsl`.
   private def tokenizeExpressionColumn(inCol: ExpressionColumn[_])(implicit ctx: TokenizeContext): String =
     inCol match {
-      case agg: AggregateFunction[_]            => tokenizeAggregateFunction(agg)
-      case col: ArithmeticFunctionCol[_]        => tokenizeArithmeticFunctionColumn(col)
-      case col: ArithmeticFunctionOp[_]         => tokenizeArithmeticFunctionOperator(col)
-      case col: ArrayFunction                   => tokenizeArrayFunction(col)
-      case col: BitFunction                     => tokenizeBitFunction(col)
-      case col: ComparisonColumn                => tokenizeComparisonColumn(col)
-      case col: DateTimeFunctionCol[_]          => tokenizeDateTimeColumn(col)
-      case col: DateTimeConst[_]                => tokenizeDateTimeConst(col)
-      case col: DictionaryFuncColumn[_]         => tokenizeDictionaryFunction(col)
-      case col: DistanceFunction                => tokenizeDistanceFunction(col)
-      case col: EmptyFunction[_]                => tokenizeEmptyCol(col)
-      case col: EncodingFunction[_]             => tokenizeEncodingFunction(col)
-      case col: HashFunction                    => tokenizeHashFunction(col)
-      case col: HigherOrderFunction[_, _]       => tokenizeHigherOrderFunction(col)
-      case col: IPFunction[_]                   => tokenizeIPFunction(col)
-      case col: InFunction                      => tokenizeInFunction(col)
-      case col: JsonFunction[_]                 => tokenizeJsonFunction(col)
-      case col: LogicalFunction                 => tokenizeLogicalFunction(col)
-      case col: MathFuncColumn                  => tokenizeMathematicalFunction(col)
-      case col: MiscellaneousFunction           => tokenizeMiscellaneousFunction(col)
-      case col: NullableFunction                => tokenizeNullableFunction(col)
-      case col: RandomFunction                  => tokenizeRandomFunction(col)
-      case col: RoundingFunction                => tokenizeRoundingFunction(col)
-      case col: SplitMergeFunction[_]           => tokenizeSplitMergeFunction(col)
-      case col: StringFunctionCol[_]            => tokenizeStringCol(col)
-      case col: StringSearchFunc[_]             => tokenizeStringSearchFunction(col)
-      case col: TypeCastColumn[_]               => tokenizeTypeCastColumn(col)
-      case col: URLFunction[_]                  => tokenizeURLFunction(col)
-      case col: WindowOnlyFunctionCol[_]        => tokenizeWindowOnlyFunction(col)
-      case All()                                => "*"
-      case RawColumn(rawSql)                    => rawSql
-      case Conditional(cases, default, multiIf) =>
+      case agg: AggregateFunction[_]               => tokenizeAggregateFunction(agg)
+      case col: ArithmeticFunctionCol[_]           => tokenizeArithmeticFunctionColumn(col)
+      case col: ArithmeticFunctionOp[_]            => tokenizeArithmeticFunctionOperator(col)
+      case col: (ArrayFunction @unchecked)         => tokenizeArrayFunction(col)
+      case col: BitFunction                        => tokenizeBitFunction(col)
+      case col: ComparisonColumn                   => tokenizeComparisonColumn(col)
+      case col: DateTimeFunctionCol[_]             => tokenizeDateTimeColumn(col)
+      case col: DateTimeConst[_]                   => tokenizeDateTimeConst(col)
+      case col: DictionaryFuncColumn[_]            => tokenizeDictionaryFunction(col)
+      case col: (DistanceFunction @unchecked)      => tokenizeDistanceFunction(col)
+      case col: EmptyFunction[_]                   => tokenizeEmptyCol(col)
+      case col: EncodingFunction[_]                => tokenizeEncodingFunction(col)
+      case col: HashFunction                       => tokenizeHashFunction(col)
+      case col: HigherOrderFunction[_, _]          => tokenizeHigherOrderFunction(col)
+      case col: IPFunction[_]                      => tokenizeIPFunction(col)
+      case col: (InFunction @unchecked)            => tokenizeInFunction(col)
+      case col: JsonFunction[_]                    => tokenizeJsonFunction(col)
+      case col: LogicalFunction                    => tokenizeLogicalFunction(col)
+      case col: MathFuncColumn                     => tokenizeMathematicalFunction(col)
+      case col: (MiscellaneousFunction @unchecked) => tokenizeMiscellaneousFunction(col)
+      case col: (NullableFunction @unchecked)      => tokenizeNullableFunction(col)
+      case col: RandomFunction                     => tokenizeRandomFunction(col)
+      case col: RoundingFunction                   => tokenizeRoundingFunction(col)
+      case col: SplitMergeFunction[_]              => tokenizeSplitMergeFunction(col)
+      case col: StringFunctionCol[_]               => tokenizeStringCol(col)
+      case col: StringSearchFunc[_]                => tokenizeStringSearchFunction(col)
+      case col: TypeCastColumn[_]                  => tokenizeTypeCastColumn(col)
+      case col: URLFunction[_]                     => tokenizeURLFunction(col)
+      case col: WindowOnlyFunctionCol[_]           => tokenizeWindowOnlyFunction(col)
+      case All()                                   => "*"
+      case RawColumn(rawSql)                       => rawSql
+      case Conditional(Nil, default, _)            => tokenizeColumn(default)
+      case Conditional(cases, default, multiIf)    =>
         if (multiIf) {
           s"${if (cases.size > 1) "multiIf" else "if"}(${cases
               .map(`case` => s"${tokenizeColumn(`case`.condition)}, ${tokenizeColumn(`case`.result)}")

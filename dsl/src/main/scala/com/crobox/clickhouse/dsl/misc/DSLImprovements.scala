@@ -117,23 +117,14 @@ object DSLImprovements {
     def insertConstraint(condition: Option[ExpressionColumn[Boolean]]): OperationalQuery =
       condition.map(insertConstraint).getOrElse(query)
 
-    def insertConstraint(condition: ExpressionColumn[Boolean]): OperationalQuery = {
-      query.internalQuery.from.foreach {
-        case l1: InnerFromQuery =>
-          return query.from(l1.innerQuery.andConstraint(condition))
-
-        // this might be even another level 'deep'
-        // See FilterQueryTransformerFourTableTest#
-        //          l1.internalQuery.from.foreach {
-        //            case l2: InnerFromQuery   => return query.from(l1.innerQuery.from(l2.innerQuery.andConstraint(condition)))
-        //            case _: TableFromQuery[_] => return query.from(l1.innerQuery.andConstraint(condition))
-        //            case _                    =>
-        //          }
-        case _: TableFromQuery[_] => return query.andConstraint(condition)
-        case _                    =>
+    // Only the one level: a constraint on a query selecting from a subquery that itself selects from a subquery lands
+    // on the outer of the two. See FilterQueryTransformerFourTableTest.
+    def insertConstraint(condition: ExpressionColumn[Boolean]): OperationalQuery =
+      query.internalQuery.from match {
+        case Some(l1: InnerFromQuery)   => query.from(l1.innerQuery.andConstraint(condition))
+        case Some(_: TableFromQuery[_]) => query.andConstraint(condition)
+        case _                          => query
       }
-      query
-    }
   }
 
   implicit class OrderingColumnsImprovements(values: Seq[OrderingColumn]) {

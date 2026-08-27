@@ -60,7 +60,7 @@ class ExplainIT extends DslITSpec {
   it should "explain a query carrying the clauses added for #328" in {
     val clauses = select(shieldId)
       .from(OneTestTable)
-      .withArrayJoin(numbers as "n")
+      .withArrayJoin(this.numbers as "n")
       .where(shieldId isEq "a")
       .limit(Option(Limit(5)))
       .settings("max_threads" -> "1")

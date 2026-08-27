@@ -14,30 +14,31 @@ class QueryClausesTest extends DslTestSpec {
   private def sql(query: OperationalQuery): String = toSql(query.internalQuery, None)
 
   "ARRAY JOIN" should "unfold a single column" in {
-    sql(select(shieldId).from(OneTestTable).withArrayJoin(numbers)) should matchSQL(
+    sql(select(shieldId).from(OneTestTable).withArrayJoin(this.numbers)) should matchSQL(
       s"SELECT shield_id FROM ${OneTestTable.quoted} ARRAY JOIN numbers"
     )
   }
 
   it should "render LEFT ARRAY JOIN" in {
-    sql(select(shieldId).from(OneTestTable).withLeftArrayJoin(numbers)) should matchSQL(
+    sql(select(shieldId).from(OneTestTable).withLeftArrayJoin(this.numbers)) should matchSQL(
       s"SELECT shield_id FROM ${OneTestTable.quoted} LEFT ARRAY JOIN numbers"
     )
   }
 
   it should "carry an alias, which is how the unfolded column gets named" in {
-    sql(select(shieldId).from(OneTestTable).withArrayJoin(numbers as "n")) should matchSQL(
+    sql(select(shieldId).from(OneTestTable).withArrayJoin(this.numbers as "n")) should matchSQL(
       s"SELECT shield_id FROM ${OneTestTable.quoted} ARRAY JOIN numbers AS n"
     )
   }
 
   it should "accumulate columns across calls rather than replacing them" in {
-    val query = select(shieldId).from(OneTestTable).withArrayJoin(numbers as "n").withArrayJoin(numbers as "m")
+    val query =
+      select(shieldId).from(OneTestTable).withArrayJoin(this.numbers as "n").withArrayJoin(this.numbers as "m")
     sql(query) should matchSQL(s"SELECT shield_id FROM ${OneTestTable.quoted} ARRAY JOIN numbers AS n, numbers AS m")
   }
 
   it should "sit between FROM and WHERE" in {
-    val query = select(shieldId).from(OneTestTable).withArrayJoin(numbers).where(shieldId isEq "a")
+    val query = select(shieldId).from(OneTestTable).withArrayJoin(this.numbers).where(shieldId isEq "a")
     sql(query) should matchSQL(
       s"SELECT shield_id FROM ${OneTestTable.quoted} ARRAY JOIN numbers WHERE shield_id = 'a'"
     )
@@ -48,7 +49,7 @@ class QueryClausesTest extends DslTestSpec {
   it should "sit after the left table's alias and before JOIN" in {
     val query = select(shieldId as itemId)
       .from(OneTestTable)
-      .withArrayJoin(numbers as "n")
+      .withArrayJoin(this.numbers as "n")
       .join(JoinQuery.InnerJoin, TwoTestTable) using itemId
     sql(query) should matchSQL(
       s"SELECT shield_id AS item_id FROM ${OneTestTable.quoted} AS L1 ARRAY JOIN numbers AS n " +

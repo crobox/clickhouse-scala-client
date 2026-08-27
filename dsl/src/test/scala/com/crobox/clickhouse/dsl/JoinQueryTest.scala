@@ -231,7 +231,7 @@ class JoinQueryTest extends DslTestSpec with TableDrivenPropertyChecks {
   it should "keep ARRAY JOIN between the left alias and the first JOIN of a chain" in {
     val query = select(itemId)
       .from(TwoTestTable)
-      .withArrayJoin(numbers)
+      .withArrayJoin(this.numbers)
       .join(InnerJoin, ThreeTestTable)
       .on(itemId)
       .join(InnerJoin, TwoTestTable)

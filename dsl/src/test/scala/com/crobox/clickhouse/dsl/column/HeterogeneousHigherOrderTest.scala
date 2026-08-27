@@ -116,4 +116,17 @@ class HeterogeneousHigherOrderTest extends DslTestSpec {
     toSQL(select(arrayReverseSplit[Int](x => x > const(1), quantities)), false) should
     matchSQL("SELECT arrayReverseSplit(x -> x > 1, quantities)")
   }
+
+  // A conditional is an ExpressionColumn whether or not it has cases, so it can be a lambda body directly. It used to
+  // be typed TableColumn, which no higher-order function accepts, and callers reached for a cast.
+  it should "take a conditional as a lambda body" in {
+    val expr = arrayMap[Double, Int, Double](
+      (price, qty) => multiIf(const(0.0), columnCase(qty > const(0), price * qty)),
+      prices,
+      quantities
+    )
+    toSQL(select(expr), false) should matchSQL(
+      "SELECT arrayMap((x,y) -> if(y > 0, x * y, 0.0), prices, quantities)"
+    )
+  }
 }

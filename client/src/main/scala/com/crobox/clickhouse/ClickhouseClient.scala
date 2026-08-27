@@ -71,8 +71,9 @@ class ClickhouseClient(
    * Progress events and the result, streamed together.
    *
    * Unlike [[queryWithProgress]], which hands back the body as a materialised `Future[String]` and so holds the whole
-   * result in memory, this emits it as [[QueryProgress.QueryResultPart]] events as it arrives. Not retried, since a
-   * retry would re-run the query after the consumer had already seen part of a result.
+   * result in memory, this emits it as [[com.crobox.clickhouse.internal.progress.QueryProgress.QueryResultPart]] events
+   * as it arrives. Not retried, since a retry would re-run the query after the consumer had already seen part of a
+   * result.
    */
   def queryWithProgressStreaming(sql: String)(implicit
       settings: QuerySettings = QuerySettings(ReadQueries)

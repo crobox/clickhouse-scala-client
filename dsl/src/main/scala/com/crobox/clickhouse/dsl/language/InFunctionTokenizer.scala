@@ -15,13 +15,13 @@ trait InFunctionTokenizer {
   }
 
   private def tokenizeInFunctionCol(col: InFunctionCol[_])(implicit ctx: TokenizeContext): String = col match {
-    case In(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
+    case In(l, r) =>
       s"${tokenizeColumn(l.column)} IN ${tokenizeInFunRHCol(r, aliasTables(r))}"
-    case NotIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
+    case NotIn(l, r) =>
       s"${tokenizeColumn(l.column)} NOT IN ${tokenizeInFunRHCol(r, aliasTables(r))}"
-    case GlobalIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
+    case GlobalIn(l, r) =>
       s"${tokenizeColumn(l.column)} GLOBAL IN ${tokenizeInFunRHCol(r, aliasTables = false)}"
-    case GlobalNotIn(l: ConstOrColMagnet[_], r: InFuncRHMagnet) =>
+    case GlobalNotIn(l, r) =>
       s"${tokenizeColumn(l.column)} GLOBAL NOT IN ${tokenizeInFunRHCol(r, aliasTables = false)}"
   }
 
@@ -31,11 +31,8 @@ trait InFunctionTokenizer {
   private def tokenizeInFunRHCol(value: InFuncRHMagnet, aliasTables: Boolean)(implicit
       ctx: TokenizeContext
   ): String =
-    value match {
-      case col: InFuncRHMagnet if col.query.isDefined =>
-        s"(${ctx.withTableAlias(aliasTables)(toRawSql(col.query.get.internalQuery))})"
-      case col: InFuncRHMagnet if col.tableRef.isDefined =>
-        col.tableRef.map(table => table.quoted + ctx.withTableAlias(aliasTables)(ctx.tableAlias(table))).get
-      case col: InFuncRHMagnet => tokenizeColumn(col.column)
-    }
+    value.query
+      .map(query => s"(${ctx.withTableAlias(aliasTables)(toRawSql(query.internalQuery))})")
+      .orElse(value.tableRef.map(table => table.quoted + ctx.withTableAlias(aliasTables)(ctx.tableAlias(table))))
+      .getOrElse(tokenizeColumn(value.column))
 }

@@ -68,13 +68,20 @@ package object dsl extends ClickhouseColumnFunctions with QueryFactory with Quer
 
   def columnCase[V](condition: TableColumn[Boolean], result: TableColumn[V]): Case[V] = Case[V](condition, result)
 
-  def switch[V](defaultValue: TableColumn[V], cases: Case[V]*): TableColumn[V] = cases match {
-    case Nil => defaultValue
-    case _   => Conditional(cases, defaultValue, multiIf = false)
-  }
+  /**
+   * Both build the node even with no cases, where they once handed the default straight back. That short-circuit is
+   * what forced the return type up to `TableColumn`, and a lambda -- `arrayMap`'s and every other higher-order one --
+   * asks for an `ExpressionColumn`, so every conditional inside one needed a cast the compiler could not check.
+   *
+   * The degenerate case is not lost, only moved: the tokenizer renders a caseless conditional as the bare default, so
+   * `multiIf(x)` is still `x`.
+   *
+   * `Conditional` rather than `ExpressionColumn` because a caller building one up -- adding a case to a conditional it
+   * already has -- needs the node, and every other builder here hands its own node back too.
+   */
+  def switch[V](defaultValue: TableColumn[V], cases: Case[V]*): Conditional[V] =
+    Conditional(cases, defaultValue, multiIf = false)
 
-  def multiIf[V](defaultValue: TableColumn[V], cases: Case[V]*): TableColumn[V] = cases match {
-    case Nil => defaultValue
-    case _   => Conditional(cases, defaultValue, multiIf = true)
-  }
+  def multiIf[V](defaultValue: TableColumn[V], cases: Case[V]*): Conditional[V] =
+    Conditional(cases, defaultValue, multiIf = true)
 }

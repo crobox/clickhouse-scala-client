@@ -10,71 +10,71 @@ trait ArrayFunctionTokenizer { this: ClickhouseTokenizerModule =>
   }
 
   protected def tokenizeArrayFunctionOp(col: ArrayFunctionOp[_])(implicit ctx: TokenizeContext): String = col match {
-    case EmptyArrayToSingle(col: ArrayColMagnet[_]) =>
+    case EmptyArrayToSingle(col) =>
       s"emptyArrayToSingle(${tokenizeColumn(col.column)})"
     case Array(columns @ _*) =>
       s"[${tokenizeSeqCol(columns.map(_.column): _*)}]" // Array Creation Operator
-    case ArrayConcat(col1: ArrayColMagnet[_], columns @ _*) =>
+    case ArrayConcat(col1, columns @ _*) =>
       s"arrayConcat(${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
-    case ArrayElement(col: ArrayColMagnet[_], n: NumericCol[_]) =>
+    case ArrayElement(col, n) =>
       s"${tokenizeColumn(col.column)}[${tokenizeColumn(n.column)}]"
-    case Has(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
+    case Has(col, elm) =>
       s"has(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
-    case HasAll(col: ArrayColMagnet[_], elm: ArrayColMagnet[_]) =>
+    case HasAll(col, elm) =>
       s"hasAll(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
-    case HasAny(col: ArrayColMagnet[_], elm: ArrayColMagnet[_]) =>
+    case HasAny(col, elm) =>
       s"hasAny(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
-    case IndexOf(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
+    case IndexOf(col, elm) =>
       s"indexOf(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
-    case CountEqual(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
+    case CountEqual(col, elm) =>
       s"countEqual(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
-    case ArrayEnumerate(col: ArrayColMagnet[_]) =>
+    case ArrayEnumerate(col) =>
       s"arrayEnumerate(${tokenizeColumn(col.column)})"
-    case ArrayEnumerateUniq(col1: ArrayColMagnet[_], columns @ _*) =>
+    case ArrayEnumerateUniq(col1, columns @ _*) =>
       s"arrayEnumerateUniq(${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
-    case ArrayPopBack(col: ArrayColMagnet[_]) =>
+    case ArrayPopBack(col) =>
       s"arrayPopBack(${tokenizeColumn(col.column)})"
-    case ArrayPopFront(col: ArrayColMagnet[_]) =>
+    case ArrayPopFront(col) =>
       s"arrayPopFront(${tokenizeColumn(col.column)})"
-    case ArrayPushBack(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
+    case ArrayPushBack(col, elm) =>
       s"arrayPushBack(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
-    case ArrayPushFront(col: ArrayColMagnet[_], elm: ConstOrColMagnet[_]) =>
+    case ArrayPushFront(col, elm) =>
       s"arrayPushFront(${tokenizeColumn(col.column)}, ${tokenizeColumn(elm.column)})"
-    case ArrayResize(col: ArrayColMagnet[_], size: NumericCol[_], extender: ConstOrColMagnet[_]) =>
+    case ArrayResize(col, size, extender) =>
       s"arrayResize(${tokenizeColumn(col.column)},${tokenizeColumn(size.column)},${tokenizeColumn(extender.column)})"
-    case ArraySlice(col: ArrayColMagnet[_], offset: NumericCol[_], length: NumericCol[_]) =>
+    case ArraySlice(col, offset, length) =>
       s"arraySlice(${tokenizeColumn(col.column)},${tokenizeColumn(offset.column)},${tokenizeColumn(length.column)})"
-    case ArrayUniq(col1: ArrayColMagnet[_], columns @ _*) =>
+    case ArrayUniq(col1, columns @ _*) =>
       s"arrayUniq(${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
-    case ArrayJoin(col: ArrayColMagnet[_])                     => s"arrayJoin(${tokenizeColumn(col.column)})"
-    case ArrayDifference(col: ArrayColMagnet[_])               => s"arrayDifference(${tokenizeColumn(col.column)})"
-    case ArrayDistinct(col: ArrayColMagnet[_])                 => s"arrayDistinct(${tokenizeColumn(col.column)})"
-    case ArrayIntersect(col1: ArrayColMagnet[_], columns @ _*) =>
+    case ArrayJoin(col)                     => s"arrayJoin(${tokenizeColumn(col.column)})"
+    case ArrayDifference(col)               => s"arrayDifference(${tokenizeColumn(col.column)})"
+    case ArrayDistinct(col)                 => s"arrayDistinct(${tokenizeColumn(col.column)})"
+    case ArrayIntersect(col1, columns @ _*) =>
       s"arrayIntersect(${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
-    case ArrayReduce(function: String, col1: ArrayColMagnet[_], columns @ _*) =>
+    case ArrayReduce(function, col1, columns @ _*) =>
       s"arrayReduce('$function', ${tokenizeSeqCol(col1.column, columns.map(_.column): _*)})"
-    case ArrayReverse(col: ArrayColMagnet[_])  => s"arrayReverse(${tokenizeColumn(col.column)})"
-    case ArrayEmpty(col: ArrayColMagnet[_])    => s"empty(${tokenizeColumn(col.column)})"
-    case ArrayNotEmpty(col: ArrayColMagnet[_]) => s"notEmpty(${tokenizeColumn(col.column)})"
-    case ArrayLength(col: ArrayColMagnet[_])   => s"length(${tokenizeColumn(col.column)})"
-    case ArrayFlatten(col: ArrayColMagnet[_])  => s"arrayFlatten(${tokenizeColumn(col.column)})"
+    case ArrayReverse(col)  => s"arrayReverse(${tokenizeColumn(col.column)})"
+    case ArrayEmpty(col)    => s"empty(${tokenizeColumn(col.column)})"
+    case ArrayNotEmpty(col) => s"notEmpty(${tokenizeColumn(col.column)})"
+    case ArrayLength(col)   => s"length(${tokenizeColumn(col.column)})"
+    case ArrayFlatten(col)  => s"arrayFlatten(${tokenizeColumn(col.column)})"
   }
 
   protected def tokenizeArrayFunctionConst(col: ArrayFunctionConst[_])(implicit ctx: TokenizeContext): String =
     col match {
-      case _: EmptyArrayUInt8      => "emptyArrayUInt8()"
-      case _: EmptyArrayUInt16     => "emptyArrayUInt16()"
-      case _: EmptyArrayUInt32     => "emptyArrayUInt32()"
-      case _: EmptyArrayUInt64     => "emptyArrayUInt64()"
-      case _: EmptyArrayInt8       => "emptyArrayInt8()"
-      case _: EmptyArrayInt16      => "emptyArrayInt16()"
-      case _: EmptyArrayInt32      => "emptyArrayInt32()"
-      case _: EmptyArrayInt64      => "emptyArrayInt64()"
-      case _: EmptyArrayFloat32    => "emptyArrayFloat32()"
-      case _: EmptyArrayFloat64    => "emptyArrayFloat64()"
-      case _: EmptyArrayDate       => "emptyArrayDate()"
-      case _: EmptyArrayDateTime   => "emptyArrayDateTime()"
-      case _: EmptyArrayString     => "emptyArrayString()"
-      case Range(n: NumericCol[_]) => s"range(${tokenizeColumn(n.column)})"
+      case _: EmptyArrayUInt8    => "emptyArrayUInt8()"
+      case _: EmptyArrayUInt16   => "emptyArrayUInt16()"
+      case _: EmptyArrayUInt32   => "emptyArrayUInt32()"
+      case _: EmptyArrayUInt64   => "emptyArrayUInt64()"
+      case _: EmptyArrayInt8     => "emptyArrayInt8()"
+      case _: EmptyArrayInt16    => "emptyArrayInt16()"
+      case _: EmptyArrayInt32    => "emptyArrayInt32()"
+      case _: EmptyArrayInt64    => "emptyArrayInt64()"
+      case _: EmptyArrayFloat32  => "emptyArrayFloat32()"
+      case _: EmptyArrayFloat64  => "emptyArrayFloat64()"
+      case _: EmptyArrayDate     => "emptyArrayDate()"
+      case _: EmptyArrayDateTime => "emptyArrayDateTime()"
+      case _: EmptyArrayString   => "emptyArrayString()"
+      case Range(n)              => s"range(${tokenizeColumn(n.column)})"
     }
 }
