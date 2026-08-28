@@ -69,26 +69,23 @@ object LogicalOperatorImprovements {
 
   implicit class LogicalOpsMagnetImpr(left: LogicalOpsMagnet) {
 
-    def and(right: LogicalOpsMagnet): Option[ExpressionColumn[Boolean]] = (left.asOption, right.asOption) match {
-      case (Some(l), Some(r)) => Option(LogicalFunction(l, And, r))
-      case (None, Some(r))    => Some(r.asInstanceOf[ExpressionColumn[Boolean]])
-      case (Some(l), None)    => Some(l.asInstanceOf[ExpressionColumn[Boolean]])
-      case (None, None)       => None
-    }
+    def and(right: LogicalOpsMagnet): Option[ExpressionColumn[Boolean]] =
+      (left.asOption, right.asOption) match {
+        case (None, None) => None
+        case _            => Option(LogicalFunction(left, And, right))
+      }
 
-    def or(right: LogicalOpsMagnet): Option[ExpressionColumn[Boolean]] = (left.asOption, right.asOption) match {
-      case (Some(l), Some(r)) => Option(LogicalFunction(l, Or, r))
-      case (None, Some(r))    => Some(r.asInstanceOf[ExpressionColumn[Boolean]])
-      case (Some(l), None)    => Some(l.asInstanceOf[ExpressionColumn[Boolean]])
-      case (None, None)       => None
-    }
+    def or(right: LogicalOpsMagnet): Option[ExpressionColumn[Boolean]] =
+      (left.asOption, right.asOption) match {
+        case (None, None) => None
+        case _            => Option(LogicalFunction(left, Or, right))
+      }
 
-    def xor(right: LogicalOpsMagnet): Option[ExpressionColumn[Boolean]] = (left.asOption, right.asOption) match {
-      case (Some(l), Some(r)) => Option(LogicalFunction(l, Xor, r))
-      case (None, Some(r))    => Some(r.asInstanceOf[ExpressionColumn[Boolean]])
-      case (Some(l), None)    => Some(l.asInstanceOf[ExpressionColumn[Boolean]])
-      case (None, None)       => None
-    }
+    def xor(right: LogicalOpsMagnet): Option[ExpressionColumn[Boolean]] =
+      (left.asOption, right.asOption) match {
+        case (None, None) => None
+        case _            => Option(LogicalFunction(left, Xor, right))
+      }
   }
 
   implicit class TableColumnImpr(left: TableColumn[Boolean]) {
@@ -98,21 +95,21 @@ object LogicalOperatorImprovements {
       case _               => left
     }
 
-    def and(right: TableColumn[Boolean]): TableColumn[Boolean] = LogicalFunction(left, And, right)
+    def and(right: TableColumn[Boolean]): ExpressionColumn[Boolean] = LogicalFunction(left, And, right)
 
     def or(right: Option[TableColumn[Boolean]]): TableColumn[Boolean] = right match {
       case Some(condition) => LogicalFunction(left, Or, condition)
       case _               => left
     }
 
-    def or(right: TableColumn[Boolean]): TableColumn[Boolean] = LogicalFunction(left, Or, right)
+    def or(right: TableColumn[Boolean]): ExpressionColumn[Boolean] = LogicalFunction(left, Or, right)
 
     def xor(right: Option[TableColumn[Boolean]]): TableColumn[Boolean] = right match {
       case Some(condition) => LogicalFunction(left, Xor, condition)
       case _               => left
     }
 
-    def xor(right: TableColumn[Boolean]): TableColumn[Boolean] = LogicalFunction(left, Xor, right)
+    def xor(right: TableColumn[Boolean]): ExpressionColumn[Boolean] = LogicalFunction(left, Xor, right)
   }
 
   implicit class OptionalTableColumnImpr(left: Option[TableColumn[Boolean]]) {
