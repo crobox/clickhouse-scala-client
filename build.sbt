@@ -24,8 +24,8 @@ lazy val root = (project in file("."))
         ),
         // sbt-ci-release publishes with no version scheme otherwise, and warns on every task that reads it.
         versionScheme      := Some("early-semver"),
-        scalaVersion       := "2.13.18",
-        crossScalaVersions := List("2.13.18", "3.3.8"),
+        scalaVersion       := "3.9.0",
+        crossScalaVersions := List("3.9.0", "3.3.8"),
         javacOptions ++= Seq("-g", "-Xlint:unchecked", "-Xlint:deprecation", "-source", "11", "-target", "11"),
         scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature", "-language:_", "-encoding", "UTF-8")
       )
