@@ -52,6 +52,18 @@ class ModernColumnTypeIT extends DslITSpec {
 
   it should "create a JSON column" in createWith("json", ColumnType.JSON)
 
+  it should "create a JSON column with parameters" in
+    createWith(
+      "json_params",
+      ColumnType.JSON(
+        maxDynamicPaths = Option(10),
+        maxDynamicTypes = Option(3),
+        typedPaths = Seq("a.b" -> ColumnType.UInt32),
+        skip = Seq("x.y"),
+        skipRegexp = Seq("^tmp")
+      )
+    )
+
   it should "create a SimpleAggregateFunction column" in
     createWith("simpleagg", ColumnType.SimpleAggregateFunction("sum", ColumnType.UInt64))
 

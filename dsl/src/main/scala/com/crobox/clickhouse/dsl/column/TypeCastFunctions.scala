@@ -4,6 +4,7 @@ import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType.SimpleColumnType
 import com.crobox.clickhouse.dsl.{ExpressionColumn, TableColumn}
 import java.time.ZonedDateTime
+import spray.json.JsValue
 
 trait TypeCastFunctions {
   self: Magnets =>
@@ -171,6 +172,10 @@ trait TypeCastFunctions {
   implicit object IPv4CastOutBind extends CastOutBind[ColumnType.IPv4.type, String]
 
   implicit object IPv6CastOutBind extends CastOutBind[ColumnType.IPv6.type, String]
+
+  implicit object JSONCastOutBind extends CastOutBind[ColumnType.JSON.type, JsValue]
+
+  implicit object ParameterizedJSONCastOutBind extends CastOutBind[ColumnType.ParameterizedJSON, JsValue]
 
   def toUInt8(tableColumn: ConstOrColMagnet[_]): UInt8 = UInt8(tableColumn)
 

@@ -38,7 +38,12 @@ class SqlValidationITSpec extends DslITSpec {
    *   matches it against the declarations in `dsl/column`, so it must spell one of them exactly. For [[joinShapes]] it
    *   is just a description, since those cover a whole-query shape rather than one node.
    */
-  case class Construct(ast: String, query: OperationalQuery, level: ValidationLevel = Semantic)
+  case class Construct(
+      ast: String,
+      query: OperationalQuery,
+      level: ValidationLevel = Semantic,
+      since: Option[(Int, Int)] = None
+  )
 
   private val stampInAmsterdam =
     java.time.ZonedDateTime.of(2020, 6, 1, 12, 0, 0, 0, java.time.ZoneId.of("Europe/Amsterdam"))
@@ -63,15 +68,76 @@ class SqlValidationITSpec extends DslITSpec {
     sem("NullIf", select(nullIf(1, 0)))
   )
 
-  private val jsonConstructs = Seq(
-    sem("VisitParamHas", select(visitParamHas("""{"a":1}""", "a"))),
-    sem("VisitParamExtractUInt", select(visitParamExtractUInt("""{"a":1}""", "a"))),
-    sem("VisitParamExtractInt", select(visitParamExtractInt("""{"a":-1}""", "a"))),
-    sem("VisitParamExtractFloat", select(visitParamExtractFloat("""{"a":1.5}""", "a"))),
-    sem("VisitParamExtractBool", select(visitParamExtractBool("""{"a":true}""", "a"))),
-    sem("VisitParamExtractRaw", select(visitParamExtractRaw("""{"a":{"b":1}}""", "a"))),
-    sem("VisitParamExtractString", select(visitParamExtractString("""{"a":"b"}""", "a")))
-  )
+  private val doc = """{"a":{"b":[1,2]},"arr":[{"x":1}]}"""
+
+  // The native forms need a JSON value to read from, so they select from a subquery that casts one.
+  private val j                         = ref[spray.json.JsValue]("j")
+  private def fromJson(column: Column*) = select(column: _*).from(select(cast(doc, ColumnType.JSON) as "j"))
+
+  private val jsonConstructs = {
+    val path                            = Seq[ConstOrColMagnet[_]]("a", "b", 1)
+    def ci(ast: String, column: Column) = Construct(ast, select(column), since = Option((25, 8)))
+
+    Seq(
+      sem("VisitParamHas", select(visitParamHas("""{"a":1}""", "a"))),
+      sem("VisitParamExtractUInt", select(visitParamExtractUInt("""{"a":1}""", "a"))),
+      sem("VisitParamExtractInt", select(visitParamExtractInt("""{"a":-1}""", "a"))),
+      sem("VisitParamExtractFloat", select(visitParamExtractFloat("""{"a":1.5}""", "a"))),
+      sem("VisitParamExtractBool", select(visitParamExtractBool("""{"a":true}""", "a"))),
+      sem("VisitParamExtractRaw", select(visitParamExtractRaw("""{"a":{"b":1}}""", "a"))),
+      sem("VisitParamExtractString", select(visitParamExtractString("""{"a":"b"}""", "a"))),
+      sem("JSONHas", select(jsonHas(doc, path: _*))),
+      sem("JSONLength", select(jsonLength(doc, "a", "b"))),
+      sem("JSONType", select(jsonType(doc, "a"))),
+      sem("JSONKey", select(jsonKey(doc, 1))),
+      sem("JSONExtractUInt", select(jsonExtractUInt(doc, path: _*))),
+      sem("JSONExtractInt", select(jsonExtractInt(doc, path: _*))),
+      sem("JSONExtractFloat", select(jsonExtractFloat(doc, path: _*))),
+      sem("JSONExtractBool", select(jsonExtractBool(doc, path: _*))),
+      sem("JSONExtractString", select(jsonExtractString(doc, "a"))),
+      sem("JSONExtractRaw", select(jsonExtractRaw(doc, "a"))),
+      sem("JSONExtractArrayRaw", select(jsonExtractArrayRaw(doc, "a", "b"))),
+      sem("JSONExtractKeys", select(jsonExtractKeys(doc))),
+      sem("JSONExtractKeysAndValuesRaw", select(jsonExtractKeysAndValuesRaw(doc))),
+      sem("JSONExtractKeysAndValues", select(jsonExtractKeysAndValues[Long](doc, ColumnType.Int64, "a"))),
+      sem("JSONExtract", select(jsonExtract[Seq[Long]](doc, ColumnType.Array(ColumnType.Int64), "a", "b"))),
+      sem("JSONArrayLength", select(jsonArrayLength("[1,2]"))),
+      sem("IsValidJSON", select(isValidJSON(doc))),
+      sem("JSONMergePatch", select(jsonMergePatch("""{"a":1}""", """{"b":2}""", """{"c":3}"""))),
+      sem("JSONExists", select(jsonExists(doc, "$.a.b"))),
+      sem("JSONQuery", select(jsonQuery(doc, "$.a.b"))),
+      sem("JSONValue", select(jsonValue(doc, "$.a.b[0]"))),
+      sem("ToJSONString", select(toJSONString(tuple(1, "a")))),
+      sem("JSONAllPaths", fromJson(jsonAllPaths(j))),
+      sem("JSONAllPathsWithTypes", fromJson(jsonAllPathsWithTypes(j))),
+      sem("JSONDynamicPaths", fromJson(jsonDynamicPaths(j))),
+      sem("JSONDynamicPathsWithTypes", fromJson(jsonDynamicPathsWithTypes(j))),
+      sem("JSONSharedDataPaths", fromJson(jsonSharedDataPaths(j))),
+      sem("JSONSharedDataPathsWithTypes", fromJson(jsonSharedDataPathsWithTypes(j))),
+      sem("DynamicType", fromJson(dynamicType(jsonSubcolumn(j, "a", "b")))),
+      sem("DynamicElement", fromJson(dynamicElement[Seq[Long]](jsonSubcolumn(j, "a", "b"), ColumnType.Array(ColumnType.Int64)))),
+      sem("IsDynamicElementInSharedData", fromJson(isDynamicElementInSharedData(jsonSubcolumn(j, "a", "b")))),
+      sem("GetSubcolumn", fromJson(getSubcolumn(j, "a.b"))),
+      sem("JSONSubcolumn", fromJson(jsonSubcolumn(j, "a", "b"))),
+      sem("JSONTypedSubcolumn", fromJson(jsonTypedSubcolumn[Seq[Long]](j, ColumnType.Array(ColumnType.Int64), "a", "b"))),
+      sem("JSONSubObject", fromJson(jsonSubObject(j, "a"))),
+      sem("JSONArrayOfObjects", fromJson(jsonArrayOfObjects(j, "arr"))),
+      sem("DistinctJSONPaths", fromJson(distinctJSONPaths(j))),
+      sem("DistinctJSONPathsAndTypes", fromJson(distinctJSONPathsAndTypes(j))),
+      sem("DistinctDynamicTypes", fromJson(distinctDynamicTypes(jsonSubcolumn(j, "a", "b")))),
+      ci("JSONExtractUInt", jsonExtractUIntCaseInsensitive(doc, path: _*)),
+      ci("JSONExtractInt", jsonExtractIntCaseInsensitive(doc, path: _*)),
+      ci("JSONExtractFloat", jsonExtractFloatCaseInsensitive(doc, path: _*)),
+      ci("JSONExtractBool", jsonExtractBoolCaseInsensitive(doc, path: _*)),
+      ci("JSONExtractString", jsonExtractStringCaseInsensitive(doc, "A")),
+      ci("JSONExtractRaw", jsonExtractRawCaseInsensitive(doc, "A")),
+      ci("JSONExtractArrayRaw", jsonExtractArrayRawCaseInsensitive(doc, "A", "B")),
+      ci("JSONExtractKeys", jsonExtractKeysCaseInsensitive(doc, "A")),
+      ci("JSONExtractKeysAndValuesRaw", jsonExtractKeysAndValuesRawCaseInsensitive(doc, "A")),
+      ci("JSONExtractKeysAndValues", jsonExtractKeysAndValuesCaseInsensitive[Long](doc, ColumnType.Int64, "A")),
+      ci("JSONExtract", jsonExtractCaseInsensitive[Seq[Long]](doc, ColumnType.Array(ColumnType.Int64), "A", "B"))
+    )
+  }
 
   private val encodingConstructs = Seq(
     sem("Hex", select(hex(255))),
@@ -904,7 +970,18 @@ class SqlValidationITSpec extends DslITSpec {
     Construct("sample with an offset", select(shieldId).from(OneTestTable).sample(0.1, Option(0.5)), Syntax)
   )
 
-  private val constructs: Seq[Construct] = astConstructs ++ joinShapes ++ clauseShapes
+  /** Dot-syntax chains, which only parse if each link renders in the form the next one expects. */
+  private val jsonPathShapes: Seq[Construct] = Seq(
+    Construct("a path into an array of objects", fromJson(jsonSubcolumn(jsonArrayOfObjects(j, "arr"), "x"))),
+    Construct(
+      "a typed path into an array of objects",
+      fromJson(jsonTypedSubcolumn[Seq[Long]](jsonArrayOfObjects(j, "arr"), ColumnType.Int64, "x"))
+    ),
+    Construct("nested arrays of objects", fromJson(jsonArrayOfObjects(jsonArrayOfObjects(j, "arr")))),
+    Construct("a key that needs quoting", fromJson(jsonTypedSubcolumn[Long](j, ColumnType.Int64, "a-b", "c d")))
+  )
+
+  private val constructs: Seq[Construct] = astConstructs ++ joinShapes ++ clauseShapes ++ jsonPathShapes
 
   /** `EXPLAIN QUERY TREE` needs the analyzer, the default since 24.3 and so on every supported server. */
   private def explainOf(level: ValidationLevel): String = level match {
@@ -916,7 +993,13 @@ class SqlValidationITSpec extends DslITSpec {
     // One at a time. Firing all of them concurrently overruns the client's connection pool
     // (pekko.http.host-connection-pool.max-open-requests, 32 by default) and every result becomes a pool rejection
     // rather than a verdict on the SQL.
-    val failures = constructs.flatMap { construct =>
+    val version = clickClient.query("SELECT version()").futureValue.trim.split('.').take(2).map(_.toInt).toSeq match {
+      case Seq(major, minor) => (major, minor)
+      case other             => fail(s"Unexpected server version ${other.mkString(".")}")
+    }
+    val supported = constructs.filter(_.since.forall(since => Ordering[(Int, Int)].gteq(version, since)))
+
+    val failures = supported.flatMap { construct =>
       val sql = toSql(construct.query.internalQuery, None)
       clickClient
         .query(explainOf(construct.level) + sql)
@@ -931,7 +1014,7 @@ class SqlValidationITSpec extends DslITSpec {
           s"  ${construct.ast} (${construct.level})\n    emitted: $sql\n    server : $message"
         }
         .mkString("\n")
-      fail(s"${failures.size} of ${constructs.size} constructs emitted SQL ClickHouse rejected:\n$report")
+      fail(s"${failures.size} of ${supported.size} constructs emitted SQL ClickHouse rejected:\n$report")
     }
   }
 

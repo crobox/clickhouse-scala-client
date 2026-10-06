@@ -83,6 +83,17 @@ object ColumnDecoder {
   implicit def iterableDecoder[A](implicit inner: ColumnDecoder[A]): ColumnDecoder[Iterable[A]] =
     seqDecoder(inner).decode(_)
 
+  /** `Map(String, V)` arrives as a JSON object. */
+  implicit def mapDecoder[A](implicit inner: ColumnDecoder[A]): ColumnDecoder[Map[String, A]] =
+    instance("Map") { case JsObject(fields) => fields.map { case (key, value) => key -> inner.decode(value) } }
+
+  /** A two-element `Tuple` arrives as a JSON array. */
+  implicit def tuple2Decoder[A, B](implicit
+      first: ColumnDecoder[A],
+      second: ColumnDecoder[B]
+  ): ColumnDecoder[(A, B)] =
+    instance("Tuple") { case JsArray(Vector(a, b)) => (first.decode(a), second.decode(b)) }
+
   /**
    * `Date` arrives as `2026-08-21`, `DateTime` as `2026-08-21 21:48:17` and `DateTime64(n)` with `n` fractional digits
    * -- a space rather than the ISO `T`, and no offset. Everything after the date is optional, because `n` runs from 0

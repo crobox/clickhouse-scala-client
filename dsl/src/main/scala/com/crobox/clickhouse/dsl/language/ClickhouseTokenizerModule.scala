@@ -378,6 +378,7 @@ trait ClickhouseTokenizerModule
       case col: IPFunction[_]                      => tokenizeIPFunction(col)
       case col: (InFunction @unchecked)            => tokenizeInFunction(col)
       case col: JsonFunction[_]                    => tokenizeJsonFunction(col)
+      case col: JsonFunctionCol[_]                 => tokenizeJsonFunctionCol(col)
       case col: LogicalFunction                    => tokenizeLogicalFunction(col)
       case col: MathFuncColumn                     => tokenizeMathematicalFunction(col)
       case col: (MiscellaneousFunction @unchecked) => tokenizeMiscellaneousFunction(col)

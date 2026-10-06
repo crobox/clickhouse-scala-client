@@ -66,6 +66,12 @@ trait AggregationFunctions {
   case class TimeSeries(tableColumn: TableColumn[Long], interval: MultiInterval)
       extends AggregateFunction[Long](tableColumn)
 
+  case class DistinctJSONPaths(json: TableColumn[_]) extends AggregateFunction[Seq[String]](json)
+
+  case class DistinctJSONPathsAndTypes(json: TableColumn[_]) extends AggregateFunction[Map[String, Seq[String]]](json)
+
+  case class DistinctDynamicTypes(dynamic: TableColumn[_]) extends AggregateFunction[Seq[String]](dynamic)
+
   def count(): Count = Count()
 
   def count(column: TableColumn[_]): Count = Count(Option(column))
@@ -106,6 +112,12 @@ trait AggregationFunctions {
 
   def groupArray[V](tableColumn: TableColumn[V], maxValues: Option[Long] = None): GroupArray[V] =
     GroupArray(tableColumn, maxValues)
+
+  def distinctJSONPaths(json: TableColumn[_]): DistinctJSONPaths = DistinctJSONPaths(json)
+
+  def distinctJSONPathsAndTypes(json: TableColumn[_]): DistinctJSONPathsAndTypes = DistinctJSONPathsAndTypes(json)
+
+  def distinctDynamicTypes(dynamic: TableColumn[_]): DistinctDynamicTypes = DistinctDynamicTypes(dynamic)
 }
 
 trait AggregationFunctionsCombiners { self: Magnets with AggregationFunctions =>
