@@ -35,6 +35,28 @@ class ModernColumnTypeTest extends DslTestSpec {
     ColumnType.JSON.toString shouldBe "JSON"
   }
 
+  it should "render JSON with its parameters in the order the server renders them back" in {
+    ColumnType
+      .JSON(
+        maxDynamicPaths = Option(10),
+        maxDynamicTypes = Option(3),
+        typedPaths = Seq("a.b" -> ColumnType.UInt32, "c" -> ColumnType.String),
+        skip = Seq("x.y"),
+        skipRegexp = Seq("^tmp\\..*")
+      )
+      .toString shouldBe
+    """JSON(max_dynamic_types=3, max_dynamic_paths=10, `a.b` UInt32, c String, SKIP `x.y`, SKIP REGEXP '^tmp\\..*')"""
+  }
+
+  it should "render JSON without parameters as plain JSON" in {
+    ColumnType.JSON().toString shouldBe "JSON"
+  }
+
+  it should "refuse JSON limits the server does not accept" in {
+    an[IllegalArgumentException] should be thrownBy ColumnType.JSON(maxDynamicTypes = Option(255))
+    an[IllegalArgumentException] should be thrownBy ColumnType.JSON(maxDynamicPaths = Option(1000001))
+  }
+
   it should "render SimpleAggregateFunction" in {
     ColumnType.SimpleAggregateFunction("sum", ColumnType.UInt64).toString shouldBe
     "SimpleAggregateFunction(sum, UInt64)"

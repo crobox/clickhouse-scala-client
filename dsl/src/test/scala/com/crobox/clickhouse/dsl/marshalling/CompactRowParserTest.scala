@@ -164,4 +164,25 @@ class CompactRowParserTest extends AnyFlatSpec with Matchers {
 
   it should "reject a truncated response rather than returning an empty result" in
     intercept[ResultParsingException](CompactRowParser.parse("""["a"]"""))
+
+  // Captured from 25.3 and 26.3; 25.3 quotes the 64-bit integer inside the JSON value, 26.3 does not.
+  it should "read a Map, an array of pairs and a JSON value" in {
+    val m   = NativeColumn[Map[String, String]]("m")
+    val kv  = NativeColumn[Seq[(String, String)]]("kv")
+    val sub = NativeColumn[JsValue]("sub")
+    val row = CompactRowParser
+      .parse(
+        body(
+          """["m", "kv", "sub"]""",
+          """["Map(String, String)", "Array(Tuple(String, String))", "JSON"]""",
+          """[{"a.b":"Int64"}, [["a","1"]], {"b":"42"}]"""
+        )
+      )
+      .rows
+      .head
+
+    row.get(m) shouldBe Some(Map("a.b" -> "Int64"))
+    row.get(kv) shouldBe Some(Seq("a" -> "1"))
+    row.get(sub) shouldBe Some(JsObject("b" -> JsString("42")))
+  }
 }

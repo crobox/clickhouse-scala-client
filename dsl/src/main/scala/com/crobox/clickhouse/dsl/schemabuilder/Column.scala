@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.dsl.schemabuilder
 
-import com.crobox.clickhouse.dsl.NativeColumn
+import com.crobox.clickhouse.dsl.{ClickhouseStatement, NativeColumn}
 
 /**
  * @author
@@ -159,7 +159,41 @@ object ColumnType {
   case object Dynamic extends SimpleColumnType("Dynamic")
 
   /** The native `JSON` type, as opposed to the `visitParam*` functions that read JSON out of a String. */
-  case object JSON extends SimpleColumnType("JSON")
+  case object JSON extends SimpleColumnType("JSON") {
+
+    def apply(
+        maxDynamicPaths: Option[Int] = None,
+        maxDynamicTypes: Option[Int] = None,
+        typedPaths: Seq[(String, ColumnType)] = Seq.empty,
+        skip: Seq[String] = Seq.empty,
+        skipRegexp: Seq[String] = Seq.empty
+    ): ParameterizedJSON = ParameterizedJSON(maxDynamicPaths, maxDynamicTypes, typedPaths, skip, skipRegexp)
+  }
+
+  /** `JSON(max_dynamic_paths=N, max_dynamic_types=N, some.path Type, SKIP path, SKIP REGEXP 're')`. */
+  case class ParameterizedJSON(
+      maxDynamicPaths: Option[Int] = None,
+      maxDynamicTypes: Option[Int] = None,
+      typedPaths: Seq[(String, ColumnType)] = Seq.empty,
+      skip: Seq[String] = Seq.empty,
+      skipRegexp: Seq[String] = Seq.empty
+  ) extends SimpleColumnType("JSON") {
+    maxDynamicPaths.foreach(n =>
+      require(n >= 0 && n <= 1000000, s"max_dynamic_paths must be between 0 and 1000000, got $n")
+    )
+    maxDynamicTypes.foreach(n => require(n >= 0 && n <= 254, s"max_dynamic_types must be between 0 and 254, got $n"))
+
+    // In the order the server renders them back.
+    override def toString: String = {
+      val parameters =
+        maxDynamicTypes.map(n => s"max_dynamic_types=$n").toSeq ++
+          maxDynamicPaths.map(n => s"max_dynamic_paths=$n") ++
+          typedPaths.map { case (path, columnType) => s"${ClickhouseStatement.quoteIdentifier(path)} $columnType" } ++
+          skip.map(path => s"SKIP ${ClickhouseStatement.quoteIdentifier(path)}") ++
+          skipRegexp.map(regexp => s"SKIP REGEXP '${ClickhouseStatement.escape(regexp)}'")
+      if (parameters.isEmpty) "JSON" else parameters.mkString("JSON(", ", ", ")")
+    }
+  }
 
   /**
    * `SimpleAggregateFunction(f, types...)`.

@@ -44,6 +44,9 @@ trait AggregationFunctionTokenizer { this: ClickhouseTokenizerModule =>
       case Count(column, distinct) =>
         val prefix = if (distinct) "DISTINCT " else ""
         ("count", prefix + tokenizeColumn(column.getOrElse(EmptyColumn)))
+      case DistinctJSONPaths(json)            => ("distinctJSONPaths", tokenizeColumn(json))
+      case DistinctJSONPathsAndTypes(json)    => ("distinctJSONPathsAndTypes", tokenizeColumn(json))
+      case DistinctDynamicTypes(dynamic)      => ("distinctDynamicTypes", tokenizeColumn(dynamic))
       case FirstValue(column)                 => ("first_value", tokenizeColumn(column))
       case GroupArray(tableColumn, maxValues) =>
         ("groupArray", s"${maxValues.map(_.toString + ")(").getOrElse("")}${tokenizeColumn(tableColumn)}")
