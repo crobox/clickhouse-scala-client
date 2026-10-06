@@ -319,6 +319,9 @@ Typed/composable DSL that is interpreted and parsed into queries, with ofcourse 
 
 For more information see [the wiki](https://github.com/crobox/clickhouse-scala-client/wiki)
 
+Some functions need a newer server than the oldest supported LTS. The `jsonExtract*CaseInsensitive` functions need
+ClickHouse 25.8 or later; on 25.3 the query fails with `UNKNOWN_FUNCTION`.
+
 # Test Kit
 
 We also expose an utility test kit which provider a helpful spec with testing utilities. It automatically creates a single use database before all tests and drops it afterwards.

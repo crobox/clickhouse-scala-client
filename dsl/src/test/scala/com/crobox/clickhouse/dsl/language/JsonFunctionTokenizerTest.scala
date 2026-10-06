@@ -53,6 +53,12 @@ class JsonFunctionTokenizerTest extends DslTestSpec {
     an[IllegalArgumentException] should be thrownBy jsonArrayOfObjects(j)
   }
 
+  it should "refuse dot syntax on an expression, which the server reads as tupleElement" in {
+    an[IllegalArgumentException] should be thrownBy jsonSubcolumn(toJSONString(j), "a")
+    an[IllegalArgumentException] should be thrownBy jsonSubObject(j as "alias", "a")
+    sql(jsonSubcolumn(ref[String]("j"), "a")) shouldBe "j.a"
+  }
+
   it should "render the JSON aggregates" in {
     sql(distinctJSONPaths(j)) shouldBe "distinctJSONPaths(j)"
     sql(distinctJSONPathsAndTypes(j)) shouldBe "distinctJSONPathsAndTypes(j)"

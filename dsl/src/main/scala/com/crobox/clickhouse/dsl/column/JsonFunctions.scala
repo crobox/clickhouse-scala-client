@@ -1,7 +1,7 @@
 package com.crobox.clickhouse.dsl.column
 
 import com.crobox.clickhouse.dsl.schemabuilder.ColumnType
-import com.crobox.clickhouse.dsl.{Column, ExpressionColumn, TableColumn}
+import com.crobox.clickhouse.dsl.{Column, ExpressionColumn, NativeColumn, RefColumn, TableColumn}
 import spray.json.JsValue
 
 trait JsonFunctions { self: Magnets =>
@@ -134,7 +134,15 @@ trait JsonFunctions { self: Magnets =>
   // Dot syntax, which the server accepts only after a column name -- `(expr).a` is read as tupleElement, which a JSON
   // value is not -- or after another of these.
 
-  abstract class JSONPathAccess[V](val json: TableColumn[_], val path: Seq[String]) extends JsonFunctionCol[V](json)
+  abstract class JSONPathAccess[V](val json: TableColumn[_], val path: Seq[String]) extends JsonFunctionCol[V](json) {
+    require(
+      json match {
+        case _: NativeColumn[_] | _: RefColumn[_] | _: JSONPathAccess[_] => true
+        case _                                                           => false
+      },
+      s"Dot syntax needs a column or another JSON path to start from, got $json; use getSubcolumn for an expression"
+    )
+  }
 
   /** `json.a.b`: Dynamic, or the declared type for a typed path. */
   case class JSONSubcolumn[V](override val json: TableColumn[_], override val path: Seq[String])
