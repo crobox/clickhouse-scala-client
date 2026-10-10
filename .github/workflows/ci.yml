@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scala: [2.13.18, 3.3.8]
+        scala: [2.13.18, 3.9.0]
         # The last three ClickHouse LTS releases. LTS ships twice a year, as the .3 and .8 releases, so this list
         # moves forward roughly every six months.
         clickhouse: [25.3, 25.8, 26.3]
