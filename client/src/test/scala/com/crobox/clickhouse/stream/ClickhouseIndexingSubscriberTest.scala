@@ -2,6 +2,7 @@ package com.crobox.clickhouse.stream
 
 import com.crobox.clickhouse.internal.QuerySettings
 import com.crobox.clickhouse.{ClickhouseClient, ClickhouseClientAsyncSpec}
+import com.typesafe.config.ConfigFactory
 import org.apache.pekko.stream.scaladsl._
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 
@@ -76,6 +77,32 @@ class ClickhouseIndexingSubscriberTest extends ClickhouseClientAsyncSpec with Sc
     Await.ready(res, 5.seconds)
     checkRowCount("two").map(_ shouldBe inserts.size)
   }
+
+  it should "emit each element's context only once its rows are inserted" in {
+    val flowConfig = ConfigFactory
+      .parseString("crobox.clickhouse.indexer.flow { batch-size = 20, flush-interval = 100 millis }")
+      .withFallback(config)
+    val rows =
+      (i: Int) => if (i == 3) Seq.empty else parsedInserts("flow").map(data => Insert("test.insert", "{" + data + "}"))
+    val elements = (1 to 5).map(i => rows(i) -> i)
+    Source(elements)
+      .via(ClickhouseSink.toFlow[Int](flowConfig, client, Some("flow")))
+      .mapAsync(1)(i => checkRowCount("flow").map(i -> _))
+      .runWith(Sink.seq)
+      .map { emitted =>
+        emitted.map(_._1) shouldBe (1 to 5)
+        emitted.forall { case (i, count) => count >= elements.take(i).map(_._1.size).sum } shouldBe true
+        emitted.last._2 shouldBe 40
+      }
+  }
+
+  it should "fail the stream and emit none of a batch's contexts when its insert fails" in
+    recoverToSucceededIf[ClickhouseIndexingException] {
+      Source
+        .single(Seq(Insert("test.no_such_table", "{}")) -> 1)
+        .via(ClickhouseSink.toFlow[Int](config, client))
+        .runWith(Sink.seq)
+    }
 
   it should "optimize items" in {
     var statements = Seq.empty[String]
