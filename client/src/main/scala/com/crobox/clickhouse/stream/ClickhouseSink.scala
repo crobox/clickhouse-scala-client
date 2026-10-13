@@ -1,6 +1,6 @@
 package com.crobox.clickhouse.stream
 
-import org.apache.pekko.Done
+import org.apache.pekko.{Done, NotUsed}
 import org.apache.pekko.stream.scaladsl.{Flow, Keep, Sink}
 import com.crobox.clickhouse.ClickhouseClient
 import com.crobox.clickhouse.internal.QuerySettings
@@ -45,16 +45,9 @@ object ClickhouseSink extends LazyLogging {
       ec: ExecutionContext,
       settings: QuerySettings = QuerySettings()
   ): Sink[TableOperation, Future[Done]] = {
-    val indexerGeneralConfig = config.getConfig("crobox.clickhouse.indexer")
-    val mergedIndexerConfig  = indexerName
-      .flatMap(theIndexName =>
-        if (indexerGeneralConfig.hasPath(theIndexName))
-          Some(indexerGeneralConfig.getConfig(theIndexName).withFallback(indexerGeneralConfig))
-        else None
-      )
-      .getOrElse(indexerGeneralConfig)
-    val batchSize     = mergedIndexerConfig.getInt("batch-size")
-    val flushInterval = ConfigDuration(mergedIndexerConfig, "flush-interval")
+    val mergedIndexerConfig = indexerConfig(config, indexerName)
+    val batchSize           = mergedIndexerConfig.getInt("batch-size")
+    val flushInterval       = ConfigDuration(mergedIndexerConfig, "flush-interval")
     Flow[TableOperation]
       .groupBy(Int.MaxValue, _.table)
       .groupedWithin(batchSize, flushInterval)
@@ -87,6 +80,43 @@ object ClickhouseSink extends LazyLogging {
       }
       .mergeSubstreams
       .toMat(Sink.ignore)(Keep.right)
+  }
+
+  /**
+   * Inserts each element's rows, then emits the element's context: a stream can acknowledge its input once the rows are
+   * in ClickHouse, for example commit Kafka offsets, instead of when it reads them.
+   *
+   * Elements are batched up to `batch-size` rows or `flush-interval`, as in [[toSink]], and a batch inserts its rows
+   * with one insert per table. Up to `concurrent-requests` batches run at once, and their contexts are emitted in input
+   * order. An element without rows still waits for its batch. A failed insert fails the batch with a
+   * [[ClickhouseIndexingException]], and none of the batch's contexts are emitted.
+   */
+  def toFlow[C](config: Config, client: ClickhouseClient, indexerName: Option[String] = None)(implicit
+      ec: ExecutionContext,
+      settings: QuerySettings = QuerySettings()
+  ): Flow[(Seq[Insert], C), C, NotUsed] = {
+    val mergedIndexerConfig = indexerConfig(config, indexerName)
+    Flow[(Seq[Insert], C)]
+      .groupedWeightedWithin(
+        mergedIndexerConfig.getInt("batch-size").toLong,
+        ConfigDuration(mergedIndexerConfig, "flush-interval")
+      )(element => math.max(element._1.size, 1).toLong)
+      .mapAsync(mergedIndexerConfig.getInt("concurrent-requests")) { batch =>
+        Future
+          .traverse(batch.flatMap(_._1).groupBy(_.table).toSeq) { case (table, inserts) =>
+            insertTable(client, table, inserts.map(_.jsonRow))
+          }
+          .map(_ => batch.map(_._2))
+      }
+      .mapConcat(identity)
+  }
+
+  private def indexerConfig(config: Config, indexerName: Option[String]): Config = {
+    val indexerGeneralConfig = config.getConfig("crobox.clickhouse.indexer")
+    indexerName
+      .filter(indexerGeneralConfig.hasPath)
+      .map(indexerGeneralConfig.getConfig(_).withFallback(indexerGeneralConfig))
+      .getOrElse(indexerGeneralConfig)
   }
 
   private def insertTable(client: ClickhouseClient, table: String, payload: Seq[String])(implicit

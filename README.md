@@ -91,6 +91,20 @@ Source.single(Insert("clicks", """{"some_column": 3}""")).runWith(sink)
 
 `toSink` accepts any `TableOperation` -- `Insert(table, jsonRow)` for rows, and `Optimize(...)` to trigger a merge.
 
+`toFlow` inserts in the same batches and emits a context per element once that element's rows are inserted, so a
+consumer can acknowledge its input only after the write. For example, commit Kafka offsets with pekko-connectors-kafka:
+
+```scala
+Consumer
+  .committableSource(consumerSettings, subscription)
+  .map(message => toInserts(message.record.value) -> message.committableOffset)
+  .via(ClickhouseSink.toFlow(config, client))
+  .toMat(Committer.sink(committerSettings))(DrainingControl.apply)
+  .run()
+```
+
+A failed insert fails the stream with a `ClickhouseIndexingException` and emits none of that batch's contexts.
+
 ## Configuration
 
  - Client: All the configuration keys are under the prefix `crobox.clickhouse.client`
