@@ -6,7 +6,7 @@ object Build {
   val PekkoHttpVersion = "1.4.2"
 
   val scalaTest = "org.scalatest" %% "scalatest"       % "3.2.20"
-  val logback   = "ch.qos.logback" % "logback-classic" % "1.6.7"
+  val logback   = "ch.qos.logback" % "logback-classic" % "1.6.8"
 
   val testDependencies = Seq(scalaTest, logback)
 }
